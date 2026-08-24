@@ -27,7 +27,8 @@ class TestStatisticalValidator:
             stake=1.0,
             outcome=outcome,
             profit_loss=profit_loss,
-            clv=5.0,
+            model_edge_pct=5.0,
+            clv=None,
         )
 
     def _make_profitable_bets(self, n: int = 300) -> list[XBetRecord]:

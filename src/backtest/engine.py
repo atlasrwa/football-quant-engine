@@ -178,11 +178,14 @@ class WalkForwardEngine:
         # Determine actual outcome
         actual_outcome = "OVER" if features.total_goals > features.over_under_line else "UNDER"
 
-        # Determine odds
+        # Determine odds — R03: missing odds suppress signal (no synthetic odds)
         if prediction == "OVER":
-            odds = features.over_odds if features.over_odds else 1.90
+            odds = features.over_odds if features.over_odds and features.over_odds > 1.0 else None
         else:
-            odds = features.under_odds if features.under_odds else 1.90
+            odds = features.under_odds if features.under_odds and features.under_odds > 1.0 else None
+
+        if odds is None:
+            return  # NO_SIGNAL — missing market data cannot create a bet
 
         # Log the bet
         bet_logger.log_bet(

@@ -125,9 +125,16 @@ class XMetricEngine:
             xO = η·(attacker_offsides × (opponent_high_line_index / league_baseline))
 
         Proxy: high_line_index = 1/ppda (lower PPDA → higher line → more offsides).
-        League baseline = mean(1/ppda) across all rows.
+        League baseline = expanding mean of all HLI values seen up to each row
+        (sorted by date_unix). This ensures no temporal leakage — the baseline
+        for match T uses only information available at or before T.
         """
         df = df.copy()
+
+        # Sort by date_unix to ensure temporal ordering
+        if "date_unix" in df.columns:
+            sort_idx = df["date_unix"].argsort()
+            df = df.iloc[sort_idx].reset_index(drop=True)
 
         # Compute high-line indices for both sides
         ppda_home = self._safe_col(df, "ppda_home")
@@ -137,15 +144,37 @@ class XMetricEngine:
             hli_home = np.where(ppda_home != 0, 1.0 / ppda_home, 0.0)
             hli_away = np.where(ppda_away != 0, 1.0 / ppda_away, 0.0)
 
-        # League baseline: mean of all high-line indices (home + away)
-        all_hli = np.concatenate([hli_home[~np.isnan(hli_home)], hli_away[~np.isnan(hli_away)]])
-        league_baseline = float(np.mean(all_hli)) if len(all_hli) > 0 else 1.0
+        # Expanding-window league baseline: for each row i, baseline is the
+        # mean of all HLI values from rows 0..i-1 (look-ahead free).
+        # Row 0 has no history → use fallback of 1.0.
+        n = len(df)
+        league_baselines = np.ones(n)
+        if n > 0:
+            # Combined HLI per row (mean of home and away for that row)
+            row_hli = np.where(
+                ~np.isnan(hli_home) & ~np.isnan(hli_away),
+                (hli_home + hli_away) / 2.0,
+                np.where(~np.isnan(hli_home), hli_home,
+                         np.where(~np.isnan(hli_away), hli_away, np.nan))
+            )
+            # Expanding mean: baseline[i] = mean(row_hli[0:i])
+            cumsum = 0.0
+            count = 0
+            for i in range(n):
+                if count > 0:
+                    league_baselines[i] = cumsum / count
+                else:
+                    league_baselines[i] = 1.0  # fallback for first row
+                # Update cumulative stats with current row (for next row's baseline)
+                if not np.isnan(row_hli[i]):
+                    cumsum += row_hli[i]
+                    count += 1
 
         for side, opp in [("home", "away"), ("away", "home")]:
             offsides = self._safe_col(df, f"offsides_{side}")
             opp_hli = hli_away if opp == "away" else hli_home
 
-            ratio = np.where(league_baseline != 0, opp_hli / league_baseline, 0.0)
+            ratio = np.where(league_baselines != 0, opp_hli / league_baselines, 0.0)
             xo = self.coeff.xo_eta * offsides * ratio
             df[f"{side}_xO"] = xo
 

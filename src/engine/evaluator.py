@@ -134,6 +134,9 @@ class StrategyEvaluator:
             for idx in matching_indices:
                 edge = self._compute_edge(df.iloc[idx] if isinstance(idx, int) else df.loc[idx], strategy)
                 odds = self._get_odds_value(df, idx, strategy.direction)
+                # R03: Missing odds suppress signal — no synthetic betting opportunities
+                if odds is None:
+                    continue
                 signals.append(
                     Signal(
                         match_index=idx,
@@ -259,10 +262,15 @@ class StrategyEvaluator:
 
     def _get_odds_value(
         self, df: pd.DataFrame, idx: int, direction: str
-    ) -> float:
-        """Get the odds value for a specific row and direction."""
+    ) -> float | None:
+        """Get the odds value for a specific row and direction.
+
+        Returns None if odds are missing, NaN, or unavailable.
+        Missing odds must never create a synthetic betting opportunity.
+        """
         col = self._get_odds_column(direction)
         if col and col in df.columns:
             val = df.loc[idx, col] if idx in df.index else df.iloc[idx][col]
-            return float(val) if pd.notna(val) else 1.90
-        return 1.90  # default fallback
+            if pd.notna(val) and float(val) > 1.0:
+                return float(val)
+        return None  # NO_SIGNAL — missing odds suppress signal

@@ -301,7 +301,10 @@ class TestRefereeVolatilityCalculator:
     """Tests for referee volatility index calculation."""
 
     def test_single_referee_above_threshold(self):
-        """Referee with enough matches gets their own volatility."""
+        """Referee with enough PRIOR matches gets their own volatility.
+        R02 fix: volatility is computed from PRIOR matches only (expanding window).
+        Match N sees volatility computed from matches 1..N-1.
+        """
         calc = RefereeVolatilityCalculator(min_matches=3)
         matches = [
             _make_match(id=i, date_unix=100 * i, referee="RefA",
@@ -310,14 +313,20 @@ class TestRefereeVolatilityCalculator:
         ]
         result = calc.compute_index(matches)
 
-        # All matches have same ref, so all get the same volatility
-        # std of [1,2,3,4,5] = sqrt(2) ≈ 1.4142
+        # Match 1: 0 prior matches → league fallback (0 history) = 0.0
+        assert result[1] == 0.0
+        # Match 4: 3 prior matches (goals: 1,2,3) → ref has min_matches=3 prior → use ref std
         import numpy as np
-        expected_std = float(np.std([1, 2, 3, 4, 5]))
-        assert abs(result[1] - expected_std) < 0.001
+        expected_std_m4 = float(np.std([1, 2, 3], ddof=0))
+        assert abs(result[4] - expected_std_m4) < 0.001
+        # Match 5: 4 prior (goals: 1,2,3,4) → std([1,2,3,4])
+        expected_std_m5 = float(np.std([1, 2, 3, 4], ddof=0))
+        assert abs(result[5] - expected_std_m5) < 0.001
 
     def test_referee_below_threshold_uses_fallback(self):
-        """Referee with fewer than min_matches uses league-wide fallback."""
+        """Referee with fewer than min_matches PRIOR uses league-wide fallback.
+        R02 fix: temporal expanding window. Match N uses history[0..N-1].
+        """
         calc = RefereeVolatilityCalculator(min_matches=5)
         # RefA has 3 matches, RefB has 5 matches
         matches = [
@@ -332,20 +341,19 @@ class TestRefereeVolatilityCalculator:
         ]
         result = calc.compute_index(matches)
 
-        # RefA (3 matches < 5) → league fallback
-        # All goals: [3,0,6,2,3,4,1,1] → league std
+        # Match 1: first match, 0 prior → league vol = 0.0 (no history)
+        assert result[1] == 0.0
+        # Match 8 (RefB): prior RefB goals = [2,3,4,1] (4 < 5) → league fallback
+        # League prior to match 8: goals [3,0,6,2,3,4,1] → std
         import numpy as np
-        all_goals = [3, 0, 6, 2, 3, 4, 1, 1]
-        league_vol = float(np.std(all_goals))
-
-        assert abs(result[1] - league_vol) < 0.001  # RefA match
-        # RefB (5 matches) → own std: goals=[2,3,4,1,1]
-        ref_b_goals = [2, 3, 4, 1, 1]
-        ref_b_std = float(np.std(ref_b_goals))
-        assert abs(result[4] - ref_b_std) < 0.001
+        prior_goals_m8 = [3, 0, 6, 2, 3, 4, 1]
+        expected_league_vol = float(np.std(prior_goals_m8, ddof=0))
+        assert abs(result[8] - expected_league_vol) < 0.001
 
     def test_null_referee_uses_fallback(self):
-        """Matches with no referee use league-wide fallback."""
+        """Matches with no referee use league-wide expanding fallback.
+        R02 fix: temporal. Match 1 (first) has no prior data → 0.0.
+        """
         calc = RefereeVolatilityCalculator(min_matches=3)
         matches = [
             _make_match(id=1, date_unix=100, referee=None, home_goals=2, away_goals=1),
@@ -355,9 +363,14 @@ class TestRefereeVolatilityCalculator:
         ]
         result = calc.compute_index(matches)
 
+        # Match 1: first match, no prior data → 0.0
+        assert result[1] == 0.0
+        # Match 4 (RefA): has 2 prior RefA matches (< min_matches=3) → league fallback
+        # League prior to match 4: goals [3, 3, 2] → std
         import numpy as np
-        league_vol = float(np.std([3, 3, 2, 0]))
-        assert abs(result[1] - league_vol) < 0.001
+        league_prior_m4 = [3, 3, 2]
+        expected = float(np.std(league_prior_m4, ddof=0))
+        assert abs(result[4] - expected) < 0.001
 
     def test_all_same_goals_volatility_zero(self):
         """If all matches have same total goals, volatility = 0."""
@@ -513,7 +526,11 @@ class TestFeatureAssembler:
             assert f.away_xg_eff_delta_rolling == 0.0
 
     def test_all_null_referees(self):
-        """All matches with null referee should use league fallback."""
+        """All matches with null referee should use league expanding fallback.
+        R02 fix: With temporal computation, the league fallback evolves as
+        more data accumulates. All null-referee matches use the expanding
+        league-wide volatility at their timestamp (not a global constant).
+        """
         matches = [
             _make_match(id=i, date_unix=100 * i, referee=None,
                         home_goals=i % 4, away_goals=(i + 1) % 3)
@@ -523,9 +540,11 @@ class TestFeatureAssembler:
         features = assembler.assemble(matches)
 
         assert len(features) == 7
-        # All should have the same referee volatility (league-wide)
-        volatilities = {f.referee_volatility_index for f in features}
-        assert len(volatilities) == 1
+        # First match: no prior data → volatility = 0.0
+        assert features[0].referee_volatility_index == 0.0
+        # Later matches have expanding volatility (should be non-negative)
+        for f in features:
+            assert f.referee_volatility_index >= 0.0
 
     def test_mixed_referees_different_volatility(self):
         """Different referees should potentially have different volatilities."""

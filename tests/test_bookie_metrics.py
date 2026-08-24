@@ -24,7 +24,8 @@ class TestBookieMetricsCalculator:
             stake=1.0,
             outcome=outcome,
             profit_loss=profit_loss,
-            clv=5.0,
+            model_edge_pct=5.0,
+            clv=None,
         )
 
     # ------------------------------------------------------------------

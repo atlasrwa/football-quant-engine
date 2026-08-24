@@ -255,7 +255,8 @@ class FrictionAdjustedBacktester:
                     stake=capped_stake,
                     outcome=outcome,
                     profit_loss=profit_loss,
-                    clv=clv,
+                    model_edge_pct=clv,
+                    clv=None,  # Real CLV unavailable
                 )
             )
 

@@ -27,6 +27,38 @@ logger = logging.getLogger(__name__)
 
 
 @dataclass
+class BroadcastResult:
+    """Result of a broadcast operation with optional PredictionEvents.
+
+    Backward-compatible: supports len(), indexing, iteration, and equality
+    comparison with lists, so existing code continues to work unchanged.
+    """
+
+    payloads: List[SignalPayload]
+    prediction_events: list  # List[PredictionEvent] when identity provided
+
+    def __len__(self) -> int:
+        """Support len() for backward compatibility."""
+        return len(self.payloads)
+
+    def __getitem__(self, index):
+        """Support indexing for backward compatibility."""
+        return self.payloads[index]
+
+    def __iter__(self):
+        """Support iteration for backward compatibility."""
+        return iter(self.payloads)
+
+    def __eq__(self, other) -> bool:
+        """Support equality comparison with lists for backward compatibility."""
+        if isinstance(other, list):
+            return self.payloads == other
+        if isinstance(other, BroadcastResult):
+            return self.payloads == other.payloads
+        return NotImplemented
+
+
+@dataclass
 class BroadcastConfig:
     """Configuration for community signal broadcasting."""
 
@@ -64,7 +96,10 @@ class CommunityBroadcaster:
         match_data: List[dict],
         metrics: BookieMetrics | None = None,
         strategy_json: str = "{}",
-    ) -> List[SignalPayload]:
+        validation_passed: bool = False,
+        strategy_identity: Any = None,
+        source: str = "LIVE_SIGNAL",
+    ) -> "BroadcastResult":
         """Process and broadcast signals for current fixtures.
 
         Args:
@@ -72,15 +107,20 @@ class CommunityBroadcaster:
             match_data: List of match info dicts (parallel to signals or lookup).
             metrics: Bookie metrics for the strategy.
             strategy_json: Strategy JSON for proof hash.
+            validation_passed: Authoritative validation state from the validation
+                system. The broadcaster does NOT decide validation status.
+            strategy_identity: Optional identity info for PredictionEvent emission.
+            source: Prediction source ("LIVE_SIGNAL" or "PAPER_TRADE").
 
         Returns:
-            List of dispatched SignalPayloads.
+            BroadcastResult containing dispatched payloads and prediction events.
         """
         if self.is_quiet_hours(self._current_hour_utc()):
             logger.info("Quiet hours active, skipping broadcast")
-            return []
+            return BroadcastResult(payloads=[], prediction_events=[])
 
         payloads: List[SignalPayload] = []
+        prediction_events: list = []
 
         for i, signal in enumerate(signals):
             match_info = match_data[i] if i < len(match_data) else {}
@@ -92,7 +132,8 @@ class CommunityBroadcaster:
             ts = int(time.time())
             proof_hash = ProofOfAlpha.generate_hash(strategy_json, ts, "{}")
 
-            # Build payload
+            # Build payload — validation state comes from authoritative source
+            # R05: NEVER hardcode fdr_validated=True
             payload = SignalPayload(
                 match_info=self._format_match(match_info),
                 market_line=f"{signal.direction} (edge: {signal.edge:.1%})",
@@ -100,7 +141,7 @@ class CommunityBroadcaster:
                 recommended_stake=0.05,  # Default conservative
                 edge_pct=metrics.vig_adjusted_edge_pct if metrics else 0.0,
                 confidence=metrics.confidence_index if metrics else 0.0,
-                fdr_validated=True,
+                fdr_validated=validation_passed,
                 proof_hash=proof_hash,
                 timestamp=ts,
             )
@@ -116,8 +157,17 @@ class CommunityBroadcaster:
 
             payloads.append(payload)
 
+            # Emit PredictionEvent if strategy identity is available
+            if strategy_identity is not None:
+                prediction_event = self._create_prediction_event(
+                    signal, match_info, strategy_identity, source,
+                    confidence=metrics.confidence_index if metrics else 50.0,
+                )
+                if prediction_event is not None:
+                    prediction_events.append(prediction_event)
+
         logger.info("Broadcast complete: %d signals dispatched", len(payloads))
-        return payloads
+        return BroadcastResult(payloads=payloads, prediction_events=prediction_events)
 
     def format_broadcast_telegram(
         self, payload: SignalPayload, deep_links: List[DeepLink]
@@ -228,3 +278,50 @@ class CommunityBroadcaster:
         """Get current UTC hour."""
         import datetime
         return datetime.datetime.now(datetime.timezone.utc).hour
+
+    def _create_prediction_event(
+        self,
+        signal: Signal,
+        match_info: dict,
+        strategy_identity: Any,
+        source: str,
+        confidence: float = 50.0,
+    ) -> Any:
+        """Create a PredictionEvent from a broadcast signal.
+
+        Args:
+            signal: The signal being broadcast.
+            match_info: Match data dict.
+            strategy_identity: StrategyIdentityInfo with id, version, content_hash.
+            source: "LIVE_SIGNAL" or "PAPER_TRADE".
+            confidence: Confidence score (0-100).
+
+        Returns:
+            PredictionEvent in PENDING status, or None on failure.
+        """
+        from src.domain.factories import PredictionEventFactory
+        from src.domain.prediction import PredictionSource
+
+        source_map = {
+            "LIVE_SIGNAL": PredictionSource.LIVE_SIGNAL,
+            "PAPER_TRADE": PredictionSource.PAPER_TRADE,
+        }
+        prediction_source = source_map.get(source, PredictionSource.LIVE_SIGNAL)
+
+        return PredictionEventFactory.from_signal(
+            signal=signal,
+            strategy_id=strategy_identity.strategy_id,
+            strategy_version=strategy_identity.strategy_version,
+            strategy_content_hash=strategy_identity.content_hash,
+            match_id=int(match_info.get("match_id", 0)),
+            match_date_unix=int(match_info.get("date_unix", 0)),
+            home_team=str(match_info.get("home_team", "Unknown")),
+            away_team=str(match_info.get("away_team", "Unknown")),
+            league_id=int(match_info.get("league_id", 0)),
+            market_type=str(match_info.get("market_type", "OVER_UNDER")),
+            market_line=float(match_info.get("market_line", 2.5)),
+            model_version_id=getattr(strategy_identity, "model_version_id", None),
+            confidence=confidence,
+            recommended_stake=0.05,
+            source=prediction_source,
+        )

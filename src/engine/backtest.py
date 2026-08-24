@@ -8,7 +8,7 @@ from __future__ import annotations
 
 import logging
 from dataclasses import dataclass
-from typing import List, Tuple
+from typing import Dict, List, Tuple
 
 import numpy as np
 import pandas as pd
@@ -16,6 +16,21 @@ import pandas as pd
 from src.engine.evaluator import Signal, Strategy, StrategyEvaluator
 
 logger = logging.getLogger(__name__)
+
+
+@dataclass(frozen=True, slots=True)
+class StrategyIdentityInfo:
+    """Lightweight strategy identity for PredictionEvent emission during backtest.
+
+    This is a simple data carrier — NOT the authoritative StrategyIdentity.
+    It provides the minimum fields needed by PredictionEventFactory.from_backtest_bet()
+    without coupling the backtester directly to the strategy_identity module.
+    """
+
+    strategy_id: str
+    strategy_version: int
+    content_hash: str
+    model_version_id: str | None = None
 
 
 @dataclass(frozen=True, slots=True)
@@ -51,7 +66,8 @@ class XBetRecord:
     stake: float
     outcome: str  # "WIN" | "LOSS" | "VOID"
     profit_loss: float
-    clv: float
+    model_edge_pct: float  # Renamed from 'clv' — this is NOT CLV, it is model edge
+    clv: float | None = None  # Real CLV (requires closing odds); None = unavailable
 
 
 @dataclass(frozen=True, slots=True)
@@ -74,11 +90,12 @@ class XBacktestResult:
     total_staked: float
     total_profit_loss: float
     net_roi_pct: float
-    avg_clv_pct: float
+    avg_model_edge_pct: float  # Renamed from avg_clv_pct — NOT real CLV
     max_drawdown_pct: float
     win_rate: float
     folds: tuple[FoldMetrics, ...]
     bet_records: tuple[XBetRecord, ...]
+    prediction_events: tuple = ()  # PredictionEvent objects (when strategy identity available)
 
     def summary(self) -> dict:
         """Return a summary dict suitable for serialization."""
@@ -87,10 +104,11 @@ class XBacktestResult:
             "total_staked": round(self.total_staked, 2),
             "total_profit_loss": round(self.total_profit_loss, 2),
             "net_roi_pct": round(self.net_roi_pct, 2),
-            "avg_clv_pct": round(self.avg_clv_pct, 2),
+            "avg_model_edge_pct": round(self.avg_model_edge_pct, 2),
             "max_drawdown_pct": round(self.max_drawdown_pct, 2),
             "win_rate": round(self.win_rate, 2),
             "n_folds": len(self.folds),
+            "n_prediction_events": len(self.prediction_events),
         }
 
 
@@ -106,9 +124,12 @@ class XMetricBacktester:
         self,
         config: XBacktestConfig | None = None,
         evaluator: StrategyEvaluator | None = None,
+        strategy_identities: Dict[str, "StrategyIdentityInfo"] | None = None,
     ) -> None:
         self.config = config or XBacktestConfig()
         self.evaluator = evaluator or StrategyEvaluator()
+        # Optional mapping: strategy_name → identity info for PredictionEvent emission
+        self._strategy_identities = strategy_identities or {}
 
     def run(
         self,
@@ -136,23 +157,25 @@ class XMetricBacktester:
             return self._empty_result()
 
         all_bets: List[XBetRecord] = []
+        all_predictions: list = []  # PredictionEvent objects
         fold_metrics: List[FoldMetrics] = []
 
         for fold_idx, (train_range, test_range) in enumerate(folds):
             train_df = df.iloc[train_range[0]:train_range[1]]
             test_df = df.iloc[test_range[0]:test_range[1]]
 
-            fold_bets = self._run_fold(
+            fold_bets, fold_predictions = self._run_fold(
                 train_df, test_df, strategies, outcome_col, line_col
             )
             all_bets.extend(fold_bets)
+            all_predictions.extend(fold_predictions)
 
             # Compute fold-level metrics
             fm = self._compute_fold_metrics(fold_idx, fold_bets)
             fold_metrics.append(fm)
 
         # Aggregate
-        result = self._aggregate_results(all_bets, fold_metrics)
+        result = self._aggregate_results(all_bets, fold_metrics, all_predictions)
         logger.info(
             "Backtest complete: %d folds, %d bets, ROI=%.2f%%, MaxDD=%.2f%%",
             len(folds),
@@ -185,12 +208,18 @@ class XMetricBacktester:
         strategies: List[Strategy],
         outcome_col: str,
         line_col: str,
-    ) -> List[XBetRecord]:
-        """Execute a single fold: evaluate strategies on test data, settle bets."""
+    ) -> Tuple[List[XBetRecord], list]:
+        """Execute a single fold: evaluate strategies on test data, settle bets.
+
+        Returns:
+            Tuple of (bet_records, prediction_events).
+        """
         # Evaluate signals on test window only
         signals = self.evaluator.evaluate(test_df.reset_index(drop=True), strategies)
 
         bets: List[XBetRecord] = []
+        predictions: list = []  # PredictionEvent objects
+
         for signal in signals:
             # Map signal index back to test_df row
             if signal.match_index >= len(test_df):
@@ -208,23 +237,32 @@ class XMetricBacktester:
                 row, signal, odds, outcome_col, line_col
             )
 
-            # CLV: simplified as edge proxy (actual CLV requires closing odds)
-            clv = signal.edge * 100.0  # edge as percentage
+            # Model edge (NOT CLV — real CLV requires closing odds which are unavailable)
+            model_edge_pct = signal.edge * 100.0
 
-            bets.append(
-                XBetRecord(
-                    match_index=int(test_df.index[signal.match_index]),
-                    strategy_name=signal.strategy_name,
-                    direction=signal.direction,
-                    odds=odds,
-                    stake=self.config.base_stake,
-                    outcome=outcome,
-                    profit_loss=profit_loss,
-                    clv=clv,
-                )
+            bet = XBetRecord(
+                match_index=int(test_df.index[signal.match_index]),
+                strategy_name=signal.strategy_name,
+                direction=signal.direction,
+                odds=odds,
+                stake=self.config.base_stake,
+                outcome=outcome,
+                profit_loss=profit_loss,
+                model_edge_pct=model_edge_pct,
+                clv=None,  # Real CLV unavailable without closing odds
             )
+            bets.append(bet)
 
-        return bets
+            # Emit PredictionEvent if strategy identity is available
+            identity_info = self._strategy_identities.get(signal.strategy_name)
+            if identity_info is not None:
+                prediction = self._create_prediction_event(
+                    row, signal, odds, model_edge_pct, outcome, identity_info
+                )
+                if prediction is not None:
+                    predictions.append(prediction)
+
+        return bets, predictions
 
     def _settle_bet(
         self,
@@ -300,6 +338,7 @@ class XMetricBacktester:
         self,
         all_bets: List[XBetRecord],
         fold_metrics: List[FoldMetrics],
+        prediction_events: list | None = None,
     ) -> XBacktestResult:
         """Compute aggregate backtest results from all bets."""
         if not all_bets:
@@ -309,7 +348,7 @@ class XMetricBacktester:
         total_pl = sum(b.profit_loss for b in all_bets)
         wins = sum(1 for b in all_bets if b.outcome == "WIN")
         settled = sum(1 for b in all_bets if b.outcome != "VOID")
-        clv_values = [b.clv for b in all_bets]
+        clv_values = [b.model_edge_pct for b in all_bets]
 
         # Max drawdown from cumulative P&L
         max_dd = self._compute_max_drawdown(all_bets)
@@ -319,11 +358,12 @@ class XMetricBacktester:
             total_staked=total_staked,
             total_profit_loss=total_pl,
             net_roi_pct=(total_pl / total_staked * 100.0) if total_staked > 0 else 0.0,
-            avg_clv_pct=float(np.mean(clv_values)) if clv_values else 0.0,
+            avg_model_edge_pct=float(np.mean(clv_values)) if clv_values else 0.0,
             max_drawdown_pct=max_dd,
             win_rate=(wins / settled * 100.0) if settled > 0 else 0.0,
             folds=tuple(fold_metrics),
             bet_records=tuple(all_bets),
+            prediction_events=tuple(prediction_events or []),
         )
 
     def _compute_max_drawdown(self, bets: List[XBetRecord]) -> float:
@@ -339,6 +379,48 @@ class XMetricBacktester:
 
         return (max_dd / total_staked * 100.0) if total_staked > 0 else 0.0
 
+    def _create_prediction_event(
+        self,
+        row: pd.Series,
+        signal: Signal,
+        odds: float,
+        model_edge_pct: float,
+        outcome: str,
+        identity_info: "StrategyIdentityInfo",
+    ):
+        """Create a PredictionEvent from a settled backtest bet.
+
+        Returns None if required data is missing from the row.
+        """
+        from src.domain.factories import PredictionEventFactory
+
+        # Extract match identity from row (graceful fallback for missing columns)
+        match_id = int(row.get("match_id", 0))
+        match_date_unix = int(row.get("date_unix", 0))
+        home_team = str(row.get("home_team", "Unknown"))
+        away_team = str(row.get("away_team", "Unknown"))
+        league_id = int(row.get("league_id", 0))
+        market_line_val = row.get("market_line")
+        market_line = float(market_line_val) if pd.notna(market_line_val) else 2.5
+
+        return PredictionEventFactory.from_backtest_bet(
+            strategy_id=identity_info.strategy_id,
+            strategy_version=identity_info.strategy_version,
+            strategy_content_hash=identity_info.content_hash,
+            match_id=match_id,
+            match_date_unix=match_date_unix,
+            home_team=home_team,
+            away_team=away_team,
+            league_id=league_id,
+            direction=signal.direction,
+            odds=odds,
+            model_edge_pct=model_edge_pct,
+            outcome=outcome,
+            market_type="OVER_UNDER",
+            market_line=market_line,
+            model_version_id=identity_info.model_version_id,
+        )
+
     def _empty_result(self) -> XBacktestResult:
         """Return an empty result for edge cases."""
         return XBacktestResult(
@@ -346,7 +428,7 @@ class XMetricBacktester:
             total_staked=0.0,
             total_profit_loss=0.0,
             net_roi_pct=0.0,
-            avg_clv_pct=0.0,
+            avg_model_edge_pct=0.0,
             max_drawdown_pct=0.0,
             win_rate=0.0,
             folds=(),

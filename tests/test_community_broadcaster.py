@@ -94,7 +94,9 @@ class TestCommunityBroadcaster:
 
     @pytest.mark.asyncio
     async def test_run_once_dry_run(self):
-        """Dry-run produces payloads without dispatching."""
+        """Dry-run produces payloads without dispatching.
+        R05: Without explicit validation_passed=True, badge must be False.
+        """
         config = BroadcastConfig(dry_run=True)
         broadcaster = CommunityBroadcaster(config=config)
 
@@ -107,7 +109,8 @@ class TestCommunityBroadcaster:
         assert len(payloads) == 1
         assert isinstance(payloads[0], SignalPayload)
         assert payloads[0].direction == "OVER"
-        assert payloads[0].fdr_validated is True
+        # R05 fix: default is NOT validated (authoritative system must confirm)
+        assert payloads[0].fdr_validated is False
 
     @pytest.mark.asyncio
     async def test_run_once_multiple_signals(self):

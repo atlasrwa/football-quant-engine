@@ -37,6 +37,26 @@ class SignalPayload:
     timestamp: int
 
 
+@dataclass(frozen=True)
+class DispatchResult:
+    """Result of a signal dispatch, containing payload and optional PredictionEvent.
+
+    Backward-compatible: attribute access delegates to payload so existing code
+    that uses `result.direction`, `result.fdr_validated`, etc. continues to work.
+    isinstance(result, SignalPayload) will NOT pass — use result.payload for that.
+    """
+
+    payload: SignalPayload
+    prediction_event: "Any | None" = None  # PredictionEvent when identity is provided
+
+    def __getattr__(self, name: str) -> Any:
+        """Delegate attribute access to payload for backward compatibility."""
+        payload = object.__getattribute__(self, "payload")
+        if hasattr(payload, name):
+            return getattr(payload, name)
+        raise AttributeError(f"'{type(self).__name__}' object has no attribute '{name}'")
+
+
 class KellyCalculator:
     """Kelly criterion stake sizing with safety cap.
 
@@ -126,7 +146,9 @@ class CryptoSignalExporter:
         metrics: BookieMetrics,
         verdict: ValidationVerdict | None = None,
         strategy_json: str = "{}",
-    ) -> SignalPayload:
+        strategy_identity: "StrategyIdentityInfo | None" = None,
+        source: str = "LIVE_SIGNAL",
+    ) -> "SignalPayload | DispatchResult":
         """Format and dispatch a signal to configured webhooks.
 
         Args:
@@ -135,9 +157,12 @@ class CryptoSignalExporter:
             metrics: Beat the Bookie metrics for this strategy.
             verdict: Optional validation verdict for FDR badge.
             strategy_json: Strategy JSON for proof hash.
+            strategy_identity: Optional identity info for PredictionEvent emission.
+            source: Prediction source ("LIVE_SIGNAL" or "PAPER_TRADE").
 
         Returns:
-            The formatted SignalPayload.
+            SignalPayload when strategy_identity is None (backward compatible).
+            DispatchResult when strategy_identity is provided (includes PredictionEvent).
         """
         ts = int(time.time())
 
@@ -175,6 +200,16 @@ class CryptoSignalExporter:
             if self.discord_url:
                 embed = self.format_discord(payload)
                 await self._send_webhook(self.discord_url, embed)
+
+        # Emit PredictionEvent if strategy identity is available
+        prediction_event = None
+        if strategy_identity is not None:
+            prediction_event = self._create_prediction_event(
+                signal, match_info, strategy_identity, source,
+                confidence=metrics.confidence_index,
+                recommended_stake=kelly_stake,
+            )
+            return DispatchResult(payload=payload, prediction_event=prediction_event)
 
         return payload
 
@@ -276,3 +311,52 @@ class CryptoSignalExporter:
         # Edge represents our estimated advantage over the market
         estimated = implied + edge * 0.1  # Conservative scaling
         return max(0.01, min(0.99, estimated))
+
+    def _create_prediction_event(
+        self,
+        signal: Signal,
+        match_info: dict,
+        strategy_identity: Any,
+        source: str,
+        confidence: float = 50.0,
+        recommended_stake: float = 0.01,
+    ) -> Any:
+        """Create a PredictionEvent from a live signal dispatch.
+
+        Args:
+            signal: The signal being dispatched.
+            match_info: Match data dict.
+            strategy_identity: StrategyIdentityInfo with id, version, content_hash.
+            source: "LIVE_SIGNAL" or "PAPER_TRADE".
+            confidence: Confidence score (0-100).
+            recommended_stake: Kelly fraction.
+
+        Returns:
+            PredictionEvent in PENDING status.
+        """
+        from src.domain.factories import PredictionEventFactory
+        from src.domain.prediction import PredictionSource
+
+        source_map = {
+            "LIVE_SIGNAL": PredictionSource.LIVE_SIGNAL,
+            "PAPER_TRADE": PredictionSource.PAPER_TRADE,
+        }
+        prediction_source = source_map.get(source, PredictionSource.LIVE_SIGNAL)
+
+        return PredictionEventFactory.from_signal(
+            signal=signal,
+            strategy_id=strategy_identity.strategy_id,
+            strategy_version=strategy_identity.strategy_version,
+            strategy_content_hash=strategy_identity.content_hash,
+            match_id=int(match_info.get("match_id", 0)),
+            match_date_unix=int(match_info.get("date_unix", 0)),
+            home_team=str(match_info.get("home_team", "Unknown")),
+            away_team=str(match_info.get("away_team", "Unknown")),
+            league_id=int(match_info.get("league_id", 0)),
+            market_type=str(match_info.get("market_type", "OVER_UNDER")),
+            market_line=float(match_info.get("market_line", 2.5)),
+            model_version_id=getattr(strategy_identity, "model_version_id", None),
+            confidence=confidence,
+            recommended_stake=recommended_stake,
+            source=prediction_source,
+        )
