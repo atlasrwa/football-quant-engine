@@ -267,6 +267,28 @@ class TestCLI:
         captured = capsys.readouterr()
         assert "64 matches" in captured.out
 
+    def test_cli_ingest_league_alias(self, capsys):
+        """CLI ingest accepts --league as alias for --league-id."""
+        exit_code = cli_main(["ingest", "--league", "4759", "--season", "2023"])
+        assert exit_code == 0
+        captured = capsys.readouterr()
+        assert "64 matches" in captured.out
+
+    def test_cli_ingest_mode_fixture(self, capsys):
+        """CLI ingest with --mode fixture works."""
+        exit_code = cli_main(["ingest", "--league-id", "4759", "--season", "2023", "--mode", "fixture"])
+        assert exit_code == 0
+        captured = capsys.readouterr()
+        assert "64 matches" in captured.out
+        assert "mode=fixture" in captured.out
+
+    def test_cli_ingest_mode_default(self, capsys):
+        """CLI ingest defaults to fixture mode."""
+        exit_code = cli_main(["ingest", "--league-id", "4759", "--season", "2023"])
+        assert exit_code == 0
+        captured = capsys.readouterr()
+        assert "mode=fixture" in captured.out
+
     def test_cli_features(self, capsys):
         """CLI features command runs successfully."""
         exit_code = cli_main(["features", "--league-id", "4759", "--season", "2023"])
@@ -310,6 +332,19 @@ class TestCLI:
         assert "bets placed" in captured.out
         assert "BACKTEST RESULTS" in captured.out
 
+    def test_cli_run_with_league_alias(self, capsys, tmp_path):
+        """CLI run command works with --league alias."""
+        exit_code = cli_main([
+            "run",
+            "--league", "4759", "--season", "2023",
+            "--train-window", "20", "--test-window", "10",
+            "--step-size", "10", "--min-edge", "0.0",
+            "--output", str(tmp_path),
+        ])
+        assert exit_code == 0
+        captured = capsys.readouterr()
+        assert "Full Pipeline" in captured.out
+
     def test_cli_verbose(self, capsys):
         """CLI verbose flag doesn't crash."""
         exit_code = cli_main(["ingest", "-v"])
@@ -335,6 +370,23 @@ class TestCLI:
         assert exit_code == 0
         captured = capsys.readouterr()
         assert "BACKTEST RESULTS" in captured.out
+
+    def test_cli_daily_signals_help(self, capsys):
+        """daily-signals subcommand is recognized."""
+        from src.cli import build_parser
+        parser = build_parser()
+        # Verify the subcommand exists by parsing known args
+        args = parser.parse_args(["daily-signals", "--league-id", "4759"])
+        assert args.command == "daily-signals"
+        assert args.league_id == 4759
+
+    def test_cli_daily_signals_league_alias(self, capsys):
+        """daily-signals accepts --league alias."""
+        from src.cli import build_parser
+        parser = build_parser()
+        args = parser.parse_args(["daily-signals", "--league", "1625"])
+        assert args.command == "daily-signals"
+        assert args.league_id == 1625
 
 
 # ---------------------------------------------------------------------------

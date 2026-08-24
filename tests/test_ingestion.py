@@ -134,6 +134,56 @@ class TestCacheManager:
             loaded = json.load(f)
         assert loaded == record
 
+    def test_season_slash_sanitized_in_path(self, tmp_cache_dir):
+        """Season strings with slashes are sanitized to underscores in filenames."""
+        cache = CacheManager(cache_dir=tmp_cache_dir)
+        record = _make_raw_record()
+        path = cache.put(1625, "2018/2019", 9001, record)
+
+        # Should use underscore, not slash
+        assert path.name == "1625_2018_2019_9001.json"
+        assert path.exists()
+
+    def test_season_slash_roundtrip(self, tmp_cache_dir):
+        """Records cached with slash-season can be retrieved with the same season string."""
+        cache = CacheManager(cache_dir=tmp_cache_dir)
+        record = _make_raw_record(id=7777)
+
+        cache.put(1625, "2018/2019", 7777, record)
+
+        # Retrieve with the same slash-season string
+        result = cache.get(1625, "2018/2019", 7777)
+        assert result is not None
+        assert result["id"] == 7777
+
+    def test_season_slash_exists(self, tmp_cache_dir):
+        """exists() works with slash-season strings."""
+        cache = CacheManager(cache_dir=tmp_cache_dir)
+        cache.put(1625, "2018/2019", 5000, _make_raw_record(id=5000))
+
+        assert cache.exists(1625, "2018/2019", 5000) is True
+        assert cache.exists(1625, "2018/2019", 9999) is False
+
+    def test_season_slash_get_bulk(self, tmp_cache_dir):
+        """get_bulk works with slash-season strings."""
+        cache = CacheManager(cache_dir=tmp_cache_dir)
+        for i in range(3):
+            cache.put(1625, "2018/2019", 5000 + i, _make_raw_record(id=5000 + i))
+
+        results = cache.get_bulk(1625, "2018/2019")
+        assert len(results) == 3
+
+    def test_season_slash_clear(self, tmp_cache_dir):
+        """clear() works with slash-season strings."""
+        cache = CacheManager(cache_dir=tmp_cache_dir)
+        for i in range(3):
+            cache.put(1625, "2018/2019", 5000 + i, _make_raw_record(id=5000 + i))
+        cache.put(1625, "2020/2021", 6000, _make_raw_record(id=6000))
+
+        removed = cache.clear(league_id=1625, season="2018/2019")
+        assert removed == 3
+        assert cache.exists(1625, "2020/2021", 6000) is True
+
 
 # ---------------------------------------------------------------------------
 # SchemaValidator tests
@@ -306,6 +356,20 @@ class TestMockProvider:
 
         with pytest.raises(FileNotFoundError, match="Fixture file not found"):
             provider.fetch_matches(9999, "2099")
+
+    def test_season_slash_sanitized_in_fixture_path(self, tmp_path):
+        """MockProvider sanitizes slash-season when building fixture path."""
+        # Create a fixture file named with underscore (sanitized)
+        fixture_data = {"data": [_make_raw_record(id=8001, season="2018/2019", league_id=1625)]}
+        fixture_path = tmp_path / "1625_2018_2019.json"
+        with open(fixture_path, "w") as f:
+            json.dump(fixture_data, f)
+
+        provider = MockProvider(fixtures_dir=tmp_path)
+        matches = provider.fetch_matches(1625, "2018/2019")
+
+        assert len(matches) == 1
+        assert matches[0].id == 8001
 
     def test_live_example_raises(self):
         provider = MockProvider(use_live_example=True)

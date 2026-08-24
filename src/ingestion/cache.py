@@ -20,6 +20,8 @@ class CacheManager:
     Files are stored as: {cache_dir}/{league_id}_{season}_{match_id}.json
 
     Provides cache-first retrieval with optional force-refresh bypass.
+    Season strings are sanitized (slashes replaced with underscores) to
+    ensure safe filesystem paths (e.g., "2018/2019" → "2018_2019").
     """
 
     def __init__(self, cache_dir: Optional[Path] = None) -> None:
@@ -32,6 +34,20 @@ class CacheManager:
         self._cache_dir.mkdir(parents=True, exist_ok=True)
         self._hits = 0
         self._misses = 0
+
+    @staticmethod
+    def _sanitize_season(season: str) -> str:
+        """Sanitize season string for use in file paths.
+
+        Replaces slashes with underscores to prevent path traversal.
+
+        Args:
+            season: Raw season string (e.g., "2018/2019").
+
+        Returns:
+            Sanitized string safe for filenames (e.g., "2018_2019").
+        """
+        return season.replace("/", "_")
 
     @property
     def cache_dir(self) -> Path:
@@ -53,20 +69,21 @@ class CacheManager:
 
         Args:
             league_id: League identifier.
-            season: Season string.
+            season: Season string (will be sanitized).
             match_id: Match identifier.
 
         Returns:
             Filename string without directory.
         """
-        return f"{league_id}_{season}_{match_id}.json"
+        safe_season = self._sanitize_season(season)
+        return f"{league_id}_{safe_season}_{match_id}.json"
 
     def _build_path(self, league_id: int, season: str, match_id: int) -> Path:
         """Build the full file path for a cache entry.
 
         Args:
             league_id: League identifier.
-            season: Season string.
+            season: Season string (will be sanitized).
             match_id: Match identifier.
 
         Returns:
@@ -140,12 +157,13 @@ class CacheManager:
 
         Args:
             league_id: League identifier.
-            season: Season string.
+            season: Season string (will be sanitized).
 
         Returns:
             List of cached JSON dicts matching the league/season prefix.
         """
-        prefix = f"{league_id}_{season}_"
+        safe_season = self._sanitize_season(season)
+        prefix = f"{league_id}_{safe_season}_"
         results = []
         for path in sorted(self._cache_dir.glob(f"{prefix}*.json")):
             with open(path, "r", encoding="utf-8") as f:
@@ -167,7 +185,8 @@ class CacheManager:
             Number of files removed.
         """
         if league_id is not None and season is not None:
-            pattern = f"{league_id}_{season}_*.json"
+            safe_season = self._sanitize_season(season)
+            pattern = f"{league_id}_{safe_season}_*.json"
         elif league_id is not None:
             pattern = f"{league_id}_*.json"
         else:

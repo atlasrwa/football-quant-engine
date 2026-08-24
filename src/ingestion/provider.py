@@ -69,6 +69,9 @@ class MockProvider:
     def fetch_matches(self, league_id: int, season: str) -> List[Match]:
         """Load matches from a local fixture file.
 
+        Season strings are sanitized (slashes → underscores) for safe
+        filesystem paths (e.g., "2018/2019" → "2018_2019").
+
         Args:
             league_id: The FootyStats league identifier.
             season: The season string.
@@ -86,7 +89,8 @@ class MockProvider:
                 "Use FootyStatsClient with key='example' instead."
             )
 
-        fixture_path = self._fixtures_dir / f"{league_id}_{season}.json"
+        safe_season = season.replace("/", "_")
+        fixture_path = self._fixtures_dir / f"{league_id}_{safe_season}.json"
         if not fixture_path.exists():
             raise FileNotFoundError(
                 f"Fixture file not found: {fixture_path}"

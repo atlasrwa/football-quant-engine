@@ -1,23 +1,30 @@
 """CLI interface for the Football Quant Engine.
 
 Subcommands:
-  ingest   — Fetch and cache match data from FootyStats or local fixtures.
-  features — Compute feature vectors from ingested match data.
-  backtest — Run walk-forward backtest on computed features.
-  run      — Execute the full pipeline (ingest → features → backtest).
+  ingest        — Fetch and cache match data from FootyStats or local fixtures.
+  features      — Compute feature vectors from ingested match data.
+  backtest      — Run walk-forward backtest on computed features.
+  run           — Execute the full pipeline (ingest → features → backtest).
+  daily-signals — Fetch upcoming fixtures for today and generate live signals.
 """
 
 from __future__ import annotations
 
 import argparse
+import asyncio
 import json
 import logging
+import os
 import sys
+import time
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import List, Optional
 
 from src.backtest.engine import WalkForwardEngine
+from src.backtest.signal import SignalGenerator
 from src.features.assembler import FeatureAssembler
+from src.ingestion.client import FootyStatsClient
 from src.ingestion.pipeline import IngestionPipeline
 from src.models.config import StrategyConfig
 from src.models.features import MatchFeatures
@@ -61,6 +68,11 @@ def _build_config(args: argparse.Namespace) -> StrategyConfig:
     return StrategyConfig(**kwargs)
 
 
+def _get_api_key() -> Optional[str]:
+    """Retrieve FootyStats API key from environment."""
+    return os.environ.get("FOOTYSTATS_API_KEY")
+
+
 def _add_common_args(parser: argparse.ArgumentParser) -> None:
     """Add arguments common to multiple subcommands."""
     parser.add_argument(
@@ -68,12 +80,13 @@ def _add_common_args(parser: argparse.ArgumentParser) -> None:
         help="Increase verbosity (-v for INFO, -vv for DEBUG).",
     )
     parser.add_argument(
-        "--league-id", type=int, default=4759,
+        "--league-id", "--league", type=int, default=4759,
+        dest="league_id",
         help="FootyStats league ID (default: 4759).",
     )
     parser.add_argument(
         "--season", type=str, default="2023",
-        help="Season string (default: '2023').",
+        help="Season string (default: '2023'). Supports slash format e.g. '2018/2019'.",
     )
 
 
@@ -92,12 +105,38 @@ def _add_config_args(parser: argparse.ArgumentParser) -> None:
     group.add_argument("--seed", type=int, default=None)
 
 
+def _ingest_matches(args: argparse.Namespace) -> List[Match]:
+    """Ingest matches using the specified mode (fixture or api).
+
+    Args:
+        args: Parsed CLI arguments with league_id, season, and mode.
+
+    Returns:
+        List of ingested Match objects.
+    """
+    mode = getattr(args, "mode", "fixture")
+
+    if mode == "api":
+        api_key = _get_api_key() or "example"
+        client = FootyStatsClient(api_key=api_key)
+        pipeline = IngestionPipeline(client=client)
+        matches = asyncio.run(pipeline.ingest_league(args.league_id, args.season))
+    else:
+        pipeline = IngestionPipeline()
+        matches = pipeline.ingest_from_fixtures(args.league_id, args.season)
+
+    return matches
+
+
 def cmd_ingest(args: argparse.Namespace) -> List[Match]:
     """Execute the ingest subcommand."""
     _setup_logging(args.verbose)
-    pipeline = IngestionPipeline()
-    matches = pipeline.ingest_from_fixtures(args.league_id, args.season)
-    print(f"Ingested {len(matches)} matches for league={args.league_id} season={args.season}")
+    matches = _ingest_matches(args)
+    mode = getattr(args, "mode", "fixture")
+    print(
+        f"Ingested {len(matches)} matches for "
+        f"league={args.league_id} season={args.season} (mode={mode})"
+    )
     return matches
 
 
@@ -106,8 +145,7 @@ def cmd_features(args: argparse.Namespace) -> List[MatchFeatures]:
     _setup_logging(args.verbose)
     config = _build_config(args)
 
-    pipeline = IngestionPipeline()
-    matches = pipeline.ingest_from_fixtures(args.league_id, args.season)
+    matches = _ingest_matches(args)
     print(f"Ingested {len(matches)} matches")
 
     assembler = FeatureAssembler(config=config)
@@ -121,8 +159,7 @@ def cmd_backtest(args: argparse.Namespace) -> None:
     _setup_logging(args.verbose)
     config = _build_config(args)
 
-    pipeline = IngestionPipeline()
-    matches = pipeline.ingest_from_fixtures(args.league_id, args.season)
+    matches = _ingest_matches(args)
 
     assembler = FeatureAssembler(config=config)
     features = assembler.assemble(matches)
@@ -143,15 +180,15 @@ def cmd_run(args: argparse.Namespace) -> None:
     """Execute the full pipeline (ingest → features → backtest)."""
     _setup_logging(args.verbose)
     config = _build_config(args)
+    mode = getattr(args, "mode", "fixture")
 
     print("━" * 60)
     print("  Football Quant Engine — Full Pipeline")
     print("━" * 60)
 
     # Step 1: Ingest
-    print(f"\n[1/3] Ingesting matches (league={args.league_id}, season={args.season})...")
-    pipeline = IngestionPipeline()
-    matches = pipeline.ingest_from_fixtures(args.league_id, args.season)
+    print(f"\n[1/3] Ingesting matches (league={args.league_id}, season={args.season}, mode={mode})...")
+    matches = _ingest_matches(args)
     print(f"      ✓ {len(matches)} matches loaded")
 
     # Step 2: Features
@@ -174,6 +211,106 @@ def cmd_run(args: argparse.Namespace) -> None:
     print(f"Results saved to: {saved_path}")
 
 
+def cmd_daily_signals(args: argparse.Namespace) -> None:
+    """Fetch upcoming fixtures for today and generate live signals.
+
+    Fetches recent historical matches for context, assembles features,
+    generates signals for upcoming/today's matches, and appends them
+    to data/results/live_signals.jsonl.
+    """
+    _setup_logging(args.verbose)
+    config = _build_config(args)
+
+    api_key = _get_api_key() or "example"
+    client = FootyStatsClient(api_key=api_key)
+    pipeline = IngestionPipeline(client=client)
+
+    print(f"Fetching matches for league={args.league_id}, season={args.season}...")
+
+    # Fetch all available matches for the league/season (includes upcoming)
+    matches = asyncio.run(pipeline.ingest_league(args.league_id, args.season))
+
+    if not matches:
+        print("No matches found.")
+        return
+
+    # Separate historical (played) from upcoming (no goals yet, or future date)
+    now_unix = int(time.time())
+    historical = [m for m in matches if m.date_unix < now_unix and m.total_goals >= 0]
+    upcoming = [m for m in matches if m.date_unix >= now_unix]
+
+    # If no upcoming detected by timestamp, treat last N as "today's" for demo
+    if not upcoming and historical:
+        print("No upcoming matches found by timestamp. No signals to generate.")
+        return
+
+    print(f"  Historical: {len(historical)} matches")
+    print(f"  Upcoming:   {len(upcoming)} matches")
+
+    if len(historical) < 10:
+        print("Insufficient historical data for feature computation. Need at least 10 matches.")
+        return
+
+    # Assemble features using historical matches for context
+    assembler = FeatureAssembler(config=config)
+    all_features = assembler.assemble(historical + upcoming)
+
+    # Extract features for upcoming matches only (by match_id)
+    upcoming_ids = {m.id for m in upcoming}
+    upcoming_features = [f for f in all_features if f.match_id in upcoming_ids]
+
+    if not upcoming_features:
+        print("Could not compute features for upcoming matches.")
+        return
+
+    # Generate signals
+    signal_gen = SignalGenerator(config=config)
+    signals = []
+
+    for feat in upcoming_features:
+        result = signal_gen.generate(feat)
+        if result is not None:
+            prediction, edge = result
+            signal_record = {
+                "match_id": feat.match_id,
+                "date_unix": feat.date_unix,
+                "generated_at": datetime.now(timezone.utc).isoformat(),
+                "league_id": args.league_id,
+                "season": args.season,
+                "prediction": prediction,
+                "edge": round(edge, 4),
+                "home_xg_eff": round(feat.home_xg_eff_delta_rolling, 4),
+                "away_xg_eff": round(feat.away_xg_eff_delta_rolling, 4),
+                "home_form": round(feat.home_rolling_form, 4),
+                "away_form": round(feat.away_rolling_form, 4),
+                "referee_volatility": round(feat.referee_volatility_index, 4),
+                "over_odds": feat.over_odds,
+                "under_odds": feat.under_odds,
+                "status": "pending",
+            }
+            signals.append(signal_record)
+
+    if not signals:
+        print("No signals met the edge threshold.")
+        return
+
+    # Write to JSONL
+    output_dir = Path(args.output) if hasattr(args, "output") and args.output else None
+    if output_dir is None:
+        output_dir = Path(__file__).resolve().parent.parent / "data" / "results"
+    output_dir.mkdir(parents=True, exist_ok=True)
+
+    output_path = output_dir / "live_signals.jsonl"
+    with open(output_path, "a", encoding="utf-8") as f:
+        for signal in signals:
+            f.write(json.dumps(signal) + "\n")
+
+    print(f"\n  Generated {len(signals)} signals:")
+    for s in signals:
+        print(f"    Match {s['match_id']}: {s['prediction']} (edge={s['edge']:.3f})")
+    print(f"\n  Appended to: {output_path}")
+
+
 def build_parser() -> argparse.ArgumentParser:
     """Build the argument parser with all subcommands."""
     parser = argparse.ArgumentParser(
@@ -184,18 +321,30 @@ def build_parser() -> argparse.ArgumentParser:
     subparsers = parser.add_subparsers(dest="command", help="Available commands")
 
     # ingest
-    p_ingest = subparsers.add_parser("ingest", help="Ingest match data from fixtures")
+    p_ingest = subparsers.add_parser("ingest", help="Ingest match data from fixtures or API")
     _add_common_args(p_ingest)
+    p_ingest.add_argument(
+        "--mode", type=str, choices=["fixture", "api"], default="fixture",
+        help="Ingestion mode: 'fixture' for local files, 'api' for live FootyStats (default: fixture).",
+    )
 
     # features
     p_features = subparsers.add_parser("features", help="Compute feature vectors")
     _add_common_args(p_features)
     _add_config_args(p_features)
+    p_features.add_argument(
+        "--mode", type=str, choices=["fixture", "api"], default="fixture",
+        help="Ingestion mode (default: fixture).",
+    )
 
     # backtest
     p_backtest = subparsers.add_parser("backtest", help="Run walk-forward backtest")
     _add_common_args(p_backtest)
     _add_config_args(p_backtest)
+    p_backtest.add_argument(
+        "--mode", type=str, choices=["fixture", "api"], default="fixture",
+        help="Ingestion mode (default: fixture).",
+    )
     p_backtest.add_argument(
         "--output", type=str, default=None,
         help="Output directory for results JSON.",
@@ -206,8 +355,24 @@ def build_parser() -> argparse.ArgumentParser:
     _add_common_args(p_run)
     _add_config_args(p_run)
     p_run.add_argument(
+        "--mode", type=str, choices=["fixture", "api"], default="fixture",
+        help="Ingestion mode (default: fixture).",
+    )
+    p_run.add_argument(
         "--output", type=str, default=None,
         help="Output directory for results JSON.",
+    )
+
+    # daily-signals
+    p_daily = subparsers.add_parser(
+        "daily-signals",
+        help="Fetch upcoming fixtures and generate live signals",
+    )
+    _add_common_args(p_daily)
+    _add_config_args(p_daily)
+    p_daily.add_argument(
+        "--output", type=str, default=None,
+        help="Output directory for live_signals.jsonl (default: data/results/).",
     )
 
     return parser
@@ -238,6 +403,8 @@ def main(argv: Optional[List[str]] = None) -> int:
             cmd_backtest(args)
         elif args.command == "run":
             cmd_run(args)
+        elif args.command == "daily-signals":
+            cmd_daily_signals(args)
         else:
             parser.print_help()
             return 1
