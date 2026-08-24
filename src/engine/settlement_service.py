@@ -9,6 +9,14 @@ Architecture:
     
 No persistence layer — in-memory store acceptable for Phase 2.
 Persistence is a Phase 3 concern.
+
+Settlement Idempotency Guarantee:
+    A prediction can only be economically settled ONCE.
+    - First settlement: SUCCESS → creates Settlement, fires callbacks
+    - Repeated identical settlement: NO-OP → returns existing Settlement
+    - Conflicting settlement: EXPLICIT ERROR → SettlementConflictError
+    
+    This guarantee holds regardless of retries, restarts, or duplicate calls.
 """
 
 from __future__ import annotations
@@ -22,6 +30,30 @@ from src.domain.settlement import Settlement, SettlementOutcome
 from src.domain.factories import SettlementFactory
 
 logger = logging.getLogger(__name__)
+
+
+class SettlementConflictError(Exception):
+    """Raised when attempting to settle a prediction with a conflicting outcome.
+
+    This occurs when a prediction has already been settled (e.g., as WIN)
+    and a subsequent settlement attempt resolves it differently (e.g., as LOSS).
+    This indicates a data integrity issue that requires investigation.
+    """
+
+    def __init__(
+        self,
+        prediction_id: str,
+        existing_outcome: SettlementOutcome,
+        new_outcome: SettlementOutcome,
+    ) -> None:
+        self.prediction_id = prediction_id
+        self.existing_outcome = existing_outcome
+        self.new_outcome = new_outcome
+        super().__init__(
+            f"Settlement conflict for prediction {prediction_id[:8]}: "
+            f"already settled as {existing_outcome.value}, "
+            f"cannot re-settle as {new_outcome.value}"
+        )
 
 
 @dataclass(frozen=True, slots=True)
@@ -197,12 +229,21 @@ class PredictionSettlementService:
     ) -> SettlementResult:
         """Settle all PENDING predictions for a completed match.
 
+        Idempotency guarantee:
+        - If a prediction is already settled with the SAME outcome: skip (no-op)
+        - If a prediction is already settled with a DIFFERENT outcome: raise SettlementConflictError
+        - Callbacks only fire for NEW settlements (never re-fired on retry)
+
         Args:
             match_result: The actual match outcome.
             stake: Stake amount for P&L calculation.
 
         Returns:
             SettlementResult with all settlements for this match.
+
+        Raises:
+            SettlementConflictError: If a prediction was already settled
+                with a different outcome.
         """
         match_id = match_result.match_id
         pending = self._pending.pop(match_id, [])
@@ -220,6 +261,34 @@ class PredictionSettlementService:
         settled_predictions: List[PredictionEvent] = []
 
         for prediction in pending:
+            # IDEMPOTENCY CHECK: Has this prediction already been settled?
+            existing = self._settlements.get(prediction.prediction_id)
+            if existing is not None:
+                # Determine what the new outcome WOULD be
+                new_outcome = SettlementFactory._resolve_outcome(
+                    direction=prediction.direction,
+                    market_line=prediction.market_line,
+                    actual_total_goals=match_result.total_goals,
+                )
+
+                if existing.outcome == new_outcome:
+                    # Idempotent: same outcome → return existing, no callback
+                    logger.debug(
+                        "Prediction %s already settled as %s (idempotent skip)",
+                        prediction.prediction_id[:8],
+                        existing.outcome.value,
+                    )
+                    settlements.append(existing)
+                    settled_predictions.append(prediction)
+                    continue
+                else:
+                    # Conflict: different outcome → integrity error
+                    raise SettlementConflictError(
+                        prediction_id=prediction.prediction_id,
+                        existing_outcome=existing.outcome,
+                        new_outcome=new_outcome,
+                    )
+
             # Determine closing odds based on direction
             closing_odds = self._get_closing_odds(prediction, match_result)
 
@@ -236,7 +305,7 @@ class PredictionSettlementService:
             settled_predictions.append(prediction)
             self._settlements[prediction.prediction_id] = settlement
 
-            # Invoke callbacks
+            # Invoke callbacks ONLY for new settlements (never on retry)
             for callback in self._on_settlement_callbacks:
                 try:
                     callback(prediction, settlement)
@@ -310,6 +379,17 @@ class PredictionSettlementService:
     def get_pending_for_match(self, match_id: int) -> List[PredictionEvent]:
         """Get all PENDING predictions for a specific match."""
         return list(self._pending.get(match_id, []))
+
+    def is_already_settled(self, prediction_id: str) -> bool:
+        """Check if a prediction has already been settled.
+
+        Args:
+            prediction_id: The prediction to check.
+
+        Returns:
+            True if a settlement exists for this prediction.
+        """
+        return prediction_id in self._settlements
 
     def get_all_settlements(self) -> List[Settlement]:
         """Get all settlements."""

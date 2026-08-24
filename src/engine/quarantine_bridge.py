@@ -53,6 +53,10 @@ class QuarantineSettlementBridge:
         self._tracker = tracker
         self._settlements_processed = 0
         self._total_paper_pnl = 0.0
+        # Defense-in-depth: track which settlement_ids have been applied
+        # to prevent double P&L even if the bridge is called outside
+        # the normal service callback path.
+        self._processed_ids: set[str] = set()
 
     @property
     def settlements_processed(self) -> int:
@@ -82,6 +86,7 @@ class QuarantineSettlementBridge:
         """Handle a settlement event.
 
         Only processes PAPER_TRADE predictions. Other sources are ignored.
+        Idempotent: a settlement_id that has already been processed is skipped.
 
         Args:
             prediction: The original prediction that was settled.
@@ -89,6 +94,14 @@ class QuarantineSettlementBridge:
         """
         # Only paper trades affect quarantine
         if prediction.source != PredictionSource.PAPER_TRADE:
+            return
+
+        # IDEMPOTENCY: Skip if this settlement has already been applied
+        if settlement.settlement_id in self._processed_ids:
+            logger.debug(
+                "Settlement %s already processed (idempotent skip)",
+                settlement.settlement_id[:8],
+            )
             return
 
         # Map strategy_id to strategy_name for quarantine lookup.
@@ -112,6 +125,7 @@ class QuarantineSettlementBridge:
             )
             self._settlements_processed += 1
             self._total_paper_pnl += settlement.profit_loss
+            self._processed_ids.add(settlement.settlement_id)
 
             logger.debug(
                 "Updated quarantine for strategy %s: P&L=%+.2f (match %d, %s)",
