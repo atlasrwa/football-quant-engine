@@ -207,16 +207,16 @@ class BedrockLLMProvider(LLMProvider):
         self,
         prompt: str,
         system_prompt: str = "",
-        temperature: float = 0.7,
-        max_tokens: int = 2000,
+        temperature: Optional[float] = None,
+        max_tokens: Optional[int] = None,
     ) -> LLMResponse:
         """Generate a response from Claude via Bedrock.
 
         Args:
             prompt: User/research prompt (never contains credentials).
             system_prompt: System instructions.
-            temperature: Sampling temperature (overrides config default if provided).
-            max_tokens: Max response tokens (overrides config default if provided).
+            temperature: Sampling temperature. None = use config default.
+            max_tokens: Max response tokens. None = use config default.
 
         Returns:
             LLMResponse with structured content.
@@ -232,9 +232,9 @@ class BedrockLLMProvider(LLMProvider):
 
         client = self._get_client()
 
-        # Use config defaults unless explicitly overridden
-        effective_temperature = temperature if temperature != 0.7 else self._config.temperature
-        effective_max_tokens = max_tokens if max_tokens != 2000 else self._config.max_tokens
+        # Resolve None to config defaults; explicit values always preserved
+        effective_temperature = temperature if temperature is not None else self._config.temperature
+        effective_max_tokens = max_tokens if max_tokens is not None else self._config.max_tokens
 
         # Build request body for Claude Messages API via Bedrock
         request_body = self._build_request_body(

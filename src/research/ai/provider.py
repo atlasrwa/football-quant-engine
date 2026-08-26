@@ -32,8 +32,14 @@ class LLMResponse:
 class LLMProvider(ABC):
     """Abstract LLM provider interface.
 
-    Implementations: MockLLMProvider, AnthropicProvider, OpenAIProvider.
+    Implementations: MockLLMProvider, BedrockLLMProvider, DisabledProvider.
     Core research never imports provider SDKs directly.
+
+    Parameter semantics:
+        temperature=None → use provider/config default
+        temperature=0.7  → explicitly use 0.7
+        max_tokens=None  → use provider/config default
+        max_tokens=2000  → explicitly use 2000
     """
 
     @abstractmethod
@@ -41,16 +47,16 @@ class LLMProvider(ABC):
         self,
         prompt: str,
         system_prompt: str = "",
-        temperature: float = 0.7,
-        max_tokens: int = 2000,
+        temperature: Optional[float] = None,
+        max_tokens: Optional[int] = None,
     ) -> LLMResponse:
         """Generate a response from the LLM.
 
         Args:
             prompt: User/research prompt.
             system_prompt: System instructions.
-            temperature: Sampling temperature.
-            max_tokens: Max response tokens.
+            temperature: Sampling temperature. None = use provider default.
+            max_tokens: Max response tokens. None = use provider default.
 
         Returns:
             LLMResponse with content.
@@ -68,7 +74,7 @@ class LLMProvider(ABC):
     @property
     @abstractmethod
     def provider_name(self) -> str:
-        """Provider identifier (e.g., 'anthropic', 'openai', 'mock')."""
+        """Provider identifier (e.g., 'bedrock', 'mock', 'disabled')."""
         ...
 
 
@@ -76,7 +82,11 @@ class MockLLMProvider(LLMProvider):
     """Mock provider for testing. Returns deterministic structured proposals.
 
     Never makes real API calls. Used when AI is disabled or in tests.
+    Default temperature: 0.7, default max_tokens: 2000 (when None passed).
     """
+
+    DEFAULT_TEMPERATURE = 0.7
+    DEFAULT_MAX_TOKENS = 2000
 
     def __init__(self, responses: Optional[list[str]] = None) -> None:
         """Initialize with optional predefined responses.
@@ -109,15 +119,18 @@ class MockLLMProvider(LLMProvider):
         self,
         prompt: str,
         system_prompt: str = "",
-        temperature: float = 0.7,
-        max_tokens: int = 2000,
+        temperature: Optional[float] = None,
+        max_tokens: Optional[int] = None,
     ) -> LLMResponse:
+        effective_temperature = temperature if temperature is not None else self.DEFAULT_TEMPERATURE
+        effective_max_tokens = max_tokens if max_tokens is not None else self.DEFAULT_MAX_TOKENS
+
         self._call_count += 1
         self._calls.append({
             "prompt": prompt,
             "system_prompt": system_prompt,
-            "temperature": temperature,
-            "max_tokens": max_tokens,
+            "temperature": effective_temperature,
+            "max_tokens": effective_max_tokens,
         })
 
         if self._responses:
