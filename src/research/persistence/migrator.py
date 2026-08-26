@@ -29,6 +29,7 @@ class Migrator:
 
     def migrate(self) -> int:
         """Run all pending migrations. Returns number applied."""
+        self._ensure_migrations_table()
         migrations = self._discover_migrations()
         applied = self._get_applied_versions()
 
@@ -70,13 +71,30 @@ class Migrator:
         except psycopg2.errors.UndefinedTable:
             # Table doesn't exist yet — no migrations applied
             return set()
-        except Exception:
-            return set()
+        except psycopg2.Error as e:
+            logger.error("Failed to query applied migrations: %s", e)
+            raise
+
+    def _ensure_migrations_table(self) -> None:
+        """Create the research_migrations tracking table if it doesn't exist."""
+        with self._conn.connection() as conn:
+            with conn.cursor() as cur:
+                cur.execute("""
+                    CREATE TABLE IF NOT EXISTS research_migrations (
+                        version INTEGER PRIMARY KEY,
+                        filename TEXT NOT NULL,
+                        applied_at TIMESTAMP DEFAULT NOW()
+                    )
+                """)
 
     def _apply_migration(self, version: int, path: Path) -> None:
-        """Apply a single migration file."""
+        """Apply a single migration file and record it."""
         sql = path.read_text()
         logger.info("Applying migration %d: %s", version, path.name)
         with self._conn.connection() as conn:
             with conn.cursor() as cur:
                 cur.execute(sql)
+                cur.execute(
+                    "INSERT INTO research_migrations (version, filename) VALUES (%s, %s)",
+                    (version, path.name),
+                )

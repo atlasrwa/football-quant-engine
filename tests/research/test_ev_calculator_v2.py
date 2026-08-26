@@ -440,29 +440,26 @@ class TestKellyHardening:
         assert result.kelly_fraction == 0.0
 
     def test_kelly_positive_reasonable_fraction(self):
-        """Positive edge → small Kelly fraction."""
+        """Positive edge → Kelly fraction based on EV."""
         est = ProbabilityEstimate(p_over=0.6, p_under=0.4, model_name="test")
         result = EVCalculator.compute(
             est, GOALS_OVER_UNDER, over_odds=2.0, under_odds=2.0,
             direction=MarketDirection.OVER,
         )
         assert result is not None
-        # kelly = edge / (odds - 1) = 0.1 / 1.0 = 0.1
-        assert abs(result.kelly_fraction - 0.1) < 0.01
+        # kelly = EV / (odds - 1) = (0.6*2.0 - 1) / (2.0 - 1) = 0.2 / 1.0 = 0.2
+        assert abs(result.kelly_fraction - 0.2) < 0.01
 
     def test_kelly_formula_decimal_odds(self):
-        """Kelly = (b*p - q) / b where b = odds - 1.
-
-        Equivalent to edge / (odds - 1) when edge = p - fair_p.
-        """
+        """Kelly = (p*odds - 1) / (odds - 1) = EV / (odds - 1)."""
         est = ProbabilityEstimate(p_over=0.65, p_under=0.35, model_name="test")
         result = EVCalculator.compute(
             est, GOALS_OVER_UNDER, over_odds=1.80, under_odds=2.20,
             direction=MarketDirection.OVER,
         )
         assert result is not None
-        # Kelly should be edge / (odds - 1)
-        expected_kelly = result.edge / (1.80 - 1.0)
+        # Kelly = EV / (odds - 1) = (0.65*1.80 - 1) / (1.80 - 1) = 0.17 / 0.80 = 0.2125
+        expected_kelly = result.expected_value / (1.80 - 1.0)
         if expected_kelly < 0:
             expected_kelly = 0
         assert abs(result.kelly_fraction - expected_kelly) < 0.001

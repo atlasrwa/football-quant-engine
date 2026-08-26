@@ -205,10 +205,10 @@ class TemporalFeatureEngine:
         self, matches: list[ResearchMatch], team_id: int, limit: int = 20
     ) -> list[ResearchMatch]:
         """Get recent matches for a team, sorted most-recent-first."""
+        team_str = str(team_id)
         team_matches = [
             m for m in matches
-            if m.home_team == str(team_id) or m.away_team == str(team_id)
-            or m.league_id == team_id  # Fallback: match by team in league context
+            if m.home_team == team_str or m.away_team == team_str
         ]
         # Sort by date descending (most recent first)
         team_matches.sort(key=lambda m: m.date_unix, reverse=True)
@@ -254,11 +254,16 @@ class TemporalFeatureEngine:
         # Latest match timestamp used (for provenance)
         latest_match_time = max(m.date_unix for m in matches)
 
-        # Average goals from past matches
-        goals = [m.home_goals if m.home_team == str(side) else m.away_goals
-                 for m in matches if m.home_goals is not None]
-        # Simplified: use total_goals as proxy
-        goals_values = [m.total_goals for m in matches if m.total_goals is not None]
+        # Average goals scored by this team in past matches
+        side_str = str(side)
+        goals_values = []
+        for m in matches:
+            if m.home_goals is None:
+                continue
+            if m.home_team == side_str:
+                goals_values.append(m.home_goals)
+            else:
+                goals_values.append(m.away_goals)
         avg_goals = sum(goals_values) / len(goals_values) if goals_values else None
         features[f"avg_goals_{side}"] = avg_goals
 
@@ -272,10 +277,13 @@ class TemporalFeatureEngine:
         avg_cards = sum(cards_values) / len(cards_values) if cards_values else None
         features[f"avg_cards_{side}"] = avg_cards
 
-        # Average dangerous attacks
+        # Average dangerous attacks for this team
         da_values = []
         for m in matches:
-            da = m.dangerous_attacks_home if m.dangerous_attacks_home is not None else m.dangerous_attacks_away
+            if m.home_team == side_str:
+                da = m.dangerous_attacks_home
+            else:
+                da = m.dangerous_attacks_away
             if da is not None:
                 da_values.append(da)
         avg_da = sum(da_values) / len(da_values) if da_values else None

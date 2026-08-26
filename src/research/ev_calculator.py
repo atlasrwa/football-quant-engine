@@ -105,7 +105,7 @@ class DevigMethod(Enum):
 
     MULTIPLICATIVE = "MULTIPLICATIVE"  # Proportional: P_fair = P_raw / sum(P_raw)
     ADDITIVE = "ADDITIVE"             # Subtract equal margin from each side
-    POWER = "POWER"                   # Shin's method approximation
+    POWER = "POWER"                   # Power method (odds-ratio): find k where sum(p_i^k) = 1
 
 
 class MarketProbabilityNormalizer:
@@ -119,8 +119,8 @@ class MarketProbabilityNormalizer:
       Simple, widely used. Assumes margin is proportional to probability.
     - ADDITIVE: Equal margin subtracted from each side.
       Better for heavily-skewed markets.
-    - POWER: Approximation of Shin's method.
-      More theoretically justified for efficient markets.
+    - POWER: Odds-ratio power method.
+      More theoretically justified for efficient markets — finds k where sum(p_i^k) = 1.
     """
 
     def __init__(self, method: DevigMethod = DevigMethod.MULTIPLICATIVE) -> None:
@@ -170,14 +170,27 @@ class MarketProbabilityNormalizer:
             return fair_over / total, fair_under / total
 
         elif self._method == DevigMethod.POWER:
-            # Simplified power method: assumes margin is proportional to p^2
+            # Power method: find exponent k such that sum(p_i^k) = 1
+            # where p_i are raw implied probabilities. Uses bisection.
             overround = raw_over + raw_under
             if overround <= 1.0:
                 return raw_over, raw_under
-            # Use sqrt approximation
-            import math
-            fair_over = math.sqrt(raw_over * (1.0 / overround))
-            fair_under = math.sqrt(raw_under * (1.0 / overround))
+
+            def _target(k: float) -> float:
+                return raw_over ** k + raw_under ** k - 1.0
+
+            # Bisect: k=1 gives overround-1 > 0; as k→∞, target→0 (max(p)^k→0)
+            lo, hi = 1.0, 20.0
+            for _ in range(64):  # Converges in ~50 iterations to machine precision
+                mid = (lo + hi) / 2.0
+                if _target(mid) > 0:
+                    lo = mid
+                else:
+                    hi = mid
+
+            k = (lo + hi) / 2.0
+            fair_over = raw_over ** k
+            fair_under = raw_under ** k
             total = fair_over + fair_under
             return fair_over / total, fair_under / total
 
@@ -223,13 +236,26 @@ class MarketProbabilityNormalizer:
             return fair_home / total, fair_draw / total, fair_away / total
 
         elif self._method == DevigMethod.POWER:
-            import math
+            # Power method: find exponent k such that sum(p_i^k) = 1
             overround = raw_home + raw_draw + raw_away
             if overround <= 1.0:
                 return raw_home, raw_draw, raw_away
-            fair_home = math.sqrt(raw_home * (1.0 / overround))
-            fair_draw = math.sqrt(raw_draw * (1.0 / overround))
-            fair_away = math.sqrt(raw_away * (1.0 / overround))
+
+            def _target(k: float) -> float:
+                return raw_home ** k + raw_draw ** k + raw_away ** k - 1.0
+
+            lo, hi = 1.0, 20.0
+            for _ in range(64):
+                mid = (lo + hi) / 2.0
+                if _target(mid) > 0:
+                    lo = mid
+                else:
+                    hi = mid
+
+            k = (lo + hi) / 2.0
+            fair_home = raw_home ** k
+            fair_draw = raw_draw ** k
+            fair_away = raw_away ** k
             total = fair_home + fair_draw + fair_away
             return fair_home / total, fair_draw / total, fair_away / total
 
@@ -266,7 +292,7 @@ class EVResult:
         fair_probability: Margin-stripped market probability.
         expected_value: P(model) × odds - 1.
         edge: Model probability - fair probability.
-        kelly_fraction: Optimal Kelly bet fraction (edge/odds-1).
+        kelly_fraction: Optimal Kelly bet fraction: (p*odds - 1) / (odds - 1).
     """
 
     direction: MarketDirection
@@ -460,8 +486,8 @@ class EVCalculator:
         implied_p = 1.0 / odds
         edge = p_model - fair_p
 
-        # Kelly fraction: edge / (odds - 1) — capped at 0
-        kelly = edge / (odds - 1.0) if odds > 1.0 else 0.0
+        # Kelly criterion: f* = (p * odds - 1) / (odds - 1) = EV / (odds - 1)
+        kelly = ev / (odds - 1.0) if odds > 1.0 else 0.0
         kelly = max(0.0, kelly)
 
         return EVResult(
@@ -534,10 +560,10 @@ class EVCalculator:
         edge_draw = estimate.p_draw - fair_draw
         edge_away = estimate.p_away - fair_away
 
-        # Kelly fractions (capped at 0)
-        kelly_home = max(0.0, edge_home / (home_odds - 1.0)) if home_odds > 1.0 else 0.0
-        kelly_draw = max(0.0, edge_draw / (draw_odds - 1.0)) if draw_odds > 1.0 else 0.0
-        kelly_away = max(0.0, edge_away / (away_odds - 1.0)) if away_odds > 1.0 else 0.0
+        # Kelly fractions: f* = (p * odds - 1) / (odds - 1) = EV / (odds - 1)
+        kelly_home = max(0.0, ev_home / (home_odds - 1.0)) if home_odds > 1.0 else 0.0
+        kelly_draw = max(0.0, ev_draw / (draw_odds - 1.0)) if draw_odds > 1.0 else 0.0
+        kelly_away = max(0.0, ev_away / (away_odds - 1.0)) if away_odds > 1.0 else 0.0
 
         # Best outcome
         evs = {
@@ -647,7 +673,7 @@ class EVCalculator:
 
         edge = p_model - normalized_p
         ev = p_model * odds - 1.0
-        kelly = max(0.0, edge / (odds - 1.0)) if odds > 1.0 else 0.0
+        kelly = max(0.0, ev / (odds - 1.0)) if odds > 1.0 else 0.0
 
         return ResearchPrediction(
             market_type=market.market_type.value,
