@@ -10,6 +10,7 @@ from src.persistence.pg_settlement_repository import PgSettlementRepository
 from src.persistence.pg_paper_repository import PgPaperPortfolioRepository, PgPaperLedgerRepository
 from src.persistence.pg_match_repository import PgMatchRepository
 from src.persistence.pg_strategy_repository import PgStrategyRepository, PgStrategyVersionRepository, StrategyRecord
+from src.persistence.pg_quarantine_repository import PgQuarantineRepository
 from src.services.prediction_service import PredictionService
 from src.services.settlement_service import SettlementService, SettlementError
 from src.models.match import Match
@@ -194,6 +195,73 @@ class TestSettlement:
         settlement = await svc.settle_prediction(pred_id, 2, 1)
         assert settlement["closing_odds"] is None
         assert settlement["clv_pct"] is None
+
+    async def test_settlement_updates_quarantine_paper_pnl(self, db_conn):
+        """Settling a PAPER_TRADE prediction feeds quarantine_entries.paper_pnl.
+
+        This is the data the 90-day promotion gate is supposed to be based
+        on — without this wiring, paper_pnl/paper_bets never move off zero.
+        """
+        strat_id, version, content_hash = await _setup_strategy(db_conn)
+        match_id = await _setup_match(db_conn)
+
+        q_repo = PgQuarantineRepository(db_conn)
+        await q_repo.enter(strat_id, version, SYSTEM_ID)
+
+        svc = PredictionService(db_conn)
+        pred = await svc.create_prediction(
+            user_id=SYSTEM_ID, strategy_id=strat_id,
+            strategy_version=version, strategy_content_hash=content_hash,
+            match_id=match_id, match_date_unix=1700000000,
+            home_team="H", away_team="A", league_id=4759,
+            market_type="OVER_UNDER", direction="OVER",
+            entry_odds=2.0, model_edge_pct=5.0,
+            confidence=70.0, recommended_stake=0.05,
+            source="PAPER_TRADE", market_line=2.5,
+        )
+
+        settle_svc = SettlementService(db_conn)
+        settlement = await settle_svc.settle_prediction(
+            prediction_id=pred["id"],
+            actual_home_goals=2, actual_away_goals=1,  # total=3 > 2.5 → WIN
+            stake=1.0,
+        )
+        assert settlement["profit_loss"] == 1.0
+
+        entry = await q_repo.get(strat_id, version)
+        assert entry["paper_pnl"] == 1.0
+        assert entry["paper_bets"] == 1
+
+    async def test_settlement_does_not_update_quarantine_for_live_signal(self, db_conn):
+        """LIVE_SIGNAL predictions must not affect quarantine paper P&L."""
+        strat_id, version, content_hash = await _setup_strategy(db_conn)
+        match_id = await _setup_match(db_conn)
+
+        q_repo = PgQuarantineRepository(db_conn)
+        await q_repo.enter(strat_id, version, SYSTEM_ID)
+
+        svc = PredictionService(db_conn)
+        pred = await svc.create_prediction(
+            user_id=SYSTEM_ID, strategy_id=strat_id,
+            strategy_version=version, strategy_content_hash=content_hash,
+            match_id=match_id, match_date_unix=1700000000,
+            home_team="H", away_team="A", league_id=4759,
+            market_type="OVER_UNDER", direction="OVER",
+            entry_odds=2.0, model_edge_pct=5.0,
+            confidence=70.0, recommended_stake=0.05,
+            source="LIVE_SIGNAL", market_line=2.5,
+        )
+
+        settle_svc = SettlementService(db_conn)
+        await settle_svc.settle_prediction(
+            prediction_id=pred["id"],
+            actual_home_goals=2, actual_away_goals=1,
+            stake=1.0,
+        )
+
+        entry = await q_repo.get(strat_id, version)
+        assert entry["paper_pnl"] == 0.0
+        assert entry["paper_bets"] == 0
 
 
 # ═══════════════════════════════════════════════════════════════

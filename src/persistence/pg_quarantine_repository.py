@@ -52,8 +52,17 @@ class PgQuarantineRepository:
         )
         return dict(row) if row else None
 
-    async def promote(self, strategy_id: UUID, strategy_version: int) -> Optional[dict]:
-        """Promote a quarantined strategy. Returns updated entry or None if not eligible."""
+    async def promote(
+        self, strategy_id: UUID, strategy_version: int, min_paper_bets: int = 0
+    ) -> Optional[dict]:
+        """Promote a quarantined strategy. Returns updated entry or None if not eligible.
+
+        Eligibility (all enforced atomically in the WHERE clause):
+        - PENDING_QUARANTINE status
+        - 90-day quarantine period elapsed
+        - At least `min_paper_bets` paper trades recorded
+        - Positive cumulative paper P&L
+        """
         row = await self._conn.fetchrow(
             """
             UPDATE quarantine_entries
@@ -61,9 +70,11 @@ class PgQuarantineRepository:
             WHERE strategy_id = $1 AND strategy_version = $2
               AND status = 'PENDING_QUARANTINE'
               AND quarantine_until <= NOW()
+              AND paper_bets >= $3
+              AND paper_pnl > 0
             RETURNING *
             """,
-            strategy_id, strategy_version,
+            strategy_id, strategy_version, min_paper_bets,
         )
         return dict(row) if row else None
 

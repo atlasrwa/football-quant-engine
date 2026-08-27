@@ -125,7 +125,18 @@ class StrategyEvaluator:
 
             # Apply min_odds filter
             odds_col = self._get_odds_column(strategy.direction)
-            if odds_col and odds_col in df.columns:
+            if odds_col is None:
+                # BACK/LAY are valid Strategy directions (exchange-style bets)
+                # but no odds source exists for them yet — every match for
+                # this strategy will be suppressed below via _get_odds_value.
+                # Without this warning that reads as "0 signals, no reason".
+                logger.warning(
+                    "Strategy '%s': direction '%s' has no odds source wired up "
+                    "yet — this strategy will never produce signals",
+                    strategy.name,
+                    strategy.direction,
+                )
+            elif odds_col in df.columns:
                 odds_mask = df[odds_col] >= strategy.min_odds
                 mask = mask & odds_mask
 

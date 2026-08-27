@@ -10,6 +10,16 @@ Architecture:
 
 This replaces the previous Gap #5 where QuarantineTracker.update_paper_pnl()
 was never called by any system. Now it is driven by actual settlement results.
+
+Scope: this bridges the in-memory QuarantineTracker (src/engine/fdr.py) to
+the in-memory PredictionSettlementService (src/engine/settlement_service.py).
+Neither is instantiated by any live orchestrator/scheduler/API route — this
+is a backtest/research-time simulation pair, not the production path. The
+live equivalent is src/services/settlement_service.py updating
+src/persistence/pg_quarantine_repository.py directly (see its step 9b),
+wired to the real API in src/api/routes/quarantine.py. If you are looking
+for where live paper-trade settlements actually update quarantine state,
+that's it, not this file.
 """
 
 from __future__ import annotations
@@ -104,10 +114,17 @@ class QuarantineSettlementBridge:
             )
             return
 
-        # Map strategy_id to strategy_name for quarantine lookup.
-        # QuarantineTracker uses strategy_name as key.
-        # The prediction carries strategy_id — we use it as the lookup key.
-        strategy_key = prediction.strategy_id
+        # QuarantineTracker keys are opaque strings — whatever the caller
+        # passed to enter_quarantine(). We use str(prediction.strategy_id)
+        # here, so the entry MUST have been created with that same key
+        # (e.g. via tracker.enter_quarantine(str(strategy_id), ...)). A
+        # strategy entered under a different key scheme — e.g. the research
+        # governance flow's generated "research_{hash}_{hyp}" names
+        # (src/research/governance/quarantine_adapter.py) — will not be
+        # found here; update_paper_pnl() will KeyError and be swallowed
+        # below as "not in quarantine yet". This bridge and the governance
+        # adapter are not interchangeable without a shared key convention.
+        strategy_key = str(prediction.strategy_id)
 
         # Skip void/push settlements (no P&L impact)
         if settlement.outcome in (SettlementOutcome.VOID, SettlementOutcome.PUSH):

@@ -167,6 +167,57 @@ class TestQuarantine:
         with pytest.raises(QuarantineError, match="90-day"):
             await svc.promote(strat_id, version, SYSTEM_ID)
 
+    async def _elapsed_and_validated(self, db_conn, strat_id, version) -> None:
+        """Enter quarantine with quarantine_until in the past + a PASSED validation.
+
+        Leaves paper_pnl/paper_bets at their default of 0 so tests can probe
+        the paper-trading gate independently of the time/validation gates.
+        """
+        from datetime import datetime, timedelta, timezone
+        past = datetime.now(timezone.utc) - timedelta(days=91)
+        await db_conn.execute(
+            """INSERT INTO quarantine_entries (strategy_id, strategy_version, user_id,
+               status, entered_at, quarantine_until)
+               VALUES ($1, $2, $3, 'PENDING_QUARANTINE', $4, $5)
+               ON CONFLICT (strategy_id, strategy_version) DO NOTHING""",
+            strat_id, version, SYSTEM_ID, past, past + timedelta(days=90),
+        )
+        val_repo = PgValidationRepository(db_conn)
+        await val_repo.create(
+            strategy_id=strat_id, strategy_version=version,
+            status="PASSED", p_value=0.01, roi_pct=5.0,
+            sample_size=300, effect_size=0.3, ci_lower=0.5, ci_upper=2.0,
+            min_sample_required=250, min_roi_required=3.0, max_p_value=0.05,
+            fdr_submission_count=1, reason="Passed",
+        )
+
+    async def test_promotion_requires_minimum_paper_bets(self, db_conn):
+        """Promotion fails if fewer than MIN_PAPER_BETS_FOR_PROMOTION paper trades."""
+        strat_id, version = await self._setup_strategy(db_conn)
+        await self._elapsed_and_validated(db_conn, strat_id, version)
+
+        repo = PgQuarantineRepository(db_conn)
+        await repo.update_paper_pnl(strat_id, version, pnl_delta=5.0, bets_delta=1)
+
+        svc = QuarantineService(db_conn)
+        with pytest.raises(QuarantineError, match="Insufficient paper trading volume"):
+            await svc.promote(strat_id, version, SYSTEM_ID)
+
+    async def test_promotion_requires_positive_paper_pnl(self, db_conn):
+        """Promotion fails if paper trading lost money, even with enough bets."""
+        strat_id, version = await self._setup_strategy(db_conn)
+        await self._elapsed_and_validated(db_conn, strat_id, version)
+
+        repo = PgQuarantineRepository(db_conn)
+        await repo.update_paper_pnl(
+            strat_id, version,
+            pnl_delta=-5.0, bets_delta=QuarantineService.MIN_PAPER_BETS_FOR_PROMOTION,
+        )
+
+        svc = QuarantineService(db_conn)
+        with pytest.raises(QuarantineError, match="P&L is not positive"):
+            await svc.promote(strat_id, version, SYSTEM_ID)
+
     async def test_quarantine_state_immutable_after_promotion(self, db_conn):
         """Once PROMOTED, status cannot change again."""
         strat_id, version = await self._setup_strategy(db_conn)
@@ -191,6 +242,12 @@ class TestQuarantine:
             sample_size=300, effect_size=0.3, ci_lower=0.5, ci_upper=2.0,
             min_sample_required=250, min_roi_required=3.0, max_p_value=0.05,
             fdr_submission_count=1, reason="Passed",
+        )
+
+        # Seed enough positive paper trading to clear the promotion gate.
+        await repo.update_paper_pnl(
+            strat_id, version,
+            pnl_delta=1.0, bets_delta=QuarantineService.MIN_PAPER_BETS_FOR_PROMOTION,
         )
 
         svc = QuarantineService(db_conn)

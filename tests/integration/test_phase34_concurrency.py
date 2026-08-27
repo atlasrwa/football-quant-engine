@@ -111,6 +111,11 @@ async def _setup_full(conn):
         fdr_submission_count=1, reason="Passed",
     )
     from src.services.quarantine_service import QuarantineService
+    q_repo = PgQuarantineRepository(conn)
+    await q_repo.update_paper_pnl(
+        strat_id, version,
+        pnl_delta=1.0, bets_delta=QuarantineService.MIN_PAPER_BETS_FOR_PROMOTION,
+    )
     svc = QuarantineService(conn)
     await svc.promote(strat_id, version, SYSTEM_ID)
     return pred

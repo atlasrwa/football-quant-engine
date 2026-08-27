@@ -10,6 +10,7 @@ Uses the DB as the state store; the application enforces transition rules.
 
 from __future__ import annotations
 
+from datetime import datetime, timezone
 from typing import Optional
 from uuid import UUID
 
@@ -27,6 +28,14 @@ class QuarantineError(Exception):
 
 class QuarantineService:
     """Manages version-specific quarantine lifecycle."""
+
+    # Minimum paper trades required before paper P&L is considered a
+    # meaningful signal for promotion. Paired with the paper_pnl > 0 check
+    # in PgQuarantineRepository.promote() — without both, promotion was
+    # gated only on elapsed time + one historical validation run, so a
+    # strategy that lost money for 90 days of paper trading could still
+    # go live (see AUDIT_REPORT.md / RISK_REGISTER.md R09).
+    MIN_PAPER_BETS_FOR_PROMOTION: int = 30
 
     def __init__(self, conn: asyncpg.Connection) -> None:
         self._conn = conn
@@ -71,6 +80,8 @@ class QuarantineService:
         - Must be PENDING_QUARANTINE
         - 90-day quarantine period must have elapsed
         - Must have a PASSED validation run
+        - Must have at least MIN_PAPER_BETS_FOR_PROMOTION paper trades
+        - Cumulative paper P&L must be positive
 
         Raises QuarantineError if requirements not met.
         """
@@ -85,17 +96,30 @@ class QuarantineService:
                 "Cannot promote without statistical validation."
             )
 
-        # Attempt promotion (DB enforces quarantine_until <= NOW())
-        result = await repo.promote(strategy_id, strategy_version)
+        # Attempt promotion (DB enforces quarantine_until <= NOW(), paper_bets,
+        # and paper_pnl atomically in the WHERE clause).
+        result = await repo.promote(
+            strategy_id, strategy_version,
+            min_paper_bets=self.MIN_PAPER_BETS_FOR_PROMOTION,
+        )
         if not result:
-            # Check why it failed
+            # Check why it failed, most specific reason first
             entry = await repo.get(strategy_id, strategy_version)
             if not entry:
                 raise QuarantineError("Strategy version not in quarantine")
             if entry["status"] != "PENDING_QUARANTINE":
                 raise QuarantineError(f"Strategy is already {entry['status']}")
+            if entry["quarantine_until"] > datetime.now(timezone.utc):
+                raise QuarantineError(
+                    "90-day quarantine period has not elapsed"
+                )
+            if entry["paper_bets"] < self.MIN_PAPER_BETS_FOR_PROMOTION:
+                raise QuarantineError(
+                    f"Insufficient paper trading volume: {entry['paper_bets']}/"
+                    f"{self.MIN_PAPER_BETS_FOR_PROMOTION} bets required"
+                )
             raise QuarantineError(
-                "90-day quarantine period has not elapsed"
+                f"Paper trading P&L is not positive: {entry['paper_pnl']:+.2f}"
             )
 
         # Emit event

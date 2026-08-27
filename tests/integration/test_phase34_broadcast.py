@@ -105,8 +105,18 @@ async def _promote_strategy(db_conn, strat_id, version):
         fdr_submission_count=1, reason="Passed",
     )
 
-    # Promote
+    # Promotion also requires enough positive paper trading (see
+    # QuarantineService.MIN_PAPER_BETS_FOR_PROMOTION) — seed it directly
+    # rather than settling real predictions, since these tests are about
+    # broadcast behavior, not paper trading itself.
     from src.services.quarantine_service import QuarantineService
+    q_repo = PgQuarantineRepository(db_conn)
+    await q_repo.update_paper_pnl(
+        strat_id, version,
+        pnl_delta=1.0, bets_delta=QuarantineService.MIN_PAPER_BETS_FOR_PROMOTION,
+    )
+
+    # Promote
     svc = QuarantineService(db_conn)
     result = await svc.promote(strat_id, version, SYSTEM_ID)
     assert result["status"] == "PROMOTED", "Promotion failed"

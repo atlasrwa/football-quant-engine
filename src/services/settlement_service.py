@@ -21,6 +21,7 @@ Transaction flow:
       7. UPDATE prediction status
       8. INSERT paper_ledger_entry
       9. UPDATE paper_portfolio.current_balance
+      9b. UPDATE quarantine_entries.paper_pnl/paper_bets (PAPER_TRADE only)
       10. Emit event
     COMMIT
 """
@@ -39,6 +40,7 @@ from src.persistence.events import EventService, EventTypes
 from src.persistence.pg_market_price_repository import PgMarketPriceRepository
 from src.persistence.pg_paper_repository import PgPaperLedgerRepository, PgPaperPortfolioRepository
 from src.persistence.pg_prediction_repository import PgPredictionRepository
+from src.persistence.pg_quarantine_repository import PgQuarantineRepository
 from src.persistence.pg_settlement_repository import PgSettlementRepository
 
 
@@ -165,6 +167,18 @@ class SettlementService:
             await self._update_paper_portfolio(
                 portfolio_id, prediction_id, settlement_id, profit_loss, stake,
                 prediction["direction"], outcome.value,
+            )
+
+        # 9b. Quarantine paper P&L (drives the 90-day promotion gate). Only
+        # PAPER_TRADE predictions count; VOID/PUSH carry no P&L impact.
+        if prediction["source"] == "PAPER_TRADE" and outcome not in (
+            SettlementOutcome.VOID, SettlementOutcome.PUSH,
+        ):
+            await PgQuarantineRepository(self._conn).update_paper_pnl(
+                strategy_id=prediction["strategy_id"],
+                strategy_version=prediction["strategy_version"],
+                pnl_delta=profit_loss,
+                bets_delta=1,
             )
 
         # 10. Emit event

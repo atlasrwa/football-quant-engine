@@ -146,11 +146,24 @@ class QuarantineEntry:
 
 
 class QuarantineTracker:
-    """Manages 90-day live quarantine for validated strategies.
+    """In-memory, single-process 90-day quarantine tracker.
 
     Strategies passing historical backtests enter quarantine where they
     are paper-traded. Only after 90 days of positive paper P&L are they
     promoted to the live leaderboard.
+
+    NOT the production quarantine path. This is an in-process simulation
+    used by backtests and by the research-governance flow
+    (src/research/governance/quarantine_adapter.py) — it is never
+    instantiated by any live orchestrator, scheduler, or API route, and
+    its state does not persist across process restarts. The authoritative,
+    live quarantine system is Postgres-backed:
+    src/services/quarantine_service.py + src/persistence/pg_quarantine_repository.py,
+    wired into src/api/routes/quarantine.py. Entries created here are keyed
+    by whatever string the caller passes as `strategy_name` — callers on
+    different code paths (e.g. src/engine/quarantine_bridge.py, which keys
+    by `str(prediction.strategy_id)`) must agree on that key out of band;
+    QuarantineTracker does not reconcile different naming schemes.
     """
 
     QUARANTINE_DAYS: int = 90

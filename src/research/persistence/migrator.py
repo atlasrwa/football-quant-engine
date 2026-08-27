@@ -82,7 +82,7 @@ class Migrator:
                 cur.execute("""
                     CREATE TABLE IF NOT EXISTS research_migrations (
                         version INTEGER PRIMARY KEY,
-                        filename TEXT NOT NULL,
+                        name TEXT NOT NULL,
                         applied_at TIMESTAMP DEFAULT NOW()
                     )
                 """)
@@ -95,6 +95,6 @@ class Migrator:
             with conn.cursor() as cur:
                 cur.execute(sql)
                 cur.execute(
-                    "INSERT INTO research_migrations (version, filename) VALUES (%s, %s)",
+                    "INSERT INTO research_migrations (version, name) VALUES (%s, %s)",
                     (version, path.name),
                 )
