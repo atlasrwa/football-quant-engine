@@ -7,10 +7,11 @@ alerts to Telegram and Discord communities.
 
 from __future__ import annotations
 
+import datetime
 import logging
 import time
 from dataclasses import dataclass, field
-from typing import Any, List
+from typing import Any, Callable, List
 
 import httpx
 
@@ -19,6 +20,7 @@ from src.engine.metrics.bookie import BookieMetrics
 from src.engine.signals.crypto_exporter import (
     CryptoSignalExporter,
     ProofOfAlpha,
+    RiskUnitCalculator,
     SignalPayload,
 )
 from src.engine.signals.deeplinker import DeepLink, DeepLinker
@@ -81,6 +83,7 @@ class CommunityBroadcaster:
         self,
         config: BroadcastConfig | None = None,
         deep_linker: DeepLinker | None = None,
+        clock: Callable[[], datetime.datetime] | None = None,
     ) -> None:
         self.config = config or BroadcastConfig()
         self.deep_linker = deep_linker or DeepLinker()
@@ -88,6 +91,14 @@ class CommunityBroadcaster:
             telegram_url=self.config.telegram_url,
             discord_url=self.config.discord_url,
             dry_run=self.config.dry_run,
+        )
+        self._risk_tier = RiskUnitCalculator()
+        # Injectable clock (defaults to real UTC time) so quiet-hours
+        # suppression is deterministic in tests and observable in prod —
+        # see integrity fix: signals generated during quiet hours must never
+        # be silently dropped without a visible log line.
+        self._clock: Callable[[], datetime.datetime] = clock or (
+            lambda: datetime.datetime.now(datetime.timezone.utc)
         )
 
     async def run_once(
@@ -115,8 +126,15 @@ class CommunityBroadcaster:
         Returns:
             BroadcastResult containing dispatched payloads and prediction events.
         """
-        if self.is_quiet_hours(self._current_hour_utc()):
-            logger.info("Quiet hours active, skipping broadcast")
+        current_hour = self._current_hour_utc()
+        if self.is_quiet_hours(current_hour):
+            logger.warning(
+                "Quiet hours active (%02d:00 UTC) — suppressing %d signal(s) "
+                "[%s]. Signals are dropped, not queued.",
+                current_hour,
+                len(signals),
+                ", ".join(s.strategy_name for s in signals) or "none",
+            )
             return BroadcastResult(payloads=[], prediction_events=[])
 
         payloads: List[SignalPayload] = []
@@ -132,18 +150,23 @@ class CommunityBroadcaster:
             ts = int(time.time())
             proof_hash = ProofOfAlpha.generate_hash(strategy_json, ts, "{}")
 
+            # R06: heuristic risk-unit tier from edge magnitude — NOT a
+            # probability-derived Kelly stake. See RiskUnitCalculator.
+            stake_fraction, stake_tier = self._risk_tier.compute(signal.edge)
+
             # Build payload — validation state comes from authoritative source
             # R05: NEVER hardcode fdr_validated=True
             payload = SignalPayload(
                 match_info=self._format_match(match_info),
                 market_line=f"{signal.direction} (edge: {signal.edge:.1%})",
                 direction=signal.direction,
-                recommended_stake=0.05,  # Default conservative
+                recommended_stake=stake_fraction,
                 edge_pct=metrics.vig_adjusted_edge_pct if metrics else 0.0,
                 confidence=metrics.confidence_index if metrics else 0.0,
                 fdr_validated=validation_passed,
                 proof_hash=proof_hash,
                 timestamp=ts,
+                stake_tier=stake_tier,
             )
 
             # Dispatch
@@ -162,6 +185,7 @@ class CommunityBroadcaster:
                 prediction_event = self._create_prediction_event(
                     signal, match_info, strategy_identity, source,
                     confidence=metrics.confidence_index if metrics else 50.0,
+                    recommended_stake=stake_fraction,
                 )
                 if prediction_event is not None:
                     prediction_events.append(prediction_event)
@@ -188,7 +212,7 @@ class CommunityBroadcaster:
             f"Direction: `{payload.direction}`",
             f"Edge: {payload.edge_pct:.2f}% (vig-adjusted)",
             f"Confidence: {payload.confidence:.0f}/100",
-            f"Kelly Stake: {payload.recommended_stake:.2%} bankroll",
+            f"Stake: {payload.stake_tier} (heuristic risk tier, not financial advice)",
             f"Status: [{badge}]",
             "",
             f"Proof: `{payload.proof_hash[:16]}...`",
@@ -226,7 +250,7 @@ class CommunityBroadcaster:
                     {"name": "Direction", "value": payload.direction, "inline": True},
                     {"name": "Vig-Adjusted Edge", "value": f"{payload.edge_pct:.2f}%", "inline": True},
                     {"name": "Confidence", "value": f"{payload.confidence:.0f}/100", "inline": True},
-                    {"name": "Kelly Stake", "value": f"{payload.recommended_stake:.2%}", "inline": True},
+                    {"name": "Stake Tier (heuristic)", "value": payload.stake_tier, "inline": True},
                     {"name": "Status", "value": badge, "inline": True},
                     {"name": "Proof Hash", "value": f"`{payload.proof_hash[:16]}...`", "inline": True},
                     {"name": "Action Links", "value": link_text or "N/A", "inline": False},
@@ -275,9 +299,8 @@ class CommunityBroadcaster:
         return f"{home} vs {away}"
 
     def _current_hour_utc(self) -> int:
-        """Get current UTC hour."""
-        import datetime
-        return datetime.datetime.now(datetime.timezone.utc).hour
+        """Get current UTC hour from the injected clock (defaults to real time)."""
+        return self._clock().hour
 
     def _create_prediction_event(
         self,
@@ -286,6 +309,7 @@ class CommunityBroadcaster:
         strategy_identity: Any,
         source: str,
         confidence: float = 50.0,
+        recommended_stake: float = 0.0025,
     ) -> Any:
         """Create a PredictionEvent from a broadcast signal.
 
@@ -295,6 +319,7 @@ class CommunityBroadcaster:
             strategy_identity: StrategyIdentityInfo with id, version, content_hash.
             source: "LIVE_SIGNAL" or "PAPER_TRADE".
             confidence: Confidence score (0-100).
+            recommended_stake: Heuristic risk-unit stake fraction (R06).
 
         Returns:
             PredictionEvent in PENDING status, or None on failure.
@@ -322,6 +347,6 @@ class CommunityBroadcaster:
             market_line=float(match_info.get("market_line", 2.5)),
             model_version_id=getattr(strategy_identity, "model_version_id", None),
             confidence=confidence,
-            recommended_stake=0.05,
+            recommended_stake=recommended_stake,
             source=prediction_source,
         )

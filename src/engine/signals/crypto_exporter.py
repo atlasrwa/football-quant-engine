@@ -29,12 +29,16 @@ class SignalPayload:
     match_info: str
     market_line: str
     direction: str
-    recommended_stake: float  # Kelly fraction (capped)
+    # Heuristic risk-unit stake fraction (0-1 of bankroll). NOT Kelly/probability
+    # -derived — see R06 and RiskUnitCalculator. Never present this as calibrated
+    # investment sizing to subscribers.
+    recommended_stake: float
     edge_pct: float
     confidence: float
     fdr_validated: bool
     proof_hash: str
     timestamp: int
+    stake_tier: str = "0.25U"  # Display label, e.g. "0.25U" / "0.50U" / "1.00U"
 
 
 @dataclass(frozen=True)
@@ -90,6 +94,45 @@ class KellyCalculator:
         return min(kelly, self.MAX_FRACTION)
 
 
+class RiskUnitCalculator:
+    """Heuristic risk-unit stake sizing based on edge magnitude.
+
+    R06 fix: subscriber-facing stake sizing must never imply a calibrated
+    probability estimate we cannot statistically back. This buckets the
+    model's reported edge into fixed unit tiers (0.25U / 0.50U / 1.00U)
+    instead of deriving a stake from an uncalibrated win-probability guess.
+    `KellyCalculator` remains available for internal/research use, but its
+    output must not be surfaced as subscriber-facing stake guidance.
+    """
+
+    BASE_UNIT: float = 0.01  # 1.00U == 1% of bankroll
+
+    # Edge-magnitude breakpoints -> risk units. Tune these from realized
+    # calibration data, not from a probability model with no track record.
+    TIERS: tuple[tuple[float, float], ...] = (
+        (0.05, 1.00),
+        (0.02, 0.50),
+        (0.00, 0.25),
+    )
+
+    def compute(self, edge: float) -> tuple[float, str]:
+        """Map |edge| to a stake fraction and a human-readable tier label.
+
+        Args:
+            edge: Model-reported edge (can be negative; magnitude is used).
+
+        Returns:
+            (stake_fraction, tier_label), e.g. (0.005, "0.50U").
+        """
+        magnitude = abs(edge)
+        units = self.TIERS[-1][1]
+        for threshold, tier_units in self.TIERS:
+            if magnitude >= threshold:
+                units = tier_units
+                break
+        return units * self.BASE_UNIT, f"{units:.2f}U"
+
+
 class ProofOfAlpha:
     """SHA-256 hash generator for on-chain strategy verification.
 
@@ -137,7 +180,8 @@ class CryptoSignalExporter:
         self.telegram_url = telegram_url
         self.discord_url = discord_url
         self.dry_run = dry_run
-        self._kelly = KellyCalculator()
+        self._kelly = KellyCalculator()  # retained for internal/research use only
+        self._risk_tier = RiskUnitCalculator()
 
     async def dispatch(
         self,
@@ -166,10 +210,10 @@ class CryptoSignalExporter:
         """
         ts = int(time.time())
 
-        # Kelly stake calculation
-        # Estimate win probability from edge
-        win_prob = self._estimate_win_prob(signal.odds, signal.edge)
-        kelly_stake = self._kelly.compute(win_prob, signal.odds)
+        # R06: subscriber-facing stake is a heuristic risk-unit tier derived
+        # from edge magnitude — NOT a Kelly fraction derived from an
+        # uncalibrated win-probability guess. See RiskUnitCalculator.
+        stake_fraction, stake_tier = self._risk_tier.compute(signal.edge)
 
         # Proof of Alpha hash
         verdict_json = json.dumps({"passed": verdict.passed, "p_value": verdict.p_value}) if verdict else "{}"
@@ -182,12 +226,13 @@ class CryptoSignalExporter:
             match_info=self._format_match_info(match_info),
             market_line=f"{signal.direction} (edge: {signal.edge:.1%})",
             direction=signal.direction,
-            recommended_stake=round(kelly_stake, 4),
+            recommended_stake=round(stake_fraction, 4),
             edge_pct=metrics.vig_adjusted_edge_pct,
             confidence=metrics.confidence_index,
             fdr_validated=fdr_validated,
             proof_hash=proof_hash,
             timestamp=ts,
+            stake_tier=stake_tier,
         )
 
         # Dispatch to webhooks
@@ -207,7 +252,7 @@ class CryptoSignalExporter:
             prediction_event = self._create_prediction_event(
                 signal, match_info, strategy_identity, source,
                 confidence=metrics.confidence_index,
-                recommended_stake=kelly_stake,
+                recommended_stake=stake_fraction,
             )
             return DispatchResult(payload=payload, prediction_event=prediction_event)
 
@@ -227,7 +272,7 @@ class CryptoSignalExporter:
             f"*{payload.match_info}*",
             f"Direction: `{payload.direction}`",
             f"Market: {payload.market_line}",
-            f"Stake: {payload.recommended_stake:.2%} bankroll (Kelly)",
+            f"Stake: {payload.stake_tier} (heuristic risk tier, not financial advice)",
             f"Edge: {payload.edge_pct:.2f}% (vig-adjusted)",
             f"Confidence: {payload.confidence:.0f}/100",
             f"Status: [{badge}]",
@@ -254,7 +299,7 @@ class CryptoSignalExporter:
                 "fields": [
                     {"name": "Direction", "value": payload.direction, "inline": True},
                     {"name": "Market", "value": payload.market_line, "inline": True},
-                    {"name": "Kelly Stake", "value": f"{payload.recommended_stake:.2%}", "inline": True},
+                    {"name": "Stake Tier (heuristic)", "value": payload.stake_tier, "inline": True},
                     {"name": "Vig-Adjusted Edge", "value": f"{payload.edge_pct:.2f}%", "inline": True},
                     {"name": "Confidence", "value": f"{payload.confidence:.0f}/100", "inline": True},
                     {"name": "Status", "value": badge, "inline": True},
@@ -301,9 +346,12 @@ class CryptoSignalExporter:
         return f"{home} vs {away}"
 
     def _estimate_win_prob(self, odds: float, edge: float) -> float:
-        """Estimate win probability from odds and edge.
+        """Rough internal win-probability estimate from odds and edge.
 
-        Uses implied probability + edge as an estimate.
+        R06: this is an uncalibrated linear heuristic (no Brier/log-loss
+        validation) and must NOT be used to size subscriber-facing stakes —
+        `dispatch()` uses `RiskUnitCalculator` for that. Retained only for
+        internal research callers that explicitly want a quick estimate.
         """
         if odds <= 1.0:
             return 0.0

@@ -2,6 +2,9 @@
 
 from __future__ import annotations
 
+import datetime
+import logging
+
 import pytest
 
 from src.engine.evaluator import Signal
@@ -12,6 +15,11 @@ from src.engine.signals.community_broadcaster import (
 )
 from src.engine.signals.crypto_exporter import SignalPayload
 from src.engine.signals.deeplinker import DeepLink
+
+# Fixed clock outside the default quiet-hours window (1am-6am UTC), used by
+# tests that aren't specifically exercising quiet-hours behavior — otherwise
+# they'd flake depending on the real wall-clock hour they happen to run at.
+_NOON_UTC_CLOCK = lambda: datetime.datetime(2024, 6, 15, 12, 0, tzinfo=datetime.timezone.utc)
 
 
 class TestBroadcastConfig:
@@ -98,7 +106,7 @@ class TestCommunityBroadcaster:
         R05: Without explicit validation_passed=True, badge must be False.
         """
         config = BroadcastConfig(dry_run=True)
-        broadcaster = CommunityBroadcaster(config=config)
+        broadcaster = CommunityBroadcaster(config=config, clock=_NOON_UTC_CLOCK)
 
         signals = [self._make_signal()]
         match_data = [{"home_team": "Arsenal", "away_team": "Chelsea", "league": "PL"}]
@@ -116,7 +124,7 @@ class TestCommunityBroadcaster:
     async def test_run_once_multiple_signals(self):
         """Handles multiple signals in one broadcast."""
         config = BroadcastConfig(dry_run=True)
-        broadcaster = CommunityBroadcaster(config=config)
+        broadcaster = CommunityBroadcaster(config=config, clock=_NOON_UTC_CLOCK)
 
         signals = [self._make_signal(), self._make_signal(), self._make_signal()]
         match_data = [
@@ -127,6 +135,65 @@ class TestCommunityBroadcaster:
 
         payloads = await broadcaster.run_once(signals, match_data)
         assert len(payloads) == 3
+
+    @pytest.mark.asyncio
+    async def test_run_once_uses_injected_clock_not_wall_clock(self):
+        """Quiet-hours check must use the injected clock, never a direct
+        datetime.now() call — otherwise it's non-deterministic and any real
+        signal generated 1am-6am UTC is silently dropped with no way to test it.
+        """
+        quiet_clock = lambda: datetime.datetime(2026, 1, 1, 3, 0, tzinfo=datetime.timezone.utc)
+        config = BroadcastConfig(dry_run=True, quiet_hours_start=1, quiet_hours_end=6)
+        broadcaster = CommunityBroadcaster(config=config, clock=quiet_clock)
+
+        signals = [self._make_signal()]
+        match_data = [{"home_team": "Arsenal", "away_team": "Chelsea"}]
+
+        result = await broadcaster.run_once(signals, match_data)
+        assert len(result) == 0  # suppressed regardless of real wall-clock time
+
+        active_clock = lambda: datetime.datetime(2026, 1, 1, 14, 0, tzinfo=datetime.timezone.utc)
+        broadcaster2 = CommunityBroadcaster(config=config, clock=active_clock)
+        result2 = await broadcaster2.run_once(signals, match_data)
+        assert len(result2) == 1  # not suppressed outside quiet hours
+
+    @pytest.mark.asyncio
+    async def test_run_once_quiet_hours_suppression_is_logged(self, caplog):
+        """Suppressed signals must be visible to operators (WARNING), not silent."""
+        quiet_clock = lambda: datetime.datetime(2026, 1, 1, 3, 0, tzinfo=datetime.timezone.utc)
+        config = BroadcastConfig(dry_run=True, quiet_hours_start=1, quiet_hours_end=6)
+        broadcaster = CommunityBroadcaster(config=config, clock=quiet_clock)
+
+        signals = [self._make_signal(), self._make_signal()]
+        match_data = [{"home_team": "A", "away_team": "B"}, {"home_team": "C", "away_team": "D"}]
+
+        with caplog.at_level(logging.WARNING):
+            await broadcaster.run_once(signals, match_data)
+
+        assert any(
+            record.levelno == logging.WARNING and "suppressing 2 signal" in record.message
+            for record in caplog.records
+        )
+
+    @pytest.mark.asyncio
+    async def test_run_once_stake_is_risk_tier_not_hardcoded(self):
+        """R06: stake must scale with edge magnitude, not a hardcoded flat value."""
+        config = BroadcastConfig(dry_run=True)
+        broadcaster = CommunityBroadcaster(config=config, clock=_NOON_UTC_CLOCK)
+
+        big_edge_signal = Signal(
+            match_index=0, strategy_name="Big Edge", direction="OVER", edge=0.12, odds=2.0
+        )
+        small_edge_signal = Signal(
+            match_index=1, strategy_name="Small Edge", direction="OVER", edge=0.01, odds=2.0
+        )
+        match_data = [{"home_team": "A", "away_team": "B"}, {"home_team": "C", "away_team": "D"}]
+
+        result = await broadcaster.run_once([big_edge_signal, small_edge_signal], match_data)
+
+        assert result.payloads[0].stake_tier == "1.00U"
+        assert result.payloads[1].stake_tier == "0.25U"
+        assert result.payloads[0].recommended_stake > result.payloads[1].recommended_stake
 
     @pytest.mark.asyncio
     async def test_run_once_empty_signals(self):

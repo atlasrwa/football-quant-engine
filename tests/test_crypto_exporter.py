@@ -14,6 +14,7 @@ from src.engine.signals.crypto_exporter import (
     CryptoSignalExporter,
     KellyCalculator,
     ProofOfAlpha,
+    RiskUnitCalculator,
     SignalPayload,
 )
 from src.engine.validator import ValidationVerdict
@@ -65,6 +66,39 @@ class TestKellyCalculator:
         assert kelly.compute(0.5, 1.0) == 0.0
         assert kelly.compute(-0.1, 2.0) == 0.0
         assert kelly.compute(0.5, 0.5) == 0.0
+
+
+class TestRiskUnitCalculator:
+    """Tests for R06's heuristic risk-unit stake sizing (replaces exposed Kelly)."""
+
+    def test_large_edge_gets_full_unit(self):
+        calc = RiskUnitCalculator()
+        stake, tier = calc.compute(edge=0.08)
+        assert tier == "1.00U"
+        assert stake == pytest.approx(0.01)
+
+    def test_medium_edge_gets_half_unit(self):
+        calc = RiskUnitCalculator()
+        stake, tier = calc.compute(edge=0.03)
+        assert tier == "0.50U"
+        assert stake == pytest.approx(0.005)
+
+    def test_small_edge_gets_quarter_unit(self):
+        calc = RiskUnitCalculator()
+        stake, tier = calc.compute(edge=0.01)
+        assert tier == "0.25U"
+        assert stake == pytest.approx(0.0025)
+
+    def test_negative_edge_uses_magnitude(self):
+        """Direction-agnostic: a large negative edge still gets the top tier."""
+        calc = RiskUnitCalculator()
+        stake, tier = calc.compute(edge=-0.08)
+        assert tier == "1.00U"
+
+    def test_zero_edge_gets_smallest_tier(self):
+        calc = RiskUnitCalculator()
+        stake, tier = calc.compute(edge=0.0)
+        assert tier == "0.25U"
 
 
 class TestProofOfAlpha:
@@ -190,6 +224,7 @@ class TestCryptoSignalExporter:
             fdr_validated=True,
             proof_hash="a" * 64,
             timestamp=1000,
+            stake_tier="0.50U",
         )
 
         msg = exporter.format_telegram(payload)
@@ -197,7 +232,9 @@ class TestCryptoSignalExporter:
         assert "Arsenal vs Chelsea" in msg
         assert "OVER" in msg
         assert "FDR-VALIDATED" in msg
-        assert "Kelly" in msg
+        assert "0.50U" in msg
+        assert "heuristic" in msg
+        assert "Kelly" not in msg  # R06: no longer marketed as Kelly-derived
         assert "aaaa" in msg  # proof hash prefix
 
     def test_format_discord(self):
@@ -241,8 +278,12 @@ class TestCryptoSignalExporter:
         assert embed["embeds"][0]["color"] == 0xFFAA00  # Amber
 
     @pytest.mark.asyncio
-    async def test_kelly_stake_in_payload(self):
-        """Payload includes Kelly-calculated stake."""
+    async def test_stake_in_payload_is_risk_tier_not_kelly(self):
+        """R06: payload stake is a heuristic risk-unit tier, not Kelly-derived.
+
+        _make_signal() uses edge=0.15, well above the top 0.05 tier threshold,
+        so this must resolve to the 1.00U tier regardless of odds/win-prob.
+        """
         exporter = CryptoSignalExporter(dry_run=True)
         signal = self._make_signal()
         metrics = self._make_metrics()
@@ -253,7 +294,8 @@ class TestCryptoSignalExporter:
             metrics=metrics,
         )
 
-        # Kelly stake should be a reasonable fraction
+        assert payload.stake_tier == "1.00U"
+        assert payload.recommended_stake == pytest.approx(0.01)
         assert 0.0 <= payload.recommended_stake <= 0.25
 
     @pytest.mark.asyncio

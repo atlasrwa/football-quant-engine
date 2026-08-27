@@ -43,6 +43,10 @@ from src.features.referee_volatility import RefereeVolatilityCalculator
 from src.models.config import StrategyConfig
 from src.models.match import Match
 
+# Fixed clock outside the default quiet-hours window (1am-6am UTC) so
+# CommunityBroadcaster tests don't flake depending on the real wall-clock hour.
+_NOON_UTC_CLOCK = lambda: datetime(2024, 6, 15, 12, 0, tzinfo=timezone.utc)
+
 
 # ===========================================================================
 # Helpers — Regime-shift data generators
@@ -690,7 +694,7 @@ class TestQuarantineBroadcastGuard:
     def test_broadcaster_respects_validation_passed_false(self):
         """Broadcaster must emit fdr_validated=False when told validation_passed=False."""
         config = BroadcastConfig(dry_run=True)
-        broadcaster = CommunityBroadcaster(config=config)
+        broadcaster = CommunityBroadcaster(config=config, clock=_NOON_UTC_CLOCK)
 
         signal = Signal(
             match_index=0,
@@ -732,7 +736,7 @@ class TestQuarantineBroadcastGuard:
 
         # Now broadcasting with validation_passed=True is correct
         config = BroadcastConfig(dry_run=True)
-        broadcaster = CommunityBroadcaster(config=config)
+        broadcaster = CommunityBroadcaster(config=config, clock=_NOON_UTC_CLOCK)
         signal = Signal(
             match_index=0,
             strategy_name="strategy_beta",

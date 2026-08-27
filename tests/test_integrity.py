@@ -13,6 +13,7 @@ Tests the fundamental quantitative invariants established by Phase 1:
 
 from __future__ import annotations
 
+from datetime import datetime as _datetime, timezone as _timezone
 from typing import List
 
 import numpy as np
@@ -27,6 +28,11 @@ from src.engine.strategy_identity import StrategyIdentity, StrategyRegistry
 from src.engine.xmetrics import XMetricEngine
 from src.features.referee_volatility import RefereeVolatilityCalculator
 from src.models.match import Match
+
+# Fixed clock for CommunityBroadcaster tests: noon UTC is outside the default
+# quiet-hours window (1am-6am UTC), so these tests don't flake depending on
+# what real wall-clock hour they happen to run at.
+_NOON_UTC_CLOCK = lambda: _datetime(2024, 6, 15, 12, 0, tzinfo=_timezone.utc)
 
 
 # ===========================================================================
@@ -410,7 +416,7 @@ class TestR05_ValidationTrust:
     async def test_unvalidated_strategy_gets_false_badge(self):
         """Unvalidated strategy must NOT receive fdr_validated=True."""
         config = BroadcastConfig(dry_run=True)
-        broadcaster = CommunityBroadcaster(config=config)
+        broadcaster = CommunityBroadcaster(config=config, clock=_NOON_UTC_CLOCK)
 
         payloads = await broadcaster.run_once(
             signals=[self._make_signal()],
@@ -425,7 +431,7 @@ class TestR05_ValidationTrust:
     async def test_validated_strategy_gets_true_badge(self):
         """Validated strategy may receive fdr_validated=True."""
         config = BroadcastConfig(dry_run=True)
-        broadcaster = CommunityBroadcaster(config=config)
+        broadcaster = CommunityBroadcaster(config=config, clock=_NOON_UTC_CLOCK)
 
         payloads = await broadcaster.run_once(
             signals=[self._make_signal()],
@@ -440,7 +446,7 @@ class TestR05_ValidationTrust:
     async def test_default_is_not_validated(self):
         """Default (no validation_passed arg) must be False."""
         config = BroadcastConfig(dry_run=True)
-        broadcaster = CommunityBroadcaster(config=config)
+        broadcaster = CommunityBroadcaster(config=config, clock=_NOON_UTC_CLOCK)
 
         payloads = await broadcaster.run_once(
             signals=[self._make_signal()],
@@ -474,7 +480,7 @@ class TestR06_QuarantineIntegration:
 
         # This means the broadcaster should receive validation_passed=False
         config = BroadcastConfig(dry_run=True)
-        broadcaster = CommunityBroadcaster(config=config)
+        broadcaster = CommunityBroadcaster(config=config, clock=_NOON_UTC_CLOCK)
         signal = Signal(match_index=0, strategy_name="strat_1", direction="OVER", edge=0.1, odds=2.0)
 
         # Caller must check quarantine status and pass it correctly
@@ -500,7 +506,7 @@ class TestR06_QuarantineIntegration:
         assert status == QuarantineStatus.PROMOTED
 
         config = BroadcastConfig(dry_run=True)
-        broadcaster = CommunityBroadcaster(config=config)
+        broadcaster = CommunityBroadcaster(config=config, clock=_NOON_UTC_CLOCK)
         signal = Signal(match_index=0, strategy_name="strat_2", direction="OVER", edge=0.1, odds=2.0)
 
         is_validated = (status == QuarantineStatus.PROMOTED)

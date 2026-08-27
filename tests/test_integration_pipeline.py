@@ -265,7 +265,12 @@ class TestSignalDispatchPredictionEventIntegration:
     async def test_broadcaster_emits_prediction_events(self):
         """CommunityBroadcaster with identity produces PredictionEvents."""
         config = BroadcastConfig(dry_run=True)
-        broadcaster = CommunityBroadcaster(config=config)
+        # Fixed noon-UTC clock: outside default quiet hours (1am-6am UTC), so
+        # this test doesn't flake depending on when it's actually run.
+        broadcaster = CommunityBroadcaster(
+            config=config,
+            clock=lambda: datetime(2024, 6, 15, 12, 0, tzinfo=timezone.utc),
+        )
         signals = [
             Signal(match_index=0, strategy_name="s1", direction="OVER", edge=0.1, odds=1.9),
             Signal(match_index=1, strategy_name="s1", direction="UNDER", edge=0.12, odds=2.1),

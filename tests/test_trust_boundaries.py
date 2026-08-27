@@ -16,6 +16,7 @@ Trust boundaries tested:
 from __future__ import annotations
 
 import asyncio
+from datetime import datetime, timezone
 
 import pytest
 
@@ -32,6 +33,10 @@ from src.engine.signals.community_broadcaster import (
 )
 from src.engine.signals.crypto_exporter import CryptoSignalExporter
 
+# Fixed clock outside the default quiet-hours window (1am-6am UTC) so these
+# tests don't flake depending on the real wall-clock hour they run at.
+_NOON_UTC_CLOCK = lambda: datetime(2024, 6, 15, 12, 0, tzinfo=timezone.utc)
+
 
 def _make_metrics() -> BookieMetrics:
     return BookieMetrics(
@@ -47,7 +52,7 @@ class TestValidationCannotBeForged:
     async def test_broadcaster_validation_from_parameter_not_hardcoded(self):
         """Broadcaster uses validation_passed parameter, never hardcodes True."""
         config = BroadcastConfig(dry_run=True)
-        broadcaster = CommunityBroadcaster(config=config)
+        broadcaster = CommunityBroadcaster(config=config, clock=_NOON_UTC_CLOCK)
         signal = Signal(match_index=0, strategy_name="s1", direction="OVER", edge=0.1, odds=2.0)
         match_data = [{"home_team": "A", "away_team": "B"}]
 
@@ -59,7 +64,7 @@ class TestValidationCannotBeForged:
     async def test_broadcaster_validation_true_only_when_explicitly_passed(self):
         """Only validation_passed=True produces fdr_validated=True."""
         config = BroadcastConfig(dry_run=True)
-        broadcaster = CommunityBroadcaster(config=config)
+        broadcaster = CommunityBroadcaster(config=config, clock=_NOON_UTC_CLOCK)
         signal = Signal(match_index=0, strategy_name="s1", direction="OVER", edge=0.1, odds=2.0)
         match_data = [{"home_team": "A", "away_team": "B"}]
 

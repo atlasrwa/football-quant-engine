@@ -280,6 +280,30 @@ class TestStrategyEvaluator:
         assert len(signals) == 1
         assert signals[0].match_index == 1
 
+    def test_back_lay_directions_never_fabricate_odds(self):
+        """R10 regression: BACK/LAY strategies must suppress (NO_SIGNAL) rather
+        than fabricate odds, since no odds column is mapped for those
+        directions. Locks in current correct behavior of _get_odds_column /
+        _get_odds_value so a future change can't silently reintroduce a
+        synthetic-odds fallback (e.g. the old hardcoded 1.90) for BACK/LAY.
+        """
+        evaluator = StrategyEvaluator()
+        df = pd.DataFrame({
+            "home_xC": [3.0, 3.0],
+            "over_odds": [2.0, 2.0],
+            "under_odds": [2.0, 2.0],
+        })
+
+        for direction in ("BACK", "LAY"):
+            strategy = self._make_strategy(direction=direction)
+            assert evaluator._get_odds_column(direction) is None
+
+            signals = evaluator.evaluate(df, [strategy])
+            assert signals == [], (
+                f"{direction} produced signals with no real odds column mapped "
+                "— this would mean fabricated odds are back."
+            )
+
     def test_edge_calculation(self):
         """Edge is computed as mean distance from threshold."""
         evaluator = StrategyEvaluator()
