@@ -1,0 +1,740 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Football Quant Engine — Public Transparency</title>
+<style>
+:root {
+  --bg: #0d1117;
+  --surface: #161b22;
+  --surface-2: #1c2128;
+  --border: #30363d;
+  --text: #e6edf3;
+  --text-dim: #8b949e;
+  --accent: #58a6ff;
+  --green: #3fb950;
+  --red: #f85149;
+  --orange: #d29922;
+  --purple: #bc8cff;
+  --mono: 'SF Mono', 'Fira Code', 'Fira Mono', monospace;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  line-height: 1.6;
+  padding: 0;
+}
+
+.container {
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 2rem 1.5rem;
+}
+
+header {
+  border-bottom: 1px solid var(--border);
+  padding-bottom: 1.5rem;
+  margin-bottom: 2rem;
+}
+
+header h1 {
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: var(--text);
+}
+
+header p {
+  color: var(--text-dim);
+  margin-top: 0.5rem;
+  font-size: 0.9rem;
+  max-width: 700px;
+}
+
+nav {
+  display: flex;
+  gap: 0.25rem;
+  margin-top: 1.5rem;
+  flex-wrap: wrap;
+}
+
+nav button {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  color: var(--text-dim);
+  padding: 0.5rem 1rem;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 0.85rem;
+  transition: all 0.15s;
+}
+
+nav button:hover { border-color: var(--accent); color: var(--text); }
+nav button.active { background: var(--accent); color: #000; border-color: var(--accent); font-weight: 600; }
+
+.section { display: none; }
+.section.active { display: block; }
+
+h2 { font-size: 1.2rem; margin-bottom: 1rem; color: var(--text); }
+h3 { font-size: 1rem; margin: 1.5rem 0 0.75rem; color: var(--text-dim); }
+
+.card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 1.25rem;
+  margin-bottom: 1rem;
+}
+
+.card-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+.stat-label { font-size: 0.75rem; color: var(--text-dim); text-transform: uppercase; letter-spacing: 0.05em; }
+.stat-value { font-size: 1.5rem; font-weight: 700; font-family: var(--mono); margin-top: 0.25rem; }
+.stat-note { font-size: 0.75rem; color: var(--text-dim); margin-top: 0.25rem; }
+
+.countdown { color: var(--accent); }
+.status-quarantined { color: var(--orange); }
+.status-tracked { color: var(--purple); }
+
+.positive { color: var(--green); }
+.negative { color: var(--red); }
+.neutral { color: var(--text-dim); }
+
+.badge {
+  display: inline-block;
+  padding: 0.15rem 0.5rem;
+  border-radius: 4px;
+  font-size: 0.7rem;
+  font-weight: 600;
+  text-transform: uppercase;
+}
+.badge-attested { background: rgba(63, 185, 80, 0.15); color: var(--green); }
+.badge-unattested { background: rgba(248, 81, 73, 0.15); color: var(--red); }
+.badge-settled { background: rgba(88, 166, 255, 0.15); color: var(--accent); }
+.badge-pending { background: rgba(139, 148, 158, 0.15); color: var(--text-dim); }
+
+.hash {
+  font-family: var(--mono);
+  font-size: 0.7rem;
+  color: var(--text-dim);
+  word-break: break-all;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.8rem;
+}
+
+th, td {
+  padding: 0.5rem 0.75rem;
+  text-align: left;
+  border-bottom: 1px solid var(--border);
+}
+
+th {
+  color: var(--text-dim);
+  font-weight: 600;
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  cursor: pointer;
+  user-select: none;
+}
+
+th:hover { color: var(--accent); }
+
+tr:hover td { background: var(--surface-2); }
+
+.prediction-row {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 0.75rem 1rem;
+  margin-bottom: 0.5rem;
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 0.5rem;
+  align-items: center;
+}
+
+.prediction-row .teams { font-weight: 600; font-size: 0.9rem; }
+.prediction-row .meta { font-size: 0.75rem; color: var(--text-dim); }
+.prediction-row .prob { font-family: var(--mono); font-size: 0.85rem; }
+
+.explanation-box {
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 1rem 1.25rem;
+  margin: 1rem 0;
+  font-size: 0.85rem;
+  line-height: 1.7;
+  color: var(--text-dim);
+}
+
+.explanation-box strong { color: var(--text); }
+
+.failure-entry {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-left: 3px solid var(--red);
+  border-radius: 0 6px 6px 0;
+  padding: 1rem 1.25rem;
+  margin-bottom: 1rem;
+}
+
+.failure-entry.category-NO_EDGE { border-left-color: var(--orange); }
+.failure-entry.category-HYPOTHESIS_DISPROVEN { border-left-color: var(--purple); }
+.failure-entry.category-STATISTICAL_LIMITATION { border-left-color: var(--text-dim); }
+.failure-entry.category-OVERFIT_ESTIMATE { border-left-color: var(--orange); }
+.failure-entry.category-OPERATIONAL_GAP { border-left-color: var(--accent); }
+
+.failure-entry h4 { font-size: 0.9rem; margin-bottom: 0.5rem; }
+.failure-entry .date { font-size: 0.7rem; color: var(--text-dim); font-family: var(--mono); }
+.failure-entry p { font-size: 0.8rem; color: var(--text-dim); margin-top: 0.4rem; }
+.failure-entry .conclusion { color: var(--text); font-weight: 500; }
+
+.reliability-chart {
+  display: flex;
+  align-items: flex-end;
+  gap: 2px;
+  height: 120px;
+  padding: 0.5rem 0;
+}
+
+.reliability-bar {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-end;
+  height: 100%;
+  position: relative;
+}
+
+.reliability-bar .bar-predicted {
+  width: 60%;
+  background: var(--accent);
+  opacity: 0.4;
+  position: absolute;
+  bottom: 0;
+  left: 5%;
+}
+
+.reliability-bar .bar-actual {
+  width: 60%;
+  background: var(--green);
+  position: absolute;
+  bottom: 0;
+  right: 5%;
+}
+
+.reliability-bar .bar-label {
+  position: absolute;
+  top: -18px;
+  font-size: 0.6rem;
+  color: var(--text-dim);
+}
+
+.filter-row {
+  display: flex;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+  flex-wrap: wrap;
+}
+
+.filter-row input, .filter-row select {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  color: var(--text);
+  padding: 0.4rem 0.75rem;
+  border-radius: 4px;
+  font-size: 0.8rem;
+}
+
+.filter-row input:focus, .filter-row select:focus {
+  outline: none;
+  border-color: var(--accent);
+}
+
+.loading { color: var(--text-dim); font-style: italic; }
+
+.legend {
+  display: flex;
+  gap: 1rem;
+  font-size: 0.7rem;
+  color: var(--text-dim);
+  margin: 0.5rem 0;
+}
+.legend span::before {
+  content: '';
+  display: inline-block;
+  width: 10px;
+  height: 10px;
+  border-radius: 2px;
+  margin-right: 4px;
+  vertical-align: middle;
+}
+.legend .leg-predicted::before { background: var(--accent); opacity: 0.5; }
+.legend .leg-actual::before { background: var(--green); }
+
+@media (max-width: 600px) {
+  .container { padding: 1rem; }
+  .card-grid { grid-template-columns: 1fr; }
+  nav { gap: 0.25rem; }
+  nav button { padding: 0.4rem 0.6rem; font-size: 0.75rem; }
+  table { font-size: 0.7rem; }
+  th, td { padding: 0.35rem 0.5rem; }
+}
+</style>
+</head>
+<body>
+<div class="container">
+  <header>
+    <h1>Football Quant Engine</h1>
+    <p>Public transparency dashboard. No account required. Shows calibrated probability models for corners and cards markets, currently in a 90-day quarantine proving out-of-sample performance. Failures shown alongside successes.</p>
+  </header>
+
+  <nav>
+    <button class="active" data-section="quarantine">Quarantine</button>
+    <button data-section="predictions">Predictions</button>
+    <button data-section="calibration">Calibration</button>
+    <button data-section="robustness">Robustness</button>
+    <button data-section="failures">Failure Ledger</button>
+  </nav>
+
+  <!-- ═══ QUARANTINE SECTION ═══ -->
+  <div id="quarantine" class="section active">
+    <div id="quarantine-content" class="loading">Loading quarantine status...</div>
+  </div>
+
+  <!-- ═══ PREDICTIONS SECTION ═══ -->
+  <div id="predictions" class="section">
+    <div id="predictions-content" class="loading">Loading predictions...</div>
+  </div>
+
+  <!-- ═══ CALIBRATION SECTION ═══ -->
+  <div id="calibration" class="section">
+    <div id="calibration-content" class="loading">Loading calibration data...</div>
+  </div>
+
+  <!-- ═══ ROBUSTNESS SECTION ═══ -->
+  <div id="robustness" class="section">
+    <div id="robustness-content" class="loading">Loading robustness results...</div>
+  </div>
+
+  <!-- ═══ FAILURE LEDGER ═══ -->
+  <div id="failures" class="section">
+    <div id="failures-content" class="loading">Loading failure ledger...</div>
+  </div>
+</div>
+
+<script>
+// ═══════════════════════════════════════════════════════════════
+// NAVIGATION
+// ═══════════════════════════════════════════════════════════════
+const navButtons = document.querySelectorAll('nav button');
+const sections = document.querySelectorAll('.section');
+
+navButtons.forEach(btn => {
+  btn.addEventListener('click', () => {
+    navButtons.forEach(b => b.classList.remove('active'));
+    sections.forEach(s => s.classList.remove('active'));
+    btn.classList.add('active');
+    document.getElementById(btn.dataset.section).classList.add('active');
+  });
+});
+
+// ═══════════════════════════════════════════════════════════════
+// DATA FETCHING
+// ═══════════════════════════════════════════════════════════════
+async function fetchJSON(url) {
+  const res = await fetch(url);
+  return res.json();
+}
+
+// ═══════════════════════════════════════════════════════════════
+// QUARANTINE
+// ═══════════════════════════════════════════════════════════════
+async function renderQuarantine() {
+  const data = await fetchJSON('/api/quarantine');
+  const el = document.getElementById('quarantine-content');
+
+  let html = '<div class="card-grid">';
+  for (const model of data.models) {
+    const statusClass = model.status === 'QUARANTINED' ? 'status-quarantined' : 'status-tracked';
+    html += `
+      <div class="card">
+        <div class="stat-label">${model.model.toUpperCase()} MODEL</div>
+        <div class="stat-value ${statusClass}">${model.status.replace('_', ' ')}</div>
+        <div class="stat-note">${model.hypothesis_id}</div>
+        ${model.days_remaining !== null ?
+          `<div style="margin-top:1rem"><div class="stat-label">Days Remaining</div>
+           <div class="stat-value countdown">${model.days_remaining}</div>
+           <div class="stat-note">${model.days_elapsed} days elapsed of ${data.quarantine_days}</div></div>` :
+          `<div style="margin-top:1rem"><div class="stat-note">Calibration tracking only (no expiry clock)</div></div>`
+        }
+        <div style="margin-top:1rem">
+          <div class="stat-label">Paper Trading</div>
+          <div class="stat-note">${model.paper_trading ? 'Active (real odds available)' : 'No (odds unavailable for this market)'}</div>
+        </div>
+        <div style="margin-top:1rem">
+          <div class="stat-label">Reference ECE</div>
+          <div class="stat-note">${model.calibration_ece_reference} (multi-league baseline)</div>
+        </div>
+      </div>`;
+  }
+  html += '</div>';
+
+  // Explanations
+  html += '<div class="card">';
+  html += `<h3>What does this mean?</h3>`;
+  for (const model of data.models) {
+    html += `<p style="margin-bottom:0.75rem;font-size:0.85rem;color:var(--text-dim)"><strong style="color:var(--text)">${model.model}:</strong> ${model.status_explanation}</p>`;
+  }
+  html += `<p style="margin-top:1rem;font-size:0.8rem;color:var(--text-dim)">
+    <strong style="color:var(--text)">Enrollment timestamp:</strong> 
+    <span style="font-family:var(--mono)">${data.enrollment_timestamp}</span> — this is immutable and was recorded before any predictions were generated.
+  </p>`;
+  html += '</div>';
+
+  el.innerHTML = html;
+}
+
+// ═══════════════════════════════════════════════════════════════
+// PREDICTIONS
+// ═══════════════════════════════════════════════════════════════
+async function renderPredictions() {
+  const data = await fetchJSON('/api/predictions');
+  const el = document.getElementById('predictions-content');
+
+  let html = '<div class="card-grid">';
+  html += `<div class="card"><div class="stat-label">Total Predictions</div><div class="stat-value">${data.total_predictions}</div></div>`;
+  html += `<div class="card"><div class="stat-label">Attested (pre-kickoff commitment)</div><div class="stat-value positive">${data.total_attested}</div></div>`;
+  html += `<div class="card"><div class="stat-label">Unattested</div><div class="stat-value ${data.total_unattested > 0 ? 'negative' : ''}">${data.total_unattested}</div>
+    ${data.total_unattested > 0 ? '<div class="stat-note">These predictions cannot be cryptographically proven to have been made before kickoff. They are displayed for completeness but should not be treated as verified.</div>' : ''}
+  </div>`;
+  html += `<div class="card"><div class="stat-label">Settled</div><div class="stat-value">${data.total_settled}</div></div>`;
+  html += '</div>';
+
+  html += '<h3>Prediction Feed</h3>';
+  html += '<div class="filter-row"><select id="pred-model-filter"><option value="">All models</option><option value="corners">Corners</option><option value="cards">Cards</option></select>';
+  html += '<select id="pred-status-filter"><option value="">All status</option><option value="attested">Attested only</option><option value="settled">Settled only</option></select></div>';
+
+  html += '<div id="prediction-list">';
+  html += renderPredictionList(data.predictions);
+  html += '</div>';
+
+  el.innerHTML = html;
+
+  // Filters
+  document.getElementById('pred-model-filter').addEventListener('change', () => filterPredictions(data.predictions));
+  document.getElementById('pred-status-filter').addEventListener('change', () => filterPredictions(data.predictions));
+}
+
+function filterPredictions(predictions) {
+  const model = document.getElementById('pred-model-filter').value;
+  const status = document.getElementById('pred-status-filter').value;
+  let filtered = predictions;
+  if (model) filtered = filtered.filter(p => p.model.includes(model));
+  if (status === 'attested') filtered = filtered.filter(p => p.attested);
+  if (status === 'settled') filtered = filtered.filter(p => p.settled);
+  document.getElementById('prediction-list').innerHTML = renderPredictionList(filtered);
+}
+
+function renderPredictionList(predictions) {
+  if (predictions.length === 0) return '<p class="loading">No predictions match filter.</p>';
+  // Show most recent 50
+  const shown = predictions.slice(0, 50);
+  let html = '';
+  for (const p of shown) {
+    const attestBadge = p.attested ?
+      '<span class="badge badge-attested">committed pre-kickoff</span>' :
+      '<span class="badge badge-unattested">unattested</span>';
+    const settleBadge = p.settled ?
+      (p.correct ? '<span class="badge badge-settled">correct</span>' : '<span class="badge" style="background:rgba(248,81,73,0.15);color:var(--red)">incorrect</span>') :
+      '<span class="badge badge-pending">pending</span>';
+
+    const kickoff = p.kickoff_datetime ? new Date(p.kickoff_datetime).toLocaleString('en-GB', {day:'numeric',month:'short',hour:'2-digit',minute:'2-digit',timeZone:'UTC'}) + ' UTC' : '';
+    const modelLabel = p.model === 'corners_ou_9.5' ? 'Corners O/U 9.5' : 'Cards O/U 3.5';
+
+    html += `<div class="prediction-row">
+      <div>
+        <div class="teams">${p.home_team} vs ${p.away_team}</div>
+        <div class="meta">${modelLabel} &middot; ${kickoff}</div>
+        <div class="meta">${attestBadge} ${settleBadge}${p.backfilled ? ' <span style="font-size:0.65rem;color:var(--text-dim)">(backfilled)</span>' : ''}</div>
+        ${p.commitment_hash ? `<div class="hash" title="Commitment hash — cryptographic proof this prediction existed before kickoff">Commitment: ${p.commitment_hash.slice(0,16)}...</div>` : ''}
+      </div>
+      <div style="text-align:right">
+        <div class="prob ${p.p_over > 0.5 ? 'positive' : 'negative'}">P(over) = ${(p.p_over * 100).toFixed(1)}%</div>
+        ${p.settled ? `<div class="meta">Actual: ${p.actual_total} (${p.actual_over === 1.0 ? 'OVER' : 'UNDER'})</div>` : ''}
+        ${p.brier_contribution !== null ? `<div class="meta">Brier: ${p.brier_contribution.toFixed(4)}</div>` : ''}
+      </div>
+    </div>`;
+  }
+  if (predictions.length > 50) {
+    html += `<p class="stat-note" style="margin-top:1rem">Showing 50 of ${predictions.length} predictions (most recent kickoff first).</p>`;
+  }
+  return html;
+}
+
+// ═══════════════════════════════════════════════════════════════
+// CALIBRATION
+// ═══════════════════════════════════════════════════════════════
+async function renderCalibration() {
+  const data = await fetchJSON('/api/calibration');
+  const el = document.getElementById('calibration-content');
+
+  let html = '';
+
+  // Explanation
+  html += '<div class="explanation-box">';
+  html += `<p><strong>What is calibration?</strong> ${data.explanation.what_is_calibration}</p>`;
+  html += `<p style="margin-top:0.75rem"><strong>Why it matters more than accuracy:</strong> ${data.explanation.why_it_matters}</p>`;
+  html += `<p style="margin-top:0.75rem"><strong>ECE:</strong> ${data.explanation.ece_explained}</p>`;
+  html += `<p style="margin-top:0.75rem"><strong>Brier Score:</strong> ${data.explanation.brier_explained}</p>`;
+  html += `<p style="margin-top:0.75rem"><strong>Forward vs backtest:</strong> ${data.explanation.forward_vs_backtest}</p>`;
+  html += '</div>';
+
+  // Reference baselines
+  html += '<div class="card">';
+  html += '<h3 style="margin-top:0">Reference Baselines</h3>';
+  html += `<p style="font-size:0.85rem;color:var(--text-dim)">Corners ECE: <strong style="color:var(--text)">${data.reference_baselines.corners_ece}</strong> &middot; Cards ECE: <strong style="color:var(--text)">${data.reference_baselines.cards_ece}</strong></p>`;
+  html += `<p style="font-size:0.75rem;color:var(--text-dim);margin-top:0.5rem">${data.reference_baselines.source}. ${data.reference_baselines.note}</p>`;
+  html += '</div>';
+
+  // Forward calibration
+  html += '<h3>Forward Calibration (Live Quarantine Window)</h3>';
+  html += '<p style="font-size:0.8rem;color:var(--text-dim);margin-bottom:1rem">Out-of-sample predictions made before kickoff during the current 90-day window.</p>';
+  html += '<div class="card-grid">';
+  html += renderCalibrationCard('Corners', data.forward.corners, 0.064);
+  html += renderCalibrationCard('Cards', data.forward.cards, 0.058);
+  html += '</div>';
+
+  // Backtest calibration
+  html += '<h3>Backtest Calibration (Historical)</h3>';
+  html += `<p style="font-size:0.8rem;color:var(--text-dim);margin-bottom:1rem">${data.backtest.note}</p>`;
+  html += '<div class="card-grid">';
+  html += `<div class="card">
+    <div class="stat-label">Corners (backtest)</div>
+    <div class="stat-value">${data.backtest.corners.mean_ece !== null ? data.backtest.corners.mean_ece.toFixed(4) : 'N/A'}</div>
+    <div class="stat-note">Mean ECE across ${data.backtest.corners.n_league_seasons} league-seasons</div>
+  </div>`;
+  html += `<div class="card">
+    <div class="stat-label">Cards (backtest)</div>
+    <div class="stat-value">${data.backtest.cards.mean_ece !== null ? data.backtest.cards.mean_ece.toFixed(4) : 'N/A'}</div>
+    <div class="stat-note">Mean ECE across ${data.backtest.cards.n_league_seasons} league-seasons</div>
+  </div>`;
+  html += '</div>';
+
+  el.innerHTML = html;
+}
+
+function renderCalibrationCard(modelName, metrics, baseline) {
+  // Minimum-sample gate: if insufficient data, show the gate message prominently
+  if (!metrics.sufficient_sample) {
+    return `<div class="card">
+      <div class="stat-label">${modelName} (forward)</div>
+      <div class="stat-value neutral" style="font-size:1.1rem">Awaiting data</div>
+      <div class="stat-note" style="margin-top:0.75rem;color:var(--text)">${metrics.note}</div>
+      <div style="margin-top:0.75rem;padding:0.75rem;background:var(--surface-2);border-radius:4px">
+        <div style="display:flex;justify-content:space-between;align-items:center">
+          <span style="font-size:0.75rem;color:var(--text-dim)">Progress</span>
+          <span style="font-size:0.75rem;font-family:var(--mono);color:var(--text-dim)">${metrics.n} / ${metrics.min_sample_required}</span>
+        </div>
+        <div style="margin-top:0.4rem;height:6px;background:var(--border);border-radius:3px;overflow:hidden">
+          <div style="height:100%;width:${Math.min(100, (metrics.n / metrics.min_sample_required) * 100)}%;background:var(--accent);border-radius:3px;transition:width 0.3s"></div>
+        </div>
+      </div>
+      <div class="stat-note" style="margin-top:0.75rem">Publishing a calibration figure on a small sample would create false confidence — exactly the kind of premature claim this site exists to avoid. The countdown, prediction feed, robustness results, and failure ledger all have real content now; calibration genuinely needs to wait.</div>
+    </div>`;
+  }
+
+  const eceColor = metrics.ece !== null && metrics.ece > baseline * 1.5 ? 'negative' :
+                   metrics.ece !== null && metrics.ece <= baseline ? 'positive' : '';
+
+  let html = `<div class="card">
+    <div class="stat-label">${modelName} (forward)</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-top:0.5rem">
+      <div>
+        <div class="stat-label">ECE</div>
+        <div class="stat-value ${eceColor}">${metrics.ece !== null ? metrics.ece.toFixed(4) : '--'}</div>
+        <div class="stat-note">vs baseline ${baseline}</div>
+        ${metrics.ece_ci ? `<div class="stat-note" style="font-family:var(--mono)">95% CI: [${metrics.ece_ci[0].toFixed(4)}, ${metrics.ece_ci[1].toFixed(4)}]</div>` : ''}
+      </div>
+      <div>
+        <div class="stat-label">Brier</div>
+        <div class="stat-value">${metrics.brier !== null ? metrics.brier.toFixed(4) : '--'}</div>
+        <div class="stat-note">lower is better (0.25 = coin flip)</div>
+        ${metrics.brier_ci ? `<div class="stat-note" style="font-family:var(--mono)">95% CI: [${metrics.brier_ci[0].toFixed(4)}, ${metrics.brier_ci[1].toFixed(4)}]</div>` : ''}
+      </div>
+    </div>
+    <div class="stat-note" style="margin-top:0.75rem;color:var(--text)">Sample: ${metrics.n} settled predictions</div>`;
+
+  // Reliability curve
+  if (metrics.reliability_curve && metrics.reliability_curve.length > 0) {
+    html += '<div style="margin-top:1rem"><div class="stat-label">Reliability Curve</div>';
+    html += '<div class="legend"><span class="leg-predicted">Predicted</span><span class="leg-actual">Actual</span></div>';
+    html += '<div class="reliability-chart">';
+    for (const bin of metrics.reliability_curve) {
+      const predH = bin.mean_predicted !== null ? Math.round(bin.mean_predicted * 100) : 0;
+      const actH = bin.mean_actual !== null ? Math.round(bin.mean_actual * 100) : 0;
+      html += `<div class="reliability-bar">
+        <div class="bar-label">${bin.bin_range}</div>
+        <div class="bar-predicted" style="height:${predH}%" title="Predicted: ${bin.mean_predicted !== null ? (bin.mean_predicted*100).toFixed(1)+'%' : 'N/A'}"></div>
+        <div class="bar-actual" style="height:${actH}%" title="Actual: ${bin.mean_actual !== null ? (bin.mean_actual*100).toFixed(1)+'%' : 'N/A'} (n=${bin.count})"></div>
+      </div>`;
+    }
+    html += '</div></div>';
+  }
+
+  html += '</div>';
+  return html;
+}
+
+// ═══════════════════════════════════════════════════════════════
+// ROBUSTNESS
+// ═══════════════════════════════════════════════════════════════
+let robustnessData = null;
+let sortCol = 'league';
+let sortAsc = true;
+
+async function renderRobustness() {
+  const data = await fetchJSON('/api/robustness');
+  robustnessData = data;
+  const el = document.getElementById('robustness-content');
+
+  let html = '';
+  html += '<div class="card-grid">';
+  html += `<div class="card"><div class="stat-label">Corners</div><div class="stat-value">${data.aggregate.corners.positive_count}<span style="font-size:0.8rem;color:var(--text-dim)">/${data.aggregate.corners.total_count}</span></div><div class="stat-note">league-seasons beat naive baseline</div></div>`;
+  html += `<div class="card"><div class="stat-label">Cards</div><div class="stat-value">${data.aggregate.cards.positive_count}<span style="font-size:0.8rem;color:var(--text-dim)">/${data.aggregate.cards.total_count}</span></div><div class="stat-note">league-seasons beat naive baseline</div></div>`;
+  html += '</div>';
+  html += `<p style="font-size:0.8rem;color:var(--text-dim);margin-bottom:1rem">${data.aggregate.note}</p>`;
+
+  // Filters
+  html += '<div class="filter-row">';
+  html += '<input type="text" id="league-filter" placeholder="Filter by league...">';
+  html += '<select id="result-filter"><option value="">All results</option><option value="negative-corners">Negative corners only</option><option value="negative-cards">Negative cards only</option><option value="negative-any">Any negative</option></select>';
+  html += '</div>';
+
+  html += '<div id="robustness-table"></div>';
+  el.innerHTML = html;
+
+  document.getElementById('league-filter').addEventListener('input', () => renderRobustnessTable(data.results));
+  document.getElementById('result-filter').addEventListener('change', () => renderRobustnessTable(data.results));
+  renderRobustnessTable(data.results);
+}
+
+function renderRobustnessTable(results) {
+  const leagueFilter = document.getElementById('league-filter').value.toLowerCase();
+  const resultFilter = document.getElementById('result-filter').value;
+
+  let filtered = results;
+  if (leagueFilter) filtered = filtered.filter(r => r.league.toLowerCase().includes(leagueFilter));
+  if (resultFilter === 'negative-corners') filtered = filtered.filter(r => r.corners_vs_naive_pct < 0);
+  if (resultFilter === 'negative-cards') filtered = filtered.filter(r => r.cards_vs_naive_pct < 0);
+  if (resultFilter === 'negative-any') filtered = filtered.filter(r => r.corners_vs_naive_pct < 0 || r.cards_vs_naive_pct < 0);
+
+  // Sort
+  filtered.sort((a, b) => {
+    let va = a[sortCol], vb = b[sortCol];
+    if (typeof va === 'string') return sortAsc ? va.localeCompare(vb) : vb.localeCompare(va);
+    return sortAsc ? va - vb : vb - va;
+  });
+
+  let html = '<div style="overflow-x:auto"><table>';
+  html += '<thead><tr>';
+  const cols = [
+    {key:'league', label:'League'}, {key:'season_year', label:'Season'},
+    {key:'n_predictions', label:'N'}, {key:'corners_vs_naive_pct', label:'Corners vs Naive'},
+    {key:'corners_ece', label:'Corners ECE'}, {key:'cards_vs_naive_pct', label:'Cards vs Naive'},
+    {key:'cards_ece', label:'Cards ECE'}
+  ];
+  for (const col of cols) {
+    const arrow = sortCol === col.key ? (sortAsc ? ' \u25B2' : ' \u25BC') : '';
+    html += `<th data-col="${col.key}">${col.label}${arrow}</th>`;
+  }
+  html += '</tr></thead><tbody>';
+
+  for (const r of filtered) {
+    const cornersClass = r.corners_vs_naive_pct > 0 ? 'positive' : r.corners_vs_naive_pct < 0 ? 'negative' : 'neutral';
+    const cardsClass = r.cards_vs_naive_pct > 0 ? 'positive' : r.cards_vs_naive_pct < 0 ? 'negative' : 'neutral';
+    html += `<tr>
+      <td>${r.league}</td>
+      <td>${r.season_year}</td>
+      <td>${r.n_predictions}</td>
+      <td class="${cornersClass}">${r.corners_vs_naive_pct >= 0 ? '+' : ''}${r.corners_vs_naive_pct.toFixed(1)}%</td>
+      <td>${r.corners_ece.toFixed(4)}</td>
+      <td class="${cardsClass}">${r.cards_vs_naive_pct >= 0 ? '+' : ''}${r.cards_vs_naive_pct.toFixed(1)}%</td>
+      <td>${r.cards_ece.toFixed(4)}</td>
+    </tr>`;
+  }
+  html += '</tbody></table></div>';
+  html += `<p class="stat-note" style="margin-top:0.5rem">Showing ${filtered.length} of ${results.length} league-seasons. Click column headers to sort.</p>`;
+
+  document.getElementById('robustness-table').innerHTML = html;
+
+  // Sort handlers
+  document.querySelectorAll('#robustness-table th').forEach(th => {
+    th.addEventListener('click', () => {
+      const col = th.dataset.col;
+      if (sortCol === col) { sortAsc = !sortAsc; } else { sortCol = col; sortAsc = true; }
+      renderRobustnessTable(results);
+    });
+  });
+}
+
+// ═══════════════════════════════════════════════════════════════
+// FAILURE LEDGER
+// ═══════════════════════════════════════════════════════════════
+async function renderFailures() {
+  const data = await fetchJSON('/api/failures');
+  const el = document.getElementById('failures-content');
+
+  let html = '';
+  if (data.description) {
+    html += `<p style="font-size:0.85rem;color:var(--text-dim);margin-bottom:1.5rem">${data.description}</p>`;
+  }
+
+  if (!data.entries || data.entries.length === 0) {
+    html += '<p class="loading">No entries yet.</p>';
+    el.innerHTML = html;
+    return;
+  }
+
+  for (const entry of data.entries) {
+    html += `<div class="failure-entry category-${entry.category}">
+      <div style="display:flex;justify-content:space-between;align-items:baseline">
+        <h4>${entry.id}: ${entry.title}</h4>
+        <span class="date">${entry.date}</span>
+      </div>
+      <p><strong>What we tried:</strong> ${entry.what_we_tried}</p>
+      <p><strong>What happened:</strong> ${entry.what_happened}</p>
+      <p class="conclusion"><strong>Conclusion:</strong> ${entry.conclusion}</p>
+    </div>`;
+  }
+
+  el.innerHTML = html;
+}
+
+// ═══════════════════════════════════════════════════════════════
+// INIT
+// ═══════════════════════════════════════════════════════════════
+renderQuarantine();
+renderPredictions();
+renderCalibration();
+renderRobustness();
+renderFailures();
+</script>
+</body>
+</html>

@@ -1,0 +1,87 @@
+{
+  "title": "Failure Ledger",
+  "description": "A permanent, append-only public record of what we tried and what didn't work. Every entry is dated, honest, and irreversible. The purpose is accountability: you should be able to see our mistakes as clearly as our successes.",
+  "entries": [
+    {
+      "id": "F001",
+      "date": "2026-03-15",
+      "title": "PPDA-based expected offsides (xO) metric abandoned",
+      "what_we_tried": "Built an expected offsides model using PPDA (Passes Per Defensive Action) as a key feature, hypothesizing that high-pressing teams generate more offside traps.",
+      "what_happened": "The FootyStats API does not provide PPDA data. Confirmed against 1,140 real matches across multiple leagues. The field simply doesn't exist in the data source.",
+      "conclusion": "Abandoned entirely. No alternative data source identified at acceptable cost. The hypothesis remains plausible but untestable with our data.",
+      "category": "DATA_UNAVAILABLE"
+    },
+    {
+      "id": "F002",
+      "date": "2026-04-20",
+      "title": "Goals over/under model initially underperformed naive baseline",
+      "what_we_tried": "Applied the same count-regression approach that works for corners to the goals over/under 2.5 market.",
+      "what_happened": "Initial performance was -4.1% vs naive baseline with ECE of 0.090. After applying shrinkage correction to the team-strength estimates, performance improved to +0.2% \u2014 roughly at par with the naive baseline.",
+      "conclusion": "The goals model is NOT claimed as an edge. It's approximately at par (+0.2%) which is statistically indistinguishable from zero advantage. We do not market this as a product.",
+      "category": "NO_EDGE"
+    },
+    {
+      "id": "F003",
+      "date": "2026-04-25",
+      "title": "BTTS (Both Teams To Score) model at par, not an edge",
+      "what_we_tried": "Applied count-regression to the BTTS market, expecting similar outperformance to corners.",
+      "what_happened": "Performance settled at +0.4% vs naive baseline. Statistically indistinguishable from zero.",
+      "conclusion": "BTTS is NOT claimed as an edge. It produces calibrated probabilities but no meaningful advantage over naive baselines. Honest assessment: this market may simply be more efficient than corners.",
+      "category": "NO_EDGE"
+    },
+    {
+      "id": "F004",
+      "date": "2026-06-10",
+      "title": "Corners calibration silently regressed during refit-interval change",
+      "what_we_tried": "Changed the model's refit interval (how often it re-trains on accumulated data) as part of a routine optimization.",
+      "what_happened": "Corners ECE regressed from 0.018 to 0.035 without any test catching it. The regression was silent \u2014 no monitoring alert fired.",
+      "conclusion": "Caught and fixed. Added explicit calibration regression tests. The original 0.018 figure was from a single EPL sample and proved optimistic regardless \u2014 the multi-league reality is ~0.064. This incident revealed that we were tracking against a misleadingly good baseline.",
+      "category": "SILENT_REGRESSION"
+    },
+    {
+      "id": "F005",
+      "date": "2026-07-01",
+      "title": "Market-inefficiency hypothesis DISPROVEN by our own data",
+      "what_we_tried": "Hypothesized that the model's edge should be larger in thinly-bet leagues (lower liquidity = less efficient market = more exploitable mispricing).",
+      "what_happened": "Tested across all 25 leagues in the robustness check. Edge magnitude shows no correlation with estimated league betting volume. Portugal and Netherlands perform similarly to England and Spain.",
+      "conclusion": "DISPROVEN. The edge appears uniform across league tiers. This is actually a robustness signal \u2014 it suggests the model captures a real structural feature (team-level corner/card tendencies) rather than exploiting a market-specific inefficiency that would disappear with liquidity.",
+      "category": "HYPOTHESIS_DISPROVEN"
+    },
+    {
+      "id": "F006",
+      "date": "2026-07-15",
+      "title": "FDR individual-level testing: only 60/150 tests survive correction",
+      "what_we_tried": "Applied Benjamini-Hochberg False Discovery Rate correction to individual league-season test results (150 tests: 75 league-seasons x 2 models).",
+      "what_happened": "Only 60/150 individual tests survive BH correction at alpha=0.05. This reflects low per-test statistical power (100-300 matches per league-season) rather than absence of effect.",
+      "conclusion": "The individual tests lack power. The meta-analysis (aggregating across all league-seasons) is what passes with high confidence. We should say plainly: the evidence is in the aggregate pattern, not in any single league-season. A single league-season is too small a sample to detect the effect size we're seeing.",
+      "category": "STATISTICAL_LIMITATION"
+    },
+    {
+      "id": "F007",
+      "date": "2026-08-01",
+      "title": "Single-sample calibration figures proved optimistic",
+      "what_we_tried": "Initially reported ECE of 0.018 (corners) and 0.027 (cards) from an EPL-only evaluation.",
+      "what_happened": "Multi-league robustness check across 25 leagues and 3 seasons revealed the realistic figures are ~0.064 (corners) and ~0.058 (cards). The original numbers were an optimistic single-sample estimate.",
+      "conclusion": "Replaced all references to the 0.018/0.027 figures with the honest multi-league numbers (0.064/0.058). The model is still well-calibrated \u2014 ECE under 0.07 is good \u2014 but the original claim was misleadingly precise. Lesson: never report a single-sample estimate as if it's a stable parameter.",
+      "category": "OVERFIT_ESTIMATE"
+    },
+    {
+      "id": "F008",
+      "date": "2026-08-28",
+      "title": "4 predictions unattested due to late attestation wiring",
+      "what_we_tried": "Quarantine started 2026-08-27 12:00 UTC. Predictions generated at 15:45 UTC. Attestation (commit-reveal) wasn't wired into the prediction loop until Aug 28.",
+      "what_happened": "4 predictions (2 matches x 2 models: Celta vs Osasuna and Barcelona vs Athletic, Aug 27 evening) were generated before attestation was wired, and their matches kicked off before backfill could run. These predictions cannot be cryptographically proven to have been made pre-kickoff.",
+      "conclusion": "These 4 predictions are marked as UNATTESTED in the feed. They represent day-1 of the quarantine window. All subsequent predictions (190+) have valid pre-kickoff commitments. The gap is disclosed rather than hidden.",
+      "category": "OPERATIONAL_GAP"
+    },
+    {
+      "id": "F009",
+      "date": "2026-08-28",
+      "title": "Corners/cards quarantine retired \u2014 architecture reoriented to metric discovery",
+      "what_we_tried": "Enrolled two target-predictor models (Corners O/U 9.5, Cards O/U 3.5) in a 90-day quarantine on 2026-08-27. The plan was to validate individual strategy-level predictions against live fixtures.",
+      "what_happened": "Within 24 hours of enrollment, the architecture was reoriented from strategy-validation to metric-validation. Target predictors (which predict one specific market outcome) are not the right unit of validation \u2014 they do not compose into anything reusable. The correct primitive is a reusable metric that composes into unlimited creator hypotheses. Both models were marked SUPERSEDED after generating 194 predictions (190 attested).",
+      "conclusion": "The quarantine enrollments are preserved as immutable project history but predictions are no longer treated as product evidence. The modeling work (count regression with shrinkage, Dixon-Coles) carries forward directly into the metric discovery pipeline as scoring models. This is an architecture decision, not a failure of the models themselves \u2014 they were performing as expected.",
+      "category": "ARCHITECTURE_CHANGE"
+    }
+  ]
+}

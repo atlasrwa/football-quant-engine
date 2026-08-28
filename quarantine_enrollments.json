@@ -1,0 +1,72 @@
+{
+  "enrollment_timestamp": "2026-08-27T12:00:00+00:00",
+  "quarantine_days": 90,
+  "enrollments": [
+    {
+      "model": "corners",
+      "hypothesis_id": "corners_ou_9.5_count_regression_v1",
+      "candidate_hash": "3d3b3548074ea02a",
+      "strategy_name": "research_3d3b3548_corners_",
+      "status": "SUPERSEDED",
+      "previous_status": "QUARANTINED",
+      "enrollment_timestamp": "2026-08-27T12:00:00+00:00",
+      "quarantine_expires": "2026-11-25T12:00:00+00:00",
+      "superseded_at": "2026-08-28T02:00:00+00:00",
+      "superseded_reason": "Architecture reoriented from strategy-validation to metric-validation on 2026-08-28. Target predictors (corners O/U 9.5) are not reusable metrics — they don't compose into other hypotheses. The unit of validation changed from 'strategy that predicts a specific market' to 'reusable predictive primitive that composes into unlimited strategies'. The modeling work (count regression with shrinkage) is retained and reused as a scoring model in the metric discovery pipeline.",
+      "paper_trading": true,
+      "odds_available": true,
+      "calibration_ece_reference": 0.064,
+      "submitted": true,
+      "predictions_generated": 194,
+      "predictions_attested": 190,
+      "predictions_unattested": 4,
+      "note": "Predictions accrued between enrollment and supersession are preserved as project history but are no longer treated as product evidence."
+    },
+    {
+      "model": "cards",
+      "hypothesis_id": "cards_ou_3.5_count_regression_v1",
+      "candidate_hash": "2a0b05e540df2987",
+      "strategy_name": "research_2a0b05e5_cards_ou",
+      "status": "SUPERSEDED",
+      "previous_status": "TRACKED_NO_MARKET",
+      "enrollment_timestamp": "2026-08-27T12:00:00+00:00",
+      "quarantine_expires": "N/A (calibration-only)",
+      "superseded_at": "2026-08-28T02:00:00+00:00",
+      "superseded_reason": "Architecture reoriented from strategy-validation to metric-validation. Cards O/U 3.5 is a target predictor, not a composable metric. Retired alongside corners model. Modeling work (count regression) retained for reuse.",
+      "paper_trading": false,
+      "odds_available": false,
+      "calibration_ece_reference": 0.058,
+      "submitted": true,
+      "predictions_generated": 194,
+      "predictions_attested": 190,
+      "predictions_unattested": 4,
+      "note": "Same as corners — predictions preserved as history, no longer product evidence."
+    }
+  ],
+  "attestation_status": {
+    "commit_reveal_available": true,
+    "auto_commit_wired": true,
+    "note": "Attestation was wired into the forward loop on 2026-08-28. 190/194 predictions received pre-kickoff commitments. The machinery is reused for metric quarantine and creator strategy quarantine going forward."
+  },
+  "calibration_reference": {
+    "corners_ece": 0.064,
+    "cards_ece": 0.058,
+    "source": "Multi-league robustness check (25 leagues \u00d7 3 seasons)",
+    "note": "These are the realistic figures, NOT the original single-sample EPL numbers (0.018/0.027)"
+  },
+  "architecture_note": {
+    "reorientation_date": "2026-08-28",
+    "from": "Strategy-level quarantine (validate specific target predictors)",
+    "to": "Metric-level discovery + quarantine (validate reusable predictive primitives that compose into strategies)",
+    "two_tier_model": {
+      "tier_1": "Metric quarantine — DISCOVERED metrics enter 90-day forward test, promoted to VALIDATED on success",
+      "tier_2": "Strategy quarantine — creator strategies built from validated metrics still need their own 90-day forward test"
+    },
+    "retained_from_previous": [
+      "Forward loop scheduler (cron every 4h)",
+      "Commit-reveal attestation",
+      "Settlement and calibration tracking",
+      "Modeling approaches (Dixon-Coles, count regression with shrinkage)"
+    ]
+  }
+}
