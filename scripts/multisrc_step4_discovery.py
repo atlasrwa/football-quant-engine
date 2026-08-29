@@ -218,12 +218,9 @@ def gate_passed(gate, league, target):
     if gate is None:
         return target in ("goals", "corners")
     try:
-        return bool(gate["leagues"][league]["targets"][target]["pass"])
+        return bool(gate["leagues"][league]["targets"][target]["gate"]["passed"])
     except Exception:
-        try:
-            return bool(gate[league][target]["pass"])
-        except Exception:
-            return target in ("goals", "corners")
+        return False
 
 
 def main():

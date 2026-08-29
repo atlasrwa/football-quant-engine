@@ -85,6 +85,29 @@ def fetch_stats(comp, season, tag, limit=None):
     return got, cached
 
 
+def fetch_odds(comp, season, tag, match_ids):
+    """Fetch Bet365 odds for a specific list of match ids (balanced selection).
+    Cache key <tag>_odds_<mid>. Cache-first. Reports coverage."""
+    got = 0; cached = 0; missing = 0
+    for i, mid in enumerate(match_ids):
+        ck = f"{tag}_odds_{mid}"
+        data, meta = api.get_json(f"/football/matches/{mid}/odds",
+                                  params={"bookmaker": "bet365"},
+                                  cache_key=ck, allow_status=(200, 404))
+        if meta.get("http_status") == 404 or data is None:
+            missing += 1
+        elif meta.get("from_cache"):
+            cached += 1
+        else:
+            got += 1
+        if (i + 1) % 25 == 0:
+            print(f"[{tag} {season}] {i+1}/{len(match_ids)} odds (live={got} cached={cached} "
+                  f"missing={missing}) remaining={api.budget_snapshot().get('last_monthly_remaining')}")
+    print(f"[{tag} {season}] odds done: live={got} cached={cached} missing={missing} "
+          f"total={len(match_ids)}")
+    return got, cached, missing
+
+
 if __name__ == "__main__":
     cmd = sys.argv[1]
     if cmd == "seasons":
@@ -94,6 +117,10 @@ if __name__ == "__main__":
     elif cmd == "stats":
         limit = sys.argv[5] if len(sys.argv) > 5 else None
         fetch_stats(sys.argv[2], sys.argv[3], sys.argv[4], limit)
+    elif cmd == "odds":
+        # odds <comp> <season> <tag> <ids_json_file>
+        ids = json.load(open(sys.argv[5]))
+        fetch_odds(sys.argv[2], sys.argv[3], sys.argv[4], ids)
     else:
         print("unknown command", cmd); sys.exit(1)
     print("budget:", api.budget_snapshot())

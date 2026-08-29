@@ -82,6 +82,225 @@
       "what_happened": "Within 24 hours of enrollment, the architecture was reoriented from strategy-validation to metric-validation. Target predictors (which predict one specific market outcome) are not the right unit of validation \u2014 they do not compose into anything reusable. The correct primitive is a reusable metric that composes into unlimited creator hypotheses. Both models were marked SUPERSEDED after generating 194 predictions (190 attested).",
       "conclusion": "The quarantine enrollments are preserved as immutable project history but predictions are no longer treated as product evidence. The modeling work (count regression with shrinkage, Dixon-Coles) carries forward directly into the metric discovery pipeline as scoring models. This is an architecture decision, not a failure of the models themselves \u2014 they were performing as expected.",
       "category": "ARCHITECTURE_CHANGE"
+    },
+    {
+      "id": "F010",
+      "date": "2026-08-28",
+      "title": "Metric discovery: first null was artifact of wrong screener \u2014 confirmed after correction",
+      "what_we_tried": "Ran two discovery approaches: (1) binary median-split screening of 1,398 single-feature arithmetic combinations, (2) model-based screening (L2-regularized logistic regression) of team-specific rolling features with within-league walk-forward. Both used the full corpus (7,692 discovery matches, 25 leagues, 2 seasons).",
+      "what_happened": "First run (binary median-split): 0/1,398 survivors \u2014 but sanity gate later showed the screener could not detect known-good signal. Second run (logistic regression): same result, same problem. Third run (Poisson GLM with shrinkage \u2014 the correct model class): sanity gate PASSED, full search found 2,752 FDR survivors on cards target (BSS up to +3.4%), all confirmed on held-out data (BSS +1.2% to +2.2%, p < 0.000003). The first two nulls were artifacts of mis-specified screeners, not absent signal.",
+      "conclusion": "The correct conclusion has two parts: (1) Signal IS discoverable when the screening model matches the domain structure (Poisson for count data, not logistic). (2) The discovered combinations are WEAKER than the full baseline model (+2.2% BSS vs +6.1% robustness check), confirming that model architecture matters more than feature selection \u2014 but feature selection still contributes meaningfully. The 2,752 survivors reduce to ~4 distinct patterns: team card rates + fouls/tempo features. This is ONE underlying signal (team disciplinary persistence) accessed through different feature subsets.",
+      "category": "GENUINE_NULL_FINDING"
+    },
+    {
+      "id": "F011",
+      "date": "2026-08-28",
+      "title": "Corners discovery: signal inaccessible to Poisson GLM over rolling averages (tested, not inferred)",
+      "what_we_tried": "Ran the proven Poisson GLM screener (which detected cards at +1.4% BSS) on corners target with team-specific rolling corner rates.",
+      "what_happened": "ORIGINAL DIAGNOSIS (2026-08-28, now superseded): Assumed the global temporal split was the problem and per-league walk-forward would fix it. TESTED RESULT: Per-league walk-forward with team-specific rolling corner rates produces BSS = -3.6% (6/25 leagues positive). Per-league walk-forward with the ACTUAL corners model features (dangerous_attacks, attacks, possession, shots) produces BSS = -16.9% (2/23 leagues positive). BOTH approaches fail. The +6.8% robustness result relies on full team-effect estimation with shrinkage across the entire training period \u2014 a fundamentally different operation from fitting a Poisson GLM over rolling feature averages. The split method was NOT the problem.",
+      "conclusion": "The corners signal is architecturally bound to the CountRegressionModel's team-effect estimation (per-team Poisson rate parameters with shrinkage toward league mean). This cannot be replicated by a generic Poisson GLM over rolling averages, regardless of which features are used or how the walk-forward is split. Corners is NOT a viable target for the combination-discovery pipeline. The signal is in the model ARCHITECTURE, not in any feature combination \u2014 consistent with the earlier diagnostic finding (F010). The cards model works in the pipeline because card rates have higher team-level persistence than corner rates (confirmed: card autocorrelation > 0 vs corner autocorrelation \u2248 -0.03).",
+      "category": "GENUINE_NULL_FINDING"
+    },
+    {
+      "id": "F012",
+      "date": "2026-08-28",
+      "title": "BTTS: sanity gate passes marginally but no survivors after cumulative FDR",
+      "what_we_tried": "Ran logistic GLM screener on BTTS target using team goal-scoring rolling rates (the natural features for BTTS prediction).",
+      "what_happened": "Sanity gate passed marginally (BSS = +0.22%, p = 0.097). 351 candidates passed screening but NONE survived cumulative FDR correction (family = 22,848). Best screening p-values were in the 0.01-0.05 range \u2014 too weak for a family this large.",
+      "conclusion": "BTTS signal is detectable but too weak to survive rigorous multiple-testing correction. This is consistent with the earlier finding that BTTS is 'roughly at par (+0.4%)' \u2014 the per-match effect size is simply too small for the combination discovery approach to pick up given the testing burden. The BTTS market may be more efficiently priced than cards/goals.",
+      "category": "GENUINE_NULL_FINDING"
+    },
+    {
+      "id": "F013",
+      "date": "2026-08-28",
+      "title": "EV Test: All 7 discovered metrics fail to beat Bet365 on calibration",
+      "what_we_tried": "Tested the 7 validated metrics (4 cards, 3 goals) head-to-head against cached Bet365 closing odds on 321 EPL/La Liga matches from 2024-25. Used the exact model architecture (Poisson GLM with L2 shrinkage, team-level empirical Bayes), same feature definitions and rolling windows as validated in discovery. Vig removed via multiplicative method. Walk-forward discipline: model trained only on data before the odds sample.",
+      "what_happened": "Market wins 13/17 comparisons on BSS. Mean delta: -2.20% BSS (market better). Cards metrics: lose at 3.5 line (model over-predicts), marginal +1-2% BSS advantage at 4.5 line but with wide CIs and negative realized returns. Goals metrics: market dominates at ALL lines (market BSS +0.5% to +4.3%, model mostly negative). Realized flat-bet ROI is negative for every metric/line combination. No confidence interval excludes zero on the positive side.",
+      "conclusion": "The signals are real (they beat naive baselines as validated through FDR and held-out testing) but they are ALREADY PRICED IN by the market. Bet365 incorporates team card rates, foul rates, xG, SOT conceded, and recent goal counts \u2014 the exact factors our metrics capture \u2014 plus many additional factors we do not model. The bar for exploitable edge is \"beat the market,\" not \"beat naive.\" These metrics clear the naive bar by +0.5-2.3% BSS but fall short of the market bar by -2.2% BSS on average. This is a valuable finding: it quantifies exactly where the bar sits.",
+      "category": "SIGNAL_PRICED_IN",
+      "evidence": {
+        "report": "docs/ev_test_report.md",
+        "script": "scripts/ev_test_metrics_vs_bet365.py",
+        "results": "data/results/ev_test_metrics_vs_bet365.json",
+        "sample_size": 321,
+        "model_wins": "4/17",
+        "market_wins": "13/17",
+        "mean_delta_bss": "-2.20%"
+      }
+    },
+    {
+      "id": "F014",
+      "date": "2026-08-29",
+      "title": "Disagreement-concentrated edge: DISPROVEN \u2014 model performance DEGRADES with disagreement",
+      "what_we_tried": "The EV test (F013) measured AVERAGE edge and found the market wins by -2.20% BSS. A concentrated edge (right on a minority of fixtures, neutral elsewhere) would be washed out by that average. Thesis: edge is concentrated in matches where the model and market most diverge (narrative mispricing). Test: re-slice the EXACT same per-match model probabilities and vig-adjusted market probabilities by disagreement = |model_p_over - market_fair_p_over|, bucket by disagreement magnitude, and ask who is right in the highest-disagreement matches. Zero API calls. No model substitution, no refit, no retune \u2014 the analysis script imports scripts/ev_test_metrics_vs_bet365.py verbatim. Per-combo QUINTILES (per-combo n=70-281 too thin for deciles); POOLED DECILES on within-combo z-scored disagreement (3,088 rows from ~321 unique matches).",
+      "what_happened": "The fatal pattern the brief anticipated. Performance DEGRADES with disagreement. Pooled decile correlation (bucket index vs model-minus-market BSS) = -0.56. Lowest-disagreement decile is a dead heat with the market (+0.04% BSS); the highest-disagreement decile collapses to -14.48% BSS, directional accuracy 41% (model is closer to the actual outcome than the market LESS than half the time), follow-disagreement flat-bet ROI -18.1% [95% CI -29.9, -5.7] (CI excludes zero on the losing side). Per-combo: 8/17 DEGRADE, 8/17 FLAT, only 1/17 IMPROVES. Degradation is near-monotone on goals at high lines (goals_count_xg@3.5 corr -0.93, goals_sot_xg@3.5 -0.87, goals_sot_count@3.5 -0.76). The single IMPROVES slice (cards_minimal_pair@4.5, corr +0.64) is exactly what multiple-comparison risk predicts from 17 slices \u2014 the other three cards metrics at the same 4.5 line are FLAT. Top-decile directional split: BOTH sides lose, and the model is WORSE on the UNDER side (dir acc 37%, ROI -19.7% [-35.6, -3.1]) than the OVER side \u2014 the REVERSE of what the narrative-bias mechanism predicts. High-disagreement fixtures are predominantly EPL promoted/relegation-threatened/high-variance sides (Southampton, Ipswich, Wolves, Everton), NOT marquee derbies, with no referee concentration.",
+      "conclusion": "DISPROVEN, in the most damaging way. Disagreement is ANTI-informative: the model is most wrong exactly where it is most confident the market is wrong \u2014 the signature of a mis-specified model (extreme lambda estimates driven by unreliable rolling averages on thin/volatile team histories), not concealed edge. This explains WHY the EV-test average looked only mildly negative: the low-disagreement majority is a near dead-heat with the market and dilutes the concentrated losses in the high-disagreement tail. The loss is concentrated, not the edge. CAVEATS: wide CIs (~30 unique matches per bucket); this is a subset analysis on already-examined data (multiple-comparison risk); pooled rows are non-independent (one fixture spans multiple metric/line combos, so pooled CIs understate correlation). The finding must be confirmed on held-out/fresh matches before being treated as a stable property: rerun the identical disagreement-decile analysis with the frozen model on a different season or additional leagues. A self-damaging pattern is less likely to be a fluke than a positive one, but confirmation is still required.",
+      "category": "HYPOTHESIS_DISPROVEN",
+      "evidence": {
+        "report": "docs/disagreement_edge_test_report.md",
+        "script": "scripts/disagreement_edge_test.py",
+        "results": "data/results/disagreement_edge_test.json",
+        "pooled_decile_corr": -0.562,
+        "top_decile_model_minus_market_bss_pct": -14.48,
+        "top_decile_directional_accuracy": 0.41,
+        "top_decile_follow_roi_pct": -18.1,
+        "top_decile_follow_roi_ci95": [
+          -29.9,
+          -5.7
+        ],
+        "per_combo_tally": {
+          "DEGRADES": 8,
+          "FLAT": 8,
+          "IMPROVES": 1
+        },
+        "no_api_calls": true,
+        "no_model_substitution": true
+      }
+    },
+    {
+      "id": "F015",
+      "date": "2026-08-29",
+      "title": "Championship down-tier inefficiency thesis: NOT SUPPORTED (market ~as sharp as EPL) + sanity gate failed on slice",
+      "what_we_tried": "Bought a complete balanced slice of English Championship (comp_8321) 25/26 via TheStatsAPI to test whether a second-tier league is more loosely priced than EPL, and whether the 7 validated metrics or new-field candidates beat that market. Cached 552 fixture stats + Bet365 odds on a balanced 200-match subset (every team 16-17 appearances, spread across all 10 months). Reused the exact Poisson-GLM+L2+shrinkage model verbatim via a schema adapter (no refit/retune/substitution); within-season point-in-time walk-forward. Ran a sanity gate, the 7 existing metrics as-is, and 7 mechanism-motivated new-field candidates (defending-block->cards, territory/crosses->corners, big-chances/npxG->goals). Cumulative FDR family 22848 -> 22855.",
+      "what_happened": "(1) MARKET CALIBRATION (model-independent, primary result): Bet365 Championship market BSS vs naive hovers ~0 at well-populated lines - goals@2.5 -0.18% (n=200), goals@3.5 +0.10%, cards@3.5 +0.10% (n=120), corners@9.5 -0.83% (n=109); overrounds EPL-like (goals ~5%, cards ~8%, corners ~8%). Larger negatives only at low-base-rate extremes (goals@0.5/@5.5, cards@4.5) where naive is hard to beat - same structure as EPL (ref ~-0.35%). Championship is NOT measurably sloppier than EPL. (2) SANITY GATE FAILED: the known team-card-rate->cards signal is not detectable on this slice (Spearman(predicted lambda, actual cards) = -0.105, p=0.13; mean-calibrated 4.21 vs 4.20 but rank-inverted). Per the standing rule, ALL model-side EV results were reported but NOT trusted. (3) No candidate credibly beats the market: the one eye-catching cell (cards@3.5 model-market BSS +10-12%) is a small-sample artifact of a wildly negative MARKET BSS at n=28-50; on the n=120 calibration set market BSS is +0.10%; every realized-ROI 95% CI spans zero.",
+      "conclusion": "The down-tier inefficiency thesis is NOT supported by this slice: a second-tier league did not price more loosely than EPL at the lines that matter. The metrics did not transfer (sanity gate failed), so no model-side edge could even be trusted. RECOMMENDATION: do NOT buy the ~10k-15k-request paid plan on this thesis. Cheap next check within the EXISTING trial (~8,660 requests remain of 10,000): re-run the identical pipeline on Championship 24/25 (sn_2930227) / 23/24 to test whether the sanity-gate failure is a single-season artifact and whether market BSS stays ~0 across seasons. BUDGET CORRECTION: the trial is metered at ~10,000 monthly requests (not the ~425 assumed), with a 12 req/min burst cap; the slice used 768 live requests.",
+      "category": "THESIS_NOT_SUPPORTED",
+      "evidence": {
+        "report": "docs/championship_slice_report.md",
+        "analysis_script": "scripts/championship_step34_analysis.py",
+        "results": "data/results/championship_step34.json",
+        "season": "sn_3064530 (Championship 25/26, completed)",
+        "matches_cached_stats": 552,
+        "balanced_odds_matches": 200,
+        "per_team_appearances": "16-17 (min16/max17/median17)",
+        "market_bss_goals_2p5_pct": -0.18,
+        "market_bss_cards_3p5_pct": 0.1,
+        "market_bss_corners_9p5_pct": -0.83,
+        "sanity_gate_passed": false,
+        "sanity_spearman_lambda_actual": -0.105,
+        "cumulative_fdr_family_before": 22848,
+        "cumulative_fdr_family_after": 22855,
+        "new_field_candidates": 7,
+        "live_requests_used": 768,
+        "monthly_quota_remaining": 8660,
+        "buy_recommendation": "DO NOT BUY (thesis unsupported); cheap multi-season re-check available within existing trial"
+      }
+    },
+    {
+      "id": "F016",
+      "date": "2026-08-29",
+      "title": "Championship sanity-gate failure is a GENERALIZATION finding, not a pipeline bug \u2014 card signal has near-zero within-season persistence on Championship 25/26",
+      "what_we_tried": "The Championship slice (F015) reported a sanity-gate failure: Spearman(predicted card-lambda, realized cards) = -0.105. Because a slightly-inverse correlation on independently-validated signal usually indicates a wiring bug (4 of the prior 5 sanity-gate failures were instrument mis-specification), we ran 4 diagnostics on the CACHED data (zero API calls; no model/metric/definition changes; no re-run with adjustments): (1) field-by-field schema-adapter verification + home/away orientation trace; (2) run identical feature-extraction code on known-good FootyStats corpus vs the TheStatsAPI-adapter output; (3) break the correlation down by available team history (thin-history pathology); (4) target-variable definition + reds handling.",
+      "what_happened": "DECISIVE RAW-FEATURE TEST (bypasses GLM/shrinkage entirely): team recent yellow-card rate -> total cards is Spearman +0.177 (p~1e-98, n=13,992) on FootyStats corpus but -0.044 (p=0.47, n=275) on Championship; recent FOUL rate -> cards is +0.170 vs -0.012; w10 yellow-rate +0.198 vs -0.014. TWO independent predictors both vanish on Championship while means/variance are intact (Championship feature std 0.90, percentiles 2.8/4.0/5.1). D1: adapter orientation correct (raw .home->team_a, .away->team_b; extract_stat reads each team's OWN cards; traced on multiple matches), scale correct (Championship yellows/match 3.96 vs FootyStats 4.04). D2: could not A/B identical fixtures (99 legacy stats files have a match-ID namespace with zero overlap with cached match-lists) - ran the shared-code equivalent instead. D3: thin history RULED OUT - every sanity-gate prediction already had >=19 prior matches per team (median 32); restricting to more history/training moves correlation toward 0 (-0.023 at n_train>=200), never positive. D4: reds under-recorded on Championship (null on 91% of matches, present in 9% vs FootyStats 17%) but immaterial - yellows-only vs yellows+reds changes FootyStats correlation by 0.005.",
+      "conclusion": "NOT a pipeline bug. The sanity gate correctly detected that the known-good card signal is ABSENT on Championship 25/26. The signal is flat at the raw-feature level (before the model) for two independent predictors, which a shared-code wiring bug could not selectively produce. This is a GENERALIZATION finding: a signal validated across ~25 leagues shows near-zero within-season persistence on this 26th (Championship 25/26) - plausibly because promotion/relegation churn and roster turnover compress team-level disciplinary persistence. It breaks the 'sanity-gate failure = bug' streak (this is the 1 genuine case). Model-side conclusions from the Championship slice (F015) remain untrustworthy AS INTENDED - the gate did its job. CAVEAT: single season, n=275 usable; confirm by repeating the raw-feature correlation on Championship 24/25 (sn_2930227)/23/24, cheap and within existing trial budget. MARKET-CALIBRATION result from F015 is model-independent and unaffected (not re-litigated).",
+      "category": "GENERALIZATION_FINDING",
+      "evidence": {
+        "diagnosis_report": "docs/championship_sanity_gate_diagnosis.md",
+        "raw_feature_spearman_footystats_yellows": 0.177,
+        "raw_feature_spearman_championship_yellows": -0.044,
+        "raw_feature_spearman_footystats_fouls": 0.17,
+        "raw_feature_spearman_championship_fouls": -0.012,
+        "footystats_n": 13992,
+        "championship_n": 275,
+        "adapter_orientation": "correct (verified, no home/away swap)",
+        "thin_history_ruled_out": "all preds had >=19 prior matches/team (median 32)",
+        "reds_immaterial": "yellows-only vs yellow+red changes FootyStats rho by 0.005",
+        "is_pipeline_bug": false,
+        "no_api_calls": true,
+        "no_model_change": true,
+        "no_rerun_with_adjustments": true
+      },
+      "followup": "CONFIRMED STRUCTURAL & CARDS-SPECIFIC by F017 (2026-08-29): the flat card signal replicates across Championship 24/25 and 23/24 (not just 25/26), so it is NOT a single-season artifact. And it is cards-specific: goals persistence transfers to Championship at corpus-comparable strength (xG->goals +0.114*/+0.149***), corners is corpus-level. F016's 'genuine finding not a bug' conclusion stands and is strengthened."
+    },
+    {
+      "id": "F017",
+      "date": "2026-08-29",
+      "title": "Championship card-signal failure is STRUCTURAL and CARDS-SPECIFIC \u2014 confirmed across 3 seasons; goals signal transfers fine",
+      "what_we_tried": "F016 found team card/foul predictors flat on Championship 25/26 (raw-feature Spearman, model-free) vs strongly positive on the 25-league corpus, but n=275 on one season was thin for a structural claim. Repeated the IDENTICAL model-free raw-feature correlation (rolling w5, point-in-time, feature=home+away team rolling rate, Spearman vs realized total; NO model/GLM/metric definitions) on Championship 24/25 (sn_2930227) and 23/24 (sn_343481) - full regular seasons, 552 matches each, every team exactly 46 appearances (perfectly balanced). Also measured corners and goals predictors to test whether flatness is cards-specific or league-wide. ~1,116 API requests (fixtures+stats, no odds). Per season, never pooled.",
+      "what_happened": "CARDS: yellow-card-rate->cards is corpus +0.177*** [.161,.193] but Championship -0.044 (25/26), +0.033 (24/25), +0.012 (23/24) - every CI includes 0 AND excludes corpus +0.177. foul-rate->cards: corpus +0.175*** vs Championship -0.010/-0.030/-0.041. Flat across all 3 seasons, both predictors. GOALS: xG-rate->goals corpus +0.099*** vs Championship +0.114* (25/26)/+0.057/+0.149*** (23/24); SOT-rate->goals corpus +0.107*** vs +0.050/+0.032/+0.135** (23/24) - goals persistence HOLDS at corpus-comparable strength. CORNERS: corpus +0.067*** vs +/-0/+0.087/+0.067 - corpus-level (weak everywhere). Self-check: script reproduces F016 exactly (corpus cards +0.177, 25/26 -0.044) before trusting new seasons.",
+      "conclusion": "STRUCTURAL, not a single-season artifact: the card/foul->cards signal is flat in all three Championship seasons tested, with every CI excluding the corpus value. And CARDS-SPECIFIC, not a league-wide loss of team signal: goals persistence transfers to Championship at ~corpus strength (so the 'squad churn erases all persistence' mechanism is too broad - it's disciplinary-specific). PRODUCT IMPLICATION: cards-based metrics require per-league validation before deployment and Championship specifically should be EXCLUDED for cards strategies; goals-based team signal does transfer. A signal surviving cumulative FDR across ~25 leagues is NOT evidence it holds in a 26th - generalization must be measured (cheaply, via this model-free raw-feature check) before modelling/odds spend. Does NOT change the F015 market-calibration/buy conclusion (model-independent, untouched). Strengthens F016 (genuine finding, not a bug).",
+      "category": "GENERALIZATION_LIMIT_STRUCTURAL",
+      "evidence": {
+        "report": "docs/championship_metric_generalization.md",
+        "script": "scripts/champ_raw_feature_corr.py",
+        "results": "data/thestatsapi/championship/_raw_feature_corr_by_season.json",
+        "cards_yellow_corpus": 0.177,
+        "cards_yellow_champ_2526": -0.044,
+        "cards_yellow_champ_2425": 0.033,
+        "cards_yellow_champ_2324": 0.012,
+        "cards_foul_corpus": 0.175,
+        "cards_foul_champ": [
+          -0.01,
+          -0.03,
+          -0.041
+        ],
+        "goals_xg_corpus": 0.099,
+        "goals_xg_champ": [
+          0.114,
+          0.057,
+          0.149
+        ],
+        "corners_corpus": 0.067,
+        "corners_champ": [
+          -0.001,
+          0.087,
+          0.067
+        ],
+        "seasons": [
+          "sn_3064530 25/26",
+          "sn_2930227 24/25",
+          "sn_343481 23/24"
+        ],
+        "per_team_appearances": "46 each (min=max=median=46, full balanced seasons)",
+        "method": "model-free raw-feature Spearman, rolling w5, point-in-time, per season never pooled",
+        "verdict": "structural + cards-specific",
+        "live_requests_this_task": 1116,
+        "cumulative_live_requests": 1884,
+        "monthly_remaining": 7544,
+        "no_odds": true,
+        "no_model": true
+      }
+    },
+    {
+      "id": "F018",
+      "date": "2026-08-29",
+      "title": "Multi-source discovery (24 new TheStatsAPI fields, 3 second-tier leagues): NO survivor \u2014 broader claim now tested, not just the narrow one",
+      "what_we_tried": "Every prior discovery (cards/goals/BTTS/corners) ran on FootyStats basic stats only, so prior negatives supported only the NARROW claim 'metrics from basic public stats don't beat the market'. For the first time we searched the ~24 TheStatsAPI-unique fields (blocked_shots, shots_inside/outside_box, big_chances(_missed), touches_in_penalty_area, final_third_entries, accurate_crosses/long_balls, the duels family, the defending family tackles/interceptions/clearances/ball_recoveries, goalkeeping, np_expected_goals, half-splits) across English Championship, French Ligue 2, Spanish La Liga 2. 6-step protocol: (1) BLOCKING merge-validation gate FootyStats<->TheStatsAPI on shared fields; (2) balanced corpus (Championship cached 3 seasons; freshly pulled Ligue2 comp_9777 25/26+24/25 = 306+306 and LaLiga2 comp_0976 25/26+24/25 = 462+462, full regular seasons so every team equal appearances) + per-league field-population; (3) per-league/target sanity gate (raw-feature model-free then model-based), search only where it passes; (4) discovery = small 2-feature Poisson GLM+L2 over point-in-time rolling features, bounded mechanism-motivated candidate pools, cumulative BH-FDR; (5) EV vs cached Bet365 odds + model-independent market BSS; (6) honest report. No model substitution/refit of the 7 metrics; held-out untouched. ~1,774 live requests (2 seasons + 18 fixtures + 1,534 stats + 218 odds).",
+      "what_happened": "STEP 1 merge PASSED decisively: on the Championship 24/25 overlap season (present in both sources) the crosswalk join agrees 95.0% (cards)/97.6% (corners) exact vs a 21.8% shuffled namespace-mismatch null (73pt gap); SOT/fouls lower agreement (82-89%) is provider measurement noise on subjective fields, not a join error (F016/D2 namespace issue was about raw match-ID matching, which this join does not use). STEP 3 GATE (search only where it passes): PASS = champ/goals (model rho +0.113), ligue2/cards (+0.141), laliga2/cards (+0.181); FAIL/untestable = champ/cards (EXPECTED per F017), champ/corners, ligue2/goals (weak SOT + xG absent), laliga2/goals (xG null in 24/25 blocks model confirmation), all corners. STEP 4: bounded family (cards 144 / goals 196 / corners 64 models x 2 lines); 968 NEW candidates over the 3 gate-passing cells; cumulative FDR family 22855 -> 23823; 484 computable candidates screened; ZERO survived BH correction. Strongest raw signals all LaLiga2/cards defensive-engagement (tackles+fouls Spearman +0.156 p<0.0001) but none clear the 23823-member family. 7-metric re-test: no demotions (already TESTED_NEGATIVE/priced-in; still non-survivors under enlarged family); LaLiga2 cards metrics detectable uncorrected (+0.18-0.19) but that is not the bar. STEP 5: no survivors to EV-test; the DECISIVE odds-coverage gap is that Bet365 offers NO total_cards market for Ligue2 (0/108) or LaLiga2 (1/110) - the two leagues where cards persistence exists have no cards market to monetize. Market BSS vs naive (model-independent): goals EPL-like (goals@2.5 +3.65%/+1.81%, orr 4.5-6.8%), corners@9.5 -0.50%/-2.56% (orr ~8%) - second-tier not measurably sloppier than EPL.",
+      "conclusion": "NO exploitable, multiple-testing-robust edge from the new fields in these leagues. This is a MUCH STRONGER negative than prior runs because the ~24 TheStatsAPI-unique fields were finally searched: the broader claim ('richer proprietary stats don't beat the market either'), not just the narrow one, is now tested and holds. TWO by-products worth held-out confirmation (NOT validated findings): (1) cards disciplinary-persistence is LEAGUE-SPECIFIC, not tier-specific - present in Ligue2 & LaLiga2, flat only in the Championship - which REFINES F017 (Championship-specific, not a down-tier property); (2) the strongest new-field signal is defensive-engagement -> cards in LaLiga2 (tackles/fouls/clearances/ball_recoveries), a near-miss under FDR with no Bet365 cards market to exploit. Wide CIs (per-cell n 300-900); a positive point estimate that doesn't clear the cumulative family is a hypothesis, not a result. Does NOT change F015 (market calibration/buy: second-tier EPL-like, down-tier thesis unsupported) or F016; refines F017. Held-out set untouched.",
+      "category": "GENUINE_NULL_FINDING",
+      "evidence": {
+        "report": "docs/multisrc_discovery_report.md",
+        "fetcher": "scripts/multisrc_fetch.py",
+        "discovery_script": "scripts/multisrc_step4_discovery.py",
+        "sanity_gate_script": "scripts/multisrc_step3_sanity_gate.py",
+        "merge_validation_script": "scripts/multisrc_step1_merge_validation.py",
+        "results": "data/results/multisrc_discovery.json",
+        "market_calibration": "data/results/multisrc_market_calibration.json",
+        "leagues": ["England Championship", "France Ligue 2 (comp_9777)", "Spain La Liga 2 (comp_0976)"],
+        "new_fields_searched_first_time": true,
+        "merge_gate_cards_exact_vs_null": [0.950, 0.218],
+        "gate_pass_cells": ["champ/goals", "ligue2/cards", "laliga2/cards"],
+        "new_candidates": 968,
+        "candidates_screened": 484,
+        "cumulative_fdr_before": 22855,
+        "cumulative_fdr_after": 23823,
+        "fdr_survivors": 0,
+        "best_near_miss": "laliga2/cards tackles_w10 + fouls_w10, Spearman +0.156, p<0.0001 (does not clear family 23823)",
+        "cards_persistence_league_specific": "present Ligue2 (+0.141) & LaLiga2 (+0.181); flat Championship (refines F017)",
+        "bet365_cards_market_present": {"ligue2": "0/108", "laliga2": "1/110"},
+        "market_bss_goals_2p5_pct": {"ligue2": 3.65, "laliga2": 1.81},
+        "market_bss_corners_9p5_pct": {"ligue2": -0.50, "laliga2": -2.56},
+        "bet365_sharp_caveat": "market-referenced results are a conservative lower bound vs softer books (bc.game); untested, not overstated; moot here (no survivors, no cards market)",
+        "seven_metric_demotions": 0,
+        "per_team_balance": "full regular seasons; Champ 24x46, Ligue2 18x34, LaLiga2 22x42",
+        "held_out_touched": false,
+        "no_model_substitution": true,
+        "live_requests_this_task": 1774,
+        "cumulative_live_requests": 3658,
+        "monthly_remaining": 5770,
+        "fetcher_committed": true
+      }
     }
   ]
 }
