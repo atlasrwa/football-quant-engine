@@ -277,10 +277,21 @@
         "merge_validation_script": "scripts/multisrc_step1_merge_validation.py",
         "results": "data/results/multisrc_discovery.json",
         "market_calibration": "data/results/multisrc_market_calibration.json",
-        "leagues": ["England Championship", "France Ligue 2 (comp_9777)", "Spain La Liga 2 (comp_0976)"],
+        "leagues": [
+          "England Championship",
+          "France Ligue 2 (comp_9777)",
+          "Spain La Liga 2 (comp_0976)"
+        ],
         "new_fields_searched_first_time": true,
-        "merge_gate_cards_exact_vs_null": [0.950, 0.218],
-        "gate_pass_cells": ["champ/goals", "ligue2/cards", "laliga2/cards"],
+        "merge_gate_cards_exact_vs_null": [
+          0.95,
+          0.218
+        ],
+        "gate_pass_cells": [
+          "champ/goals",
+          "ligue2/cards",
+          "laliga2/cards"
+        ],
         "new_candidates": 968,
         "candidates_screened": 484,
         "cumulative_fdr_before": 22855,
@@ -288,9 +299,18 @@
         "fdr_survivors": 0,
         "best_near_miss": "laliga2/cards tackles_w10 + fouls_w10, Spearman +0.156, p<0.0001 (does not clear family 23823)",
         "cards_persistence_league_specific": "present Ligue2 (+0.141) & LaLiga2 (+0.181); flat Championship (refines F017)",
-        "bet365_cards_market_present": {"ligue2": "0/108", "laliga2": "1/110"},
-        "market_bss_goals_2p5_pct": {"ligue2": 3.65, "laliga2": 1.81},
-        "market_bss_corners_9p5_pct": {"ligue2": -0.50, "laliga2": -2.56},
+        "bet365_cards_market_present": {
+          "ligue2": "0/108",
+          "laliga2": "1/110"
+        },
+        "market_bss_goals_2p5_pct": {
+          "ligue2": 3.65,
+          "laliga2": 1.81
+        },
+        "market_bss_corners_9p5_pct": {
+          "ligue2": -0.5,
+          "laliga2": -2.56
+        },
         "bet365_sharp_caveat": "market-referenced results are a conservative lower bound vs softer books (bc.game); untested, not overstated; moot here (no survivors, no cards market)",
         "seven_metric_demotions": 0,
         "per_team_balance": "full regular seasons; Champ 24x46, Ligue2 18x34, LaLiga2 22x42",
@@ -301,6 +321,68 @@
         "monthly_remaining": 5770,
         "fetcher_committed": true
       }
+    },
+    {
+      "id": "F019",
+      "date": "2026-08-30",
+      "title": "Same-game correlation-gap hypothesis: DISPROVEN at Step 1 \u2014 cards/corners/goals outcomes are near-zero (slightly NEGATIVE) correlated, uniform across profiles; market gap untestable (no cached same-game combo prices)",
+      "what_we_tried": "Tested whether same-game cross-market combinations (cards\u00d7corners, cards\u00d7goals, corners\u00d7goals) carry a real modelling gap: whether the TRUE joint probability is materially higher than a bookmaker's blanket correlation adjustment in identifiable match profiles, by enough to clear the same-game overround (15-25%). Step 1: measured model-free realized pairwise correlation (Pearson+Spearman) across the full corpus (15,359 complete matches, 15,335 with valid corners, 50 league-seasons), broken down by referee card tendency (look-ahead-free expanding-window terciles), tempo (dangerous-attacks terciles), competitive balance (|home_ppg-away_ppg| median split), and league. Every pooled correlation reported alongside a within-league-season z-scored version to rule out a Simpson/league-mix artifact. Pre-stated gate. Step 2 (only to serve Step 5): built the joint by coupling the VALIDATED CountRegressionModel marginals (Poisson/NB+L2+team shrinkage) with a Gaussian copula (latent rho=2 sin(pi rho_s/6)); chose copula over bivariate-Poisson because measured corr is near-zero AND negative and Holgate biv-Poisson only represents positive corr; marginal-recovery sanity gate. Step 3: naive P(A)xP(B) vs joint, plus market-coverage check. Zero API calls; NO refit/substitution of the marginals (F009 lesson); held-out untouched.",
+      "what_happened": "GATE FAILED AT STEP 1. Overall within-league-season Spearman: cards\u00d7corners -0.033 (95% CI [-0.049,-0.017]), cards\u00d7goals -0.030 [-0.046,-0.014], corners\u00d7goals -0.028 [-0.044,-0.012]; pooled -0.047/-0.043/-0.019; Pearson near-identical. All THREE are near-zero and NEGATIVE \u2014 the opposite sign to the hypothesis premise ('high-tempo physical match produces both cards and corners'). Multiple-testing family = 60 profile-bucket\u00d7pair correlation tests. Criterion A (overall positive & |rho|>=0.05): FALSE. Criterion B (any bucket positive, >=+0.10, BH-significant): FALSE \u2014 0 positive-and-BH-significant buckets; 6 negative-and-BH-significant. Profile variation is small under the within-league-season control (referee 0.02-0.06 range, tempo 0.01-0.02, balance up to 0.065 but both sides ~0/negative). The single positive-looking slice (league 12325 cards\u00d7corners +0.117, n=380) does NOT survive BH \u2014 the exact multiple-comparison false positive the brief anticipated. STEP 2 sanity gate PASSED (marginal recovery 1e-9 << 1e-6; copula validated to ~1e-16 vs scipy). STEP 3 naive-vs-joint (Over\u2229Over, cards O3.5/corners O9.5/goals O2.5): joint is BELOW naive everywhere \u2014 cards\u00d7corners naive 29.58% vs joint 28.94% (-0.64pp, -2.5% rel), cards\u00d7goals 30.70% vs 30.06% (-0.63pp), corners\u00d7goals 27.12% vs 26.84% (-0.29pp); max abs gap over 15k matches <=0.78pp; by-profile movement <0.05pp. MARKET COMPARISON UNTESTABLE: 0 of 420 cached odds files contain a same-game COMBINATION price for any target cross-market pair; only total_goals_btts (10) and correct_score (10) exist, both goals-internal. Single-market overrounds (Bet365): goals@2.5 5.3%, cards ~7.9-8.0%, corners ~8.2%.",
+      "conclusion": "DISPROVEN, and closed at the correlation-structure step. At the match-total level the cards/corners/goals outcomes are effectively independent (near-zero) with a slight NEGATIVE coupling, and this is uniform across referee/tempo/balance/league profiles once the league-mix artifact is controlled. There is no positive, material, multiple-testing-robust correlation for a joint model to exploit, so a bookmaker's blanket correlation adjustment is approximately correct \u2014 there is no gap. TWO standalone honest deliverables: (1) The market-gap question is FORMALLY UNTESTABLE with cached data \u2014 no same-game combination prices for the target pairs are cached \u2014 reported as a hard limitation, not worked around. (2) STEP 5 (required regardless): modelling the joint instead of multiplying marginals changes the combined Over\u2229Over probability by <1pp (~1-2.5% relative) and in the direction of a slightly LOWER joint; so P(A)xP(B) is a good approximation for these markets, wrong by ~1pp on the high side. Net of overround (>=8% per single leg, more for a combo), a <=0.8pp WRONG-SIGN gap cannot be an edge. Consistent with the project's accumulated finding that these markets' signal is already priced/at-par (F002/F003/F013). CAVEATS: model-free correlations are tight (CIs exclude the hypothesized values); copula divergence is descriptive (inherits validated marginals), computed on full corpus, not an edge claim; held-out untouched. Confirmation of the market-gap leg would require cached/fresh same-game combination prices, which do not exist in this dataset.",
+      "category": "HYPOTHESIS_DISPROVEN",
+      "evidence": {
+        "report": "docs/samegame_joint_correlation_report.md",
+        "step1_script": "scripts/samegame_step1_correlation.py",
+        "step1_gate_script": "scripts/samegame_step1b_gate.py",
+        "step2_joint_script": "scripts/samegame_step2_joint.py",
+        "step3_coverage_script": "scripts/samegame_step3_coverage.py",
+        "results": [
+          "data/results/samegame_step1_correlation.json",
+          "data/results/samegame_step1b_gate.json",
+          "data/results/samegame_step2_joint.json",
+          "data/results/samegame_step3_coverage.json"
+        ],
+        "n_matches": 15359,
+        "n_with_corners": 15335,
+        "n_league_seasons": 50,
+        "overall_within_spearman": {
+          "cards_x_corners": -0.033,
+          "cards_x_goals": -0.03,
+          "corners_x_goals": -0.028
+        },
+        "multiple_testing_family": 60,
+        "criterion_A_overall_positive": false,
+        "criterion_B_bucket_positive_material_bh": false,
+        "positive_and_bh_significant_buckets": 0,
+        "negative_and_bh_significant_buckets": 6,
+        "joint_sanity_gate_passed": true,
+        "max_marginal_recovery_error": 1e-09,
+        "naive_vs_joint_signed_pp": {
+          "cards_x_corners": -0.64,
+          "cards_x_goals": -0.63,
+          "corners_x_goals": -0.29
+        },
+        "same_game_combo_prices_target_pairs": 0,
+        "single_market_overround_pct": {
+          "goals_2p5": 5.25,
+          "cards": 8.0,
+          "corners": 8.2
+        },
+        "market_gap_testable": false,
+        "no_api_calls": true,
+        "no_model_substitution": true,
+        "held_out_touched": false
+      }
+    },
+    {
+      "id": "F020",
+      "date": "2026-08-30",
+      "title": "Raw-observable-stats engine (clean run, no prior metrics): sanity gate exposed a mis-specified feature instrument; after fixing it, the only FDR survivors were a pooling (Simpson) artifact with zero within-league significance. No genuine raw-stat edge found.",
+      "what_we_tried": "Built a market-independent prediction engine on RAW observable match stats only (goals/corners/cards/fouls/shots/SOT/xG/possession/dangerous-attacks + referee expanding card&foul rates), no reference to any prior discovered metric. Systematic mechanism-restricted search over size-1/2/3 feature sets (same-stat persistence, cross-stat, cross-team interaction, referee-conditioned, style/tempo) across 25 leagues x 9 target/line cells, Poisson/logistic with shrinkage, walk-forward point-in-time, sanity-gate-first, cumulative-FDR corrected against family 23,823. Also probed a heatmap spatial batch.",
+      "what_happened": "(1) The reused slot-based rolling features (team_a_*/team_b_*) were MIS-SPECIFIED as team instruments (they conflate team identity with home/away venue); the sanity gate correctly FAILED even pooled (xG->goals corr 0.004). Rebuilding team-consistent point-in-time features restored the known-good signal (xG->goals corr 0.109; pooled gate PASS for goals/cards/btts/clean-sheet). Corners failed the gate even pooled (persistence ~0) and was marked untestable, matching the known structural null. (2) Per-league, every gate failed (n~300/league gives train ~187/test ~217 - too little power); pooled the search tested 46 gate-passed candidates -> cumulative family 23,823 -> 23,869; 24 cleared the cumulative BH rank-1 threshold (p<=2.09e-6), led by referee-card-tendency x both-teams-foul-rate -> cards (pooled BSS +4.30%). (3) DECISIVE: per-league breakdown showed 0 of 24 pooled survivors are significant (p<0.05) in even ONE individual league, and cards-persistence pooled +2.27% is NEGATIVE in all 8 testable leagues (EPL -4.31%). The pooled significance is a between-league base-rate (Simpson) artifact, not within-league predictive signal. (4) Heatmap: all 4 candidate spatial endpoints returned 404 - no heatmap data exists on this plan; no batch run.",
+      "conclusion": "No genuine raw-stat predictive edge was found. The pooled FDR survivors are a pooling confound and were NOT promoted to held-out (held-out set untouched). The most valuable output is methodological: (a) the sanity gate again caught a mis-specified instrument (the 8th such catch); (b) per-league evaluation is mandatory - pooled search over leagues with different base rates manufactures spurious significance; (c) at ~300 matches/league the engine has insufficient power to detect the small (BSS ~1-2%) within-league signal that genuinely exists for cards/goals. Corners persistence remains ~0 (untestable). Heatmap spatial data is unavailable (endpoint 404). Cumulative FDR family updated 23,823 -> 23,869.",
+      "category": "discovery-null / methodology",
+      "evidence": "scripts/raw_stats_discovery.py, data/discovery/raw_stats_discovery.json (pooled_gates, per_league_consistency_of_pooled_survivors: n_pooled_survivors=24, n_sig_in_any_league=0), scripts/heatmap_fetch.py, data/thestatsapi/heatmap/_probe_result.json (all endpoints 404), docs/raw_stats_engine_report.md. Quota: 4 live requests spent on heatmap probe (monthly_remaining 5518 -> 5514); core run zero API."
     }
   ]
 }
