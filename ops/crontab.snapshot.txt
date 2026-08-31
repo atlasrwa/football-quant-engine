@@ -1,0 +1,10 @@
+# Atlas Watchtower — every 15 minutes (replaces GitHub Actions)
+0 */4 * * * cd /home/ubuntu && /usr/bin/python3 scripts/quarantine_forward_loop.py >> logs/forward_loop.log 2>&1
+# >>> pilotC forward loop (managed by install_pilotC_cron.sh) >>>
+# Full cycle every 6 hours: fetch odds -> predict+commit(before kickoff) -> settle+reveal
+0 */6 * * * cd /home/ubuntu && /home/ubuntu/.venv/bin/python scripts/pilotC_forward_loop.py >> /home/ubuntu/logs/pilotC_loop.log 2>&1
+# Daily settle-only pass so reveals bind promptly
+30 3 * * * cd /home/ubuntu && /home/ubuntu/.venv/bin/python scripts/pilotC_forward_loop.py --settle-only >> /home/ubuntu/logs/pilotC_loop.log 2>&1
+# Weekly health report (Mon 08:00 UTC)
+0 8 * * 1 cd /home/ubuntu && /home/ubuntu/.venv/bin/python scripts/pilotC_forward_loop.py --health >> /home/ubuntu/logs/pilotC_loop.log 2>&1
+# <<< pilotC forward loop <<<

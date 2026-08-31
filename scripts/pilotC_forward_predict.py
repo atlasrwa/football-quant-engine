@@ -90,9 +90,15 @@ def main():
 
     fx=json.load(open(f'{CH}/_pilotC_fixture_list.json'))['meta']
     ledger=AttestationLedger(commit_path=COMMIT_LEDGER, reveal_path=REVEAL_LEDGER)
+    # Idempotency: the ledger is append-only and does NOT dedup by prediction_id,
+    # so we must skip any pred_id already committed. Without this guard a re-run
+    # (this script rewrites the predictions file each time) would append duplicate
+    # commitment rows for the same fixture/market. Mirror Pipeline A's pattern.
+    already_committed=set(ledger.commitments_by_prediction().keys())
     now_ts=time.time()
     preds=[]
-    attest_stats={'committed':0,'unattestable_past_kickoff':0,'commit_failed':0}
+    attest_stats={'committed':0,'unattestable_past_kickoff':0,'commit_failed':0,
+                  'skipped_already_committed':0}
     for mid,info in fx.items():
         home,away=info.get('home'),info.get('away')
         if home not in corpus_teams or away not in corpus_teams: continue
@@ -131,6 +137,15 @@ def main():
                              'under_odds':ref['under_odds'],'fair_p':ref['fair_p'],
                              'overround':ref['overround']}
             row['reference_book']=ref_book
+            if pred_id in already_committed:
+                # Already committed in a prior run — do NOT re-commit (would append a
+                # duplicate ledger row). Reuse the existing commitment hash so the
+                # predictions file stays consistent with the ledger.
+                row['attested']=True
+                row['commitment_hash']=ledger.commitments_by_prediction()[pred_id]['commitment_hash']
+                attest_stats['skipped_already_committed']+=1
+                preds.append(row)
+                continue
             try:
                 res=ledger.commit(prediction_id=pred_id, fixture_id=str(mid),
                                   model=f"{market}_{line}", kickoff_unix=float(info['ts']),
@@ -167,9 +182,11 @@ def main():
              'committed_pre_kickoff':attest_stats['committed'],
              'unattestable_past_kickoff':attest_stats['unattestable_past_kickoff'],
              'commit_failed':attest_stats['commit_failed'],
+             'skipped_already_committed':attest_stats['skipped_already_committed'],
              'commit_ledger':COMMIT_LEDGER,
              'note':'Only pre-kickoff predictions are attestable. Past-kickoff fixtures '
-                    'cannot be retroactively attested and are never backdated.'},
+                    'cannot be retroactively attested and are never backdated. '
+                    'Re-runs skip already-committed predictions (idempotent).'},
          'n_predictions':len(preds),
          'n_mappable_fixtures':len(set(r['match_id'] for r in preds)),
          'betfair_vs_bet365_disagreement_pp':{
@@ -181,6 +198,7 @@ def main():
     print(f"predictions={len(preds)} over {out['n_mappable_fixtures']} fixtures")
     print(f"attestation: committed={attest_stats['committed']} "
           f"unattestable_past_kickoff={attest_stats['unattestable_past_kickoff']} "
+          f"skipped_already_committed={attest_stats['skipped_already_committed']} "
           f"failed={attest_stats['commit_failed']}")
     print(f"betfair vs bet365 disagreement: {out['betfair_vs_bet365_disagreement_pp']}")
     # show a few example edges vs Betfair
@@ -189,6 +207,7 @@ def main():
         bf=r['books']['betfair-exchange']
         print(f"  {r['market']:7s} {str(r['line']):5s} {r['home'][:14]:14s} v {r['away'][:14]:14s} model={r['model_p']:.2f} betfair_fair={bf['fair_p']:.2f} edge={bf['edge_pp']:+.1f}pp")
     print('saved', OUT)
+    return attest_stats
 
 
 if __name__=='__main__':
