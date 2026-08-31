@@ -1,0 +1,66 @@
+{
+  "title": "On-demand fixture edge scanner — pre-registered evaluation plan",
+  "version": 1,
+  "experiment_id": "scanner_v1",
+  "registered_before_settlement": true,
+  "structural_separation": "This experiment is STRUCTURALLY SEPARATE from the pre-registered Pilot C sample. Its flags live in their own files (data/forward/scanner_flagged_lines.jsonl, scanner_commitments.jsonl, scanner_reveals.jsonl, scanner_settled_log.json), its prediction ids use the 'flagged:' namespace (never 'pilotC:' or 'manual:'), and no Pilot C reader references any scanner filename. Enforced by tests/test_scanner_exclusion.py. Scanner flags never enter Pilot C's settled sample, per-cell counts toward 385, weeks-to-readout, or health report.",
+  "registration_note": "This plan is committed BEFORE any scanner flag is settled and BEFORE any settlement analysis is run. Its SHA-256 is recorded in data/forward/scanner_preregistration_ledger.jsonl via the tamper-evident attestation ledger (src/research/forward/attestation_ledger.attest_document). No post-hoc changes are permitted; a revised plan must be a NEW versioned registration with its own commitment, and the change must be disclosed. The threshold below is NOT to be revised after seeing results.",
+
+  "status_disclaimer": "A single fixture demonstrates nothing about edge. The accumulated evidence in this project is that the model has NOT beaten market prices in systematic testing (median edge 0-1pp against a 2-4pp threshold; performance degrades where model-vs-market divergence is largest, disagreement-decile correlation -0.56). Every scanner flag is a HYPOTHESIS being tested, not a recommendation. No edge conclusion may be drawn before the stopping condition below is met.",
+
+  "no_stake_sizing": "This tool never emits stake sizing, Kelly fractions, or bankroll recommendations. With no demonstrated edge any staking output is fabricated confidence, and an uncalibrated Kelly implementation was already flagged as a real liability in this project (R06).",
+
+  "primary_question": {
+    "statement": "Across all corners/cards/goals/BTTS lines the API offers, when the scanner flags a line (meaningful edge NET OF THE MARGIN HURDLE against the sharpest available reference AND passing the reliability filter), does that flag win at a rate that produces positive realized return when executed at the best available price across all books?",
+    "operationalisation": "For each settled flag, realized return is the flat-unit P&L of backing the flagged side at the best-price book's odds captured at flag time. The primary statistic is mean realized return per unit staked across all settled flags, with a 95% bootstrap CI (10000 resamples, seed=42).",
+    "primary_success_criterion": "Realized-return 95% bootstrap CI lower bound > 0 at the pre-committed stopping point. This is the whole-experiment question; it is NOT claimed per market/line (the flag count is far too small to power per-cell claims, and per-cell mining is prohibited).",
+    "what_would_falsify": "If, at the stopping point, the realized-return CI lower bound is <= 0, the scanner has FAILED to demonstrate that its flags capture edge, and it will be reported as such. Flags flagged only against high-margin soft books are the least trustworthy and are reported as a separate secondary family, never pooled into the primary claim."
+  },
+
+  "reference_and_execution_roles": {
+    "note": "Fair price and best price are DISTINCT roles and are never conflated.",
+    "fair_reference_book_priority": ["betfair-exchange", "pinnacle"],
+    "fair_reference_rationale": "Betfair exchange (~1% overround) is the sharpest available reference and the benchmark the model is measured against; Pinnacle is the fallback sharp reference. Soft books (bet365 and any others) are used ONLY as execution venues and to measure book disagreement, never as the fair benchmark for the primary claim.",
+    "best_price_definition": "For the flagged side, the highest decimal odds offered across all available books, identified explicitly with the offering book. Realized edge is model probability vs fair probability, executed at the best price.",
+    "soft_book_only_handling": "A flag whose only reference is a high-margin soft book is labelled soft-book-only and reported in a SEPARATE secondary family; it is excluded from the primary success claim."
+  },
+
+  "flag_definition": {
+    "markets_scanned": ["goals", "corners", "cards", "btts"],
+    "lines_scanned": "EVERY line each book offers for these markets (iterated from the odds payload, not a fixed cell set). Note: the model has fitted coefficients only for a subset of lines; a flag on a line the model was not fitted for is NOT produced (no extrapolation of a model to an unfitted line).",
+    "ranking": "Flags are ranked by edge NET OF THE MARGIN HURDLE, never by raw edge. The margin hurdle per line is derived from that line's actual overround (required_prob_edge = overround / 2, the per-side share of the book's take). net_edge = raw_edge_pp - required_edge_pp.",
+    "flag_criteria_both_required": {
+      "meaningful_net_edge": "net_edge >= 1.0 pp (raw edge exceeds the line's own margin hurdle by at least 1pp). This is a display/logging threshold for what counts as a flag; it is fixed here and not revised after seeing results.",
+      "reliability_filter": "MANDATORY. Both teams must have at least the minimum corpus history (min_matches_per_team below), and the model's rate estimate must be non-extreme (model probability within [0.05, 0.95], i.e. not driven to an extreme by thin history). The disagreement-decile analysis found the model performs WORST where it diverges most from the market (correlation -0.56), driven by extreme estimates from thin histories, so a flag that fails reliability is recorded separately and excluded from the primary sample."
+    },
+    "min_matches_per_team": 8,
+    "reliability_prob_bounds": [0.05, 0.95]
+  },
+
+  "recorded_features_not_filters": {
+    "cross_book_configuration": "For every flag, the model's position relative to the books is recorded (model agrees with sharp book both disagree with soft; model disagrees with both books which agree; model between the books; books disagree substantially and model sides with one). This is a recorded feature, analysed over settled flags, not a filter.",
+    "price_movement_to_kickoff": "The flagged price is re-captured shortly before kickoff (cache-first) and the movement recorded, so a lost flag can be attributed to 'model wrong' vs 'flagged price disappeared'. Movement toward the model's number is recorded as weak pre-settlement evidence.",
+    "broad_vs_rich": "Each flag records both the broad and rich model probability and whether they materially disagree."
+  },
+
+  "minimum_sample_and_stopping_rule": {
+    "minimum_settled_flags_before_evaluation": 100,
+    "minimum_rationale": "This is an experiment on our own fixtures at far smaller scale than Pilot C's 385/cell. n=100 settled flags is the minimum at which the whole-experiment realized-return CI is not dominated by single-flag noise; it is a pooled cross-market count, deliberately NOT a per-cell count (per-cell claims are not made). It is a modest, honest floor, not a powered per-market test.",
+    "type": "fixed-sample, no peeking",
+    "rule": "The primary realized-return statistic and its CI are computed ONCE, when at least 100 flags are SETTLED (fixture finished, graded, revealed against a pre-kickoff commitment). Before that threshold the scorecard may show operational counts (flags made, settled, hit rate by descriptive breakdown) but the primary realized-return CI is the confirmatory readout and its sign is not to be used to stop early.",
+    "peeking_prohibition": "We will not check after eight fixtures, see something encouraging or discouraging, and conclude from noise. The settled-flag count triggers the evaluation, not the results.",
+    "threshold_immutability": "The 100-flag threshold and the 1.0pp net-edge flag criterion are fixed by this registration and are NOT revised after seeing any results. A change requires a new versioned registration with its own hash, disclosed as such."
+  },
+
+  "scorecard_breakdowns_committed": {
+    "note": "The running scorecard reports the whole-experiment hit rate and realized return, broken down descriptively by the dimensions below. These breakdowns are DESCRIPTIVE/EXPLORATORY (the flag count cannot power per-dimension claims); only the pooled primary-family realized-return CI is confirmatory.",
+    "dimensions": [
+      "near-fair reference (Betfair/Pinnacle) vs soft-book-only",
+      "broad model vs rich model",
+      "cross-book configuration (the four positions above)",
+      "whether the flagged best price held to kickoff"
+    ]
+  },
+
+  "publication_rule": "If any scanner output is shared publicly, ALL settled flags are reported whether they won or lost. Publishing only the hits is what makes tipster records worthless."
+}
