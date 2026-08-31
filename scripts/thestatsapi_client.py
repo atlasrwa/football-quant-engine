@@ -57,7 +57,12 @@ def _load_budget_state():
         with open(BUDGET_STATE) as f:
             return json.load(f)
     return {"total_live_requests": 0, "last_monthly_remaining": None,
-            "last_ratelimit_remaining": None, "updated_at": None}
+            "last_ratelimit_remaining": None,
+            # API-authoritative monthly quota fields (from x-monthly-quota-* headers).
+            # These, not total_live_requests (a lifetime local counter), are the source
+            # of truth for the low-quota alert.
+            "last_monthly_limit": None, "last_monthly_reset": None,
+            "monthly_quota_updated_at": None, "updated_at": None}
 
 
 def _save_budget_state(state):
@@ -149,6 +154,15 @@ def get_json(path, params=None, cache_key=None, allow_status=(200,)):
         state["last_monthly_remaining"] = quota["monthly_remaining"]
     if quota["ratelimit_remaining"] is not None:
         state["last_ratelimit_remaining"] = quota["ratelimit_remaining"]
+    # Record the API-authoritative monthly quota window (limit + reset) so the
+    # heartbeat's low-quota alert reads the server's own accounting, not the local
+    # lifetime request counter (which drifts from the API's monthly reset cycle).
+    if quota["monthly_limit"] is not None:
+        state["last_monthly_limit"] = quota["monthly_limit"]
+    if quota["monthly_reset"] is not None:
+        state["last_monthly_reset"] = quota["monthly_reset"]
+    if quota["monthly_remaining"] is not None or quota["monthly_reset"] is not None:
+        state["monthly_quota_updated_at"] = datetime.now(timezone.utc).isoformat()
     _save_budget_state(state)
     _log_usage({"path": path, "params": params or {}, "cache_key": cache_key,
                 "http_status": status, "quota": quota})
