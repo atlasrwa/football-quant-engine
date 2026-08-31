@@ -3,13 +3,23 @@
 
 This is the cron-triggered entry point for Pilot C. It runs the full cycle:
 
-    refresh fixture statuses -> fetch multi-book odds (covered-league biased)
-    -> predict + COMMIT before kickoff -> SETTLE + REVEAL finished fixtures
+    discover upcoming covered-league fixtures (INFLOW) -> refresh fixture statuses
+    -> fetch multi-book odds (covered-league biased) -> predict + COMMIT before
+    kickoff -> SETTLE + REVEAL finished fixtures
 
 It is a thin orchestrator: the real work lives in the existing, tested modules
-(pilotC_multibook_fetch, pilotC_forward_predict, pilotC_settle). This file wires
-them into one idempotent, quota-capped, crash-recoverable, LOUDLY-observable loop —
-mirroring the corners/cards Pipeline A (scripts/quarantine_forward_loop.py).
+(pilotC_fixture_discovery, pilotC_multibook_fetch, pilotC_forward_predict,
+pilotC_settle). This file wires them into one idempotent, quota-capped,
+crash-recoverable, LOUDLY-observable loop — mirroring the corners/cards Pipeline A
+(scripts/quarantine_forward_loop.py).
+
+FIXTURE DISCOVERY (Phase 0) is the inflow that keeps the loop from draining its
+fixture universe to empty. Without it, cron fires every 6 hours, finds nothing, and
+reports zero activity indefinitely — a working-looking system with no fixtures. It
+runs on a weekly/twice-weekly cadence (Mon/Thu by default), is cache-first, and is
+restricted to the four covered leagues (Championship, EPL, Ligue 2, La Liga 2). Its
+three outcomes — found / empty / failed — are reported distinctly in the health
+report so a silent inflow failure can never masquerade as a quiet-but-healthy week.
 
 DISTINCT FROM PIPELINE A. Pilot C is a separate experiment with its own
 pre-registration and its own ledger (data/forward/pilotC_commitments.jsonl /
@@ -38,9 +48,13 @@ Usage:
     python3 scripts/pilotC_forward_loop.py --health        # emit health report only
 
 Cron (see also install: scripts/install_pilotC_cron.sh):
-    0 */6 * * *  cd /home/ubuntu && /usr/bin/python3 scripts/pilotC_forward_loop.py            >> logs/pilotC_loop.log 2>&1
-    30 3 * * *   cd /home/ubuntu && /usr/bin/python3 scripts/pilotC_forward_loop.py --settle-only >> logs/pilotC_loop.log 2>&1
-    0 8 * * 1    cd /home/ubuntu && /usr/bin/python3 scripts/pilotC_forward_loop.py --health    >> logs/pilotC_loop.log 2>&1
+    # NOTE: use the VENV python (/home/ubuntu/.venv/bin/python) — Pilot C's predictor
+    # AND the discovery settleability gate both need sklearn, which lives only in the
+    # venv, NOT in /usr/bin/python3. Running under system python silently DISABLES the
+    # corpus/settleability gate. install_pilotC_cron.sh wires the venv interpreter.
+    0 */6 * * *  cd /home/ubuntu && /home/ubuntu/.venv/bin/python scripts/pilotC_forward_loop.py              >> logs/pilotC_loop.log 2>&1
+    30 3 * * *   cd /home/ubuntu && /home/ubuntu/.venv/bin/python scripts/pilotC_forward_loop.py --settle-only >> logs/pilotC_loop.log 2>&1
+    0 8 * * 1    cd /home/ubuntu && /home/ubuntu/.venv/bin/python scripts/pilotC_forward_loop.py --health      >> logs/pilotC_loop.log 2>&1
 """
 
 from __future__ import annotations
@@ -83,6 +97,17 @@ RUN_LOG = DATA_FWD / "pilotC_run_log.jsonl"
 HEALTH_REPORT = Path("/home/ubuntu/data/discovery/pilotC_health_report.json")
 COMMIT_LEDGER = DATA_FWD / "pilotC_commitments.jsonl"
 REVEAL_LEDGER = DATA_FWD / "pilotC_reveals.jsonl"
+# Discovery status file (written by pilotC_fixture_discovery) — the health report
+# reads this to distinguish "found" / "empty" / "failed", which must never look alike.
+DISCOVERY_STATUS = Path("/home/ubuntu/data/discovery/pilotC_discovery_status.json")
+# Discovery runs on a subset of cycles (it is a weekly/twice-weekly concern, not
+# every 6 hours). By default run discovery when the current UTC weekday is Monday or
+# Thursday (twice weekly) — cheap and cache-first, so a stray extra run is harmless.
+# Set PILOTC_DISCOVERY_EVERY_RUN=1 to discover on every cycle (also fine — cache-first).
+DISCOVERY_WEEKDAYS = {0, 3}  # Mon, Thu
+# If the last successful discovery is older than this, discovery is considered STALE
+# and the health report flags it (the loop is running but inflow may have stopped).
+DISCOVERY_STALE_HOURS = int(os.environ.get("PILOTC_DISCOVERY_STALE_HOURS", "96"))
 
 # Per-run hard cap on LIVE API requests. Covered upcoming fixtures are ~10/week
 # across 3 books = ~30 requests, plus settlement fetches (2/finished fixture). A
@@ -106,12 +131,31 @@ PREREG_CELLS = [
 ]
 TARGET_N_PER_CELL = 385
 ORIGINAL_WEEKS_PROJECTION = 38.5  # from the hardening plan, for slippage comparison
+# The hardening plan's projection assumed ~10 covered fixtures/week of inflow. We
+# measure the ACTUAL inflow (from the discovery window) and compare, because the
+# ~38.5-week estimate depends on this assumption holding.
+ASSUMED_COVERED_INFLOW_PER_WEEK = float(
+    os.environ.get("PILOTC_ASSUMED_INFLOW_PER_WEEK", "10"))
+# Loop commit start (first commitment made under the scheduler). The "first full
+# week after discovery is live" ratio is the real steady-state measure — the 0.18
+# in the plan reflects the UNSCHEDULED gap, not steady-state performance.
+DISCOVERY_LIVE_SINCE = os.environ.get("PILOTC_DISCOVERY_LIVE_SINCE")  # ISO date, optional
 
 _FINISHED = {"finished", "complete", "completed", "ft", "full-time", "ended"}
 
 
 def _now_iso():
     return datetime.now(timezone.utc).isoformat()
+
+
+def _iso_to_unix(s):
+    """Parse an ISO-8601 timestamp to a unix float, tolerant of a trailing Z."""
+    if not s:
+        return None
+    try:
+        return datetime.fromisoformat(str(s).replace("Z", "+00:00")).timestamp()
+    except Exception:
+        return None
 
 
 def _persist_run_log(record: dict) -> None:
@@ -196,6 +240,67 @@ def _audit_missed_windows(stats: dict) -> None:
 
 # ── phase runners (each isolated for crash-safety) ───────────────────────────
 
+def _should_discover() -> bool:
+    """Whether to run fixture discovery this cycle.
+
+    Discovery is a weekly/twice-weekly concern (fixtures cluster on weekends), not a
+    per-6-hour one. Default: run on Mon/Thu. It is cheap and cache-first, so running
+    it more often is harmless — override with PILOTC_DISCOVERY_EVERY_RUN=1.
+    """
+    if os.environ.get("PILOTC_DISCOVERY_EVERY_RUN") == "1":
+        return True
+    return datetime.now(timezone.utc).weekday() in DISCOVERY_WEEKDAYS
+
+
+def _phase_discover(stats: dict) -> None:
+    """Discover upcoming covered-league fixtures and merge them into the universe.
+
+    This is the inflow that keeps the loop from draining the universe to empty. It is
+    isolated for crash-safety: a discovery failure is logged LOUDLY (a stalled inflow
+    is exactly the silent failure this whole loop exists to prevent) but does not stop
+    the rest of the cycle from processing whatever is already in the universe.
+    """
+    import pilotC_fixture_discovery as disc
+    try:
+        d = disc.discover(dry_run=False)
+        stats["discovery"] = {
+            "state": d.get("state"),
+            "upcoming_in_window_seen": d.get("upcoming_fixtures_in_window_seen"),
+            "covered_settleable_in_window": d.get("covered_settleable_fixtures_in_window"),
+            "added": d.get("fixtures_added"),
+            "refreshed": d.get("fixtures_refreshed_in_place"),
+            "universe_size_after": d.get("universe_size_after"),
+            "requests_used": d.get("requests", {}).get("live_requests_used_this_run"),
+            "projected_weekly_requests": d.get("requests", {}).get("projected_weekly_request_consumption"),
+        }
+        state = d.get("state")
+        if state == "found":
+            logger.info("DISCOVERY: found %s upcoming covered fixtures in window "
+                        "(added=%s, refreshed=%s, universe=%s, requests=%s).",
+                        d.get("covered_settleable_fixtures_in_window"),
+                        d.get("fixtures_added"), d.get("fixtures_refreshed_in_place"),
+                        d.get("universe_size_after"),
+                        d.get("requests", {}).get("live_requests_used_this_run"))
+        elif state == "empty":
+            logger.warning("DISCOVERY: ran and reached the API but found ZERO settleable "
+                           "covered fixtures in the %s-day window. This CAN be legitimate "
+                           "(e.g. international break) — it is NOT a failure, but watch for "
+                           "it persisting.", d.get("window_days"))
+        else:  # failed
+            logger.error("DISCOVERY FAILED: did not complete a clean discovery run "
+                         "(errors=%s). Inflow to the fixture universe may have STOPPED — "
+                         "investigate before the universe drains.", d.get("errors", [])[:3])
+            stats["errors"].append(f"discovery failed: {d.get('errors', [])[:2]}")
+    except SystemExit as e:
+        stats["discovery"] = {"state": "failed", "reason": f"SystemExit {e.code} (quota cap)"}
+        logger.error("DISCOVERY stopped (SystemExit %s) — likely quota cap. Inflow at risk.", e.code)
+        stats["errors"].append(f"discovery SystemExit {e.code}")
+    except Exception as e:
+        stats["discovery"] = {"state": "failed", "reason": f"{type(e).__name__}: {str(e)[:120]}"}
+        logger.error("DISCOVERY crashed: %s — inflow at risk.", str(e)[:200])
+        stats["errors"].append(f"discovery crash: {type(e).__name__}: {str(e)[:120]}")
+
+
 def _phase_fetch_odds(stats: dict) -> None:
     """Fetch multi-book odds for covered-league fixtures, cache-first and capped."""
     os.environ["PILOTC_COVERED_ONLY"] = "1"
@@ -259,6 +364,86 @@ def _phase_settle(stats: dict) -> None:
 
 
 # ── health report (weekly early-warning) ─────────────────────────────────────
+
+def _discovery_health() -> dict:
+    """Interpret the discovery status file into a health block.
+
+    The whole point is that these three outcomes are NOT interchangeable:
+      * healthy   — discovery ran and found upcoming covered fixtures ("found")
+      * empty     — discovery ran, reached the API, found zero in the window
+                    ("empty"); possibly legitimate (international break)
+      * broken    — discovery did not run or failed ("failed"), OR the last
+                    successful discovery is STALE (older than DISCOVERY_STALE_HOURS)
+                    — inflow may have stopped and the universe will drain
+    A missing status file entirely is treated as "broken" (never run).
+    """
+    if not DISCOVERY_STATUS.exists():
+        return {
+            "discovery_state": "never_ran",
+            "interpretation": "broken",
+            "note": "No discovery status file — fixture discovery has never run. "
+                    "The universe will drain and the loop will report zero activity. "
+                    "Run scripts/pilotC_fixture_discovery.py / check the cron entry.",
+            "last_discovery": None,
+            "age_hours": None,
+        }
+    try:
+        d = json.load(open(DISCOVERY_STATUS))
+    except Exception as e:
+        return {"discovery_state": "unreadable", "interpretation": "broken",
+                "note": f"discovery status file unreadable: {str(e)[:80]}",
+                "last_discovery": None, "age_hours": None}
+
+    state = d.get("state", "failed")
+    gen = d.get("generated")
+    age_hours = None
+    try:
+        if gen:
+            age_hours = round(
+                (datetime.now(timezone.utc)
+                 - datetime.fromisoformat(gen)).total_seconds() / 3600.0, 1)
+    except Exception:
+        pass
+
+    stale = (age_hours is not None and age_hours > DISCOVERY_STALE_HOURS)
+    if state == "found":
+        interp = "stale_but_last_run_found" if stale else "healthy"
+    elif state == "empty":
+        interp = "empty_possibly_legitimate" if not stale else "stale_empty"
+    else:
+        interp = "broken"
+
+    note = {
+        "healthy": "Discovery ran and found upcoming covered fixtures. Inflow is live.",
+        "stale_but_last_run_found": f"Last discovery FOUND fixtures but was {age_hours}h "
+            f"ago (> {DISCOVERY_STALE_HOURS}h) — it may have stopped running. Check cron.",
+        "empty_possibly_legitimate": "Discovery ran and reached the API but found ZERO "
+            "settleable covered fixtures in the window. Can be legitimate (international "
+            "break, off-season). NOT the same as a failure — but watch for persistence.",
+        "stale_empty": f"Discovery last ran {age_hours}h ago and found zero — both stale "
+            "AND empty; likely not running. Check cron.",
+        "broken": "Discovery DID NOT complete (failed/never-ran). Inflow has stopped; the "
+            "universe will drain and the loop will fall silent. Investigate immediately.",
+    }[interp]
+
+    return {
+        "discovery_state": state,
+        "interpretation": interp,
+        "healthy": interp == "healthy",
+        "last_discovery": gen,
+        "age_hours": age_hours,
+        "stale_threshold_hours": DISCOVERY_STALE_HOURS,
+        "window_days": d.get("window_days"),
+        "upcoming_in_window_seen": d.get("upcoming_fixtures_in_window_seen"),
+        "covered_settleable_in_window": d.get("covered_settleable_fixtures_in_window"),
+        "fixtures_added_last_run": d.get("fixtures_added"),
+        "per_league": d.get("per_league"),
+        "requests_last_run": (d.get("requests") or {}).get("live_requests_used_this_run"),
+        "projected_weekly_request_consumption": (d.get("requests") or {}).get(
+            "projected_weekly_request_consumption"),
+        "note": note,
+    }
+
 
 def _per_cell_settled_counts() -> dict:
     """Count settled+revealed observations per pre-registered cell."""
@@ -331,8 +516,90 @@ def emit_health_report() -> dict:
         if observed_weekly_settle > 0:
             weeks_to_readout_observed = round(remaining_to_power / observed_weekly_settle, 1)
 
+    # ── inflow analysis (the binding constraint early on) ────────────────────
+    # Weeks-to-readout is gated by the SLOWER of two rates: how fast covered fixtures
+    # arrive (inflow) and how fast they settle. This early, the settle rate is a noisy
+    # extrapolation from a handful of reveals; the inflow rate is the meaningful signal
+    # and it is exactly the ~10/week assumption the ~38.5-week estimate rests on.
+    #
+    # Observed inflow = settleable covered fixtures seen in the discovery window,
+    # scaled to a weekly rate. This is fixtures/week; each fixture yields observations
+    # across the pre-registered market cells (a fixture contributes to goals/btts/etc).
+    disc_status = {}
+    try:
+        if DISCOVERY_STATUS.exists():
+            disc_status = json.load(open(DISCOVERY_STATUS))
+    except Exception:
+        disc_status = {}
+    settleable_in_window = disc_status.get("covered_settleable_fixtures_in_window")
+    window_days = disc_status.get("window_days") or 10
+    observed_inflow_per_week = None
+    if settleable_in_window is not None and window_days:
+        observed_inflow_per_week = round(settleable_in_window / (window_days / 7.0), 1)
+    inflow_holds = None
+    inflow_shortfall_pct = None
+    if observed_inflow_per_week is not None and ASSUMED_COVERED_INFLOW_PER_WEEK > 0:
+        inflow_holds = observed_inflow_per_week >= ASSUMED_COVERED_INFLOW_PER_WEEK
+        inflow_shortfall_pct = round(
+            100.0 * (ASSUMED_COVERED_INFLOW_PER_WEEK - observed_inflow_per_week)
+            / ASSUMED_COVERED_INFLOW_PER_WEEK, 1)
+
+    # First-full-week ratio: commitments made vs covered fixtures that became
+    # available in the 7 days since discovery went live. This is the steady-state
+    # measure the task asks for — distinct from the all-time ratio which is dragged
+    # down by the unscheduled-gap backlog and the 22 permanently-missed windows.
+    first_week_ratio = None
+    committed_first_week = None
+    available_first_week = None
+    live_since_unix = None
+    try:
+        if DISCOVERY_LIVE_SINCE:
+            live_since_unix = datetime.fromisoformat(DISCOVERY_LIVE_SINCE).timestamp()
+    except Exception:
+        live_since_unix = None
+    if live_since_unix is None:
+        # Fall back to the earliest discovery-log entry as "discovery live since".
+        try:
+            log_path = Path("/home/ubuntu/data/discovery/pilotC_discovery_log.jsonl")
+            if log_path.exists():
+                first = None
+                for ln in open(log_path):
+                    r = json.loads(ln)
+                    g = r.get("generated")
+                    if g:
+                        first = g
+                        break
+                if first:
+                    live_since_unix = datetime.fromisoformat(first).timestamp()
+        except Exception:
+            live_since_unix = None
+    if live_since_unix is not None:
+        week_end = live_since_unix + 7 * 86400
+        committed_first_week = sum(
+            1 for c in commitments
+            if c.get("committed_at") and _iso_to_unix(c["committed_at"]) is not None
+            and live_since_unix <= _iso_to_unix(c["committed_at"]) < week_end)
+        # available in first week ~ inflow rate over one week (best estimate we have)
+        if observed_inflow_per_week is not None:
+            available_first_week = observed_inflow_per_week
+            denom = committed_first_week + max(available_first_week - committed_first_week, 0)
+            if denom > 0:
+                first_week_ratio = round(committed_first_week / denom, 3)
+
+    # Revised weeks-to-readout using the INFLOW rate (fixtures/week -> observations).
+    # Each committed+settled fixture contributes to multiple cells; conservatively we
+    # track the per-cell target across 9 cells. Inflow-limited weeks = remaining
+    # cell-observations / (inflow_per_week * cells_touched_per_fixture ~ len(cells)).
+    weeks_to_readout_inflow = None
+    if observed_inflow_per_week and observed_inflow_per_week > 0:
+        # obs added per week ~ inflow fixtures * cells each fixture can populate
+        obs_per_week = observed_inflow_per_week * len(PREREG_CELLS)
+        remaining_obs = max(TARGET_N_PER_CELL * len(PREREG_CELLS) - total_settled, 0)
+        weeks_to_readout_inflow = round(remaining_obs / obs_per_week, 1)
+
     quota = _quota_remaining()
     ledger_ok, ledger_problems = _verify_ledger_chain()
+    discovery = _discovery_health()
 
     report = {
         "generated": _now_iso(),
@@ -340,6 +607,7 @@ def emit_health_report() -> dict:
                   "No edge conclusion may be drawn from unsettled fixtures.",
         "ledger_chain_verifies": ledger_ok,
         "ledger_problems": ledger_problems[:5],
+        "discovery_health": discovery,
         "attestation": {
             "total_commitments": len(commitments),
             "total_reveals": len(reveals),
@@ -364,11 +632,38 @@ def emit_health_report() -> dict:
         },
         "timeline": {
             "observed_weekly_settle_rate": observed_weekly_settle,
-            "estimated_weeks_to_readout_at_observed_rate": weeks_to_readout_observed,
+            "estimated_weeks_to_readout_at_observed_settle_rate": weeks_to_readout_observed,
+            "settle_rate_note": "Weeks-to-readout from the SETTLE rate is a noisy "
+                                "extrapolation until many fixtures have settled; treat "
+                                "it as indicative only while total_settled is small.",
+            "observed_covered_inflow_per_week": observed_inflow_per_week,
+            "assumed_covered_inflow_per_week": ASSUMED_COVERED_INFLOW_PER_WEEK,
+            "inflow_assumption_holds": inflow_holds,
+            "inflow_shortfall_pct_vs_assumption": inflow_shortfall_pct,
+            "estimated_weeks_to_readout_at_observed_inflow": weeks_to_readout_inflow,
             "original_projection_weeks": ORIGINAL_WEEKS_PROJECTION,
+            "inflow_note": "Inflow is the binding constraint early on. The ~"
+                           f"{ORIGINAL_WEEKS_PROJECTION}-week projection assumes ~"
+                           f"{ASSUMED_COVERED_INFLOW_PER_WEEK:g} covered fixtures/week. "
+                           "If observed inflow is materially below that, the timeline "
+                           "slips — surfaced here, not at the readout date.",
             "slippage_note": "If weeks-to-readout at the observed rate exceeds the "
                              f"original ~{ORIGINAL_WEEKS_PROJECTION}-week projection, "
                              "collection is running slower than planned.",
+        },
+        "ratio_recovery": {
+            "all_time_committed_over_available_ratio": ratio,
+            "all_time_ratio_note": "Dragged down by the unscheduled-gap backlog and the "
+                "22 permanently-missed windows (sunk, never backdated). NOT the "
+                "steady-state measure.",
+            "first_full_week_ratio": first_week_ratio,
+            "first_week_committed": committed_first_week,
+            "first_week_available_estimate": available_first_week,
+            "discovery_live_since": (datetime.fromtimestamp(live_since_unix, timezone.utc)
+                                     .isoformat() if live_since_unix else None),
+            "first_week_ratio_note": "This is the real measure of steady-state capture "
+                "once discovery+scheduler are live. Should recover toward 1.0; the 0.18 "
+                "baseline reflects the unscheduled gap, not steady-state performance.",
         },
         "quota": {
             "monthly_remaining": quota,
@@ -385,6 +680,33 @@ def emit_health_report() -> dict:
                 len(commitments), len(reveals), total_settled,
                 TARGET_N_PER_CELL * len(PREREG_CELLS), n_cells_at_target,
                 ratio, missed_windows, quota, ledger_ok)
+    # Discovery is the inflow — its three states must be distinguishable and loud.
+    logger.info("HEALTH DISCOVERY: state=%s interpretation=%s last_run=%s age=%sh "
+                "settleable_in_window=%s added_last_run=%s",
+                discovery.get("discovery_state"), discovery.get("interpretation"),
+                discovery.get("last_discovery"), discovery.get("age_hours"),
+                discovery.get("covered_settleable_in_window"),
+                discovery.get("fixtures_added_last_run"))
+    # Inflow vs assumption + first-week ratio recovery — surface slippage early.
+    logger.info("HEALTH INFLOW: observed=%s/wk assumed=%s/wk holds=%s shortfall=%s%% "
+                "weeks_to_readout(inflow)=%s vs original~%s | first_week_ratio=%s "
+                "(committed=%s) all_time_ratio=%s",
+                observed_inflow_per_week, ASSUMED_COVERED_INFLOW_PER_WEEK, inflow_holds,
+                inflow_shortfall_pct, weeks_to_readout_inflow, ORIGINAL_WEEKS_PROJECTION,
+                first_week_ratio, committed_first_week, ratio)
+    if inflow_holds is False:
+        logger.warning("INFLOW BELOW PROJECTION: observed ~%s covered fixtures/week vs "
+                       "assumed ~%s (%s%% short). The ~%s-week readout estimate depends "
+                       "on this — timeline is slipping.", observed_inflow_per_week,
+                       ASSUMED_COVERED_INFLOW_PER_WEEK, inflow_shortfall_pct,
+                       ORIGINAL_WEEKS_PROJECTION)
+    interp = discovery.get("interpretation")
+    if interp == "broken":
+        logger.error("DISCOVERY BROKEN: %s", discovery.get("note"))
+    elif interp in ("stale_but_last_run_found", "stale_empty"):
+        logger.warning("DISCOVERY STALE: %s", discovery.get("note"))
+    elif interp == "empty_possibly_legitimate":
+        logger.warning("DISCOVERY EMPTY (may be legitimate): %s", discovery.get("note"))
     if not ledger_ok:
         logger.error("LEDGER CHAIN FAILED VERIFICATION: %s", ledger_problems[:3])
     if ratio is not None and ratio < 0.5 and covered_available:
@@ -432,6 +754,28 @@ def run_cycle(settle_only: bool = False) -> dict:
         logger.warning("LOW QUOTA at start: %d remaining (< %d).", quota_before, LOW_QUOTA_WARN)
 
     if not settle_only:
+        # 0. Discover upcoming covered-league fixtures (the inflow) BEFORE fetching
+        #    odds, so this cycle's fetch/predict can act on anything newly discovered.
+        #    Runs on a weekly/twice-weekly cadence (see _should_discover); cache-first.
+        if _should_discover():
+            logger.info("Phase 0: discover upcoming covered-league fixtures "
+                        "(merge into universe, cache-first)...")
+            try:
+                _phase_discover(stats)
+                d = stats.get("discovery", {})
+                logger.info("  discovery state=%s settleable_in_window=%s added=%s "
+                            "universe=%s requests=%s",
+                            d.get("state"), d.get("covered_settleable_in_window"),
+                            d.get("added"), d.get("universe_size_after"),
+                            d.get("requests_used"))
+            except Exception as e:
+                logger.error("Phase 0 (discovery) crashed: %s", str(e)[:200])
+                stats["errors"].append(f"discovery phase: {type(e).__name__}: {str(e)[:150]}")
+        else:
+            logger.info("Phase 0: discovery skipped this cycle (runs Mon/Thu; set "
+                        "PILOTC_DISCOVERY_EVERY_RUN=1 to force). Universe unchanged.")
+            stats["discovery"] = {"state": "skipped_this_cycle"}
+
         # 1. Fetch odds (cache-first, covered-league biased, capped).
         logger.info("Phase 1: fetch multi-book odds for covered-league fixtures "
                     "(cap=%d requests, <=%d fixtures)...",
