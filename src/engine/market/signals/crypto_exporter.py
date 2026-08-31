@@ -1,6 +1,6 @@
 """Crypto-native signal exporter for Telegram/Discord communities.
 
-Formats live signals into webhook payloads with Kelly fraction stake sizing
+Formats live signals into webhook payloads with risk-unit stake tiers
 and SHA-256 Proof-of-Alpha hashes for on-chain verification.
 """
 
@@ -15,9 +15,9 @@ from typing import Any
 
 import httpx
 
-from src.engine.evaluator import Signal
-from src.engine.metrics.bookie import BookieMetrics
-from src.engine.validator import ValidationVerdict
+from src.engine.analysis.evaluator import Signal
+from src.engine.market.metrics.bookie import BookieMetrics
+from src.engine.analysis.validator import ValidationVerdict
 
 logger = logging.getLogger(__name__)
 
@@ -115,16 +115,17 @@ class RiskUnitCalculator:
         (0.00, 0.25),
     )
 
-    def compute(self, edge: float) -> tuple[float, str]:
-        """Map |edge| to a stake fraction and a human-readable tier label.
+    def compute(self, condition_strength: float) -> tuple[float, str]:
+        """Map |condition_strength| to a stake fraction and a human-readable tier label.
 
         Args:
-            edge: Model-reported edge (can be negative; magnitude is used).
+            condition_strength: Hypothesis-layer condition strength (can be negative;
+                magnitude is used).
 
         Returns:
             (stake_fraction, tier_label), e.g. (0.005, "0.50U").
         """
-        magnitude = abs(edge)
+        magnitude = abs(condition_strength)
         units = self.TIERS[-1][1]
         for threshold, tier_units in self.TIERS:
             if magnitude >= threshold:
@@ -211,9 +212,9 @@ class CryptoSignalExporter:
         ts = int(time.time())
 
         # R06: subscriber-facing stake is a heuristic risk-unit tier derived
-        # from edge magnitude — NOT a Kelly fraction derived from an
+        # from condition strength magnitude — NOT a Kelly fraction derived from an
         # uncalibrated win-probability guess. See RiskUnitCalculator.
-        stake_fraction, stake_tier = self._risk_tier.compute(signal.edge)
+        stake_fraction, stake_tier = self._risk_tier.compute(signal.condition_strength)
 
         # Proof of Alpha hash
         verdict_json = json.dumps({"passed": verdict.passed, "p_value": verdict.p_value}) if verdict else "{}"
@@ -224,7 +225,7 @@ class CryptoSignalExporter:
 
         payload = SignalPayload(
             match_info=self._format_match_info(match_info),
-            market_line=f"{signal.direction} (edge: {signal.edge:.1%})",
+            market_line=f"{signal.direction} (strength: {signal.condition_strength:.1%})",
             direction=signal.direction,
             recommended_stake=round(stake_fraction, 4),
             edge_pct=metrics.vig_adjusted_edge_pct,

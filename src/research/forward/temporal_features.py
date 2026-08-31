@@ -54,7 +54,6 @@ _POST_MATCH_FEATURES = frozenset({
     "dangerous_attacks_home", "dangerous_attacks_away",
     "possession_home", "possession_away",
     "home_xg", "away_xg",
-    "ppda_home", "ppda_away",
     "result",
 })
 

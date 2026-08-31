@@ -7,14 +7,14 @@ import logging
 
 import pytest
 
-from src.engine.evaluator import Signal
-from src.engine.metrics.bookie import BookieMetrics
-from src.engine.signals.community_broadcaster import (
+from src.engine.analysis.evaluator import Signal
+from src.engine.market.metrics.bookie import BookieMetrics
+from src.engine.market.signals.community_broadcaster import (
     BroadcastConfig,
     CommunityBroadcaster,
 )
-from src.engine.signals.crypto_exporter import SignalPayload
-from src.engine.signals.deeplinker import DeepLink
+from src.engine.market.signals.crypto_exporter import SignalPayload
+from src.engine.market.signals.deeplinker import DeepLink
 
 # Fixed clock outside the default quiet-hours window (1am-6am UTC), used by
 # tests that aren't specifically exercising quiet-hours behavior — otherwise
@@ -53,7 +53,7 @@ class TestCommunityBroadcaster:
             match_index=0,
             strategy_name="Test Strategy",
             direction="OVER",
-            edge=0.12,
+            condition_strength=0.12,
             odds=2.00,
         )
 
@@ -182,10 +182,10 @@ class TestCommunityBroadcaster:
         broadcaster = CommunityBroadcaster(config=config, clock=_NOON_UTC_CLOCK)
 
         big_edge_signal = Signal(
-            match_index=0, strategy_name="Big Edge", direction="OVER", edge=0.12, odds=2.0
+            match_index=0, strategy_name="Big Strength", direction="OVER", condition_strength=0.12, odds=2.0
         )
         small_edge_signal = Signal(
-            match_index=1, strategy_name="Small Edge", direction="OVER", edge=0.01, odds=2.0
+            match_index=1, strategy_name="Small Strength", direction="OVER", condition_strength=0.01, odds=2.0
         )
         match_data = [{"home_team": "A", "away_team": "B"}, {"home_team": "C", "away_team": "D"}]
 

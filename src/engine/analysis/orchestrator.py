@@ -19,14 +19,14 @@ import pandas as pd
 from src.domain.backtest_run import BacktestRun
 from src.domain.provenance import DatasetVersion, FeatureVersion, ModelVersion
 from src.domain.provenance_builder import ProvenanceBuilder
-from src.engine.backtest import (
+from src.engine.analysis.backtest import (
     StrategyIdentityInfo,
     XBacktestConfig,
     XBacktestResult,
     XMetricBacktester,
 )
-from src.engine.evaluator import Strategy, StrategyEvaluator
-from src.engine.strategy_identity import StrategyIdentity, StrategyRegistry
+from src.engine.analysis.evaluator import Strategy, StrategyEvaluator
+from src.engine.analysis.strategy_identity import StrategyIdentity, StrategyRegistry
 
 logger = logging.getLogger(__name__)
 

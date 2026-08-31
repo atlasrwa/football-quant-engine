@@ -29,10 +29,10 @@ from typing import TYPE_CHECKING
 
 from src.domain.prediction import PredictionEvent, PredictionSource
 from src.domain.settlement import Settlement, SettlementOutcome
-from src.engine.fdr import QuarantineTracker
+from src.engine.analysis.fdr import QuarantineTracker
 
 if TYPE_CHECKING:
-    from src.engine.settlement_service import PredictionSettlementService
+    from src.engine.market.settlement_service import PredictionSettlementService
 
 logger = logging.getLogger(__name__)
 

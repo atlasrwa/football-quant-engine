@@ -15,15 +15,15 @@ from typing import Any, Callable, List
 
 import httpx
 
-from src.engine.evaluator import Signal
-from src.engine.metrics.bookie import BookieMetrics
-from src.engine.signals.crypto_exporter import (
+from src.engine.analysis.evaluator import Signal
+from src.engine.market.metrics.bookie import BookieMetrics
+from src.engine.market.signals.crypto_exporter import (
     CryptoSignalExporter,
     ProofOfAlpha,
     RiskUnitCalculator,
     SignalPayload,
 )
-from src.engine.signals.deeplinker import DeepLink, DeepLinker
+from src.engine.market.signals.deeplinker import DeepLink, DeepLinker
 
 logger = logging.getLogger(__name__)
 
@@ -150,15 +150,15 @@ class CommunityBroadcaster:
             ts = int(time.time())
             proof_hash = ProofOfAlpha.generate_hash(strategy_json, ts, "{}")
 
-            # R06: heuristic risk-unit tier from edge magnitude — NOT a
+            # R06: heuristic risk-unit tier from condition strength magnitude — NOT a
             # probability-derived Kelly stake. See RiskUnitCalculator.
-            stake_fraction, stake_tier = self._risk_tier.compute(signal.edge)
+            stake_fraction, stake_tier = self._risk_tier.compute(signal.condition_strength)
 
             # Build payload — validation state comes from authoritative source
             # R05: NEVER hardcode fdr_validated=True
             payload = SignalPayload(
                 match_info=self._format_match(match_info),
-                market_line=f"{signal.direction} (edge: {signal.edge:.1%})",
+                market_line=f"{signal.direction} (strength: {signal.condition_strength:.1%})",
                 direction=signal.direction,
                 recommended_stake=stake_fraction,
                 edge_pct=metrics.vig_adjusted_edge_pct if metrics else 0.0,

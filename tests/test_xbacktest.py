@@ -6,14 +6,14 @@ import numpy as np
 import pandas as pd
 import pytest
 
-from src.engine.backtest import (
+from src.engine.analysis.backtest import (
     FoldMetrics,
     XBacktestConfig,
     XBacktestResult,
     XBetRecord,
     XMetricBacktester,
 )
-from src.engine.evaluator import Condition, Strategy, StrategyEvaluator
+from src.engine.analysis.evaluator import Condition, Strategy, StrategyEvaluator
 
 
 class TestXBacktestConfig:

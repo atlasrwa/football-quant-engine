@@ -14,7 +14,7 @@ from typing import List, Tuple
 import numpy as np
 from scipy import stats
 
-from src.engine.backtest import XBetRecord
+from src.engine.analysis.backtest import XBetRecord
 
 logger = logging.getLogger(__name__)
 

@@ -9,7 +9,7 @@ from pathlib import Path
 
 import pytest
 
-from src.engine.data.footystats_api import (
+from src.engine.analysis.data.footystats_api import (
     DiskCache,
     FootyStatsAPIClient,
     TokenBucket,

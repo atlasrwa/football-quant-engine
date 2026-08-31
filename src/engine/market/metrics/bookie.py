@@ -12,8 +12,8 @@ from typing import List
 
 import numpy as np
 
-from src.engine.backtest import XBetRecord
-from src.engine.friction import MarketFrictionConfig
+from src.engine.analysis.backtest import XBetRecord
+from src.engine.analysis.friction import MarketFrictionConfig
 
 logger = logging.getLogger(__name__)
 

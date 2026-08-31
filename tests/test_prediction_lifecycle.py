@@ -22,7 +22,7 @@ import pytest
 from src.domain.factories import PredictionEventFactory, SettlementFactory
 from src.domain.prediction import PredictionEvent, PredictionSource, PredictionStatus
 from src.domain.settlement import Settlement, SettlementOutcome
-from src.engine.evaluator import Signal
+from src.engine.analysis.evaluator import Signal
 
 
 def _make_pending_prediction(
@@ -277,7 +277,7 @@ class TestPredictionLifecycleSemantics:
 
     def test_live_prediction_born_pending(self):
         """Live signal predictions are created in PENDING status."""
-        signal = Signal(match_index=0, strategy_name="s1", direction="OVER", edge=0.1, odds=2.0)
+        signal = Signal(match_index=0, strategy_name="s1", direction="OVER", condition_strength=0.1, odds=2.0)
         pe = PredictionEventFactory.from_signal(
             signal=signal, strategy_id="strat-1", strategy_version=1,
             strategy_content_hash="a" * 64, match_id=100,
@@ -303,7 +303,7 @@ class TestPredictionLifecycleSemantics:
 
     def test_paper_trade_prediction_born_pending(self):
         """Paper trade predictions are PENDING (awaiting real match outcome)."""
-        signal = Signal(match_index=0, strategy_name="s1", direction="UNDER", edge=0.08, odds=1.9)
+        signal = Signal(match_index=0, strategy_name="s1", direction="UNDER", condition_strength=0.08, odds=1.9)
         pe = PredictionEventFactory.from_signal(
             signal=signal, strategy_id="strat-1", strategy_version=1,
             strategy_content_hash="a" * 64, match_id=200,

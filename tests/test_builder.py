@@ -6,8 +6,8 @@ import json
 
 import pytest
 
-from src.engine.builder import StrategyBuilder
-from src.engine.evaluator import Condition, Strategy
+from src.engine.analysis.builder import StrategyBuilder
+from src.engine.analysis.evaluator import Condition, Strategy
 
 
 class TestStrategyBuilder:
@@ -265,7 +265,7 @@ class TestStrategyBuilder:
 
     def test_compatible_with_evaluator(self):
         """Built strategy works with StrategyEvaluator.load_strategies_from_list."""
-        from src.engine.evaluator import StrategyEvaluator
+        from src.engine.analysis.evaluator import StrategyEvaluator
 
         builder = self._make_builder()
         data = builder.to_dict()

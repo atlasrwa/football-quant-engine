@@ -13,7 +13,7 @@ from typing import Dict, List, Tuple
 import numpy as np
 import pandas as pd
 
-from src.engine.evaluator import Signal, Strategy, StrategyEvaluator
+from src.engine.analysis.evaluator import Signal, Strategy, StrategyEvaluator
 
 logger = logging.getLogger(__name__)
 
@@ -211,12 +211,52 @@ class XMetricBacktester:
     ) -> Tuple[List[XBetRecord], list]:
         """Execute a single fold: evaluate strategies on test data, settle bets.
 
+        Two-phase architecture:
+        1. Hypothesis layer: generate signals (conditions + edge, via evaluator)
+        2. Market layer: apply odds bounds, settle bets against outcomes
+
         Returns:
             Tuple of (bet_records, prediction_events).
         """
-        # Evaluate signals on test window only
+        # Phase 1: Hypothesis layer — get signals from evaluator
+        # (evaluator.evaluate() now internally separates hypothesis/market phases)
         signals = self.evaluator.evaluate(test_df.reset_index(drop=True), strategies)
 
+        # Phase 2: Market layer — odds filtering, bet settlement, PredictionEvent emission
+        bets, predictions = self._settle_signals_against_market(
+            signals, test_df, strategies, outcome_col, line_col
+        )
+
+        return bets, predictions
+
+    def _settle_signals_against_market(
+        self,
+        signals: List[Signal],
+        test_df: pd.DataFrame,
+        strategies: List[Strategy],
+        outcome_col: str,
+        line_col: str,
+    ) -> Tuple[List[XBetRecord], list]:
+        """MARKET LAYER: Settle hypothesis signals against market odds and outcomes.
+
+        This method ONLY:
+        - Applies odds bounds (min_odds, max_odds from config)
+        - Determines bet outcome (WIN/LOSS/VOID) from actual results
+        - Computes profit/loss based on odds
+        - Emits PredictionEvent objects if strategy identity available
+
+        It NEVER evaluates strategy conditions or generates probabilities.
+
+        Args:
+            signals: Output from evaluator (hypothesis signals with odds attached).
+            test_df: Test DataFrame with outcome and odds data.
+            strategies: Strategy list.
+            outcome_col: Column for actual match outcome.
+            line_col: Column for market line.
+
+        Returns:
+            Tuple of (bet_records, prediction_events).
+        """
         bets: List[XBetRecord] = []
         predictions: list = []  # PredictionEvent objects
 
@@ -237,8 +277,8 @@ class XMetricBacktester:
                 row, signal, odds, outcome_col, line_col
             )
 
-            # Model edge (NOT CLV — real CLV requires closing odds which are unavailable)
-            model_edge_pct = signal.edge * 100.0
+            # Model condition strength (NOT market edge — real edge requires odds comparison)
+            model_edge_pct = signal.condition_strength * 100.0
 
             bet = XBetRecord(
                 match_index=int(test_df.index[signal.match_index]),

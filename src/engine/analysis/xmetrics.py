@@ -124,7 +124,11 @@ class XMetricEngine:
         Formula per side:
             xO = η·(attacker_offsides × (opponent_high_line_index / league_baseline))
 
-        Proxy: high_line_index = 1/ppda (lower PPDA → higher line → more offsides).
+        Proxy: high_line_index = 1/corners_avg_against (teams conceding fewer
+        corners play a higher line → opponents get caught offside more often).
+        This replaces the previous PPDA-based proxy which is unavailable from
+        FootyStats.
+
         League baseline = expanding mean of all HLI values seen up to each row
         (sorted by date_unix). This ensures no temporal leakage — the baseline
         for match T uses only information available at or before T.
@@ -136,13 +140,14 @@ class XMetricEngine:
             sort_idx = df["date_unix"].argsort()
             df = df.iloc[sort_idx].reset_index(drop=True)
 
-        # Compute high-line indices for both sides
-        ppda_home = self._safe_col(df, "ppda_home")
-        ppda_away = self._safe_col(df, "ppda_away")
+        # Compute high-line indices for both sides using corners_avg_against.
+        # Low corners conceded → high pressing line → more offsides traps.
+        corners_against_home = self._safe_col(df, "corners_avg_against_home")
+        corners_against_away = self._safe_col(df, "corners_avg_against_away")
 
         with np.errstate(divide="ignore", invalid="ignore"):
-            hli_home = np.where(ppda_home != 0, 1.0 / ppda_home, 0.0)
-            hli_away = np.where(ppda_away != 0, 1.0 / ppda_away, 0.0)
+            hli_home = np.where(corners_against_home > 0, 1.0 / corners_against_home, 0.0)
+            hli_away = np.where(corners_against_away > 0, 1.0 / corners_against_away, 0.0)
 
         # Expanding-window league baseline: for each row i, baseline is the
         # mean of all HLI values from rows 0..i-1 (look-ahead free).

@@ -12,7 +12,7 @@ from dataclasses import dataclass
 from typing import List
 from urllib.parse import quote, urlencode
 
-from src.engine.evaluator import Signal
+from src.engine.analysis.evaluator import Signal
 
 logger = logging.getLogger(__name__)
 

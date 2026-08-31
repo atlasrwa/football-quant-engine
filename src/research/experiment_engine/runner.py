@@ -298,18 +298,64 @@ class ExperimentRunner:
     ) -> tuple[list[ExperimentPrediction], ObservationCounts]:
         """Generate predictions for test data.
 
+        Two-phase architecture:
+        1. Hypothesis layer: evaluate conditions + generate model probabilities
+        2. Market layer: attach odds, compute EV, apply filters
+
         Only generates predictions where hypothesis conditions are met.
         """
-        predictions: list[ExperimentPrediction] = []
+        # Phase 1: Hypothesis layer — probabilities only, no odds
+        raw_predictions, hyp_counts = self._generate_hypothesis_predictions(
+            test_data, hypothesis, market, model
+        )
+
+        # Phase 2: Market layer — attach odds and compute EV
+        predictions = self._apply_market_layer_to_predictions(
+            raw_predictions, test_data, hypothesis, market, config
+        )
+
+        # Merge counts (market layer may exclude additional rows via odds filter)
+        excluded_odds = sum(
+            1 for p in predictions if p.ev_status == EVStatus.INVALID_ODDS
+        )
+        counts = ObservationCounts(
+            total_rows=hyp_counts.total_rows,
+            eligible_rows=hyp_counts.eligible_rows,
+            missing_rows=hyp_counts.missing_rows,
+            invalid_rows=hyp_counts.invalid_rows,
+            insufficient_history_rows=hyp_counts.insufficient_history_rows,
+            excluded_odds_filter=excluded_odds,
+        )
+        return predictions, counts
+
+    def _generate_hypothesis_predictions(
+        self,
+        test_data: list[dict[str, Any]],
+        hypothesis: ExperimentHypothesis,
+        market: ResearchMarket,
+        model: ProbabilityModel,
+    ) -> tuple[list[dict[str, Any]], ObservationCounts]:
+        """HYPOTHESIS LAYER: Generate probability predictions from model.
+
+        This method ONLY:
+        - Evaluates hypothesis conditions against features
+        - Resolves actual outcomes from market definition
+        - Runs the probability model to get P(outcome | features)
+
+        It NEVER reads odds fields, computes EV, fair odds, or implied probability.
+
+        Returns:
+            Tuple of (raw_prediction_dicts, observation_counts).
+            Each dict has: match_id, date_unix, model_probability, actual_outcome,
+            is_hit, direction, conditions_met, data_index.
+        """
+        raw_predictions: list[dict[str, Any]] = []
         missing = 0
         invalid = 0
         insufficient_history = 0
-        excluded_odds = 0
         eligible = 0
 
-        thresholds = config.thresholds
-
-        for d in test_data:
+        for idx, d in enumerate(test_data):
             match_id = d.get("match_id", 0)
             date_unix = d.get("date_unix", 0)
 
@@ -368,7 +414,60 @@ class ExperimentRunner:
 
             eligible += 1
 
-            # Handle odds
+            raw_predictions.append({
+                "data_index": idx,
+                "match_id": match_id,
+                "date_unix": date_unix,
+                "model_probability": model_prob,
+                "actual_outcome": actual_outcome,
+                "is_hit": is_hit,
+                "direction": hypothesis.direction,
+            })
+
+        counts = ObservationCounts(
+            total_rows=len(test_data),
+            eligible_rows=eligible,
+            missing_rows=missing,
+            invalid_rows=invalid,
+            insufficient_history_rows=insufficient_history,
+        )
+        return raw_predictions, counts
+
+    def _apply_market_layer_to_predictions(
+        self,
+        raw_predictions: list[dict[str, Any]],
+        test_data: list[dict[str, Any]],
+        hypothesis: ExperimentHypothesis,
+        market: ResearchMarket,
+        config: ExperimentConfig,
+    ) -> list[ExperimentPrediction]:
+        """MARKET LAYER: Attach odds and compute EV for hypothesis predictions.
+
+        This method ONLY:
+        - Reads market odds from match data
+        - Computes implied probability, fair odds, and expected value
+        - Applies odds filters
+
+        It NEVER evaluates hypothesis conditions or runs the probability model.
+
+        Args:
+            raw_predictions: Output from _generate_hypothesis_predictions.
+            test_data: Original test match dicts (for odds lookup).
+            hypothesis: Hypothesis (for direction).
+            market: Market definition (for odds field names).
+            config: Experiment config (for odds mode and thresholds).
+
+        Returns:
+            List of ExperimentPrediction with full market data attached.
+        """
+        predictions: list[ExperimentPrediction] = []
+        thresholds = config.thresholds
+
+        for pred in raw_predictions:
+            idx = pred["data_index"]
+            d = test_data[idx]
+
+            # Default: no market data
             ev_status = EVStatus.MISSING_ODDS
             market_odds: Optional[float] = None
             fair_odds: Optional[float] = None
@@ -396,43 +495,34 @@ class ExperimentRunner:
 
                         # Apply odds filter
                         if chosen_odds < thresholds.min_odds or chosen_odds > thresholds.max_odds:
-                            excluded_odds += 1
                             # Still record prediction but without EV
                             ev_status = EVStatus.INVALID_ODDS
                         else:
                             market_odds = chosen_odds
                             implied_prob = 1.0 / chosen_odds if chosen_odds > 0 else None
-                            fair_odds_val = probability_to_fair_odds(model_prob)
+                            fair_odds_val = probability_to_fair_odds(pred["model_probability"])
                             fair_odds = fair_odds_val
-                            expected_value = model_prob * chosen_odds - 1.0
+                            expected_value = pred["model_probability"] * chosen_odds - 1.0
                             ev_status = EVStatus.VALID
 
             predictions.append(ExperimentPrediction(
-                match_id=match_id,
-                prediction_timestamp=date_unix,
-                information_timestamp=date_unix,
-                outcome_timestamp=date_unix,  # post-match
-                model_probability=model_prob,
-                actual_outcome=actual_outcome,
-                is_hit=is_hit,
+                match_id=pred["match_id"],
+                prediction_timestamp=pred["date_unix"],
+                information_timestamp=pred["date_unix"],
+                outcome_timestamp=pred["date_unix"],  # post-match
+                model_probability=pred["model_probability"],
+                actual_outcome=pred["actual_outcome"],
+                is_hit=pred["is_hit"],
                 market_odds=market_odds,
                 fair_odds=fair_odds,
                 implied_probability=implied_prob,
                 expected_value=expected_value,
                 ev_status=ev_status,
-                direction=hypothesis.direction,
+                direction=pred["direction"],
                 conditions_met=True,
             ))
 
-        counts = ObservationCounts(
-            total_rows=len(test_data),
-            eligible_rows=eligible,
-            missing_rows=missing,
-            invalid_rows=invalid,
-            insufficient_history_rows=insufficient_history,
-            excluded_odds_filter=excluded_odds,
-        )
-        return predictions, counts
+        return predictions
 
     def _extract_features(
         self, match_dict: dict[str, Any], feature_ids: tuple[str, ...]

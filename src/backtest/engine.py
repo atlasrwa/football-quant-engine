@@ -157,21 +157,75 @@ class WalkForwardEngine:
     ) -> None:
         """Process a single test match: signal → stake → bet.
 
+        Two-phase architecture:
+        1. Hypothesis layer: generate signal (prediction + edge)
+        2. Market layer: look up odds, compute stake, place bet
+
         Args:
             features: Match feature vector.
             bet_logger: Logger to record the bet.
             team_goal_history: Team goal history for variance calc.
         """
-        # Generate signal
-        signal = self._signal_gen.generate(features)
-        if signal is None:
+        # ═══════════════════════════════════════════════════════════════
+        # PHASE 1: HYPOTHESIS LAYER — signal generation (no odds)
+        # ═══════════════════════════════════════════════════════════════
+        prediction, edge = self._generate_signal(features)
+        if prediction is None:
             return  # Edge below threshold, skip
 
-        prediction, edge = signal
+        # ═══════════════════════════════════════════════════════════════
+        # PHASE 2: MARKET LAYER — odds lookup, staking, bet placement
+        # ═══════════════════════════════════════════════════════════════
+        self._place_bet(features, prediction, edge, bet_logger, team_goal_history)
 
-        # Compute variance for staking (use generic history keyed by match_id)
-        # Since MatchFeatures doesn't carry team names, approximate variance
-        # from the referee_volatility_index as a proxy
+    def _generate_signal(
+        self, features: MatchFeatures
+    ) -> tuple:
+        """HYPOTHESIS LAYER: Generate a directional signal with edge estimate.
+
+        This method ONLY:
+        - Runs the signal generator (composite score from features)
+        - Produces a prediction direction and edge magnitude
+
+        It NEVER reads odds, computes stake, or places bets.
+
+        Args:
+            features: Match feature vector.
+
+        Returns:
+            Tuple of (prediction, edge) or (None, None) if edge below threshold.
+        """
+        signal = self._signal_gen.generate(features)
+        if signal is None:
+            return None, None
+        return signal  # (prediction: str, edge: float)
+
+    def _place_bet(
+        self,
+        features: MatchFeatures,
+        prediction: str,
+        edge: float,
+        bet_logger: BetLogger,
+        team_goal_history: Dict[str, deque],
+    ) -> None:
+        """MARKET LAYER: Look up odds, compute stake, and place bet.
+
+        This method ONLY:
+        - Reads odds from the match features
+        - Computes volatility-adjusted stake
+        - Determines actual outcome for settlement
+        - Logs the bet
+
+        It NEVER generates signals or computes probabilities.
+
+        Args:
+            features: Match feature vector (for odds and outcome data).
+            prediction: Direction from hypothesis layer ("OVER" or "UNDER").
+            edge: Edge magnitude from hypothesis layer.
+            bet_logger: Logger to record the bet.
+            team_goal_history: Team goal history for variance calc.
+        """
+        # Compute variance for staking
         match_variance = features.referee_volatility_index
         stake = self._staking.compute_stake(match_variance)
 

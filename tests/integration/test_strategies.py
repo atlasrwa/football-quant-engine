@@ -14,8 +14,8 @@ from src.persistence.pg_strategy_repository import (
     compute_content_hash,
     strategy_to_definition,
 )
-from src.engine.evaluator import Condition, Strategy
-from src.engine.strategy_identity import StrategyRegistry
+from src.engine.analysis.evaluator import Condition, Strategy
+from src.engine.analysis.strategy_identity import StrategyRegistry
 
 
 pytestmark = pytest.mark.asyncio

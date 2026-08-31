@@ -16,7 +16,7 @@ from typing import List
 
 from src.domain.prediction import PredictionEvent, PredictionSource, PredictionStatus
 from src.domain.settlement import Settlement, SettlementOutcome
-from src.engine.evaluator import Signal
+from src.engine.analysis.evaluator import Signal
 
 
 class PredictionEventFactory:
@@ -93,7 +93,7 @@ class PredictionEventFactory:
             market_line=market_line,
             direction=signal.direction,
             entry_odds=signal.odds,
-            model_edge_pct=signal.edge * 100.0,
+            model_edge_pct=signal.condition_strength * 100.0,
             confidence=confidence,
             recommended_stake=recommended_stake,
             source=source,

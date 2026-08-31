@@ -13,8 +13,8 @@ from uuid import UUID
 
 import asyncpg
 
-from src.engine.strategy_identity import StrategyRegistry
-from src.engine.evaluator import Condition, Strategy
+from src.engine.analysis.strategy_identity import StrategyRegistry
+from src.engine.analysis.evaluator import Condition, Strategy
 
 
 @dataclass

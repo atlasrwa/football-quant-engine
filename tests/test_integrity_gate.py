@@ -11,8 +11,8 @@ These tests verify 7 critical invariants before Phase 2 begins:
 7. Same strategy + same version + same dataset = deterministic results
 
 Tests 1 & 2 construct deliberately NON-STATIONARY future observations:
-- Historical period: low-PPDA regime (high defensive lines, many offsides)
-- Future period: high-PPDA regime (deep blocks, few offsides)
+- Historical period: low-corners-against regime (high defensive lines, many offsides)
+- Future period: high-corners-against regime (deep blocks, few offsides)
 This creates a structural break. Any implementation that leaks future data
 into historical features will produce materially different baselines.
 
@@ -32,12 +32,12 @@ import numpy as np
 import pandas as pd
 import pytest
 
-from src.engine.clv import CLVCalculator, CLVResult
-from src.engine.evaluator import Condition, Signal, Strategy, StrategyEvaluator
-from src.engine.fdr import QuarantineStatus, QuarantineTracker
-from src.engine.signals.community_broadcaster import BroadcastConfig, CommunityBroadcaster
-from src.engine.strategy_identity import StrategyRegistry
-from src.engine.xmetrics import XMetricCoefficients, XMetricEngine
+from src.engine.market.clv import CLVCalculator, CLVResult
+from src.engine.analysis.evaluator import Condition, Signal, Strategy, StrategyEvaluator
+from src.engine.analysis.fdr import QuarantineStatus, QuarantineTracker
+from src.engine.market.signals.community_broadcaster import BroadcastConfig, CommunityBroadcaster
+from src.engine.analysis.strategy_identity import StrategyRegistry
+from src.engine.analysis.xmetrics import XMetricCoefficients, XMetricEngine
 from src.features.assembler import FeatureAssembler
 from src.features.referee_volatility import RefereeVolatilityCalculator
 from src.models.config import StrategyConfig
@@ -89,10 +89,10 @@ def _build_xo_regime_shift_df(
     n_historical: int = 20,
     n_future: int = 20,
 ) -> tuple[pd.DataFrame, pd.DataFrame]:
-    """Build DataFrames with a deliberate PPDA regime shift.
+    """Build DataFrames with a deliberate corners-against regime shift.
 
-    Historical regime: PPDA ~ 6.0 (aggressive pressing, high HLI ~ 0.167)
-    Future regime:     PPDA ~ 20.0 (deep block, low HLI ~ 0.05)
+    Historical regime: corners_avg_against ~ 3.0 (aggressive pressing, high HLI ~ 0.33)
+    Future regime:     corners_avg_against ~ 10.0 (deep block, low HLI ~ 0.10)
 
     The expanding-mean league baseline should NOT be affected by the future
     regime when computing historical features.
@@ -104,24 +104,24 @@ def _build_xo_regime_shift_df(
 
     base_ts = 1700000000
 
-    # Historical period: aggressive pressing (low PPDA → high HLI)
+    # Historical period: aggressive pressing (low corners against → high HLI)
     hist_rows = []
     for i in range(n_historical):
         hist_rows.append({
             "date_unix": base_ts + i * 86400,
-            "ppda_home": rng.uniform(5.0, 7.0),
-            "ppda_away": rng.uniform(5.0, 7.0),
+            "corners_avg_against_home": rng.uniform(2.5, 4.0),
+            "corners_avg_against_away": rng.uniform(2.5, 4.0),
             "offsides_home": rng.integers(2, 8),
             "offsides_away": rng.integers(2, 8),
         })
 
-    # Future period: MASSIVE regime shift to deep-block (high PPDA → low HLI)
+    # Future period: MASSIVE regime shift to deep-block (high corners against → low HLI)
     future_rows = []
     for i in range(n_future):
         future_rows.append({
             "date_unix": base_ts + (n_historical + i) * 86400,
-            "ppda_home": rng.uniform(18.0, 25.0),  # 3-4x higher
-            "ppda_away": rng.uniform(18.0, 25.0),
+            "corners_avg_against_home": rng.uniform(9.0, 12.0),  # 3-4x higher
+            "corners_avg_against_away": rng.uniform(9.0, 12.0),
             "offsides_home": rng.integers(0, 2),
             "offsides_away": rng.integers(0, 2),
         })
@@ -191,8 +191,8 @@ class TestXOLeagueBaselineTemporalLeakage:
     """Verify xO league baseline is immune to non-stationary future data.
 
     The test constructs a deliberate regime shift:
-    - Historical: PPDA ~ 6 (HLI ~ 0.167)
-    - Future:     PPDA ~ 21 (HLI ~ 0.048)
+    - Historical: corners_avg_against ~ 3.0 (HLI ~ 0.33)
+    - Future:     corners_avg_against ~ 10.5 (HLI ~ 0.095)
 
     If the baseline used a global mean instead of an expanding mean,
     the future low-HLI values would DRAG DOWN the baseline for historical
@@ -241,10 +241,10 @@ class TestXOLeagueBaselineTemporalLeakage:
             n_historical=20, n_future=20
         )
 
-        # HLI = 1/PPDA: historical avg ~ 0.167, future avg ~ 0.048
-        hist_hli = (1.0 / df_hist["ppda_home"].values + 1.0 / df_hist["ppda_away"].values) / 2
+        # HLI = 1/corners_avg_against: historical avg ~ 0.33, future avg ~ 0.095
+        hist_hli = (1.0 / df_hist["corners_avg_against_home"].values + 1.0 / df_hist["corners_avg_against_away"].values) / 2
         future_rows = df_combined.iloc[20:]
-        future_hli = (1.0 / future_rows["ppda_home"].values + 1.0 / future_rows["ppda_away"].values) / 2
+        future_hli = (1.0 / future_rows["corners_avg_against_home"].values + 1.0 / future_rows["corners_avg_against_away"].values) / 2
 
         # The means must differ by at least 50% (they differ by ~3.5x)
         ratio = hist_hli.mean() / future_hli.mean()
@@ -283,10 +283,10 @@ class TestXOLeagueBaselineTemporalLeakage:
 
         # Simulate vulnerable implementation: global mean baseline
         def _compute_xO_vulnerable(df: pd.DataFrame) -> np.ndarray:
-            ppda_h = df["ppda_home"].values.astype(float)
-            ppda_a = df["ppda_away"].values.astype(float)
-            hli_h = np.where(ppda_h != 0, 1.0 / ppda_h, 0.0)
-            hli_a = np.where(ppda_a != 0, 1.0 / ppda_a, 0.0)
+            ca_h = df["corners_avg_against_home"].values.astype(float)
+            ca_a = df["corners_avg_against_away"].values.astype(float)
+            hli_h = np.where(ca_h > 0, 1.0 / ca_h, 0.0)
+            hli_a = np.where(ca_a > 0, 1.0 / ca_a, 0.0)
             row_hli = (hli_h + hli_a) / 2.0
             # VULNERABLE: uses global mean (includes future data)
             global_baseline = np.mean(row_hli)
@@ -700,7 +700,7 @@ class TestQuarantineBroadcastGuard:
             match_index=0,
             strategy_name="quarantined_strat",
             direction="OVER",
-            edge=0.05,
+            condition_strength=0.05,
             odds=2.10,
         )
         match_data = [{"home_team": "Arsenal", "away_team": "Chelsea"}]
@@ -741,7 +741,7 @@ class TestQuarantineBroadcastGuard:
             match_index=0,
             strategy_name="strategy_beta",
             direction="OVER",
-            edge=0.08,
+            condition_strength=0.08,
             odds=1.95,
         )
         payloads = asyncio.run(
@@ -1023,7 +1023,7 @@ class TestDeterministicResults:
         assert len(signals_1) == len(signals_2)
         for s1, s2 in zip(signals_1, signals_2):
             assert s1.match_index == s2.match_index
-            assert s1.edge == s2.edge
+            assert s1.condition_strength == s2.condition_strength
             assert s1.odds == s2.odds
             assert s1.direction == s2.direction
 

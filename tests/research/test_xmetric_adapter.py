@@ -7,7 +7,7 @@ into the research laboratory's feature system without modifying the engine.
 import pytest
 import numpy as np
 
-from src.engine.xmetrics import XMetricCoefficients, XMetricEngine
+from src.engine.analysis.xmetrics import XMetricCoefficients, XMetricEngine
 from src.research.data_source import ResearchMatch
 from src.research.feature_registry import (
     FeatureDefinition,

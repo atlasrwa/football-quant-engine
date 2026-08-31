@@ -8,16 +8,16 @@ import time
 
 import pytest
 
-from src.engine.evaluator import Signal
-from src.engine.metrics.bookie import BookieMetrics
-from src.engine.signals.crypto_exporter import (
+from src.engine.analysis.evaluator import Signal
+from src.engine.market.metrics.bookie import BookieMetrics
+from src.engine.market.signals.crypto_exporter import (
     CryptoSignalExporter,
     KellyCalculator,
     ProofOfAlpha,
     RiskUnitCalculator,
     SignalPayload,
 )
-from src.engine.validator import ValidationVerdict
+from src.engine.analysis.validator import ValidationVerdict
 
 
 class TestKellyCalculator:
@@ -73,31 +73,31 @@ class TestRiskUnitCalculator:
 
     def test_large_edge_gets_full_unit(self):
         calc = RiskUnitCalculator()
-        stake, tier = calc.compute(edge=0.08)
+        stake, tier = calc.compute(condition_strength=0.08)
         assert tier == "1.00U"
         assert stake == pytest.approx(0.01)
 
     def test_medium_edge_gets_half_unit(self):
         calc = RiskUnitCalculator()
-        stake, tier = calc.compute(edge=0.03)
+        stake, tier = calc.compute(condition_strength=0.03)
         assert tier == "0.50U"
         assert stake == pytest.approx(0.005)
 
     def test_small_edge_gets_quarter_unit(self):
         calc = RiskUnitCalculator()
-        stake, tier = calc.compute(edge=0.01)
+        stake, tier = calc.compute(condition_strength=0.01)
         assert tier == "0.25U"
         assert stake == pytest.approx(0.0025)
 
     def test_negative_edge_uses_magnitude(self):
         """Direction-agnostic: a large negative edge still gets the top tier."""
         calc = RiskUnitCalculator()
-        stake, tier = calc.compute(edge=-0.08)
+        stake, tier = calc.compute(condition_strength=-0.08)
         assert tier == "1.00U"
 
     def test_zero_edge_gets_smallest_tier(self):
         calc = RiskUnitCalculator()
-        stake, tier = calc.compute(edge=0.0)
+        stake, tier = calc.compute(condition_strength=0.0)
         assert tier == "0.25U"
 
 
@@ -148,7 +148,7 @@ class TestCryptoSignalExporter:
             match_index=0,
             strategy_name="High xC Over",
             direction="OVER",
-            edge=0.15,
+            condition_strength=0.15,
             odds=2.10,
         )
 
@@ -281,7 +281,7 @@ class TestCryptoSignalExporter:
     async def test_stake_in_payload_is_risk_tier_not_kelly(self):
         """R06: payload stake is a heuristic risk-unit tier, not Kelly-derived.
 
-        _make_signal() uses edge=0.15, well above the top 0.05 tier threshold,
+        _make_signal() uses condition_strength=0.15, well above the top 0.05 tier threshold,
         so this must resolve to the 1.00U tier regardless of odds/win-prob.
         """
         exporter = CryptoSignalExporter(dry_run=True)

@@ -10,8 +10,8 @@ import uuid
 import logging
 from typing import List
 
-from src.engine.builder import StrategyBuilder
-from src.engine.evaluator import Condition, Strategy
+from src.engine.analysis.builder import StrategyBuilder
+from src.engine.analysis.evaluator import Condition, Strategy
 
 logger = logging.getLogger(__name__)
 

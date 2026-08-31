@@ -1,5 +1,5 @@
 """Beat the Bookie metrics suite."""
 
-from src.engine.metrics.bookie import BookieMetrics, BookieMetricsCalculator
+from src.engine.market.metrics.bookie import BookieMetrics, BookieMetricsCalculator
 
 __all__ = ["BookieMetrics", "BookieMetricsCalculator"]

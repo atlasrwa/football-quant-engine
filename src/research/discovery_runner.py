@@ -25,6 +25,7 @@ from src.research.feature_registry import (
 )
 from src.research.market import ALL_MARKETS, ResearchMarket
 from src.research.memory import ResearchMemory
+from src.research.models.factory import create_model_for_market
 from src.research.probability import (
     HistoricalFrequencyModel,
     LogisticRegressionModel,
@@ -156,7 +157,7 @@ class DiscoveryRunner:
                 min_odds=self._config.min_odds,
                 max_odds=self._config.max_odds,
             )
-            model = LogisticRegressionModel()
+            model = create_model_for_market(market.market_type.value)
 
             for hyp in hypotheses:
                 # Check duplicate
@@ -197,7 +198,7 @@ class DiscoveryRunner:
                     test_window=self._config.test_window,
                     step_size=self._config.step_size,
                 )
-                model = LogisticRegressionModel()
+                model = create_model_for_market(target_market.market_type.value)
                 result = experiment.run(hyp, match_dicts, feature_values, target_market, model)
                 self._memory.store_result(hyp.hypothesis_id, result)
                 all_results.append(result)

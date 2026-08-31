@@ -4,9 +4,9 @@ from __future__ import annotations
 
 import pytest
 
-from src.engine.backtest import XBetRecord
-from src.engine.friction import MarketFrictionConfig
-from src.engine.metrics.bookie import BookieMetrics, BookieMetricsCalculator
+from src.engine.analysis.backtest import XBetRecord
+from src.engine.analysis.friction import MarketFrictionConfig
+from src.engine.market.metrics.bookie import BookieMetrics, BookieMetricsCalculator
 
 
 class TestBookieMetricsCalculator:

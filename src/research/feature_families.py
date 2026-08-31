@@ -54,7 +54,6 @@ _FIELD_FAMILY_MAP: dict[str, FeatureFamily] = {
     "offsides": FeatureFamily.OFFSIDES,
     "possession": FeatureFamily.POSSESSION,
     "fouls": FeatureFamily.DISCIPLINE,
-    "ppda": FeatureFamily.TEMPO,
     "xg": FeatureFamily.FORM,
     "xC": FeatureFamily.XMETRICS,
     "xB": FeatureFamily.XMETRICS,

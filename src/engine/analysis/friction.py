@@ -14,14 +14,14 @@ from typing import List
 import numpy as np
 import pandas as pd
 
-from src.engine.backtest import (
+from src.engine.analysis.backtest import (
     XBacktestConfig,
     XBacktestResult,
     XBetRecord,
     XMetricBacktester,
     FoldMetrics,
 )
-from src.engine.evaluator import Strategy, StrategyEvaluator
+from src.engine.analysis.evaluator import Strategy, StrategyEvaluator
 
 logger = logging.getLogger(__name__)
 
@@ -244,7 +244,7 @@ class FrictionAdjustedBacktester:
                 row, signal, effective_odds, capped_stake, outcome_col, line_col
             )
 
-            clv = signal.edge * 100.0
+            clv = signal.condition_strength * 100.0
 
             bets.append(
                 XBetRecord(

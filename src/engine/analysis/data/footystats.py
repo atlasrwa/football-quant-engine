@@ -12,7 +12,7 @@ from typing import Any
 
 import pandas as pd
 
-from src.engine.data.base import BaseDataLoader
+from src.engine.analysis.data.base import BaseDataLoader
 
 logger = logging.getLogger(__name__)
 
@@ -67,10 +67,6 @@ class FootyStatsAdapter(BaseDataLoader):
         "offsides_away": "offsides_away",
         "team_a_offsides": "offsides_home",
         "team_b_offsides": "offsides_away",
-        "ppda_home": "ppda_home",
-        "ppda_away": "ppda_away",
-        "team_a_ppda": "ppda_home",
-        "team_b_ppda": "ppda_away",
         # Market data
         "o25_potential": "over_odds",
         "u25_potential": "under_odds",

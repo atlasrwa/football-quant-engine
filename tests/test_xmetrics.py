@@ -6,7 +6,7 @@ import numpy as np
 import pandas as pd
 import pytest
 
-from src.engine.xmetrics import XMetricCoefficients, XMetricEngine
+from src.engine.analysis.xmetrics import XMetricCoefficients, XMetricEngine
 
 
 class TestXMetricEngine:
@@ -37,8 +37,6 @@ class TestXMetricEngine:
             # xO fields
             "offsides_home": rng.integers(0, 6, n),
             "offsides_away": rng.integers(0, 6, n),
-            "ppda_home": rng.uniform(5.0, 15.0, n),
-            "ppda_away": rng.uniform(5.0, 15.0, n),
         })
 
     def test_compute_xC_adds_columns(self):
@@ -162,22 +160,22 @@ class TestXMetricEngine:
             "date_unix": [1000, 2000],
             "offsides_home": [3, 4],
             "offsides_away": [2, 3],
-            "ppda_home": [8.0, 8.0],
-            "ppda_away": [10.0, 10.0],
+            "corners_avg_against_home": [5.0, 5.0],
+            "corners_avg_against_away": [4.0, 4.0],
         })
 
         result = engine.compute_xO(df)
 
         # Row 0: baseline = 1.0 (fallback, no prior data)
-        hli_home = 1.0 / 8.0  # 0.125
-        hli_away = 1.0 / 10.0  # 0.1
-        expected_home_r0 = 1.0 * 3 * (hli_away / 1.0)  # 3 * 0.1 = 0.3
-        expected_away_r0 = 1.0 * 2 * (hli_home / 1.0)  # 2 * 0.125 = 0.25
+        hli_home = 1.0 / 5.0  # 0.2
+        hli_away = 1.0 / 4.0  # 0.25
+        expected_home_r0 = 1.0 * 3 * (hli_away / 1.0)  # 3 * 0.25 = 0.75
+        expected_away_r0 = 1.0 * 2 * (hli_home / 1.0)  # 2 * 0.2 = 0.4
 
         assert result["home_xO"].iloc[0] == pytest.approx(expected_home_r0, rel=1e-6)
         assert result["away_xO"].iloc[0] == pytest.approx(expected_away_r0, rel=1e-6)
 
-        # Row 1: baseline = mean of row 0's HLI = (0.125 + 0.1)/2 = 0.1125
+        # Row 1: baseline = mean of row 0's HLI = (0.2 + 0.25)/2 = 0.225
         baseline_r1 = (hli_home + hli_away) / 2.0
         expected_home_r1 = 1.0 * 4 * (hli_away / baseline_r1)
         expected_away_r1 = 1.0 * 3 * (hli_home / baseline_r1)
@@ -185,18 +183,18 @@ class TestXMetricEngine:
         assert result["home_xO"].iloc[1] == pytest.approx(expected_home_r1, rel=1e-6)
         assert result["away_xO"].iloc[1] == pytest.approx(expected_away_r1, rel=1e-6)
 
-    def test_compute_xO_ppda_zero(self):
-        """xO handles ppda=0 (division by zero) gracefully."""
+    def test_compute_xO_corners_against_zero(self):
+        """xO handles corners_avg_against=0 (division by zero) gracefully."""
         engine = XMetricEngine()
         df = pd.DataFrame({
             "offsides_home": [3],
             "offsides_away": [2],
-            "ppda_home": [0.0],
-            "ppda_away": [10.0],
+            "corners_avg_against_home": [0.0],
+            "corners_avg_against_away": [4.0],
         })
 
         result = engine.compute_xO(df)
-        # ppda_home=0 → hli_home=0, which only affects away_xO's opponent index
+        # corners_avg_against_home=0 → hli_home=0, which only affects away_xO's opponent index
         assert not pd.isna(result["home_xO"].iloc[0])
 
     def test_compute_all_chains_all_metrics(self):

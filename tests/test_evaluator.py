@@ -10,7 +10,7 @@ import numpy as np
 import pandas as pd
 import pytest
 
-from src.engine.evaluator import Condition, Signal, Strategy, StrategyEvaluator
+from src.engine.analysis.evaluator import Condition, Signal, Strategy, StrategyEvaluator
 
 
 class TestStrategyEvaluator:
@@ -317,4 +317,4 @@ class TestStrategyEvaluator:
 
         signals = evaluator.evaluate(df, [strategy])
         assert len(signals) == 1
-        assert signals[0].edge == pytest.approx(1.0, rel=1e-6)
+        assert signals[0].condition_strength == pytest.approx(1.0, rel=1e-6)

@@ -30,7 +30,7 @@ from typing import Any, Optional
 import numpy as np
 import pandas as pd
 
-from src.engine.xmetrics import XMetricCoefficients, XMetricEngine
+from src.engine.analysis.xmetrics import XMetricCoefficients, XMetricEngine
 from src.research.data_source import ResearchMatch
 from src.research.feature_registry import (
     FeatureDefinition,
@@ -94,12 +94,12 @@ _XB_PROVENANCE = XMetricProvenance(
 
 _XO_PROVENANCE = XMetricProvenance(
     metric_name="xO",
-    version="1.0.0",
+    version="1.1.0",
     coefficients={"eta": 1.0},
-    timestamp_semantics="POST_MATCH: uses offsides and PPDA; expanding-window baseline is temporal-leak-free",
+    timestamp_semantics="POST_MATCH: uses offsides and corners_avg_against; expanding-window baseline is temporal-leak-free",
     input_fields=(
         "offsides_home", "offsides_away",
-        "ppda_home", "ppda_away",
+        "corners_avg_against_home", "corners_avg_against_away",
     ),
 )
 
@@ -249,8 +249,6 @@ class XMetricAdapter:
                 "possession_away": m.possession_away,
                 "offsides_home": m.offsides_home,
                 "offsides_away": m.offsides_away,
-                "ppda_home": m.ppda_home,
-                "ppda_away": m.ppda_away,
             }
             records.append(record)
 

@@ -16,15 +16,15 @@ logger = logging.getLogger(__name__)
 
 
 class SignalGenerator:
-    """Generates Over/Under signals with estimated edge.
+    """Generates Over/Under signals with estimated condition strength.
 
     MVP heuristic strategy:
     - Combines xG efficiency deltas, rolling form, and referee volatility
       into a composite score predicting goal volume.
     - Positive composite → OVER signal; negative → UNDER signal.
-    - Edge magnitude is the absolute composite score (capped at 1.0).
+    - Condition strength is the absolute composite score (capped at 1.0).
 
-    Signals are only emitted when edge >= min_edge_threshold.
+    Signals are only emitted when condition strength >= min_edge_threshold.
     """
 
     # Feature weights for the composite score
@@ -45,7 +45,7 @@ class SignalGenerator:
 
     @property
     def min_edge(self) -> float:
-        """Minimum edge required to emit a signal."""
+        """Minimum condition strength required to emit a signal."""
         return self._min_edge
 
     def generate(
@@ -57,18 +57,19 @@ class SignalGenerator:
             features: The computed feature vector for the match.
 
         Returns:
-            Tuple of (prediction, edge) if edge meets threshold, else None.
+            Tuple of (prediction, condition_strength) if strength meets threshold,
+            else None.
             prediction is "OVER" or "UNDER".
-            edge is in [min_edge_threshold, 1.0].
+            condition_strength is in [min_edge_threshold, 1.0].
         """
         composite = self._compute_composite(features)
-        edge = min(abs(composite), 1.0)
+        strength = min(abs(composite), 1.0)
 
-        if edge < self._min_edge:
+        if strength < self._min_edge:
             return None
 
         prediction = "OVER" if composite > 0 else "UNDER"
-        return prediction, edge
+        return prediction, strength
 
     def _compute_composite(self, features: MatchFeatures) -> float:
         """Compute composite score from features.

@@ -25,7 +25,7 @@ from typing import Any, Optional
 import numpy as np
 import pytest
 
-from src.engine.fdr import FDRController, FDRResult, QuarantineStatus, QuarantineTracker
+from src.engine.analysis.fdr import FDRController, FDRResult, QuarantineStatus, QuarantineTracker
 from src.research.candidates import CandidateCondition, CandidateOperator, ResearchCandidate
 from src.research.data_source import MarketOdds, ResearchDataSource, ResearchMatch
 from src.research.experiment_engine.config import (

@@ -23,15 +23,15 @@ import pytest
 from src.domain.factories import PredictionEventFactory, SettlementFactory
 from src.domain.prediction import PredictionEvent, PredictionSource, PredictionStatus
 from src.domain.settlement import Settlement, SettlementOutcome
-from src.engine.backtest import StrategyIdentityInfo
-from src.engine.evaluator import Signal
-from src.engine.metrics.bookie import BookieMetrics
-from src.engine.settlement_service import MatchResult, PredictionSettlementService
-from src.engine.signals.community_broadcaster import (
+from src.engine.analysis.backtest import StrategyIdentityInfo
+from src.engine.analysis.evaluator import Signal
+from src.engine.market.metrics.bookie import BookieMetrics
+from src.engine.market.settlement_service import MatchResult, PredictionSettlementService
+from src.engine.market.signals.community_broadcaster import (
     BroadcastConfig,
     CommunityBroadcaster,
 )
-from src.engine.signals.crypto_exporter import CryptoSignalExporter
+from src.engine.market.signals.crypto_exporter import CryptoSignalExporter
 
 # Fixed clock outside the default quiet-hours window (1am-6am UTC) so these
 # tests don't flake depending on the real wall-clock hour they run at.
@@ -53,7 +53,7 @@ class TestValidationCannotBeForged:
         """Broadcaster uses validation_passed parameter, never hardcodes True."""
         config = BroadcastConfig(dry_run=True)
         broadcaster = CommunityBroadcaster(config=config, clock=_NOON_UTC_CLOCK)
-        signal = Signal(match_index=0, strategy_name="s1", direction="OVER", edge=0.1, odds=2.0)
+        signal = Signal(match_index=0, strategy_name="s1", direction="OVER", condition_strength=0.1, odds=2.0)
         match_data = [{"home_team": "A", "away_team": "B"}]
 
         # Without explicit validation_passed → defaults to False
@@ -65,7 +65,7 @@ class TestValidationCannotBeForged:
         """Only validation_passed=True produces fdr_validated=True."""
         config = BroadcastConfig(dry_run=True)
         broadcaster = CommunityBroadcaster(config=config, clock=_NOON_UTC_CLOCK)
-        signal = Signal(match_index=0, strategy_name="s1", direction="OVER", edge=0.1, odds=2.0)
+        signal = Signal(match_index=0, strategy_name="s1", direction="OVER", condition_strength=0.1, odds=2.0)
         match_data = [{"home_team": "A", "away_team": "B"}]
 
         result = await broadcaster.run_once(
@@ -77,7 +77,7 @@ class TestValidationCannotBeForged:
     async def test_exporter_validation_from_verdict_not_hardcoded(self):
         """CryptoSignalExporter derives fdr_validated from verdict, not client."""
         exporter = CryptoSignalExporter(dry_run=True)
-        signal = Signal(match_index=0, strategy_name="s1", direction="OVER", edge=0.1, odds=2.0)
+        signal = Signal(match_index=0, strategy_name="s1", direction="OVER", condition_strength=0.1, odds=2.0)
 
         # No verdict → not validated
         result = await exporter.dispatch(
@@ -143,7 +143,7 @@ class TestProofHashCannotBeForged:
 
     def test_factory_computes_proof_hash(self):
         """PredictionEventFactory.from_signal() computes proof_hash internally."""
-        signal = Signal(match_index=0, strategy_name="s1", direction="OVER", edge=0.1, odds=2.0)
+        signal = Signal(match_index=0, strategy_name="s1", direction="OVER", condition_strength=0.1, odds=2.0)
         pe = PredictionEventFactory.from_signal(
             signal=signal, strategy_id="strat-1", strategy_version=1,
             strategy_content_hash="a" * 64, match_id=100,
@@ -157,7 +157,7 @@ class TestProofHashCannotBeForged:
 
     def test_proof_hash_not_controllable_by_caller(self):
         """Factory does not accept proof_hash as parameter — it's always computed."""
-        signal = Signal(match_index=0, strategy_name="s1", direction="OVER", edge=0.1, odds=2.0)
+        signal = Signal(match_index=0, strategy_name="s1", direction="OVER", condition_strength=0.1, odds=2.0)
 
         # from_signal has no proof_hash parameter — it's computed internally
         import inspect
@@ -238,7 +238,7 @@ class TestBacktestLiveSeparation:
 
     def test_live_prediction_source_is_live_signal(self):
         """Live predictions have LIVE_SIGNAL source."""
-        signal = Signal(match_index=0, strategy_name="s1", direction="OVER", edge=0.1, odds=2.0)
+        signal = Signal(match_index=0, strategy_name="s1", direction="OVER", condition_strength=0.1, odds=2.0)
         pe = PredictionEventFactory.from_signal(
             signal=signal, strategy_id="s1", strategy_version=1,
             strategy_content_hash="a" * 64, match_id=100,

@@ -45,8 +45,6 @@ MATCH_RECORD_SCHEMA: dict[str, str] = {
     # xO inputs
     "offsides_home": "float",
     "offsides_away": "float",
-    "ppda_home": "float",
-    "ppda_away": "float",
     # Market data
     "over_odds": "float",
     "under_odds": "float",

@@ -18,7 +18,7 @@ from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from typing import List
 
-from src.engine.evaluator import Strategy
+from src.engine.analysis.evaluator import Strategy
 
 logger = logging.getLogger(__name__)
 

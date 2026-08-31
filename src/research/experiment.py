@@ -196,19 +196,108 @@ class ResearchExperiment:
         market: ResearchMarket,
         model: ProbabilityModel,
     ) -> list[BetResult]:
-        """Evaluate hypothesis on test window, generate bets."""
-        bets: list[BetResult] = []
+        """Evaluate hypothesis on test window, generate bets.
+
+        Two-phase architecture:
+        1. Hypothesis layer: check conditions, generate probabilities (no odds)
+        2. Market layer: take probabilities + odds, compute EV, produce bets
+        """
+        # Phase 1: Hypothesis layer — generate predictions (probability only)
+        predictions = self._generate_hypothesis_predictions(
+            hypothesis, matches, features, market, model
+        )
+
+        # Phase 2: Market layer — apply odds, compute EV, produce bets
+        bets = self._apply_market_layer(predictions, hypothesis, matches, market)
+
+        return bets
+
+    def _generate_hypothesis_predictions(
+        self,
+        hypothesis: ResearchHypothesis,
+        matches: list[dict],
+        features: list[dict[str, float]],
+        market: ResearchMarket,
+        model: ProbabilityModel,
+    ) -> list[dict]:
+        """HYPOTHESIS LAYER: Generate probability predictions.
+
+        This method ONLY:
+        - Checks hypothesis conditions against features
+        - Runs the probability model
+        - Resolves actual outcomes
+
+        It NEVER touches odds, EV, edge, or any market pricing.
+
+        Returns:
+            List of prediction dicts with keys:
+            - match_index, model_probability, direction, actual_outcome, estimate
+        """
+        predictions: list[dict] = []
+        direction = MarketDirection.OVER if hypothesis.direction == "OVER" else MarketDirection.UNDER
 
         for i, (m, feat) in enumerate(zip(matches, features)):
             # Check hypothesis conditions
             if not self._conditions_met(hypothesis, feat):
                 continue
 
-            # Get odds
-            over_odds_field = market.odds_over_field
-            under_odds_field = market.odds_under_field
-            over_odds = m.get(over_odds_field)
-            under_odds = m.get(under_odds_field)
+            # Get probability estimate from model
+            estimate = model.predict(feat)
+
+            # Determine actual outcome
+            target_val = m.get(market.target_field)
+            if target_val is None:
+                continue
+            actual = market.resolve_outcome(float(target_val))
+
+            predictions.append({
+                "match_index": i,
+                "estimate": estimate,
+                "model_probability": estimate.p_over if direction == MarketDirection.OVER else estimate.p_under,
+                "direction": direction,
+                "actual_outcome": actual,
+            })
+
+        return predictions
+
+    def _apply_market_layer(
+        self,
+        predictions: list[dict],
+        hypothesis: ResearchHypothesis,
+        matches: list[dict],
+        market: ResearchMarket,
+    ) -> list[BetResult]:
+        """MARKET LAYER: Apply odds and compute EV for predictions.
+
+        This method ONLY:
+        - Reads market odds for each prediction
+        - Computes EV using the probability from the hypothesis layer
+        - Applies odds/EV filters
+        - Settles bets against actual outcomes
+
+        It NEVER computes probabilities or evaluates hypothesis conditions.
+
+        Args:
+            predictions: Output from _generate_hypothesis_predictions.
+            hypothesis: The hypothesis (for direction info).
+            matches: Match dicts (for odds lookup).
+            market: Market definition (for odds field names).
+
+        Returns:
+            List of BetResult (settled bets).
+        """
+        bets: list[BetResult] = []
+
+        for pred in predictions:
+            i = pred["match_index"]
+            estimate = pred["estimate"]
+            direction = pred["direction"]
+            actual = pred["actual_outcome"]
+            m = matches[i]
+
+            # Get odds from market data
+            over_odds = m.get(market.odds_over_field)
+            under_odds = m.get(market.odds_under_field)
 
             if over_odds is None or under_odds is None:
                 continue
@@ -216,11 +305,7 @@ class ResearchExperiment:
                 if under_odds <= self._min_odds or under_odds >= self._max_odds:
                     continue
 
-            # Get probability estimate
-            estimate = model.predict(feat)
-
-            # Calculate EV
-            direction = MarketDirection.OVER if hypothesis.direction == "OVER" else MarketDirection.UNDER
+            # Calculate EV using probability from hypothesis layer
             ev_result = EVCalculator.compute(
                 estimate, market, over_odds, under_odds, direction
             )
@@ -230,12 +315,6 @@ class ResearchExperiment:
             # Only bet if EV meets threshold
             if ev_result.expected_value < self._min_ev:
                 continue
-
-            # Determine actual outcome
-            target_val = m.get(market.target_field)
-            if target_val is None:
-                continue
-            actual = market.resolve_outcome(float(target_val))
 
             # Settlement
             chosen_odds = ev_result.market_odds

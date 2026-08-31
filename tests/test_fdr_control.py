@@ -7,7 +7,7 @@ from datetime import datetime, timedelta
 import numpy as np
 import pytest
 
-from src.engine.fdr import (
+from src.engine.analysis.fdr import (
     FDRController,
     FDRResult,
     QuarantineEntry,

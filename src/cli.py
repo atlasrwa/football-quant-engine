@@ -270,7 +270,7 @@ def cmd_daily_signals(args: argparse.Namespace) -> None:
     for feat in upcoming_features:
         result = signal_gen.generate(feat)
         if result is not None:
-            prediction, edge = result
+            prediction, condition_strength = result
             signal_record = {
                 "match_id": feat.match_id,
                 "date_unix": feat.date_unix,
@@ -278,7 +278,7 @@ def cmd_daily_signals(args: argparse.Namespace) -> None:
                 "league_id": args.league_id,
                 "season": args.season,
                 "prediction": prediction,
-                "edge": round(edge, 4),
+                "condition_strength": round(condition_strength, 4),
                 "home_xg_eff": round(feat.home_xg_eff_delta_rolling, 4),
                 "away_xg_eff": round(feat.away_xg_eff_delta_rolling, 4),
                 "home_form": round(feat.home_rolling_form, 4),
@@ -291,7 +291,7 @@ def cmd_daily_signals(args: argparse.Namespace) -> None:
             signals.append(signal_record)
 
     if not signals:
-        print("No signals met the edge threshold.")
+        print("No signals met the condition strength threshold.")
         return
 
     # Write to JSONL
@@ -307,7 +307,7 @@ def cmd_daily_signals(args: argparse.Namespace) -> None:
 
     print(f"\n  Generated {len(signals)} signals:")
     for s in signals:
-        print(f"    Match {s['match_id']}: {s['prediction']} (edge={s['edge']:.3f})")
+        print(f"    Match {s['match_id']}: {s['prediction']} (strength={s['condition_strength']:.3f})")
     print(f"\n  Appended to: {output_path}")
 
 

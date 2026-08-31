@@ -20,9 +20,9 @@ import pytest
 
 from src.domain.prediction import PredictionEvent, PredictionSource, PredictionStatus
 from src.domain.settlement import Settlement, SettlementOutcome
-from src.engine.fdr import QuarantineTracker
-from src.engine.quarantine_bridge import QuarantineSettlementBridge
-from src.engine.settlement_service import (
+from src.engine.analysis.fdr import QuarantineTracker
+from src.engine.market.quarantine_bridge import QuarantineSettlementBridge
+from src.engine.market.settlement_service import (
     MatchResult,
     PredictionSettlementService,
     SettlementConflictError,

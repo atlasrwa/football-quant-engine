@@ -170,10 +170,6 @@ class SyntheticResearchDataSource(ResearchDataSource):
         home_xg = float(max(0, home_lambda + rng.normal(0, 0.3)))
         away_xg = float(max(0, away_lambda + rng.normal(0, 0.3)))
 
-        # PPDA
-        ppda_home = float(max(5, 11 + rng.normal(0, 2)))
-        ppda_away = float(max(5, 11 + rng.normal(0, 2)))
-
         return ResearchMatch(
             match_id=match_id,
             date_unix=date_unix,
@@ -211,8 +207,6 @@ class SyntheticResearchDataSource(ResearchDataSource):
             possession_away=away_poss,
             home_xg=home_xg,
             away_xg=away_xg,
-            ppda_home=ppda_home,
-            ppda_away=ppda_away,
             referee=f"Referee_{rng.integers(1, 10)}",
         )
 

@@ -42,13 +42,37 @@ class Strategy:
 
 
 @dataclass(frozen=True, slots=True)
-class Signal:
-    """A generated betting signal for a specific match."""
+class HypothesisSignal:
+    """A hypothesis-layer signal: a match passed strategy conditions.
+
+    Contains ONLY information from the hypothesis layer:
+    - Which match matched
+    - Which strategy fired
+    - The direction predicted
+    - The condition strength (normalized distance from thresholds)
+
+    Does NOT contain odds or any market pricing information.
+    """
 
     match_index: int
     strategy_name: str
     direction: str
-    edge: float
+    condition_strength: float
+
+
+@dataclass(frozen=True, slots=True)
+class Signal:
+    """A complete market-layer signal: hypothesis signal + market odds.
+
+    This is the final output that includes both:
+    - Hypothesis information (which match, which strategy, direction, condition_strength)
+    - Market information (odds)
+    """
+
+    match_index: int
+    strategy_name: str
+    direction: str
+    condition_strength: float
     odds: float
 
 
@@ -113,50 +137,18 @@ class StrategyEvaluator:
     ) -> List[Signal]:
         """Evaluate all strategies against every row in the DataFrame.
 
+        Two-phase architecture:
+        1. Hypothesis layer: evaluate conditions, compute condition strength
+        2. Market layer: apply odds filters, attach odds to produce signals
+
         Returns a list of Signals for rows that satisfy strategy conditions
         and meet minimum odds requirements.
         """
-        signals: List[Signal] = []
+        # Phase 1: Hypothesis layer — condition evaluation + strength scoring
+        hypothesis_signals = self.evaluate_hypothesis(df, strategies)
 
-        for strategy in strategies:
-            mask = self._evaluate_strategy_mask(df, strategy)
-            if mask is None:
-                continue
-
-            # Apply min_odds filter
-            odds_col = self._get_odds_column(strategy.direction)
-            if odds_col is None:
-                # BACK/LAY are valid Strategy directions (exchange-style bets)
-                # but no odds source exists for them yet — every match for
-                # this strategy will be suppressed below via _get_odds_value.
-                # Without this warning that reads as "0 signals, no reason".
-                logger.warning(
-                    "Strategy '%s': direction '%s' has no odds source wired up "
-                    "yet — this strategy will never produce signals",
-                    strategy.name,
-                    strategy.direction,
-                )
-            elif odds_col in df.columns:
-                odds_mask = df[odds_col] >= strategy.min_odds
-                mask = mask & odds_mask
-
-            matching_indices = df.index[mask].tolist()
-
-            for idx in matching_indices:
-                edge = self._compute_edge(df.iloc[idx] if isinstance(idx, int) else df.loc[idx], strategy)
-                odds = self._get_odds_value(df, idx, strategy.direction)
-                # R03: Missing odds suppress signal — no synthetic betting opportunities
-                if odds is None:
-                    continue
-                signals.append(
-                    Signal(
-                        match_index=idx,
-                        strategy_name=strategy.name,
-                        direction=strategy.direction,
-                        edge=edge,
-                        odds=odds,
-                    )
-                )
+        # Phase 2: Market layer — odds filtering + signal completion
+        signals = self.apply_market_filter(df, hypothesis_signals, strategies)
 
         logger.info(
             "Evaluated %d strategies → %d signals from %d matches",
@@ -164,6 +156,104 @@ class StrategyEvaluator:
             len(signals),
             len(df),
         )
+        return signals
+
+    def evaluate_hypothesis(
+        self, df: pd.DataFrame, strategies: List[Strategy]
+    ) -> List[HypothesisSignal]:
+        """HYPOTHESIS LAYER: Evaluate strategy conditions and compute condition strength.
+
+        This method ONLY:
+        - Evaluates strategy conditions against DataFrame columns
+        - Computes condition strength as normalized distance from thresholds
+
+        It NEVER reads odds columns, applies odds filters, or touches market data.
+
+        Args:
+            df: DataFrame with x-Metric columns computed.
+            strategies: List of strategies to evaluate.
+
+        Returns:
+            List of HypothesisSignal for all rows matching strategy conditions.
+        """
+        hypothesis_signals: List[HypothesisSignal] = []
+
+        for strategy in strategies:
+            mask = self._evaluate_strategy_mask(df, strategy)
+            if mask is None:
+                continue
+
+            matching_indices = df.index[mask].tolist()
+
+            for idx in matching_indices:
+                strength = self._compute_condition_strength(
+                    df.iloc[idx] if isinstance(idx, int) else df.loc[idx], strategy
+                )
+                hypothesis_signals.append(
+                    HypothesisSignal(
+                        match_index=idx,
+                        strategy_name=strategy.name,
+                        direction=strategy.direction,
+                        condition_strength=strength,
+                    )
+                )
+
+        return hypothesis_signals
+
+    def apply_market_filter(
+        self,
+        df: pd.DataFrame,
+        hypothesis_signals: List[HypothesisSignal],
+        strategies: List[Strategy],
+    ) -> List[Signal]:
+        """MARKET LAYER: Apply odds filters and attach market odds to signals.
+
+        This method ONLY:
+        - Reads odds columns from the DataFrame
+        - Applies min_odds filters per strategy
+        - Suppresses signals with missing odds (R03)
+        - Produces final Signal objects with odds attached
+
+        It NEVER evaluates strategy conditions or computes condition strength.
+
+        Args:
+            df: DataFrame with odds columns.
+            hypothesis_signals: Output from evaluate_hypothesis().
+            strategies: Strategy list (for min_odds lookup).
+
+        Returns:
+            List of Signal with market odds attached.
+        """
+        # Build strategy lookup for min_odds
+        strategy_map: dict[str, Strategy] = {s.name: s for s in strategies}
+        signals: List[Signal] = []
+
+        for hs in hypothesis_signals:
+            strategy = strategy_map.get(hs.strategy_name)
+            if strategy is None:
+                continue
+
+            # Get odds value
+            odds = self._get_odds_value(df, hs.match_index, hs.direction)
+
+            # R03: Missing odds suppress signal — no synthetic betting opportunities
+            if odds is None:
+                continue
+
+            # Apply min_odds filter
+            if odds < strategy.min_odds:
+                continue
+
+            signals.append(
+                Signal(
+                    match_index=hs.match_index,
+                    strategy_name=hs.strategy_name,
+                    direction=hs.direction,
+                    condition_strength=hs.condition_strength,
+                    odds=odds,
+                )
+            )
+
         return signals
 
     # ------------------------------------------------------------------
@@ -244,8 +334,12 @@ class StrategyEvaluator:
 
         return combined
 
-    def _compute_edge(self, row: pd.Series, strategy: Strategy) -> float:
-        """Compute edge as mean normalized distance from thresholds."""
+    def _compute_condition_strength(self, row: pd.Series, strategy: Strategy) -> float:
+        """Compute condition strength as mean normalized distance from thresholds.
+
+        This is a hypothesis-layer metric measuring how strongly the conditions
+        are exceeded — NOT a market edge (which requires odds).
+        """
         distances: List[float] = []
 
         for cond in strategy.conditions:

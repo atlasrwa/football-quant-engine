@@ -1,6 +1,6 @@
 """Crypto-native signal exporter for betting communities."""
 
-from src.engine.signals.crypto_exporter import (
+from src.engine.market.signals.crypto_exporter import (
     CryptoSignalExporter,
     KellyCalculator,
     ProofOfAlpha,

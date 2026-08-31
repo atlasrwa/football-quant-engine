@@ -6,8 +6,8 @@ import numpy as np
 import pytest
 from scipy import stats
 
-from src.engine.backtest import XBetRecord
-from src.engine.validator import (
+from src.engine.analysis.backtest import XBetRecord
+from src.engine.analysis.validator import (
     StatisticalValidator,
     ValidationCriteria,
     ValidationVerdict,

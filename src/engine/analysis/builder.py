@@ -11,7 +11,7 @@ import json
 import logging
 from typing import List
 
-from src.engine.evaluator import Condition, Strategy, StrategyEvaluator
+from src.engine.analysis.evaluator import Condition, Strategy, StrategyEvaluator
 
 logger = logging.getLogger(__name__)
 

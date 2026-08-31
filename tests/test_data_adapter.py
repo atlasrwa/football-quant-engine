@@ -10,9 +10,9 @@ import numpy as np
 import pandas as pd
 import pytest
 
-from src.engine.data.base import BaseDataLoader, MATCH_RECORD_SCHEMA
-from src.engine.data.footystats import FootyStatsAdapter
-from src.engine.data.synthetic import SyntheticDataLoader
+from src.engine.analysis.data.base import BaseDataLoader, MATCH_RECORD_SCHEMA
+from src.engine.analysis.data.footystats import FootyStatsAdapter
+from src.engine.analysis.data.synthetic import SyntheticDataLoader
 
 
 class TestMatchRecordSchema:
@@ -116,8 +116,6 @@ class TestFootyStatsAdapter:
             "referee_cpm": [4.2] * n,
             "team_a_offsides": [3] * n,
             "team_b_offsides": [2] * n,
-            "team_a_ppda": [8.5] * n,
-            "team_b_ppda": [10.0] * n,
             "o25_potential": [1.85] * n,
             "u25_potential": [2.00] * n,
             "homeGoalCount": [2] * n,
@@ -314,7 +312,7 @@ class TestSyntheticDataLoader:
 
     def test_compatible_with_xmetric_engine(self):
         """Output can be fed directly to XMetricEngine.compute_all()."""
-        from src.engine.xmetrics import XMetricEngine
+        from src.engine.analysis.xmetrics import XMetricEngine
 
         loader = SyntheticDataLoader(n=100, seed=42, nan_rate=0.0)
         df = loader.load()

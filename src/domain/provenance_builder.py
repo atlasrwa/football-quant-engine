@@ -15,7 +15,7 @@ from typing import List
 
 from src.domain.backtest_run import BacktestRun, BacktestStatus, ValidationRun, ValidationStatus
 from src.domain.provenance import DatasetVersion, FeatureVersion, ModelVersion
-from src.engine.strategy_identity import StrategyIdentity
+from src.engine.analysis.strategy_identity import StrategyIdentity
 from src.models.config import StrategyConfig
 from src.models.match import Match
 

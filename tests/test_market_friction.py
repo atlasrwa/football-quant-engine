@@ -6,9 +6,9 @@ import numpy as np
 import pandas as pd
 import pytest
 
-from src.engine.backtest import XBacktestConfig, XBetRecord
-from src.engine.evaluator import Condition, Strategy
-from src.engine.friction import (
+from src.engine.analysis.backtest import XBacktestConfig, XBetRecord
+from src.engine.analysis.evaluator import Condition, Strategy
+from src.engine.analysis.friction import (
     DEFAULT_LEAGUE_TIERS,
     FrictionAdjustedBacktester,
     MarketFrictionConfig,
@@ -122,7 +122,7 @@ class TestFrictionAdjustedBacktester:
 
     def test_friction_reduces_roi(self):
         """Friction-adjusted backtest has lower ROI than vanilla."""
-        from src.engine.backtest import XMetricBacktester
+        from src.engine.analysis.backtest import XMetricBacktester
 
         config = XBacktestConfig(train_window=50, test_window=20, step_size=20)
         df = self._make_df(300)

@@ -33,8 +33,8 @@ from src.domain.prediction import PredictionEvent, PredictionSource, PredictionS
 from src.domain.provenance import DatasetVersion, FeatureVersion, ModelVersion
 from src.domain.provenance_builder import ProvenanceBuilder
 from src.domain.settlement import Settlement, SettlementOutcome
-from src.engine.evaluator import Condition, Signal, Strategy
-from src.engine.strategy_identity import StrategyIdentity, StrategyRegistry
+from src.engine.analysis.evaluator import Condition, Signal, Strategy
+from src.engine.analysis.strategy_identity import StrategyIdentity, StrategyRegistry
 from src.models.config import StrategyConfig
 from src.models.match import Match
 
@@ -753,7 +753,7 @@ class TestPredictionEventFactory:
             match_index=0,
             strategy_name="Test Strategy",
             direction="OVER",
-            edge=0.052,
+            condition_strength=0.052,
             odds=2.10,
         )
 
@@ -779,7 +779,7 @@ class TestPredictionEventFactory:
         assert pred.settled_at is None
 
     def test_from_signal_generates_unique_ids(self):
-        signal = Signal(match_index=0, strategy_name="S", direction="OVER", edge=0.05, odds=2.0)
+        signal = Signal(match_index=0, strategy_name="S", direction="OVER", condition_strength=0.05, odds=2.0)
         p1 = PredictionEventFactory.from_signal(
             signal=signal, strategy_id="s", strategy_version=1,
             strategy_content_hash="h", match_id=1, match_date_unix=100,
@@ -1221,7 +1221,7 @@ class TestEndToEndPipeline:
             match_index=0,
             strategy_name="High xC Over",
             direction="OVER",
-            edge=0.052,
+            condition_strength=0.052,
             odds=2.10,
         )
 
@@ -1296,7 +1296,7 @@ class TestEndToEndPipeline:
 
         # Generate prediction with full provenance
         signal = Signal(match_index=5, strategy_name=strategy.name,
-                        direction="OVER", edge=0.04, odds=1.95)
+                        direction="OVER", condition_strength=0.04, odds=1.95)
 
         pred = PredictionEventFactory.from_signal(
             signal=signal,

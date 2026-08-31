@@ -12,7 +12,7 @@ from typing import Any
 import numpy as np
 import pandas as pd
 
-from src.engine.data.base import BaseDataLoader, MATCH_RECORD_SCHEMA
+from src.engine.analysis.data.base import BaseDataLoader, MATCH_RECORD_SCHEMA
 
 logger = logging.getLogger(__name__)
 
@@ -87,8 +87,6 @@ class SyntheticDataLoader(BaseDataLoader):
             # xO inputs
             "offsides_home": rng.integers(0, 8, n).astype(float),
             "offsides_away": rng.integers(0, 8, n).astype(float),
-            "ppda_home": rng.uniform(4.0, 18.0, n),
-            "ppda_away": rng.uniform(4.0, 18.0, n),
             # Market data
             "over_odds": rng.uniform(1.50, 2.80, n),
             "under_odds": rng.uniform(1.50, 2.80, n),
@@ -145,10 +143,6 @@ class SyntheticDataLoader(BaseDataLoader):
         # Very high offsides
         mask = rng.random(len(df)) < self.extreme_rate
         df.loc[mask, "offsides_home"] = rng.integers(12, 20, mask.sum()).astype(float)
-
-        # Zero PPDA (division by zero edge case)
-        mask = rng.random(len(df)) < self.extreme_rate
-        df.loc[mask, "ppda_home"] = 0.0
 
         return df
 

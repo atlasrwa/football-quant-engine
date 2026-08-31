@@ -13,8 +13,8 @@ from src.api.routes.builder_ui import (
     get_template_by_name,
     get_templates,
 )
-from src.engine.evaluator import Signal, StrategyEvaluator
-from src.engine.signals.deeplinker import DeepLink, DeepLinkConfig, DeepLinker
+from src.engine.analysis.evaluator import Signal, StrategyEvaluator
+from src.engine.market.signals.deeplinker import DeepLink, DeepLinkConfig, DeepLinker
 
 
 class TestDeepLinker:
@@ -25,7 +25,7 @@ class TestDeepLinker:
             match_index=0,
             strategy_name="Test",
             direction="OVER",
-            edge=0.10,
+            condition_strength=0.10,
             odds=2.00,
         )
 

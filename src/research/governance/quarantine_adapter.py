@@ -16,7 +16,7 @@ from dataclasses import dataclass
 from datetime import datetime
 from typing import Any, Optional
 
-from src.engine.fdr import QuarantineEntry, QuarantineStatus, QuarantineTracker
+from src.engine.analysis.fdr import QuarantineEntry, QuarantineStatus, QuarantineTracker
 from src.research.governance.classifier import GovernanceDecision, GovernanceState
 
 

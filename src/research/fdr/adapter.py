@@ -17,7 +17,7 @@ from dataclasses import dataclass, field
 from enum import Enum
 from typing import Any, Optional
 
-from src.engine.fdr import FDRController, FDRResult
+from src.engine.analysis.fdr import FDRController, FDRResult
 from src.research.fdr.family import ResearchFamily
 from src.research.walkforward.result import WalkForwardResult
 

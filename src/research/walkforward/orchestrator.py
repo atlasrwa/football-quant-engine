@@ -23,6 +23,7 @@ from src.research.experiment_engine.dataset import ResearchDataset
 from src.research.experiment_engine.hypothesis import ExperimentHypothesis
 from src.research.experiment_engine.result import ExperimentResult, ExperimentResultStatus
 from src.research.experiment_engine.runner import ExperimentRunner
+from src.research.models.factory import create_model_for_market, _create_model_instance
 from src.research.probability import (
     HistoricalFrequencyModel,
     LogisticRegressionModel,
@@ -51,17 +52,12 @@ def _default_model_factory(model_type: str, model_parameters: dict[str, Any]) ->
 
     Returns a callable that creates a new model instance each time.
     This ensures no state leaks between folds.
+
+    Supports all new statistical models (Dixon-Coles, count regression,
+    derived BTTS/CS) in addition to the original baselines.
     """
     def factory() -> ProbabilityModel:
-        if model_type == "historical_frequency":
-            return HistoricalFrequencyModel(**model_parameters)
-        elif model_type == "logistic_regression":
-            return LogisticRegressionModel(**model_parameters)
-        elif model_type == "poisson":
-            return PoissonModel(**model_parameters)
-        else:
-            # Default to historical frequency
-            return HistoricalFrequencyModel()
+        return _create_model_instance(model_type, model_parameters)
     return factory
 
 

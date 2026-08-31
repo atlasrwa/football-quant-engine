@@ -20,12 +20,12 @@ import numpy as np
 import pandas as pd
 import pytest
 
-from src.engine.backtest import XBacktestConfig, XBetRecord, XMetricBacktester
-from src.engine.clv import CLVCalculator, CLVResult
-from src.engine.evaluator import Condition, Signal, Strategy, StrategyEvaluator
-from src.engine.signals.community_broadcaster import BroadcastConfig, CommunityBroadcaster
-from src.engine.strategy_identity import StrategyIdentity, StrategyRegistry
-from src.engine.xmetrics import XMetricEngine
+from src.engine.analysis.backtest import XBacktestConfig, XBetRecord, XMetricBacktester
+from src.engine.market.clv import CLVCalculator, CLVResult
+from src.engine.analysis.evaluator import Condition, Signal, Strategy, StrategyEvaluator
+from src.engine.market.signals.community_broadcaster import BroadcastConfig, CommunityBroadcaster
+from src.engine.analysis.strategy_identity import StrategyIdentity, StrategyRegistry
+from src.engine.analysis.xmetrics import XMetricEngine
 from src.features.referee_volatility import RefereeVolatilityCalculator
 from src.models.match import Match
 
@@ -113,8 +113,8 @@ class TestR01_xO_TemporalLeakage:
             "date_unix": base_ts + np.arange(n) * 86400,
             "offsides_home": rng.integers(0, 6, n).astype(float),
             "offsides_away": rng.integers(0, 6, n).astype(float),
-            "ppda_home": rng.uniform(5.0, 15.0, n),
-            "ppda_away": rng.uniform(5.0, 15.0, n),
+            "corners_avg_against_home": rng.uniform(3.0, 8.0, n),
+            "corners_avg_against_away": rng.uniform(3.0, 8.0, n),
         })
 
     def test_future_invariance(self):
@@ -127,16 +127,16 @@ class TestR01_xO_TemporalLeakage:
         assert harness.verify_xO_invariance(history, future)
 
     def test_extreme_future_does_not_affect_history(self):
-        """Anomalous future data (extreme PPDA) must not alter historical baselines."""
+        """Anomalous future data (extreme corners_avg_against) must not alter historical baselines."""
         history = self._make_df(30, base_ts=1000000)
 
-        # Extreme future: PPDA=0.1 would make HLI=10, massively changing any global mean
+        # Extreme future: corners_avg_against=0.1 would make HLI=10, massively changing any global mean
         extreme_future = pd.DataFrame({
             "date_unix": [1000000 + 100 * 86400] * 50,
             "offsides_home": [20.0] * 50,
             "offsides_away": [20.0] * 50,
-            "ppda_home": [0.1] * 50,  # Extreme — HLI = 10.0
-            "ppda_away": [0.1] * 50,
+            "corners_avg_against_home": [0.1] * 50,  # Extreme — HLI = 10.0
+            "corners_avg_against_away": [0.1] * 50,
         })
 
         harness = TemporalIntegrityHarness()
@@ -155,19 +155,19 @@ class TestR01_xO_TemporalLeakage:
     def test_expanding_baseline_grows_with_data(self):
         """League baseline should evolve as more data accumulates."""
         engine = XMetricEngine()
-        # Uniform PPDA = 10.0 → HLI = 0.1 for all rows
+        # Uniform corners_avg_against = 5.0 → HLI = 0.2 for all rows
         df = pd.DataFrame({
             "date_unix": np.arange(10) * 86400,
             "offsides_home": [3.0] * 10,
             "offsides_away": [2.0] * 10,
-            "ppda_home": [10.0] * 10,
-            "ppda_away": [10.0] * 10,
+            "corners_avg_against_home": [5.0] * 10,
+            "corners_avg_against_away": [5.0] * 10,
         })
         result = engine.compute_xO(df)
 
-        # After first few rows stabilize, baseline should converge to 0.1
-        # Row 0: baseline=1.0 (fallback), ratio = 0.1/1.0 = 0.1
-        # Row 1+: baseline→0.1, ratio→1.0
+        # After first few rows stabilize, baseline should converge to 0.2
+        # Row 0: baseline=1.0 (fallback), ratio = 0.2/1.0 = 0.2
+        # Row 1+: baseline→0.2, ratio→1.0
         # So later rows should have higher xO than row 0
         assert result["home_xO"].iloc[5] > result["home_xO"].iloc[0]
 
@@ -376,7 +376,7 @@ class TestR04_CLV:
 
     def test_clv_never_equals_edge_times_100(self):
         """CLV must not coincidentally equal 'edge * 100' for arbitrary values."""
-        # edge=0.5, entry=2.10, closing=1.95
+        # condition_strength=0.5, entry=2.10, closing=1.95
         fake_clv = 0.5 * 100  # This is what the old code did
         real_clv = CLVCalculator.compute(2.10, 1.95)
         assert real_clv.clv_pct != pytest.approx(fake_clv)
@@ -410,7 +410,7 @@ class TestR05_ValidationTrust:
     """Tests proving validation state is authoritative, not hardcoded."""
 
     def _make_signal(self) -> Signal:
-        return Signal(match_index=0, strategy_name="Test", direction="OVER", edge=0.1, odds=2.0)
+        return Signal(match_index=0, strategy_name="Test", direction="OVER", condition_strength=0.1, odds=2.0)
 
     @pytest.mark.asyncio
     async def test_unvalidated_strategy_gets_false_badge(self):
@@ -468,7 +468,7 @@ class TestR06_QuarantineIntegration:
     @pytest.mark.asyncio
     async def test_quarantined_strategy_not_validated(self):
         """Quarantined strategy must not broadcast as validated."""
-        from src.engine.fdr import QuarantineStatus, QuarantineTracker
+        from src.engine.analysis.fdr import QuarantineStatus, QuarantineTracker
         from datetime import datetime
 
         tracker = QuarantineTracker()
@@ -481,7 +481,7 @@ class TestR06_QuarantineIntegration:
         # This means the broadcaster should receive validation_passed=False
         config = BroadcastConfig(dry_run=True)
         broadcaster = CommunityBroadcaster(config=config, clock=_NOON_UTC_CLOCK)
-        signal = Signal(match_index=0, strategy_name="strat_1", direction="OVER", edge=0.1, odds=2.0)
+        signal = Signal(match_index=0, strategy_name="strat_1", direction="OVER", condition_strength=0.1, odds=2.0)
 
         # Caller must check quarantine status and pass it correctly
         is_validated = (status == QuarantineStatus.PROMOTED)
@@ -495,7 +495,7 @@ class TestR06_QuarantineIntegration:
     @pytest.mark.asyncio
     async def test_promoted_strategy_can_be_validated(self):
         """Only PROMOTED strategies may broadcast as validated."""
-        from src.engine.fdr import QuarantineStatus, QuarantineTracker
+        from src.engine.analysis.fdr import QuarantineStatus, QuarantineTracker
         from datetime import datetime, timedelta
 
         tracker = QuarantineTracker()
@@ -507,7 +507,7 @@ class TestR06_QuarantineIntegration:
 
         config = BroadcastConfig(dry_run=True)
         broadcaster = CommunityBroadcaster(config=config, clock=_NOON_UTC_CLOCK)
-        signal = Signal(match_index=0, strategy_name="strat_2", direction="OVER", edge=0.1, odds=2.0)
+        signal = Signal(match_index=0, strategy_name="strat_2", direction="OVER", condition_strength=0.1, odds=2.0)
 
         is_validated = (status == QuarantineStatus.PROMOTED)
         payloads = await broadcaster.run_once(

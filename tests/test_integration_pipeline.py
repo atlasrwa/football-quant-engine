@@ -23,20 +23,20 @@ from src.domain.prediction import PredictionEvent, PredictionSource, PredictionS
 from src.domain.provenance import DatasetVersion, FeatureVersion, ModelVersion
 from src.domain.backtest_run import BacktestRun, BacktestStatus
 from src.domain.settlement import Settlement, SettlementOutcome
-from src.engine.backtest import StrategyIdentityInfo, XBacktestConfig, XMetricBacktester
-from src.engine.evaluator import Condition, Signal, Strategy, StrategyEvaluator
-from src.engine.fdr import QuarantineTracker
-from src.engine.orchestrator import BacktestOrchestrator, OrchestratedBacktestResult
-from src.engine.quarantine_bridge import QuarantineSettlementBridge
-from src.engine.settlement_service import MatchResult, PredictionSettlementService
-from src.engine.signals.community_broadcaster import (
+from src.engine.analysis.backtest import StrategyIdentityInfo, XBacktestConfig, XMetricBacktester
+from src.engine.analysis.evaluator import Condition, Signal, Strategy, StrategyEvaluator
+from src.engine.analysis.fdr import QuarantineTracker
+from src.engine.analysis.orchestrator import BacktestOrchestrator, OrchestratedBacktestResult
+from src.engine.market.quarantine_bridge import QuarantineSettlementBridge
+from src.engine.market.settlement_service import MatchResult, PredictionSettlementService
+from src.engine.market.signals.community_broadcaster import (
     BroadcastConfig,
     BroadcastResult,
     CommunityBroadcaster,
 )
-from src.engine.signals.crypto_exporter import CryptoSignalExporter, DispatchResult
-from src.engine.metrics.bookie import BookieMetrics
-from src.engine.strategy_identity import StrategyRegistry
+from src.engine.market.signals.crypto_exporter import CryptoSignalExporter, DispatchResult
+from src.engine.market.metrics.bookie import BookieMetrics
+from src.engine.analysis.strategy_identity import StrategyRegistry
 
 
 def _make_test_df(n: int = 300, seed: int = 42) -> pd.DataFrame:
@@ -223,7 +223,7 @@ class TestSignalDispatchPredictionEventIntegration:
     async def test_crypto_exporter_emits_prediction_event(self):
         """CryptoSignalExporter with identity produces DispatchResult with PredictionEvent."""
         exporter = CryptoSignalExporter(dry_run=True)
-        signal = Signal(match_index=0, strategy_name="test", direction="OVER", edge=0.15, odds=2.0)
+        signal = Signal(match_index=0, strategy_name="test", direction="OVER", condition_strength=0.15, odds=2.0)
         metrics = _make_metrics()
         identity = StrategyIdentityInfo(
             strategy_id="strat-001", strategy_version=1, content_hash="a" * 64
@@ -249,10 +249,10 @@ class TestSignalDispatchPredictionEventIntegration:
     @pytest.mark.asyncio
     async def test_crypto_exporter_without_identity_returns_payload(self):
         """CryptoSignalExporter without identity returns plain SignalPayload."""
-        from src.engine.signals.crypto_exporter import SignalPayload
+        from src.engine.market.signals.crypto_exporter import SignalPayload
 
         exporter = CryptoSignalExporter(dry_run=True)
-        signal = Signal(match_index=0, strategy_name="test", direction="OVER", edge=0.15, odds=2.0)
+        signal = Signal(match_index=0, strategy_name="test", direction="OVER", condition_strength=0.15, odds=2.0)
         metrics = _make_metrics()
 
         result = await exporter.dispatch(
@@ -272,8 +272,8 @@ class TestSignalDispatchPredictionEventIntegration:
             clock=lambda: datetime(2024, 6, 15, 12, 0, tzinfo=timezone.utc),
         )
         signals = [
-            Signal(match_index=0, strategy_name="s1", direction="OVER", edge=0.1, odds=1.9),
-            Signal(match_index=1, strategy_name="s1", direction="UNDER", edge=0.12, odds=2.1),
+            Signal(match_index=0, strategy_name="s1", direction="OVER", condition_strength=0.1, odds=1.9),
+            Signal(match_index=1, strategy_name="s1", direction="UNDER", condition_strength=0.12, odds=2.1),
         ]
         match_data = [
             {"match_id": 100, "date_unix": 1700000000, "home_team": "A", "away_team": "B", "league_id": 4759},
@@ -298,7 +298,7 @@ class TestSignalDispatchPredictionEventIntegration:
     async def test_paper_trade_source(self):
         """Dispatch with source=PAPER_TRADE sets correct PredictionSource."""
         exporter = CryptoSignalExporter(dry_run=True)
-        signal = Signal(match_index=0, strategy_name="test", direction="OVER", edge=0.1, odds=2.0)
+        signal = Signal(match_index=0, strategy_name="test", direction="OVER", condition_strength=0.1, odds=2.0)
         metrics = _make_metrics()
         identity = StrategyIdentityInfo(
             strategy_id="strat-003", strategy_version=1, content_hash="c" * 64
@@ -638,7 +638,7 @@ class TestEndToEndPipeline:
 
         # Step 1: Dispatch signal (paper trade mode)
         exporter = CryptoSignalExporter(dry_run=True)
-        signal = Signal(match_index=0, strategy_name="pipeline-strat", direction="OVER", edge=0.12, odds=2.05)
+        signal = Signal(match_index=0, strategy_name="pipeline-strat", direction="OVER", condition_strength=0.12, odds=2.05)
         metrics = _make_metrics()
         identity = StrategyIdentityInfo(
             strategy_id=strategy_id, strategy_version=1, content_hash="d" * 64

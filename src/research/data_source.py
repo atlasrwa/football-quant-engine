@@ -96,10 +96,6 @@ class ResearchMatch:
     home_xg: Optional[float] = None
     away_xg: Optional[float] = None
 
-    # PPDA (POST-MATCH ONLY)
-    ppda_home: Optional[float] = None
-    ppda_away: Optional[float] = None
-
     # Referee
     referee: Optional[str] = None
 
