@@ -5,13 +5,17 @@ so this seeds a PROSPECTIVE dataset that becomes a backtest as games settle.
 
 One call per (match, book). Books: bet365, betfair-exchange, pinnacle.
 Cache-first (idempotent), hard local cap via THESTATS_MAX_REQUESTS, client pacing.
-Priority order: finished (settle first) -> live -> scheduled, so the cap spends on
-the most immediately useful games. Skips a book for a match once budget is tight.
+
+Fetch order: by default finished -> live -> scheduled. When PILOTC_COVERED_ONLY=1
+the fetch is biased toward UPCOMING fixtures in leagues that already have corpus
+coverage (see src/research/forward/covered_league_topup) — this grows a settleable
+sample fastest without pulling brand-new leagues. PILOTC_MAX_FIXTURES caps how many
+fixtures (not requests) are attempted this run.
 
 Cache key: pilotC_odds_<mid>_<book>. Raw response saved unmodified by the client.
 """
 import sys, json, os
-sys.path.insert(0,'/home/ubuntu/scripts')
+sys.path.insert(0,'/home/ubuntu'); sys.path.insert(0,'/home/ubuntu/scripts')
 import thestatsapi_client as api
 
 LIST='/home/ubuntu/data/thestatsapi/championship/_pilotC_fixture_list.json'
@@ -19,11 +23,34 @@ BOOKS=['bet365','betfair-exchange','pinnacle']
 PROGRESS='/home/ubuntu/data/thestatsapi/championship/_pilotC_progress.json'
 
 
+def _ordered_ids(fx):
+    """Return match_ids in fetch order, applying the covered-league bias if enabled."""
+    meta = fx['meta']
+    if os.environ.get('PILOTC_COVERED_ONLY') == '1':
+        import time
+        import pilotC_stat_mixer as mix
+        from src.research.forward.covered_league_topup import build_topup_plan
+        ms = mix.load_corpus(); hist = mix.build_histories(ms)
+        plan = build_topup_plan(meta, fx['match_ids'], set(hist.keys()), time.time())
+        print(f"covered-league bias ON: {len(plan.ordered_match_ids)} fixtures in "
+              f"{plan.detail['n_covered_competitions']} covered comps "
+              f"(tier0 upcoming both-covered={plan.n_upcoming_both_covered}, "
+              f"excluded new-league={plan.n_excluded_new_league})")
+        ids = plan.ordered_match_ids
+    else:
+        order = {'finished': 0, 'live': 1, 'scheduled': 2}
+        ids = sorted(fx['match_ids'], key=lambda m: order.get(meta[m]['status'], 3))
+    max_fx = int(os.environ.get('PILOTC_MAX_FIXTURES', '0') or 0)
+    if max_fx > 0:
+        ids = ids[:max_fx]
+    return ids
+
+
 def main():
     fx=json.load(open(LIST)); meta=fx['meta']
-    order={'finished':0,'live':1,'scheduled':2}
-    ids=sorted(fx['match_ids'], key=lambda m: order.get(meta[m]['status'],3))
-    stats={'live_calls':0,'cached':0,'empty':0,'populated':0,'by_book':{b:0 for b in BOOKS}}
+    ids=_ordered_ids(fx)
+    stats={'live_calls':0,'cached':0,'empty':0,'populated':0,'fixtures_attempted':len(ids),
+           'by_book':{b:0 for b in BOOKS}}
     saved=[]
     for mid in ids:
         for bk in BOOKS:

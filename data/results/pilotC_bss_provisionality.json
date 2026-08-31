@@ -1,0 +1,46 @@
+{
+  "assessment_date": "2026-08-30",
+  "subject": "Pilot C stat-mixer '9-for-9 positive BSS, ECE 0.004-0.030' result (scripts/pilotC_stat_mixer.py train_eval, data/discovery/pilotC_stat_mixer.json)",
+  "verdict": "PROVISIONAL but NOT for the reason the brief assumed. The 9/9 is NOT a forward result on a small sample; it is a single time-ordered 70/30 split on the corpus with large held-out n (~4600 per market). Hyperparameter selection did NOT touch that held-out split, so the OOS-in-time figure is not directly contaminated. It nonetheless remains provisional: it is a single split (not walk-forward/CPCV), the within-train CV folds are not time-ordered, and above all it is corpus-internal OOS, NOT forward OOS. The forward fixtures are unsettled, so there is as yet NO forward-OOS BSS.",
+
+  "q1_cv_folds_strictly_point_in_time": {
+    "answer": "NO for the hyperparameter-selection CV; YES for the train/test evaluation split.",
+    "evidence": {
+      "train_test_split": "train_eval() sorts the corpus by date_unix (load_corpus) then splits X[:0.7] train / X[0.7:] test. The evaluation (test) set is strictly LATER in time than the training set -> the reported BSS/ECE are genuinely out-of-sample IN TIME.",
+      "hyperparameter_cv": "LogisticRegressionCV(cv=4) selects C and l1_ratio via sklearn StratifiedKFold, which is NOT time-ordered: a validation fold can contain rows dated earlier than rows in its own training fold. So hyperparameter tuning uses mild within-train look-ahead. This is confined to the training 70% and does not see the test 30%."
+    }
+  },
+
+  "q2_hyperparameter_selection_used_evaluation_data": {
+    "answer": "NO. Hyperparameter selection ran only on the training 70% (clf.fit(Xtr, ytr)); BSS/ECE were computed on the held-out later-in-time 30% (Xte). The evaluation split was not used to pick C/l1_ratio.",
+    "important_caveat": "The FORWARD predictor (scripts/pilotC_forward_predict.py fit_full) REUSES the (C, l1_ratio) chosen by train_eval and refits on the FULL corpus, then predicts forward fixtures. Those hyperparameters were selected on corpus data that overlaps the refit data. This is acceptable for the corpus-internal number but means the forward predictions inherit corpus-selected hyperparameters — the forward OOS test must be judged on genuinely held-out SETTLED forward fixtures, of which there are currently zero."
+  },
+
+  "relabeling_required": {
+    "was_labeled": "OOS BSS positive on all 9 markets (implied forward-quality result)",
+    "must_be_relabeled_as": "Corpus single-split OOS-in-time BSS on all 9 markets. This is in-sample-of-the-corpus with respect to the FORWARD experiment. It is NOT forward-OOS and must not be cited as evidence of forward edge until confirmed on genuinely held-out SETTLED forward fixtures.",
+    "reason": "9 markets all positive with tight ECE, produced with CV-selected elastic-net hyperparameters on one corpus, is exactly the shape a result takes when it has not yet met genuinely unseen forward data. The magnitudes are also small (BSS +0.5% to +4.1%), consistent with a near-fair market and a mildly-calibrated model rather than exploitable edge."
+  },
+
+  "measured_values_for_the_record": {
+    "note": "Reproduced from data/discovery/pilotC_stat_mixer.json. n_test is the held-out later-in-time slice, NOT forward fixtures.",
+    "models": [
+      {"market": "goals", "line": 1.5, "bss_pct": 1.48, "ece": 0.006, "n_test": 4611},
+      {"market": "goals", "line": 2.5, "bss_pct": 1.68, "ece": 0.004, "n_test": 4611},
+      {"market": "goals", "line": 3.5, "bss_pct": 1.83, "ece": 0.018, "n_test": 4611},
+      {"market": "corners", "line": 8.5, "bss_pct": 1.47, "ece": 0.018, "n_test": 4601},
+      {"market": "corners", "line": 9.5, "bss_pct": 1.23, "ece": 0.030, "n_test": 4601},
+      {"market": "corners", "line": 10.5, "bss_pct": 1.66, "ece": 0.023, "n_test": 4601},
+      {"market": "cards", "line": 3.5, "bss_pct": 4.14, "ece": 0.024, "n_test": 4608},
+      {"market": "cards", "line": 4.5, "bss_pct": 3.78, "ece": 0.026, "n_test": 4608},
+      {"market": "btts", "line": null, "bss_pct": 0.53, "ece": 0.009, "n_test": 4611}
+    ],
+    "positive_bss_count": "9/9"
+  },
+
+  "recommended_fixes_to_remove_remaining_optimism": [
+    "Replace LogisticRegressionCV(cv=4) with a time-series CV (e.g. TimeSeriesSplit) so hyperparameter selection is strictly point-in-time within the training set.",
+    "Replace the single 70/30 split with walk-forward or combinatorial purged CV (CPCV) to remove split-point luck.",
+    "Report the forward-OOS BSS ONLY on settled, pre-registered, attested forward fixtures — never cite the corpus split as the forward result."
+  ]
+}

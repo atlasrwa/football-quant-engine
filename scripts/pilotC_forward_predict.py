@@ -11,7 +11,7 @@ Edge is measured against EACH book's devigged fair prob, with Betfair (near-zero
 as the primary honest benchmark and cross-book disagreement recorded. No bets settled
 here; outcomes filled in later by pilotC_settle.py as fixtures complete.
 """
-import sys, json, glob, os, warnings
+import sys, json, glob, os, warnings, time
 from datetime import datetime, timezone
 from collections import defaultdict
 import numpy as np
@@ -19,10 +19,15 @@ warnings.filterwarnings('ignore')
 sys.path.insert(0,'/home/ubuntu'); sys.path.insert(0,'/home/ubuntu/scripts')
 from sklearn.linear_model import LogisticRegression
 import pilotC_stat_mixer as mix
+from src.research.forward.attestation_ledger import AttestationLedger
 
 CH='/home/ubuntu/data/thestatsapi/championship'
 OUT='/home/ubuntu/data/discovery/pilotC_forward_predictions.json'
+COMMIT_LEDGER='/home/ubuntu/data/forward/pilotC_commitments.jsonl'
+REVEAL_LEDGER='/home/ubuntu/data/forward/pilotC_reveals.jsonl'
 BOOKS=['bet365','betfair-exchange','pinnacle']
+# Betfair exchange is the primary (near-fair) reference price for the edge claim.
+PRIMARY_BOOK='betfair-exchange'
 MKT_ODDSKEY={'goals':'total_goals','corners':'match_corners','cards':'total_cards','btts':'btts'}
 
 
@@ -84,7 +89,10 @@ def main():
         models[(market,line)]=fit_full(ms,hist,market,line,C,l1r)
 
     fx=json.load(open(f'{CH}/_pilotC_fixture_list.json'))['meta']
+    ledger=AttestationLedger(commit_path=COMMIT_LEDGER, reveal_path=REVEAL_LEDGER)
+    now_ts=time.time()
     preds=[]
+    attest_stats={'committed':0,'unattestable_past_kickoff':0,'commit_failed':0}
     for mid,info in fx.items():
         home,away=info.get('home'),info.get('away')
         if home not in corpus_teams or away not in corpus_teams: continue
@@ -108,7 +116,40 @@ def main():
                     row['books'][bk]={'fair_p':round(fair,4),'overround':round(ovr,4),
                                       'edge_pp':round((pm-fair)*100,2),
                                       'over_odds':float(o),'under_odds':float(u)}
-            if row['books']: preds.append(row)
+            if not row['books']:
+                continue
+
+            # ── ATTESTATION: commit BEFORE kickoff, binding the reference price ──
+            # A Pilot C prediction is a forward edge claim vs a specific reference
+            # price. We commit (prediction + fixture + reference price + timestamp)
+            # via the tamper-evident ledger. If the fixture has already kicked off
+            # the ledger refuses — the row is flagged UNATTESTABLE, never backdated.
+            pred_id=f"pilotC:{mid}:{market}:{line}"
+            ref_book=PRIMARY_BOOK if PRIMARY_BOOK in row['books'] else next(iter(row['books']))
+            ref=row['books'][ref_book]
+            reference_price={'book':ref_book,'over_odds':ref['over_odds'],
+                             'under_odds':ref['under_odds'],'fair_p':ref['fair_p'],
+                             'overround':ref['overround']}
+            row['reference_book']=ref_book
+            try:
+                res=ledger.commit(prediction_id=pred_id, fixture_id=str(mid),
+                                  model=f"{market}_{line}", kickoff_unix=float(info['ts']),
+                                  p_over=round(pm,4), p_under=round(1.0-pm,4),
+                                  reference_price=reference_price)
+                if res.committed:
+                    row['attested']=True
+                    row['commitment_hash']=res.record['commitment_hash']
+                    attest_stats['committed']+=1
+                else:
+                    row['attested']=False
+                    row['attestation_note']=res.reason
+                    attest_stats['unattestable_past_kickoff']+=1
+            except Exception as e:
+                row['attested']=False
+                row['attestation_note']=f"{type(e).__name__}: {str(e)[:120]}"
+                attest_stats['commit_failed']+=1
+
+            preds.append(row)
 
     # cross-book disagreement summary
     disagree=[]
@@ -117,6 +158,18 @@ def main():
             disagree.append(abs(r['books']['bet365']['fair_p']-r['books']['betfair-exchange']['fair_p']))
     out={'generated':datetime.now(timezone.utc).isoformat(),
          'STATUS':'PROSPECTIVE — most fixtures unsettled; score with pilotC_settle.py after kickoff',
+         'DISCLAIMER':'This demonstrates the CONDITIONS for edge (near-fair Betfair reference, '
+                      'measurable book disagreement, a calibrated model) and that the pipeline runs '
+                      'end to end. It does NOT demonstrate edge. No edge conclusion may be drawn from '
+                      'unsettled fixtures.',
+         'primary_reference_book':PRIMARY_BOOK,
+         'attestation':{
+             'committed_pre_kickoff':attest_stats['committed'],
+             'unattestable_past_kickoff':attest_stats['unattestable_past_kickoff'],
+             'commit_failed':attest_stats['commit_failed'],
+             'commit_ledger':COMMIT_LEDGER,
+             'note':'Only pre-kickoff predictions are attestable. Past-kickoff fixtures '
+                    'cannot be retroactively attested and are never backdated.'},
          'n_predictions':len(preds),
          'n_mappable_fixtures':len(set(r['match_id'] for r in preds)),
          'betfair_vs_bet365_disagreement_pp':{
@@ -126,6 +179,9 @@ def main():
          'predictions':preds}
     json.dump(out, open(OUT,'w'), indent=2, default=str)
     print(f"predictions={len(preds)} over {out['n_mappable_fixtures']} fixtures")
+    print(f"attestation: committed={attest_stats['committed']} "
+          f"unattestable_past_kickoff={attest_stats['unattestable_past_kickoff']} "
+          f"failed={attest_stats['commit_failed']}")
     print(f"betfair vs bet365 disagreement: {out['betfair_vs_bet365_disagreement_pp']}")
     # show a few example edges vs Betfair
     ex=[r for r in preds if 'betfair-exchange' in r['books']][:8]

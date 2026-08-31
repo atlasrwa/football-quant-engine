@@ -1,0 +1,67 @@
+{
+  "title": "Pilot C forward edge test — pre-registered analysis plan",
+  "version": 1,
+  "registered_before_settlement": true,
+  "registration_note": "This plan is committed BEFORE any forward fixtures are settled and BEFORE any settlement analysis is run. Its SHA-256 is recorded in data/forward/preregistration_ledger.jsonl via the tamper-evident attestation ledger. No post-hoc changes are permitted; a revised plan must be a NEW versioned registration with its own commitment, and the change must be disclosed. Any analysis that deviates from this plan must be reported as EXPLORATORY, not confirmatory.",
+
+  "status_disclaimer": "The pilot has demonstrated the CONDITIONS for edge (a near-fair Betfair reference price, measurable book disagreement, a calibrated model) and that the machinery runs end to end. It has NOT demonstrated edge. No edge conclusion may be drawn from unsettled fixtures.",
+
+  "primary_hypothesis": {
+    "statement": "For a given market/line, the Pilot C stat-mixer's forward probability beats the Betfair-exchange de-vigged fair price, net of overround, on genuinely held-out SETTLED forward fixtures that were commit-reveal attested before kickoff.",
+    "operationalisation": "Bet the side (over/under, or yes/no for BTTS) the model favours vs the Betfair fair price. The primary statistic per market/line is the realized flat-bet ROI on attested +EV selections, with a 95% bootstrap CI (10000 resamples, seed=42). Secondary: model BSS minus Betfair-market BSS on the same settled outcomes.",
+    "primary_success_criterion": "Realized ROI 95% bootstrap CI lower bound > 0 AND the per-market edge threshold (below) is met, on a sample of at least the minimum size, at the pre-committed stopping point."
+  },
+
+  "reference_price": {
+    "primary_book": "betfair-exchange",
+    "rationale": "Betfair exchange overround measured ~1.1% in the pilot vs Bet365 ~5.9%; it is the closest to a fair reference.",
+    "de_vig_method": "Proportional (multiplicative) overround removal: fair_p_side = (1/odds_side) / (1/odds_over + 1/odds_under). Identical to scripts implementation (devig / devig_multiplicative).",
+    "reference_price_binding": "The Betfair over/under odds and de-vigged fair prob used for each prediction are bound into that prediction's commitment hash at commit time, so the benchmark cannot be re-chosen after the fact. If Betfair is unavailable for a fixture the fallback book actually used is recorded per prediction (reference_book) and such fixtures are analysed as a SEPARATE, secondary family, not pooled with Betfair-referenced ones.",
+    "secondary_books": ["bet365", "pinnacle"]
+  },
+
+  "multiple_testing_family": {
+    "description": "The confirmatory family is the full set of market/line cells tested. Every cell below is counted in the family regardless of outcome; we do NOT drop cells that look bad, nor add cells that look good.",
+    "cells": [
+      {"market": "goals", "line": 1.5}, {"market": "goals", "line": 2.5}, {"market": "goals", "line": 3.5},
+      {"market": "corners", "line": 8.5}, {"market": "corners", "line": 9.5}, {"market": "corners", "line": 10.5},
+      {"market": "cards", "line": 3.5}, {"market": "cards", "line": 4.5},
+      {"market": "btts", "line": null}
+    ],
+    "n_cells_primary": 9,
+    "league_stratification": "Primary analysis POOLS across covered leagues (the covered-league top-up keeps the fixture universe to leagues with corpus history). A per-league breakdown is SECONDARY/exploratory only; each league x cell that is separately claimed enters the family and is counted. We will not mine league subsets for the largest edge.",
+    "multiplicity_correction": "Benjamini-Hochberg FDR at q=0.10 across the 9 primary cells (consistent with the project's existing FDR machinery, src/research/fdr). A cell is a confirmatory winner only if it survives BH-FDR AND meets the edge threshold AND its ROI CI lower bound > 0.",
+    "family_wise_note": "If secondary families (per-league, non-Betfair books) are reported, each is corrected within itself and labelled exploratory; they do not borrow significance from the primary family."
+  },
+
+  "edge_threshold_per_market": {
+    "rationale": "Against Betfair's ~1.1% overround the required edge to overcome the reference-price vig is ~0.55pp per side (half the overround). We set a conservative REQUIRED de-vigged probability edge threshold that must be exceeded for a selection to count as +EV, and a separate ROI threshold for the confirmatory claim.",
+    "required_prob_edge_pp_for_selection": 1.0,
+    "required_realized_roi_pct_for_claim": 2.0,
+    "note": "The 1.0pp selection threshold is deliberately at/above the overround-implied ~0.55pp so we do not count marginal noise as +EV. The 2.0pp ROI-claim threshold guards against a statistically-positive-but-economically-trivial result after realistic frictions. Book disagreement measured now (data/results/book_disagreement.json): pooled mean 1.29pp, median 0.91pp, 46% of Bet365-vs-Betfair pairs exceed 1pp — so an edge above threshold is possible but not abundant."
+  },
+
+  "minimum_sample_size": {
+    "per_cell_minimum_settled_attested_fixtures": 385,
+    "rationale": "n=385 gives a +/-5% margin at 95% confidence on a proportion at the worst-case p=0.5. Applied PER market/line cell. A cell with fewer than 385 settled, attested fixtures yields NO confirmatory conclusion for that cell (reported as under-powered).",
+    "attestation_requirement": "Only fixtures whose prediction was commit-reveal attested BEFORE kickoff (verify_chain passes) are eligible. Unattested / past-kickoff predictions are excluded from the confirmatory sample entirely."
+  },
+
+  "stopping_rule": {
+    "type": "fixed-sample, no peeking",
+    "rule": "Confirmatory analysis is run ONCE, when the primary family reaches at least 385 settled+attested fixtures in a MAJORITY (>= 5 of 9) of cells, OR at a hard calendar cutoff of 2027-06-30, whichever comes first. Interim monitoring is limited to operational health (attestation success, settlement counts, calibration drift) and MUST NOT include the primary ROI/BSS edge statistics. We will not stop early because results 'look good'; the settlement count triggers the analysis, not the results.",
+    "peeking_prohibition": "No primary edge statistic (ROI, ROI CI, model-minus-market BSS) is to be computed or viewed on the confirmatory sample before the stopping condition is met.",
+    "projected_trigger": "Under the covered-league top-up projection (~10 covered upcoming fixtures/week => ~10 settleable/cell/week), 385/cell implies ~38 weeks, i.e. an estimated readout around 2027-05-27 (see data/discovery/pilotC_topup_plan.json). The 2027-06-30 calendar cutoff is the backstop."
+  },
+
+  "analysis_procedure_committed": {
+    "fit_scheme": "Forward predictions use the corpus-trained elastic-net stat-mixer with hyperparameters selected on corpus data (documented as a limitation in data/results/pilotC_bss_provisionality.json). The forward fixtures themselves are never used in training or hyperparameter selection.",
+    "point_in_time": "Features for each forward fixture use only data before that fixture's kickoff (verified point-in-time in the feature builders).",
+    "bet_side": "Bet whichever side the de-vigged Betfair edge points to (fixed in scripts/ev_test_metrics_vs_bet365.py simulate_flat_bet_return).",
+    "what_would_falsify": "If, at the stopping point, no primary cell has an ROI CI lower bound > 0 after BH-FDR, the pilot has FAILED to demonstrate edge and will be reported as such. A near-fair reference price plus measurable disagreement is necessary but not sufficient for edge."
+  },
+
+  "provisional_result_handling": {
+    "pilot_9_for_9_bss": "The pilot's 9-for-9 positive BSS is a corpus single-split OOS-in-time result (large held-out n), NOT a forward-OOS result. It is treated as in-sample-of-a-sample with respect to this forward experiment and is NOT evidence for the primary hypothesis. See data/results/pilotC_bss_provisionality.json."
+  }
+}

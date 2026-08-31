@@ -1,0 +1,40 @@
+{
+  "generated": "2026-08-30T14:23:00UTC",
+  "policy": "Bias top-up toward UPCOMING fixtures in leagues with existing team history. Do NOT broaden the corpus to new leagues.",
+  "corpus_teams": 480,
+  "plan": {
+    "n_total_fixtures": 220,
+    "n_covered_competitions": 13,
+    "upcoming_both_covered": 10,
+    "upcoming_one_covered": 10,
+    "finished_both_covered_backlog": 18,
+    "excluded_new_league": 164,
+    "excluded_past_or_uncovered": 18,
+    "ordered_fixtures_in_plan": 38
+  },
+  "quota": {
+    "actual_remaining_reported_by_client": "4908",
+    "max_fixtures_this_run": 40,
+    "fixtures_attempted_this_run": 38,
+    "books_per_fixture": 3,
+    "projected_requests_this_run_worst_case": 114,
+    "note": "Cache-first: only NEW (match,book) pairs cost budget; cached pairs are free. Worst case assumes all pairs uncached."
+  },
+  "projection": {
+    "markets_per_fixture": 4,
+    "covered_upcoming_fixtures_visible_now": 10,
+    "assumed_weekly_covered_upcoming_fixtures": 10,
+    "projected_weekly_settleable_predictions": 40,
+    "projected_weekly_settleable_per_market_line": 10,
+    "target_n_per_market_line": 385,
+    "estimated_weeks_to_power_per_market_line": 38.5,
+    "caveats": [
+      "weekly rate is a proxy from the currently-visible fixture horizon; true weekly covered-fixture inflow may differ.",
+      "target_n is per market/line; the multiple-testing family (see pre-registration) requires each tested cell to reach n independently.",
+      "settleable != edge; reaching n only enables a conclusion, it does not imply one."
+    ]
+  },
+  "powered_sample_date_estimate_per_market_line": "2027-05-27",
+  "honest_framing": "Reaching a powered sample only ENABLES a conclusion; it does not imply edge. No edge conclusion from unsettled fixtures.",
+  "fetch_command": "PILOTC_COVERED_ONLY=1 PILOTC_MAX_FIXTURES=40 THESTATS_MAX_REQUESTS=114 python3 scripts/pilotC_multibook_fetch.py"
+}

@@ -47,6 +47,7 @@ import numpy as np
 from src.research.footystats.client import FootyStatsResearchClient
 from src.research.footystats.normalizer import MatchNormalizer
 from src.research.models.count_regression import create_corners_model, create_cards_model
+from src.research.forward.attestation_ledger import AttestationLedger
 
 # ═══════════════════════════════════════════════════════════════
 # CONFIGURATION (frozen for quarantine duration)
@@ -111,20 +112,6 @@ def _prediction_id(fixture_id: str, model: str) -> str:
     return hashlib.sha256(content.encode()).hexdigest()[:16]
 
 
-def _commitment_hash(prediction: dict) -> str:
-    """Compute commitment hash: proves prediction content at a point in time."""
-    # Hash the prediction content (excluding the commitment itself)
-    canonical = json.dumps({
-        "prediction_id": prediction["prediction_id"],
-        "fixture_id": prediction["fixture_id"],
-        "model": prediction["model"],
-        "p_over": prediction["p_over"],
-        "p_under": prediction["p_under"],
-        "prediction_timestamp": prediction["prediction_timestamp"],
-    }, sort_keys=True, separators=(",", ":"))
-    return hashlib.sha256(canonical.encode()).hexdigest()
-
-
 def load_existing_predictions() -> dict[str, dict]:
     """Load existing predictions keyed by prediction_id. Idempotency check."""
     predictions = {}
@@ -174,90 +161,26 @@ def persist_run_log(run_record: dict) -> None:
 
 # ═══════════════════════════════════════════════════════════════
 # ATTESTATION (commit-reveal lifecycle for provable predictions)
+#
+# Delegates to the shared tamper-evident AttestationLedger. The ledger:
+#   - takes the commit timestamp from ITS OWN clock (never backdatable)
+#   - hash-chains records so any edit/reorder/insertion is detectable
+#   - refuses to commit once a match has kicked off (flags UNATTESTED instead)
+# The corners/cards quarantine loop logs no odds, so reference_price is None;
+# the commitment hash still binds prediction content + fixture + timestamp.
 # ═══════════════════════════════════════════════════════════════
 
-def _compute_attestation_commitment_hash(prediction: dict) -> str:
-    """Compute attestation commitment hash using the canonical production format.
-
-    Uses the same canonical JSON → SHA-256 approach as the production
-    AttestationService (src/persistence/broadcast_hashing.py), binding the
-    prediction content cryptographically before kickoff.
-
-    The forward loop doesn't have strategy_id/strategy_version/entry_odds/proof_hash
-    from the production domain model, so we use the quarantine-specific fields
-    that uniquely identify the prediction content:
-        prediction_id, fixture_id, model, p_over, p_under, prediction_timestamp
-    """
-    canonical = json.dumps({
-        "prediction_id": prediction["prediction_id"],
-        "fixture_id": prediction["fixture_id"],
-        "model": prediction["model"],
-        "p_over": prediction["p_over"],
-        "p_under": prediction["p_under"],
-        "prediction_timestamp": prediction["prediction_timestamp"],
-    }, sort_keys=True, separators=(",", ":"))
-    return hashlib.sha256(canonical.encode("utf-8")).hexdigest()
-
-
-def _compute_attestation_reveal_hash(commitment_hash: str, settlement: dict) -> str:
-    """Compute attestation reveal hash binding settlement to original commitment.
-
-    Proves the settlement outcome corresponds to the committed prediction.
-    """
-    canonical = json.dumps({
-        "commitment_hash": commitment_hash,
-        "prediction_id": settlement["prediction_id"],
-        "fixture_id": settlement["fixture_id"],
-        "model": settlement["model"],
-        "actual_over": settlement["actual_over"],
-        "actual_total": settlement["actual_total"],
-        "settled_at": settlement["settled_at"],
-    }, sort_keys=True, separators=(",", ":"))
-    return hashlib.sha256(canonical.encode("utf-8")).hexdigest()
+_LEDGER = AttestationLedger(commit_path=COMMITMENTS_FILE, reveal_path=REVEALS_FILE)
 
 
 def load_existing_commitments() -> dict[str, dict]:
     """Load existing commitments keyed by prediction_id."""
-    commitments = {}
-    if COMMITMENTS_FILE.exists():
-        with open(COMMITMENTS_FILE, "r") as f:
-            for line in f:
-                line = line.strip()
-                if line:
-                    c = json.loads(line)
-                    commitments[c["prediction_id"]] = c
-    return commitments
+    return _LEDGER.commitments_by_prediction()
 
 
 def load_existing_reveals() -> set[str]:
     """Load existing reveal prediction IDs."""
-    reveals = set()
-    if REVEALS_FILE.exists():
-        with open(REVEALS_FILE, "r") as f:
-            for line in f:
-                line = line.strip()
-                if line:
-                    r = json.loads(line)
-                    reveals.add(r["prediction_id"])
-    return reveals
-
-
-def persist_commitment(commitment: dict) -> None:
-    """Append commitment to immutable JSONL store.
-
-    Once written, a commitment cannot be edited or backdated.
-    The append timestamp in the file serves as the attestation anchor.
-    """
-    COMMITMENTS_FILE.parent.mkdir(parents=True, exist_ok=True)
-    with open(COMMITMENTS_FILE, "a") as f:
-        f.write(json.dumps(commitment) + "\n")
-
-
-def persist_reveal(reveal: dict) -> None:
-    """Append reveal to JSONL store after settlement."""
-    REVEALS_FILE.parent.mkdir(parents=True, exist_ok=True)
-    with open(REVEALS_FILE, "a") as f:
-        f.write(json.dumps(reveal) + "\n")
+    return set(_LEDGER.reveals_by_prediction().keys())
 
 
 # ═══════════════════════════════════════════════════════════════
@@ -468,44 +391,52 @@ def run_forward_cycle():
                     "market": "CORNERS_TOTAL" if "corners" in model_name else "CARDS_TOTAL",
                     "status": "COMMITTED",
                     "attested": False,  # Provisional — set True only after commitment succeeds
-                    "commitment_hash": "",  # Computed below
+                    "commitment_hash": "",  # Set below from the ledger commitment
                 }
-
-                # Compute commitment hash (canonical attestation binding)
-                prediction["commitment_hash"] = _compute_attestation_commitment_hash(prediction)
 
                 # Persist prediction (immutable once written)
                 persist_prediction(prediction)
                 existing_predictions[pred_id] = prediction
                 stats["predictions_generated"] += 1
 
-                # ── ATTESTATION: create commitment immediately ──
-                # The commitment proves this prediction existed at this timestamp.
-                # If commitment fails, the prediction is flagged as unattested.
+                # ── ATTESTATION: create commitment immediately via the ledger ──
+                # The ledger derives the commit timestamp from its own clock and
+                # hash-chains the record, so it cannot be backdated. It refuses to
+                # commit if the match has already started; on any failure the
+                # prediction stays flagged UNATTESTED (never backdated).
                 try:
-                    commitment = {
-                        "prediction_id": pred_id,
-                        "fixture_id": fixture_id,
-                        "model": model_name,
-                        "commitment_hash": prediction["commitment_hash"],
-                        "committed_at": now.isoformat(),
-                        "committed_unix": now_ts,
-                        "kickoff_timestamp": kickoff_ts,
-                        "pre_kickoff": True,  # Assertion: committed before match starts
-                    }
-                    persist_commitment(commitment)
-                    existing_commitments[pred_id] = commitment
-                    stats["commitments_created"] += 1
-
-                    # Mark prediction as attested
-                    prediction["attested"] = True
-
-                    logger.info(
-                        "  PREDICTED+COMMITTED %s %s vs %s: p_over=%.3f (%s) hash=%s",
-                        model_name, home_name, away_name, estimate.p_over,
-                        datetime.fromtimestamp(kickoff_ts, tz=timezone.utc).strftime("%m-%d %H:%M"),
-                        prediction["commitment_hash"][:12],
+                    res = _LEDGER.commit(
+                        prediction_id=pred_id,
+                        fixture_id=fixture_id,
+                        model=model_name,
+                        kickoff_unix=kickoff_ts,
+                        p_over=prediction["p_over"],
+                        p_under=prediction["p_under"],
+                        reference_price=None,  # corners/cards loop logs no odds
+                        prediction_timestamp=prediction["prediction_timestamp"],
                     )
+                    if res.committed:
+                        commitment = res.record
+                        existing_commitments[pred_id] = commitment
+                        prediction["commitment_hash"] = commitment["commitment_hash"]
+                        stats["commitments_created"] += 1
+                        prediction["attested"] = True
+                        logger.info(
+                            "  PREDICTED+COMMITTED %s %s vs %s: p_over=%.3f (%s) hash=%s",
+                            model_name, home_name, away_name, estimate.p_over,
+                            datetime.fromtimestamp(kickoff_ts, tz=timezone.utc).strftime("%m-%d %H:%M"),
+                            commitment["commitment_hash"][:12],
+                        )
+                    else:
+                        # Commitment declined (e.g. kickoff passed) — UNATTESTED
+                        stats["commitments_failed"] += 1
+                        err = f"COMMITMENT DECLINED {pred_id}: {res.reason}"
+                        logger.warning(err)
+                        stats["errors"].append(err)
+                        logger.warning(
+                            "  PREDICTED (UNATTESTED) %s %s vs %s: p_over=%.3f — %s",
+                            model_name, home_name, away_name, estimate.p_over, res.reason,
+                        )
                 except Exception as ce:
                     # Commitment failed — prediction exists but is unattested
                     stats["commitments_failed"] += 1
@@ -529,41 +460,47 @@ def run_forward_cycle():
 
     # ─── PHASE 3.5: BACKFILL COMMITMENTS FOR UNATTESTED PREDICTIONS ──
     # If a prior run generated predictions without commitments (e.g., before
-    # attestation was wired), create commitments now IF still pre-kickoff.
-    logger.info("Phase 3.5: Backfilling commitments for unattested predictions...")
+    # attestation was wired), create commitments now — but ONLY via the ledger,
+    # which refuses any prediction whose kickoff has already passed. Such
+    # predictions stay permanently UNATTESTED; we never backdate them.
+    logger.info("Phase 3.5: Backfilling commitments for still-pre-kickoff predictions...")
 
     backfilled = 0
+    backfill_declined = 0
     for pred_id, pred in existing_predictions.items():
         if pred_id in existing_commitments:
             continue  # Already committed
-        # Only commit if still before kickoff
         kickoff_ts = pred.get("kickoff_timestamp", 0)
-        if now_ts >= kickoff_ts:
-            continue  # Too late — match started, cannot prove pre-kickoff commitment
-
         try:
-            # Recompute commitment hash with canonical algorithm
-            c_hash = _compute_attestation_commitment_hash(pred)
-            commitment = {
-                "prediction_id": pred_id,
-                "fixture_id": pred["fixture_id"],
-                "model": pred["model"],
-                "commitment_hash": c_hash,
-                "committed_at": now.isoformat(),
-                "committed_unix": now_ts,
-                "kickoff_timestamp": kickoff_ts,
-                "pre_kickoff": True,
-                "backfilled": True,  # Marks this was created after initial prediction
-            }
-            persist_commitment(commitment)
-            existing_commitments[pred_id] = commitment
-            backfilled += 1
+            res = _LEDGER.commit(
+                prediction_id=pred_id,
+                fixture_id=pred["fixture_id"],
+                model=pred["model"],
+                kickoff_unix=kickoff_ts,
+                p_over=pred.get("p_over"),
+                p_under=pred.get("p_under"),
+                reference_price=None,
+                prediction_timestamp=pred.get("prediction_timestamp"),
+                extra={"backfilled": True},
+            )
+            if res.committed:
+                existing_commitments[pred_id] = res.record
+                backfilled += 1
+            else:
+                # Kickoff already passed — cannot prove a pre-kickoff commitment.
+                backfill_declined += 1
         except Exception as e:
             logger.warning("Backfill commitment failed for %s: %s", pred_id, str(e)[:80])
 
     if backfilled > 0:
-        logger.info("Backfilled %d commitments for previously unattested predictions", backfilled)
+        logger.info("Backfilled %d commitments for still-pre-kickoff predictions", backfilled)
         stats["commitments_created"] += backfilled
+    if backfill_declined > 0:
+        logger.info(
+            "%d predictions are past kickoff and remain permanently UNATTESTED "
+            "(not backdated)", backfill_declined,
+        )
+        stats["backfill_declined_past_kickoff"] = backfill_declined
 
     # ─── PHASE 4: SETTLE COMPLETED PREDICTIONS ───────────────────────
     logger.info("Phase 4: Settling completed predictions...")
@@ -621,28 +558,28 @@ def run_forward_cycle():
 
         # ── ATTESTATION: auto-reveal after settlement ──
         # Reveals bind the settlement outcome to the original commitment,
-        # completing the commit→reveal lifecycle.
+        # completing the commit→reveal lifecycle. Only predictions with a prior
+        # commitment can be revealed (the ledger enforces this).
         if pred_id in existing_commitments and pred_id not in existing_reveals:
             try:
-                commitment = existing_commitments[pred_id]
-                reveal_hash = _compute_attestation_reveal_hash(
-                    commitment["commitment_hash"], settlement
+                res = _LEDGER.reveal(
+                    prediction_id=pred_id,
+                    fixture_id=fixture_id,
+                    model=model_name,
+                    outcome={
+                        "actual_over": actual_over,
+                        "actual_total": actual_total,
+                        "line": pred["line"],
+                        "p_over": pred["p_over"],
+                        "brier_contribution": settlement["brier_contribution"],
+                    },
+                    settled_at=now.isoformat(),
                 )
-                reveal = {
-                    "prediction_id": pred_id,
-                    "fixture_id": fixture_id,
-                    "model": model_name,
-                    "commitment_hash": commitment["commitment_hash"],
-                    "reveal_hash": reveal_hash,
-                    "actual_over": actual_over,
-                    "actual_total": actual_total,
-                    "brier_contribution": settlement["brier_contribution"],
-                    "settled_at": now.isoformat(),
-                    "revealed_at": now.isoformat(),
-                }
-                persist_reveal(reveal)
-                existing_reveals.add(pred_id)
-                stats["reveals_created"] += 1
+                if res.committed:
+                    existing_reveals.add(pred_id)
+                    stats["reveals_created"] += 1
+                else:
+                    logger.warning("Reveal declined for %s: %s", pred_id, res.reason)
             except Exception as re:
                 logger.warning("Reveal failed for %s: %s", pred_id, str(re)[:80])
 
