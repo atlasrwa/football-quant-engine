@@ -288,3 +288,107 @@ def test_no_stake_sizing_anywhere_in_scanner():
             if any(b in low for b in banned_substrings):
                 offending.append(nm)
     assert not offending, f"forbidden staking construct(s) present in code: {sorted(set(offending))}"
+
+
+
+# ── 4. CORE LOGIC: net-edge ranking, fair-vs-best-price, cross-book config ──────
+#
+# These are offline unit tests of the scanner's decision logic (no network, no model
+# fit). They lock in the brief's critical design points so a refactor cannot silently
+# regress them:
+#   §4 rank by edge NET OF THE MARGIN HURDLE, never raw edge
+#   §5 fair price (sharpest ref) and best price (highest odds) are DISTINCT roles
+#   §6 the four cross-book configurations, classified boundary-stably
+
+def _bf(fair_p, overround, over_odds, under_odds):
+    return {"fair_p": fair_p, "overround": overround,
+            "over_odds": over_odds, "under_odds": under_odds}
+
+
+def test_net_edge_ranking_not_raw_edge():
+    """The brief's central point: +7.91pp vs a 9.11% overround is a SMALLER real edge
+    than +5.25pp vs a 0.76% overround. rank_flags must order by net_edge, not raw."""
+    # Two synthetic flags mirroring the brief's example.
+    cards = {"market": "cards", "line": 3.5, "is_flag": True,
+             "raw_edge_pp": 7.91, "net_edge_pp": 3.36,
+             "reliability": {"passes": True}}
+    btts = {"market": "btts", "line": None, "is_flag": True,
+            "raw_edge_pp": 5.25, "net_edge_pp": 4.87,
+            "reliability": {"passes": True}}
+    scan = {"lines": [cards, btts]}
+    flags_pass, flags_fail = es.rank_flags(scan)
+    assert [f["market"] for f in flags_pass] == ["btts", "cards"], (
+        "must rank by NET edge (btts 4.87 > cards 3.36), NOT raw edge (cards 7.91 first)")
+    assert not flags_fail
+
+
+def test_reliability_filter_splits_pass_and_fail():
+    passing = {"market": "goals", "line": 2.5, "is_flag": True, "net_edge_pp": 2.0,
+               "reliability": {"passes": True}}
+    failing = {"market": "corners", "line": 9.5, "is_flag": True, "net_edge_pp": 3.0,
+               "reliability": {"passes": False}}
+    not_flag = {"market": "goals", "line": 1.5, "is_flag": False}
+    flags_pass, flags_fail = es.rank_flags({"lines": [passing, failing, not_flag]})
+    assert [f["market"] for f in flags_pass] == ["goals"]
+    assert [f["market"] for f in flags_fail] == ["corners"]  # edge but fails reliability — reported, not dropped
+
+
+def test_fair_reference_prefers_sharp_then_pinnacle():
+    both = {"betfair-exchange": _bf(0.50, 0.01, 1.98, 2.02),
+            "pinnacle": _bf(0.51, 0.02, 1.95, 2.0),
+            "bet365": _bf(0.49, 0.06, 2.05, 1.80)}
+    assert es._pick_fair_reference(both) == ("betfair-exchange", False)
+    no_betfair = {"pinnacle": _bf(0.51, 0.02, 1.95, 2.0), "bet365": _bf(0.49, 0.06, 2.05, 1.8)}
+    assert es._pick_fair_reference(no_betfair) == ("pinnacle", False)
+    soft_only = {"bet365": _bf(0.49, 0.06, 2.05, 1.8)}
+    ref, soft = es._pick_fair_reference(soft_only)
+    assert ref == "bet365" and soft is True  # soft-book-only must be flagged
+
+
+def test_best_price_is_distinct_from_fair_reference():
+    """§5: fair reference (Betfair) and best execution price (highest odds, maybe a soft
+    book) are separate roles. Here Betfair is the fair ref but bet365 offers better over
+    odds — the scanner must return bet365 for the OVER best price."""
+    book_fair = {"betfair-exchange": _bf(0.50, 0.01, 1.98, 2.02),
+                 "bet365": _bf(0.49, 0.06, 2.05, 1.80)}
+    ref_book, soft_only = es._pick_fair_reference(book_fair)
+    assert ref_book == "betfair-exchange"
+    bp_book, bp_odds = es._best_price(book_fair, "over")
+    assert (bp_book, bp_odds) == ("bet365", 2.05)  # best price != fair reference book
+    bp_book_u, bp_odds_u = es._best_price(book_fair, "under")
+    assert (bp_book_u, bp_odds_u) == ("betfair-exchange", 2.02)
+
+
+def _cfg(model_p, sharp_fp, soft_fp, over=True):
+    bf = {"betfair-exchange": _bf(sharp_fp, 0.01, 2.0, 2.0),
+          "bet365": _bf(soft_fp, 0.06, 2.0, 2.0)}
+    return es._cross_book_config(model_p, bf, "betfair-exchange", over)
+
+
+def test_cross_book_config_four_configurations():
+    # books agree with each other:
+    assert _cfg(0.501, 0.50, 0.505) == "model_agrees_with_both_books"
+    assert _cfg(0.56, 0.50, 0.505) == "model_disagrees_with_both_books_which_agree"
+    # books disagree substantially:
+    assert _cfg(0.50, 0.45, 0.55) == "model_between_books_that_disagree"
+    assert _cfg(0.45, 0.45, 0.55) == "model_agrees_with_sharp_both_disagree_with_soft"
+    assert _cfg(0.43, 0.45, 0.55) == "books_disagree_model_sides_with_sharp"
+    assert _cfg(0.56, 0.45, 0.55) == "books_disagree_model_sides_with_soft"
+    # single book -> operational fallback
+    single = {"betfair-exchange": _bf(0.5, 0.01, 2.0, 2.0)}
+    assert es._cross_book_config(0.5, single, "betfair-exchange", True) == "single_book_only"
+
+
+def test_rich_unavailable_reported_when_corpus_not_joinable(monkeypatch):
+    """The corpus is FootyStats-keyed (numeric ids), so rich /stats cannot be joined.
+    _build_rich_history must report rich_structurally_available=False with a reason, and
+    must NOT fabricate any npxG substitution."""
+    class _NoFetchApi:
+        def is_cached(self, k):
+            return False
+    hist = {"A": [(1.0, {"id": 8223680, "home_name": "A", "away_name": "B"}, "home")] * 5,
+            "B": [(1.0, {"id": 8223731, "home_name": "C", "away_name": "B"}, "away")] * 5}
+    rich_hist, info = es._build_rich_history(_NoFetchApi(), [], hist, "A", "B", allow_fetch=True)
+    assert info["rich_structurally_available"] is False
+    assert info["npxg_substitutions"] == 0
+    assert info["unavailable_reason"] and "mt_" in info["unavailable_reason"]

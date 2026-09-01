@@ -28,6 +28,13 @@ WHAT IT DOES (per the edge-scanner brief)
      existing xG input where /stats is populated for BOTH teams. No refit. Report where
      broad and rich disagree and by how much. If they diverge materially that is
      informative in itself — the rich configuration rests on far less history.
+     NOTE (data reality): the training corpus is FootyStats-keyed and carries no
+     TheStatsAPI mt_ id, so historical matches cannot currently be joined to the /stats
+     endpoint that holds the rich fields. The rich pass is therefore honestly reported as
+     structurally unavailable (rich == broad) for corpus-history fixtures, rather than
+     silently pretending; --rich is prevented from wasting budget on wrong-namespace ids.
+     The mechanism is in place and activates automatically if a corpus carrying mt_ ids
+     (or a join table) is added later — with no model change.
  §3 EV per line     — for EVERY corners/cards/goals/BTTS line any book offers: model p
      (broad and rich), each book's vig-adjusted fair prob with overround shown,
      edge = model − market per book, and the best available REFERENCE price identified.
@@ -245,6 +252,50 @@ def check_corpus_support(home, away):
     return (len(missing) == 0), (ms, hist, corpus_teams), missing
 
 
+def gather_referee_coverage(row, hist, home, away):
+    """§1 Referee coverage — 'referee assignment and their card/foul history IF available'.
+
+    Honest reporting only: the fixture universe (_pilotC_fixture_list.json meta) carries
+    no referee assignment, and the FootyStats corpus's refereeID is null throughout, so
+    neither an assignment nor a referee card/foul history can be built from cached data.
+    We report that explicitly rather than silently omitting referee — it matters most for
+    the cards market. If a referee id/name is ever populated on the fixture row or corpus,
+    this surfaces it (still without a network call). No model input depends on it (the
+    fitted cards model uses team foul/card rolling features, not a referee feature)."""
+    assigned = None
+    for k in ("referee", "referee_name", "refereeName", "refereeID", "referee_id"):
+        v = row.get(k)
+        if v:
+            assigned = v
+            break
+    # is there ANY non-null referee id across either team's corpus history?
+    hist_has_ref = False
+    for team in (home, away):
+        for _d, mm, _r in hist.get(team, []):
+            if mm.get("refereeID") not in (None, "", 0, "0"):
+                hist_has_ref = True
+                break
+        if hist_has_ref:
+            break
+    return {
+        "assignment_available": assigned is not None,
+        "assigned_referee": assigned,
+        "referee_history_available": hist_has_ref,
+        "note": (
+            "referee data present and assigned; surfaced for context (no model input "
+            "depends on it — the cards model uses team foul/card features)"
+            if assigned else
+            ("no referee assignment in the fixture feed; corpus carries per-match "
+             "refereeID so a history could be built, but with no assignment it cannot be "
+             "tied to this fixture. Not used (cards model uses team foul/card features)"
+             if hist_has_ref else
+             "referee assignment not present in the fixture feed and corpus refereeID is "
+             "null — no referee card/foul history can be built from cached data; reported "
+             "as unavailable (the cards model uses team foul/card features, not a referee "
+             "feature, so this does not silently degrade a flag)")),
+    }
+
+
 # Rich /stats sections and their metric lists (exact key spellings verified against a
 # cached /stats payload). These are the TheStatsAPI-only fields the brief lists. Only a
 # subset feed the (unchanged) model — see the rich-model note below — the rest are
@@ -269,18 +320,36 @@ def _stats_cache_key(mid):
 
 
 def _match_id_of(m):
-    """Best-effort match id from a corpus record (used to fetch its /stats)."""
-    for k in ("id", "match_id", "matchId", "fixture_id"):
+    """TheStatsAPI (``mt_``-namespaced) match id from a corpus record, or None.
+
+    IMPORTANT id-namespace reality: the training corpus is FootyStats-sourced
+    (data/discovery/corpus/league-matches_*.json) and its ``id`` field is a NUMERIC
+    FootyStats id (e.g. 8223680). The TheStatsAPI ``/football/matches/{id}/stats``
+    endpoint — the only source of the rich npxG/tackles/etc. fields — is keyed on a
+    DIFFERENT ``mt_``-prefixed id space (e.g. mt_466259566). The two do not share a join
+    key anywhere in this project, so a corpus history match cannot be resolved to a
+    TheStatsAPI /stats record.
+
+    We therefore return ONLY an ``mt_``-namespaced id if the corpus record happens to
+    carry one (it currently never does). Returning the numeric FootyStats id here would
+    make the rich pass fetch ``/football/matches/8223680/stats`` — a wrong-namespace id
+    that wastes budget on guaranteed 404s. Refusing to do that is what keeps ``--rich``
+    budget-safe AND honest: rich augmentation is reported as structurally unavailable
+    rather than silently always-broad-while-burning-quota."""
+    for k in ("mt_id", "thestatsapi_id", "match_id", "matchId", "fixture_id", "id"):
         v = m.get(k)
-        if v:
-            return str(v)
+        if isinstance(v, str) and v.startswith("mt_"):
+            return v
     return None
 
 
 def _rich_stats_for_match(api, match_id, allow_fetch):
     """Return the /stats data dict for a match, cache-first. If allow_fetch is False,
-    only returns it when already cached (zero budget). Returns None if unavailable."""
-    if match_id is None:
+    only returns it when already cached (zero budget). Returns None if unavailable.
+
+    ``match_id`` must be a TheStatsAPI ``mt_`` id (see _match_id_of); anything else is
+    rejected before any request so a wrong-namespace id can never spend budget."""
+    if match_id is None or not str(match_id).startswith("mt_"):
         return None
     ck = _stats_cache_key(match_id)
     if not api.is_cached(ck) and not allow_fetch:
@@ -327,6 +396,10 @@ def gather_rich_coverage(api, hist, home, away, allow_fetch):
         field_null = {}
         stats_matches = 0
         npxg_matches = 0
+        # how many recent history matches even carry a TheStatsAPI mt_ id we could join
+        # to /stats. If this is 0 the rich fields are STRUCTURALLY unavailable for this
+        # team (corpus is FootyStats-keyed; see _match_id_of), not merely "unfetched".
+        joinable = sum(1 for _d, m, _r in recent if _match_id_of(m) is not None)
         for d_unix, m, role in recent:
             mid = _match_id_of(m)
             data = _rich_stats_for_match(api, mid, allow_fetch)
@@ -354,6 +427,8 @@ def gather_rich_coverage(api, hist, home, away, allow_fetch):
         report[team] = {
             "matches_history": n_hist,
             "recent_considered": len(recent),
+            "rich_joinable_matches": joinable,
+            "rich_available": joinable > 0,
             "stats_matches_available": stats_matches,
             "npxg_matches": npxg_matches,
             "rich_fields_populated": field_pop,
@@ -449,11 +524,18 @@ def _build_rich_history(api, ms, hist, home, away, allow_fetch):
     other team's features are identical to broad."""
     import copy
     info = {"npxg_substitutions": 0, "matches_touched": 0,
-            "home_stats_matches": 0, "away_stats_matches": 0, "both_covered": False}
+            "home_stats_matches": 0, "away_stats_matches": 0, "both_covered": False,
+            "home_joinable": 0, "away_joinable": 0, "rich_structurally_available": False,
+            "unavailable_reason": None}
     # start from the shared histories; copy only the match dicts we mutate so we never
     # corrupt the broad corpus in-memory.
     rich_hist = dict(hist)
     touched_ids = {}
+
+    def _joinable(team):
+        rows = hist.get(team, [])
+        recent = rows[-RICH_HISTORY_CAP:] if rows else []
+        return sum(1 for _d, m, _r in recent if _match_id_of(m) is not None)
 
     def _augment(team, key):
         rows = hist.get(team, [])
@@ -482,10 +564,22 @@ def _build_rich_history(api, ms, hist, home, away, allow_fetch):
         rich_hist[team] = new_rows
         return n_stats
 
+    info["home_joinable"] = _joinable(home)
+    info["away_joinable"] = _joinable(away)
     info["home_stats_matches"] = _augment(home, "home")
     info["away_stats_matches"] = _augment(away, "away")
     info["matches_touched"] = len(touched_ids)
     info["both_covered"] = info["home_stats_matches"] > 0 and info["away_stats_matches"] > 0
+    # Distinguish "structurally impossible to join" from "joinable but not fetched yet".
+    if info["home_joinable"] == 0 and info["away_joinable"] == 0:
+        info["rich_structurally_available"] = False
+        info["unavailable_reason"] = (
+            "corpus history is FootyStats-keyed and carries no TheStatsAPI mt_ id, so "
+            "recent matches cannot be joined to the /stats endpoint that holds the rich "
+            "npxG/tackles/etc. fields. Rich model therefore equals broad here — this is a "
+            "data-namespace limitation, not a fetch that --rich would fix. See _match_id_of.")
+    else:
+        info["rich_structurally_available"] = True
     return rich_hist, info
 
 
@@ -560,46 +654,65 @@ def _best_price(book_fair, side):
 
 
 def _cross_book_config(model_p, book_fair, ref_book, side_over):
-    """§6 Record the model's position relative to the books. Returns a short string
-    describing one of the four configurations. side_over: True if the model favours the
-    'over'/'yes' side. Uses fair probs on the model's side."""
-    # fair prob on the model's side per book
+    """§6 Record the model's position relative to the books — one of the four
+    configurations the brief enumerates:
+      * model_agrees_with_sharp_both_disagree_with_soft
+      * model_disagrees_with_both_books_which_agree
+      * model_between_books_that_disagree
+      * books_disagree_model_sides_with_sharp / ..._with_soft
+    plus operational fallbacks (single_book_only). All probabilities are taken on the
+    MODEL'S side (over/yes if side_over else under/no).
+
+    Design notes making the classification boundary-stable:
+      * TOL is a single 'meaningful disagreement' threshold (1pp; Pilot C measured mean
+        book disagreement ~1.3pp). Two numbers are 'the same' iff within TOL.
+      * Softs are summarised by their mean side-prob (they are execution/disagreement
+        venues; there is usually one soft book here anyway). 'Books agree' means the
+        sharp and the soft summary are within TOL.
+      * 'Between' requires the model to be strictly inside the (sharp, soft) interval by
+        more than TOL on BOTH sides — otherwise it is classified as siding with the
+        nearer book, so a model sitting essentially ON one book is not mislabelled
+        'between'."""
     def side_p(b):
         fp_over = b["fair_p"]  # fair_p is always P(over/yes)
         return fp_over if side_over else (1.0 - fp_over)
+
     sharp = book_fair.get(ref_book)
     softs = {b: v for b, v in book_fair.items() if b != ref_book}
     if not sharp or not softs:
         return "single_book_only"
+
+    TOL = 0.01  # 1pp meaningful-disagreement threshold
     sharp_p = side_p(sharp)
-    soft_ps = {b: side_p(v) for b, v in softs.items()}
+    soft_ps = [side_p(v) for v in softs.values()]
+    soft_p = sum(soft_ps) / len(soft_ps)          # soft summary
     m = model_p if side_over else (1.0 - model_p)
-    TOL = 0.01  # 1pp: "meaningful" book disagreement threshold (Pilot C measured ~1.3pp mean)
-    # is the sharp/soft pair in agreement?
-    max_book_gap = max(abs(sharp_p - sp) for sp in soft_ps.values())
-    books_agree = max_book_gap < TOL
-    # model vs sharp, model vs each soft
-    m_vs_sharp = m - sharp_p
+
+    books_agree = abs(sharp_p - soft_p) < TOL
+
     if books_agree:
-        # books agree with each other; where does the model sit?
-        if abs(m_vs_sharp) < TOL:
+        if abs(m - sharp_p) < TOL:
             return "model_agrees_with_both_books"
         return "model_disagrees_with_both_books_which_agree"
-    # books disagree substantially
-    # does the model sit between them, or side with one?
-    lo = min([sharp_p] + list(soft_ps.values()))
-    hi = max([sharp_p] + list(soft_ps.values()))
-    if lo - TOL <= m <= hi + TOL and not (abs(m - lo) < TOL or abs(m - hi) < TOL):
+
+    # Books disagree meaningfully. Order the two poles.
+    lo, hi = min(sharp_p, soft_p), max(sharp_p, soft_p)
+    # Strictly inside the interval (by > TOL on both sides) => genuinely between.
+    if (m > lo + TOL) and (m < hi - TOL):
         return "model_between_books_that_disagree"
-    # closer to sharp or to soft?
-    nearest = min(list(soft_ps.items()) + [(ref_book, sharp_p)],
-                  key=lambda kv: abs(m - kv[1]))
-    if nearest[0] == ref_book:
+    # Otherwise the model is at/beyond one pole — it sides with the nearer book.
+    if abs(m - sharp_p) <= abs(m - soft_p):
+        # model close to sharp; if it is also ~equal to sharp and both books straddle,
+        # this is the 'agrees with sharp, both disagree with soft' configuration.
+        if abs(m - sharp_p) < TOL:
+            return "model_agrees_with_sharp_both_disagree_with_soft"
         return "books_disagree_model_sides_with_sharp"
     return "books_disagree_model_sides_with_soft"
 
 
-def build_scan(mid, row, hist, rich_hist, models, books, rich_info):
+
+
+def build_scan(mid, row, hist, rich_hist, models, books, rich_info, referee_coverage=None):
     """§3/§4/§5/§6 — produce per-line rows with broad+rich model p, per-book fair probs,
     edge, net edge, fair reference, best price, and cross-book config. No side effects."""
     home, away = row["home"], row["away"]
@@ -712,6 +825,7 @@ def build_scan(mid, row, hist, rich_hist, models, books, rich_info):
         "reliability_history": {"n_home": n_home, "n_away": n_away,
                                 "min_required": MIN_MATCHES_PER_TEAM, "both_ok": hist_ok},
         "rich_info": rich_info,
+        "referee_coverage": referee_coverage or {},
         "lines": lines,
     }
 
@@ -1215,13 +1329,27 @@ def render_summary(scan, flags_pass, flags_fail, commit_results, usage, rich_cov
     for team, cov in (rich_coverage or {}).items():
         npop = len(cov.get("rich_fields_populated", {}))
         nnull = len(cov.get("rich_fields_null", {}))
-        A(f"  rich /stats [{team}]: {cov['stats_matches_available']}/{cov['recent_considered']} "
-          f"recent matches had /stats; npxG in {cov['npxg_matches']}; "
+        A(f"  rich /stats [{team}]: joinable={cov.get('rich_joinable_matches', 0)}/"
+          f"{cov['recent_considered']} recent matches carry a TheStatsAPI mt_ id; "
+          f"{cov['stats_matches_available']} had /stats; npxG in {cov['npxg_matches']}; "
           f"rich fields populated={npop} null-only={nnull}")
     ri = scan.get("rich_info", {})
     A(f"  rich model inputs: npxG substituted into xG for {ri.get('npxg_substitutions', 0)} "
       f"match-rows; both teams covered={ri.get('both_covered', False)} "
       f"({'RICH ACTIVE' if ri.get('both_covered') else 'rich falls back to broad'})")
+    if not ri.get("rich_structurally_available", False) and ri.get("unavailable_reason"):
+        A(f"  ** RICH UNAVAILABLE (structural): {ri['unavailable_reason']}")
+    ref_cov = scan.get("referee_coverage", {})
+    if ref_cov:
+        if ref_cov.get("assignment_available"):
+            A(f"  referee: assigned={ref_cov.get('assigned_referee')} "
+              f"history_available={ref_cov.get('referee_history_available')}")
+        elif ref_cov.get("referee_history_available"):
+            A("  referee: NO assignment in the fixture feed — corpus does carry per-match "
+              "refereeID (a history could be built) but with no assignment it cannot be "
+              "tied to this fixture. Not used (the cards model uses team foul/card features).")
+        else:
+            A(f"  referee: UNAVAILABLE — {ref_cov.get('note')}")
     A("")
 
     # scanned lines (§3) — compact per market/line, one line per book
@@ -1409,11 +1537,12 @@ def main():
     import thestatsapi_client as api
     rich_coverage = gather_rich_coverage(api, hist, home, away, allow_fetch=args.rich)
     rich_hist, rich_info = _build_rich_history(api, ms, hist, home, away, allow_fetch=args.rich)
+    referee_coverage = gather_referee_coverage(row, hist, home, away)
     # refresh quota after any rich fetches
     usage["live_requests_made"] = api.live_requests_made()
     usage["monthly_remaining_after"] = api.budget_snapshot().get("last_monthly_remaining")
 
-    scan = build_scan(mid, row, hist, rich_hist, models, books, rich_info)
+    scan = build_scan(mid, row, hist, rich_hist, models, books, rich_info, referee_coverage)
     flags_pass, flags_fail = rank_flags(scan)
     commit_results = commit_flags(scan, flags_pass, args.requested_by, dry_run=args.dry_run)
     if not args.dry_run:
@@ -1423,7 +1552,8 @@ def main():
         print(json.dumps({"scan": scan, "flags_passing": flags_pass,
                           "flags_failing_reliability": flags_fail,
                           "commit_results": commit_results,
-                          "rich_coverage": rich_coverage, "quota": usage,
+                          "rich_coverage": rich_coverage,
+                          "referee_coverage": referee_coverage, "quota": usage,
                           "scorecard": build_scorecard(), "caveat": CAVEAT,
                           "dry_run": args.dry_run}, indent=2, default=str))
     else:
