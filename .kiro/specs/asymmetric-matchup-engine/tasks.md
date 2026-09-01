@@ -117,7 +117,7 @@ Commit-and-push checkpoints (Req 14.1) are embedded as sub-steps; the `hypothesi
     - Commit `directional_model.py` and tests; push. No shared-config change
     - _Requirements: 14.1_
 
-- [ ] 5. Implement the Interaction_Model (two directions) with cards conditioning
+- [x] 5. Implement the Interaction_Model (two directions) with cards conditioning
   - [x] 5.1 Implement referee card-rate conditioning
     - Add `RefereeCardRate` (adapting `src/features/referee_volatility.py`): expanding, look-ahead-free, league-fallback; when referee is missing or insufficiently observed, substitute the league-level expanding card rate and set `referee_substituted=True`
     - Treat the league-level expanding-window card rate as the PRIMARY pre-match conditioning path (not merely a fallback), because referee assignment is unavailable pre-match in both data sources; use a referee-specific rate ONLY in backtest on completed fixtures with a known post-match referee id; the Analysis_CLI never conditions a pre-match cards prediction on a referee-specific rate
@@ -137,32 +137,32 @@ Commit-and-push checkpoints (Req 14.1) are embedded as sub-steps; the `hypothesi
     - **Validates: Requirements 2.7, 2.11**
     - `# Feature: asymmetric-matchup-engine, Property 5: ...`, `@settings(max_examples=100)`
     - _Requirements: 2.7, 2.11_
-  - [-] 5.5 Commit and push the interaction model
+  - [x] 5.5 Commit and push the interaction model
     - Commit `interaction.py`, referee conditioning, and tests; push. No shared-config change
     - _Requirements: 14.1_
 
 - [ ] 6. Implement the Derived_Outcome combiner and correlation check
-  - [~] 6.1 Implement `DerivedOutcomeCombiner` in `derived.py`
+  - [x] 6.1 Implement `DerivedOutcomeCombiner` in `derived.py`
     - Mirror `src/research/models/derived_goals.py`: derive total corners/cards/goals via discrete convolution of the two per-side distributions; BTTS = `P(A>=1)*P(B>=1)`; clean sheet per side = `P(opponent goals = 0)`, all under the stated independence assumption emitted alongside each outcome
     - Never model any Derived_Outcome directly
     - _Requirements: 2.9, 2.10, 3.1_
-  - [~] 6.2 Implement Correlation_Structure constants and comparison in `correlation.py`
+  - [x] 6.2 Implement Correlation_Structure constants and comparison in `correlation.py`
     - Encode measured constants (cards×corners -0.033, cards×goals -0.030, corners×goals -0.028, 95% CI ±0.016); compute implied correlation from the per-side joint; red-flag when implied lies outside `measured ± max(CI, 0.05)`; always report measured values and CIs alongside the comparison
     - _Requirements: 3.2, 3.3, 3.4_
-  - [ ]* 6.3 Write property test for derived combination under independence
+  - [x]* 6.3 Write property test for derived combination under independence
     - **Property 6: Derived combination under independence** — total = discrete convolution and a valid PMF; total mean = sum of per-side means; BTTS = `P(A>=1)*P(B>=1)`
     - **Validates: Requirements 2.9, 3.1**
     - Uses the `count_pmfs` strategy; `# Feature: asymmetric-matchup-engine, Property 6: ...`, `@settings(max_examples=100)`
     - _Requirements: 2.9, 3.1_
-  - [ ]* 6.4 Write property test for implied-vs-measured correlation red flag
+  - [x]* 6.4 Write property test for implied-vs-measured correlation red flag
     - **Property 7: Implied-vs-measured correlation red flag** — red flag raised iff implied correlation lies outside the measured value by more than the reported tolerance
     - **Validates: Requirements 3.2, 3.3, 3.4**
     - `# Feature: asymmetric-matchup-engine, Property 7: ...`, `@settings(max_examples=100)`
     - _Requirements: 3.2, 3.3, 3.4_
-  - [ ]* 6.5 Write unit tests for derive-don't-model and reported constants
+  - [x]* 6.5 Write unit tests for derive-don't-model and reported constants
     - Assert no Derived_Outcome is modelled directly (2.10); assert measured correlation constants and ±0.016 CI are reported (3.4)
     - _Requirements: 2.10, 3.4_
-  - [~] 6.6 Commit and push the combiner and correlation check
+  - [-] 6.6 Commit and push the combiner and correlation check
     - Commit `derived.py`, `correlation.py`, and tests; push. No shared-config change
     - _Requirements: 14.1_
 
