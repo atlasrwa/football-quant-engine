@@ -79,41 +79,41 @@ Commit-and-push checkpoints (Req 14.1) are embedded as sub-steps; the `hypothesi
   - [x]* 3.7 Write edge-case unit tests for min-history boundary and reduced dimensions
     - Test the `< 5` insufficient boundary exactly at 4 and 5 matches (1.16); test the reduced-profile dimension set for Broad_Corpus (4.3)
     - _Requirements: 1.16, 4.3_
-  - [-] 3.8 Commit and push the profiler
+  - [x] 3.8 Commit and push the profiler
     - Commit `profile_dimensions.py`, `profiles.py`, and their tests; push. No shared-config change
     - _Requirements: 14.1_
 
 - [ ] 4. Implement the directional count model (elastic-net + shrinkage)
-  - [~] 4.1 Implement `DirectionalCountModel` in `directional_model.py`
+  - [x] 4.1 Implement `DirectionalCountModel` in `directional_model.py`
     - Extend the reused MLE from `src/research/models/count_regression.py`: reuse `_select_distribution` (`DistributionType.AUTO`, NB vs Poisson) and report the empirical dispersion ratio
     - Replace the L2-only penalty with elastic-net `lambda * (alpha_mix * sum(sqrt(w^2 + eps)) + (1 - alpha_mix) * sum(w^2))` (defaults `lambda=0.05`, `alpha_mix=0.5`), keeping L-BFGS-B stable via smoothed absolute value
     - Remove the team-identity effect layer; apply `n/(n+k)` (`k=10.0`) shrinkage to per-team profile-feature estimates toward the global mean
     - Implement `fit`, `predict_distribution` (full PMF via Poisson/NB), `predict_expected_count`; keep coefficients readable for reporting
     - _Requirements: 5.1, 5.3, 5.4, 5.5, 5.6, 10.3_
-  - [~] 4.2 Wire binary derived outcomes to the logistic model
+  - [x] 4.2 Wire binary derived outcomes to the logistic model
     - Use the existing `LogisticRegressionModel` in `probability.py` for binary Derived_Outcomes
     - _Requirements: 5.2_
-  - [ ]* 4.3 Write property test for shrinkage monotonicity
+  - [x]* 4.3 Write property test for shrinkage monotonicity
     - **Property 8: Team-level shrinkage monotonicity** — increasing n moves the shrunk estimate monotonically toward the team mean; weight `n/(n+k)` strictly increasing in n
     - **Validates: Requirements 5.1, 5.6**
     - `# Feature: asymmetric-matchup-engine, Property 8: ...`, `@settings(max_examples=100)`
     - _Requirements: 5.1, 5.6_
-  - [ ]* 4.4 Write property test for dispersion-driven distribution selection
+  - [x]* 4.4 Write property test for dispersion-driven distribution selection
     - **Property 9: Dispersion-driven distribution selection** — NB selected when variance/mean exceeds threshold, Poisson otherwise; empirical dispersion ratio reported
     - **Validates: Requirements 5.3**
     - `# Feature: asymmetric-matchup-engine, Property 9: ...`, `@settings(max_examples=100)`
     - _Requirements: 5.3_
-  - [ ]* 4.5 Write property test for elastic-net behaviour
+  - [x]* 4.5 Write property test for elastic-net behaviour
     - **Property 10: Elastic-net regularization shrinks coefficients and retains correlated features** — increasing lambda gives non-increasing L2 coefficient norm; two correlated informative features both retain non-zero weight
     - **Validates: Requirements 5.4, 5.5**
     - `# Feature: asymmetric-matchup-engine, Property 10: ...`, `@settings(max_examples=100)`
     - _Requirements: 5.4, 5.5_
-  - [ ]* 4.6 Write property test for valid predictive distributions
+  - [x]* 4.6 Write property test for valid predictive distributions
     - **Property 4: Valid predictive distributions** — every PMF entry in [0,1] and entries sum to 1 within tolerance, for each target
     - **Validates: Requirements 2.4, 2.5, 2.6, 2.7**
     - `# Feature: asymmetric-matchup-engine, Property 4: ...`, `@settings(max_examples=100)`
     - _Requirements: 2.4, 2.5, 2.6, 2.7_
-  - [~] 4.7 Commit and push the directional model
+  - [-] 4.7 Commit and push the directional model
     - Commit `directional_model.py` and tests; push. No shared-config change
     - _Requirements: 14.1_
 
