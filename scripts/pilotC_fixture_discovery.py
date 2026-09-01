@@ -106,16 +106,15 @@ if os.path.exists(_ENV_PATH):
                 os.environ.setdefault(k.strip(), v.strip().strip('"').strip("'"))
 
 import thestatsapi_client as api  # noqa: E402
+from src.research.forward.league_coverage import (  # noqa: E402
+    COVERED_LEAGUE_COMP_IDS as COVERED_LEAGUES,
+)
 
 # ── covered leagues (TheStatsAPI competition ids) ────────────────────────────
-# These four leagues already have corpus team-history coverage. Do NOT add new
-# leagues here — that is explicitly out of scope for the top-up policy.
-COVERED_LEAGUES = {
-    "comp_8321": "England Championship",
-    "comp_3039": "England Premier League",
-    "comp_9777": "France Ligue 2",
-    "comp_0976": "Spain La Liga 2",
-}
+# Imported from league_coverage (the single source of truth) so discovery, the
+# predict/commit gate, settlement, and the health report all agree on exactly which
+# competitions are "covered". Do NOT add new leagues here — that is explicitly out of
+# scope for the top-up policy; extend COVERED_LEAGUE_COMP_IDS deliberately instead.
 
 FIXTURE_LIST = Path("/home/ubuntu/data/thestatsapi/championship/_pilotC_fixture_list.json")
 STATUS_FILE = Path("/home/ubuntu/data/discovery/pilotC_discovery_status.json")

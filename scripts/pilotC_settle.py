@@ -17,11 +17,14 @@ topup:  regenerate the fixture list (future+recent w/o odds) and run pilotC_mult
 Usage:  python scripts/pilotC_settle.py score
         python scripts/pilotC_settle.py topup [--fetch] [--max=N]
 """
-import sys, json, glob, os, time
+import sys, json, glob, os, time, logging
 from datetime import datetime, timezone
 sys.path.insert(0,'/home/ubuntu'); sys.path.insert(0,'/home/ubuntu/scripts')
 
 from src.research.forward.attestation_ledger import AttestationLedger
+from src.research.forward.league_coverage import is_covered_comp
+
+logger = logging.getLogger("pilotC_settle")
 
 CH='/home/ubuntu/data/thestatsapi/championship'
 PRED='/home/ubuntu/data/discovery/pilotC_forward_predictions.json'
@@ -98,22 +101,56 @@ def _fixture_status(meta, mid):
     return str(row.get("status", "")).lower()
 
 
-def _fetch_final(api, mid):
-    """Fetch final score + stats for a finished fixture, cache-first.
+def _status_from_match_detail(dd):
+    """Extract the fixture status string from a /matches/{mid} payload (lowercased)."""
+    if not isinstance(dd, dict):
+        return ""
+    return str(dd.get("status", "")).lower()
 
-    Returns dict with home_goals/away_goals/total_corners/total_cards where available,
-    or None if the fixture data can't be retrieved. Each call is cache-first, so a
-    re-run of an already-settled fixture costs ZERO budget.
+
+def _fetch_match_detail(api, mid):
+    """Fetch the authoritative /matches/{mid} detail, cache-first.
+
+    Returns (detail_dict, http_status). Used both to read the AUTHORITATIVE fixture
+    status (FIX 2 — never rely on the frozen fixture-list status) and to extract the
+    final score. Cache-first, so re-reading a settled fixture costs ZERO budget.
     """
-    # match detail -> score (goals, btts)
     dm, mm = api.get_json(f"/football/matches/{mid}", cache_key=f"pilotC_match_{mid}",
                           allow_status=(200, 404, 422))
     detail = (dm or {}).get("data", dm) if dm else {}
+    if not isinstance(detail, dict):
+        detail = {}
+    return detail, (mm or {}).get("http_status")
+
+
+def _fetch_final(api, mid, detail=None):
+    """Fetch final score + stats for a finished fixture, cache-first.
+
+    ALWAYS fetches BOTH the match detail (score -> goals/btts) AND the stats
+    endpoint (corners/cards) for any fixture being settled — the two are fetched
+    independently so a missing/`404` stats payload can never silently drop the
+    corners/cards cells while goals/btts still grade. Each call is cache-first, so a
+    re-run of an already-settled fixture costs ZERO budget.
+
+    Returns a dict with home_goals/away_goals/total_corners/total_cards where
+    available, plus explicit provenance:
+      * ``stats_available`` — True iff the /stats endpoint returned a usable payload
+      * ``stats_http_status`` — the HTTP status seen for /stats (200/404/422/None)
+    so the caller can distinguish "stats genuinely unavailable for this fixture"
+    (e.g. a lower-tier league TheStatsAPI does not cover) from a transient miss, and
+    log it LOUDLY rather than counting a silent zero.
+    """
+    # match detail -> score (goals, btts). Reuse a pre-fetched detail if provided
+    # (the candidacy check already fetched it for the authoritative status), else
+    # fetch it here — cache-first either way.
+    if detail is None:
+        detail, _ = _fetch_match_detail(api, mid)
     hg, ag = _score_from_match_detail(detail if isinstance(detail, dict) else {})
 
-    # stats -> corners, cards
+    # stats -> corners, cards. Fetched for EVERY settled fixture (cache-first).
     ds, ms = api.get_json(f"/football/matches/{mid}/stats", cache_key=f"pilotC_stats_{mid}",
                           allow_status=(200, 404, 422))
+    stats_http_status = (ms or {}).get("http_status")
     ov = (ds or {}).get("data", ds) if ds else {}
     ov = ov.get("overview", ov) if isinstance(ov, dict) else {}
     total_corners = _stat_pair_total(ov, "corner_kicks")
@@ -122,12 +159,16 @@ def _fetch_final(api, mid):
     total_cards = None
     if yellows is not None:
         total_cards = yellows + (reds or 0.0)
+    # Stats are "available" only if the payload actually yielded a gradeable pair.
+    stats_available = total_corners is not None or total_cards is not None
 
     return {
         "home_goals": hg, "away_goals": ag,
         "total_goals": (hg + ag) if (hg is not None and ag is not None) else None,
         "total_corners": total_corners,
         "total_cards": total_cards,
+        "stats_available": stats_available,
+        "stats_http_status": stats_http_status,
     }
 
 
@@ -181,6 +222,11 @@ def score(verbose=True):
         "skipped_not_finished": 0,
         "skipped_already_revealed": 0,
         "ungradeable_missing_result": 0,
+        # A silent zero must become a visible number: count ungradeable cells broken
+        # down by market (the corners/cards cells that previously vanished when /stats
+        # was unavailable), plus the specific fixtures whose stats are missing.
+        "ungradeable_by_market": {},
+        "fixtures_missing_stats": [],
         "errors": [],
         "per_cell_settled_added": {},
     }
@@ -200,8 +246,15 @@ def score(verbose=True):
     settled_log = _load_settled_log()
     logged_ids = {r["prediction_id"] for r in settled_log["settled"]}
 
+    stats["skipped_awaiting_kickoff"] = 0
+    stats["settled_via_authoritative_status"] = 0
+    stats["settled_via_kickoff_backstop"] = 0
+    stats["awaiting_past_expected_window"] = []
+
     # cache final results per fixture within this run (avoid double fetch across markets)
     final_cache = {}
+    detail_cache = {}
+    now = time.time()
 
     for r in preds:
         stats["predictions_examined"] += 1
@@ -212,27 +265,77 @@ def score(verbose=True):
             stats["skipped_already_revealed"] += 1
             continue
 
-        # Settlement candidacy: a fixture is a candidate if the list marks it
-        # finished OR its kickoff is comfortably in the past (>~3h), since the list
-        # status is refreshed lazily and often lags reality. The AUTHORITATIVE check
-        # is the fetched final result — if the API has no final score/stats yet,
-        # grading returns None and we count it ungradeable (retry next run).
-        status = _fixture_status(meta, mid) or str(r.get("status", "")).lower()
-        kickoff_ts = float(r.get("kickoff_ts", 0) or meta.get(mid, {}).get("ts", 0) or 0)
-        likely_over = kickoff_ts > 0 and (kickoff_ts + 3 * 3600) < time.time()
-        if status not in _FINISHED and not likely_over:
-            stats["skipped_not_finished"] += 1
-            continue
-        stats["fixtures_finished"] += 1
-
-        # Only predictions with a prior pre-kickoff commitment can be revealed.
+        # Only predictions with a prior pre-kickoff commitment can be revealed. We
+        # check this BEFORE spending any budget so we never fetch for an unattested
+        # prediction (and the authoritative-status fetch below stays cheap).
         if pred_id not in committed:
             stats["reveal_declined_no_commitment"] += 1
             continue
 
+        # ── FIX 2: settlement candidacy via the AUTHORITATIVE match status ──
+        # The frozen fixture-list status lags reality (it is refreshed lazily) and
+        # the kickoff+3h heuristic can delay same-day settlement of afternoon
+        # kickoffs. So for ANY committed-and-awaiting fixture whose kickoff has
+        # passed — regardless of league — we consult the authoritative
+        # /matches/{mid} status (cache-first). That authoritative status is the
+        # PRIMARY signal; the kickoff+3h rule is only a BACKSTOP for when the API
+        # status is unavailable.
+        kickoff_ts = float(r.get("kickoff_ts", 0) or meta.get(mid, {}).get("ts", 0) or 0)
+        # A fixture whose kickoff is still in the future cannot have finished; skip
+        # it without spending budget (it is legitimately awaiting kickoff).
+        if kickoff_ts > 0 and kickoff_ts > now:
+            stats["skipped_awaiting_kickoff"] += 1
+            continue
+
+        # Kickoff has passed (or is unknown). Fetch the authoritative detail once per
+        # fixture (cache-first) to read the true status and the final score.
+        try:
+            if mid not in detail_cache:
+                detail_cache[mid] = _fetch_match_detail(api, mid)
+            detail, detail_http = detail_cache[mid]
+        except SystemExit:
+            stats["errors"].append("request cap reached during status fetch")
+            if verbose:
+                print("CAP reached during settlement status fetch — halting cleanly.")
+            break
+        except Exception as e:
+            stats["errors"].append(f"status {mid}: {type(e).__name__}: {str(e)[:80]}")
+            continue
+
+        auth_status = _status_from_match_detail(detail)
+        list_status = _fixture_status(meta, mid) or str(r.get("status", "")).lower()
+        # Backstop only: if the authoritative status is missing/unknown, fall back to
+        # the frozen list status OR the kickoff+3h heuristic.
+        kickoff_backstop = kickoff_ts > 0 and (kickoff_ts + 3 * 3600) < now
+        finished_authoritative = auth_status in _FINISHED
+        finished_backstop = (list_status in _FINISHED) or kickoff_backstop
+
+        if not finished_authoritative and not finished_backstop:
+            # Kickoff passed but the fixture is not yet finished by any signal
+            # (e.g. still in play). Not a candidate yet — retry next run.
+            stats["skipped_not_finished"] += 1
+            # If it is well past the expected finish window (kickoff+3h) yet the
+            # authoritative status still is not finished, surface it LOUDLY: a
+            # fixture awaiting settlement past its expected window is a warning.
+            if kickoff_backstop:
+                stats["awaiting_past_expected_window"].append(mid)
+                logger.warning(
+                    "AWAITING SETTLEMENT past expected window: fixture %s kicked off "
+                    ">3h ago but authoritative status=%r (list=%r) is not finished — "
+                    "not settled yet; investigate if this persists.",
+                    mid, auth_status, list_status,
+                )
+            continue
+
+        stats["fixtures_finished"] += 1
+        if finished_authoritative:
+            stats["settled_via_authoritative_status"] += 1
+        elif kickoff_backstop:
+            stats["settled_via_kickoff_backstop"] += 1
+
         try:
             if mid not in final_cache:
-                final_cache[mid] = _fetch_final(api, mid)
+                final_cache[mid] = _fetch_final(api, mid, detail=detail)
             final = final_cache[mid]
         except SystemExit:
             # client hit the request cap — stop cleanly, keep what we have
@@ -247,6 +350,31 @@ def score(verbose=True):
         actual, value = _grade(market, line, final)
         if actual is None:
             stats["ungradeable_missing_result"] += 1
+            stats["ungradeable_by_market"][market] = \
+                stats["ungradeable_by_market"].get(market, 0) + 1
+            # NEVER let a cell silently fail to grade. A corners/cards cell is
+            # ungradeable only when /stats is unavailable; goals/btts only when the
+            # match detail lacks a final score. Log the fixture and the reason at
+            # WARNING so a missing-stats cell is a visible number, not a silent zero.
+            if market in ("corners", "cards") and not final.get("stats_available"):
+                http = final.get("stats_http_status")
+                reason = (f"/stats HTTP {http}" if http is not None
+                          else "/stats payload had no corners/cards")
+                comp = meta.get(mid, {}).get("comp")
+                if mid not in stats["fixtures_missing_stats"]:
+                    stats["fixtures_missing_stats"].append(mid)
+                logger.warning(
+                    "UNGRADEABLE %s@%s for fixture %s (comp=%s, covered=%s): %s — "
+                    "corners/cards cell cannot be graded; will retry next run if the "
+                    "API later publishes stats.",
+                    market, line, mid, comp, is_covered_comp(comp), reason,
+                )
+            else:
+                logger.warning(
+                    "UNGRADEABLE %s@%s for fixture %s: no final result available yet "
+                    "(match detail incomplete) — will retry next run.",
+                    market, line, mid,
+                )
             continue
 
         p_over = float(r.get("model_p", 0.0))
@@ -299,6 +427,15 @@ def score(verbose=True):
               f"not_finished={stats['skipped_not_finished']} "
               f"no_commitment={stats['reveal_declined_no_commitment']} "
               f"ungradeable={stats['ungradeable_missing_result']}")
+        if stats["ungradeable_by_market"]:
+            print("  ungradeable by market:", stats["ungradeable_by_market"])
+        if stats["fixtures_missing_stats"]:
+            print("  fixtures with missing /stats (corners/cards ungradeable):",
+                  stats["fixtures_missing_stats"])
+        print(f"  candidacy: authoritative_status={stats['settled_via_authoritative_status']} "
+              f"kickoff_backstop={stats['settled_via_kickoff_backstop']} "
+              f"awaiting_kickoff={stats['skipped_awaiting_kickoff']} "
+              f"awaiting_past_window={len(stats['awaiting_past_expected_window'])}")
         if stats["errors"]:
             print("  settlement errors:", stats["errors"][:5])
         print("graded rows appended to", LOG)

@@ -17,6 +17,9 @@
 #     window (2h) closes. A missed pre-kickoff window is PERMANENT sample loss.
 #   - a dedicated daily settle-only pass at 03:30 so reveals bind promptly even if
 #     a full run was skipped.
+#   - an EXTRA settle-only pass at 20:00 UTC to close the 18:00->00:00 gap so
+#     afternoon kickoffs (which finish ~late afternoon/early evening UTC) settle the
+#     SAME day rather than waiting for the 03:30 pass the next morning.
 #   - a weekly health report Monday 08:00 (early warning for projection slippage).
 #
 # Re-running this script is safe: it removes any prior Pilot C block (delimited by
@@ -47,6 +50,9 @@ ${BEGIN}
 0 */6 * * * cd ${REPO} && ${PY} scripts/pilotC_forward_loop.py >> ${LOG} 2>&1
 # Daily settle-only pass so reveals bind promptly
 30 3 * * * cd ${REPO} && ${PY} scripts/pilotC_forward_loop.py --settle-only >> ${LOG} 2>&1
+# Extra settle-only pass at 20:00 UTC — closes the 18:00->00:00 gap so afternoon
+# kickoffs settle the SAME day instead of waiting for the 03:30 pass next morning.
+0 20 * * * cd ${REPO} && ${PY} scripts/pilotC_forward_loop.py --settle-only >> ${LOG} 2>&1
 # Weekly health report (Mon 08:00 UTC)
 0 8 * * 1 cd ${REPO} && ${PY} scripts/pilotC_forward_loop.py --health >> ${LOG} 2>&1
 ${END}

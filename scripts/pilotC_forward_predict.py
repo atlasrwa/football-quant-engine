@@ -20,6 +20,9 @@ sys.path.insert(0,'/home/ubuntu'); sys.path.insert(0,'/home/ubuntu/scripts')
 from sklearn.linear_model import LogisticRegression
 import pilotC_stat_mixer as mix
 from src.research.forward.attestation_ledger import AttestationLedger
+from src.research.forward.league_coverage import (
+    COVERED_LEAGUE_COMP_IDS, is_covered_comp,
+)
 
 CH='/home/ubuntu/data/thestatsapi/championship'
 OUT='/home/ubuntu/data/discovery/pilotC_forward_predictions.json'
@@ -29,6 +32,29 @@ BOOKS=['bet365','betfair-exchange','pinnacle']
 # Betfair exchange is the primary (near-fair) reference price for the edge claim.
 PRIMARY_BOOK='betfair-exchange'
 MKT_ODDSKEY={'goals':'total_goals','corners':'match_corners','cards':'total_cards','btts':'btts'}
+
+
+def commit_gate(info, corpus_teams):
+    """Decide whether a fixture may reach the COMMIT step.
+
+    Returns one of:
+      * "commit"                    — covered league AND both teams have corpus history
+      * "reject_out_of_coverage"    — competition is NOT a covered league (NEVER commit)
+      * "skip_no_corpus_history"    — covered league but a team lacks corpus history
+
+    The PRIMARY gate is covered-league membership by competition id — a fixture
+    outside the four covered leagues can never be committed, regardless of whether
+    its teams happen to appear in the corpus. This is the exact bug the fix closes:
+    the old gate tested corpus-team membership, so out-of-coverage fixtures
+    (Veikkausliiga/Serie A/Brazil) whose teams were in the corpus slipped through.
+    """
+    comp = info.get("comp")
+    if not is_covered_comp(comp):
+        return "reject_out_of_coverage"
+    home, away = info.get("home"), info.get("away")
+    if home not in corpus_teams or away not in corpus_teams:
+        return "skip_no_corpus_history"
+    return "commit"
 
 
 def devig(o,u):
@@ -98,10 +124,39 @@ def main():
     now_ts=time.time()
     preds=[]
     attest_stats={'committed':0,'unattestable_past_kickoff':0,'commit_failed':0,
-                  'skipped_already_committed':0}
+                  'skipped_already_committed':0,
+                  # LOUD out-of-coverage accounting. The predict gate is on
+                  # COVERED-LEAGUE membership (competition id), NOT corpus-team
+                  # membership — that team-based gate is exactly what let
+                  # out-of-coverage fixtures (Veikkausliiga/Serie A/Brazil) into the
+                  # committed set of a covered-league-only pre-registered sample.
+                  'rejected_out_of_coverage':0,
+                  'rejected_out_of_coverage_by_league':{},
+                  'skipped_no_corpus_history':0}
+    from collections import defaultdict
+    ooc_by_league=defaultdict(int)
     for mid,info in fx.items():
         home,away=info.get('home'),info.get('away')
-        if home not in corpus_teams or away not in corpus_teams: continue
+        comp=info.get('comp')
+        # ── PRIMARY GATE: covered-league membership (by competition id) ──
+        # A fixture outside the four pre-registered covered leagues must NEVER be
+        # committed, regardless of whether its teams appear in the corpus. This is
+        # an ERROR condition surfaced loudly (counted per league, logged), never a
+        # silent skip — an out-of-coverage fixture reaching predict means the
+        # universe contains fixtures discovery should not have admitted.
+        gate = commit_gate(info, corpus_teams)
+        if gate == "reject_out_of_coverage":
+            attest_stats['rejected_out_of_coverage']+=1
+            ooc_by_league[comp or 'UNKNOWN']+=1
+            continue
+        # ── settleability check: both teams must have corpus history to predict.
+        # This is NOT the coverage boundary (that is the competition gate above);
+        # it only decides whether we CAN produce a prediction. A covered-league
+        # fixture whose teams lack history is skipped as unpredictable, counted
+        # separately from out-of-coverage rejections.
+        if gate == "skip_no_corpus_history":
+            attest_stats['skipped_no_corpus_history']+=1
+            continue
         books=load_forward_books(mid)
         if not books: continue
         m={'home_name':home,'away_name':away,'date_unix':info['ts']}
@@ -167,6 +222,34 @@ def main():
             preds.append(row)
 
     # cross-book disagreement summary
+    attest_stats['rejected_out_of_coverage_by_league']=dict(ooc_by_league)
+
+    # ── Out-of-coverage AUDIT of the EXISTING committed ledger (read-only) ──
+    # The ledger is append-only and immutable — we NEVER edit or delete records.
+    # But we must REPORT how many already-committed fixtures are out of coverage,
+    # because that number decides whether the pre-registered sample is compromised
+    # and which fixtures are a documented ANALYSIS-TIME exclusion (never a ledger
+    # edit). Coverage is judged by the fixture's competition id in the universe.
+    ooc_committed_by_league=defaultdict(list)
+    committed_fixtures={}
+    for c in ledger.load_commitments():
+        committed_fixtures.setdefault(c['fixture_id'], c['prediction_id'])
+    for cmid in committed_fixtures:
+        crow=fx.get(cmid, {})
+        ccomp=crow.get('comp')
+        if not is_covered_comp(ccomp):
+            label=COVERED_LEAGUE_COMP_IDS.get(ccomp, ccomp or 'UNKNOWN')
+            ooc_committed_by_league[label].append(cmid)
+    out_of_coverage_committed={
+        'n_fixtures': sum(len(v) for v in ooc_committed_by_league.values()),
+        'by_league': {k: len(v) for k, v in ooc_committed_by_league.items()},
+        'fixtures': {k: v for k, v in ooc_committed_by_league.items()},
+        'note': 'Append-only ledger — these commitments are NOT deleted or altered. '
+                'They are a DOCUMENTED analysis-time exclusion from the covered-league '
+                'pre-registered sample, not a ledger edit. The predict gate now rejects '
+                'such fixtures so no NEW out-of-coverage commitments can be created.',
+    }
+
     disagree=[]
     for r in preds:
         if 'bet365' in r['books'] and 'betfair-exchange' in r['books']:
@@ -183,10 +266,17 @@ def main():
              'unattestable_past_kickoff':attest_stats['unattestable_past_kickoff'],
              'commit_failed':attest_stats['commit_failed'],
              'skipped_already_committed':attest_stats['skipped_already_committed'],
+             'rejected_out_of_coverage':attest_stats['rejected_out_of_coverage'],
+             'rejected_out_of_coverage_by_league':attest_stats['rejected_out_of_coverage_by_league'],
+             'skipped_no_corpus_history':attest_stats['skipped_no_corpus_history'],
              'commit_ledger':COMMIT_LEDGER,
              'note':'Only pre-kickoff predictions are attestable. Past-kickoff fixtures '
                     'cannot be retroactively attested and are never backdated. '
-                    'Re-runs skip already-committed predictions (idempotent).'},
+                    'Re-runs skip already-committed predictions (idempotent). The predict '
+                    'gate is COVERED-LEAGUE membership (competition id): fixtures outside '
+                    'the four covered leagues are rejected out-of-coverage and never '
+                    'committed.'},
+         'out_of_coverage_committed':out_of_coverage_committed,
          'n_predictions':len(preds),
          'n_mappable_fixtures':len(set(r['match_id'] for r in preds)),
          'betfair_vs_bet365_disagreement_pp':{
@@ -200,6 +290,21 @@ def main():
           f"unattestable_past_kickoff={attest_stats['unattestable_past_kickoff']} "
           f"skipped_already_committed={attest_stats['skipped_already_committed']} "
           f"failed={attest_stats['commit_failed']}")
+    # LOUD: fixtures rejected at the covered-league gate this run (never committed).
+    if attest_stats['rejected_out_of_coverage']:
+        print(f"OUT-OF-COVERAGE REJECTED (never committed): "
+              f"{attest_stats['rejected_out_of_coverage']} fixture(s) by league: "
+              f"{attest_stats['rejected_out_of_coverage_by_league']}")
+    if attest_stats['skipped_no_corpus_history']:
+        print(f"skipped (covered league but no corpus history): "
+              f"{attest_stats['skipped_no_corpus_history']}")
+    # LOUD: out-of-coverage fixtures ALREADY in the committed ledger (documented
+    # analysis-time exclusion; the ledger is not edited). This number decides
+    # whether the pre-registered sample is compromised.
+    if out_of_coverage_committed['n_fixtures']:
+        print(f"OUT-OF-COVERAGE ALREADY COMMITTED (append-only ledger, analysis-time "
+              f"exclusion — NOT deleted): {out_of_coverage_committed['n_fixtures']} "
+              f"fixture(s) by league: {out_of_coverage_committed['by_league']}")
     print(f"betfair vs bet365 disagreement: {out['betfair_vs_bet365_disagreement_pp']}")
     # show a few example edges vs Betfair
     ex=[r for r in preds if 'betfair-exchange' in r['books']][:8]

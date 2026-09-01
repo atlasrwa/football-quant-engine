@@ -200,3 +200,37 @@ KNOWN_LEAGUES: dict[str, dict[str, Any]] = {
     "BUNDESLIGA": {"name": "Bundesliga", "country": "Germany"},
     "LIGUE_1": {"name": "Ligue 1", "country": "France"},
 }
+
+
+# ── Pilot C covered leagues — the SINGLE SOURCE OF TRUTH ─────────────────────
+#
+# These are the four leagues Pilot C's pre-registration covers (TheStatsAPI
+# competition ids). Discovery, the predict/commit gate, settlement, and the health
+# report all import THIS mapping so "covered" means exactly one thing everywhere.
+#
+# WHY THIS EXISTS (the bug it fixes). Discovery is covered-league-only, but the
+# predict phase historically gated on *corpus-team membership* rather than
+# *covered-league membership*. Because the fixture universe still contains fixtures
+# from an older broad fetch, any fixture whose two teams happen to appear in the
+# corpus (e.g. Veikkausliiga sides that also played covered-league opponents, or
+# Serie A / Brazil teams) slipped through the predict gate and got committed —
+# out-of-coverage commitments in a pre-registered, covered-league-only sample.
+# Gating on the competition id closes that gap: a fixture outside these four
+# competitions can never be committed, regardless of its teams.
+COVERED_LEAGUE_COMP_IDS: dict[str, str] = {
+    "comp_8321": "England Championship",
+    "comp_3039": "England Premier League",
+    "comp_9777": "France Ligue 2",
+    "comp_0976": "Spain La Liga 2",
+}
+
+
+def is_covered_comp(comp_id: Optional[str]) -> bool:
+    """True iff ``comp_id`` is one of the pre-registered covered leagues.
+
+    This is the authoritative covered-league membership test used by the predict
+    gate (and echoed by discovery/settlement/health) so coverage is defined in
+    exactly one place. Membership is by COMPETITION, never by team — team-based
+    gating is what let out-of-coverage fixtures through.
+    """
+    return comp_id in COVERED_LEAGUE_COMP_IDS

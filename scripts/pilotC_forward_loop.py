@@ -54,6 +54,7 @@ Cron (see also install: scripts/install_pilotC_cron.sh):
     # corpus/settleability gate. install_pilotC_cron.sh wires the venv interpreter.
     0 */6 * * *  cd /home/ubuntu && /home/ubuntu/.venv/bin/python scripts/pilotC_forward_loop.py              >> logs/pilotC_loop.log 2>&1
     30 3 * * *   cd /home/ubuntu && /home/ubuntu/.venv/bin/python scripts/pilotC_forward_loop.py --settle-only >> logs/pilotC_loop.log 2>&1
+    0 20 * * *   cd /home/ubuntu && /home/ubuntu/.venv/bin/python scripts/pilotC_forward_loop.py --settle-only >> logs/pilotC_loop.log 2>&1
     0 8 * * 1    cd /home/ubuntu && /home/ubuntu/.venv/bin/python scripts/pilotC_forward_loop.py --health      >> logs/pilotC_loop.log 2>&1
 """
 
@@ -330,6 +331,10 @@ def _phase_predict_commit(stats: dict) -> None:
         stats["unattestable_past_kickoff"] = attest.get("unattestable_past_kickoff", 0)
         stats["commit_failed"] = attest.get("commit_failed", 0)
         stats["skipped_already_committed"] = attest.get("skipped_already_committed", 0)
+        stats["rejected_out_of_coverage"] = attest.get("rejected_out_of_coverage", 0)
+        stats["rejected_out_of_coverage_by_league"] = attest.get(
+            "rejected_out_of_coverage_by_league", {})
+        stats["skipped_no_corpus_history"] = attest.get("skipped_no_corpus_history", 0)
         if attest.get("unattestable_past_kickoff", 0) > 0:
             logger.warning(
                 "%d prediction(s) were past kickoff at predict time — UNATTESTED, "
@@ -339,6 +344,18 @@ def _phase_predict_commit(stats: dict) -> None:
         if attest.get("commit_failed", 0) > 0:
             logger.error("%d commitment(s) FAILED (not past-kickoff) — investigate.",
                          attest["commit_failed"])
+        # An out-of-coverage fixture reaching the predict phase is an ERROR, not a
+        # silent skip: it means the fixture universe contains games discovery should
+        # never have admitted. The predict gate correctly rejects them (never
+        # commits), but we surface it LOUDLY so the universe pollution is visible.
+        if attest.get("rejected_out_of_coverage", 0) > 0:
+            logger.error(
+                "OUT-OF-COVERAGE at predict gate: %d fixture(s) outside the covered "
+                "leagues were REJECTED (never committed) by league %s. The universe "
+                "should not contain these — investigate discovery/universe provenance.",
+                attest["rejected_out_of_coverage"],
+                attest.get("rejected_out_of_coverage_by_league", {}),
+            )
 
 
 def _phase_settle(stats: dict) -> None:
@@ -352,6 +369,11 @@ def _phase_settle(stats: dict) -> None:
         "not_finished": s.get("skipped_not_finished", 0),
         "no_commitment": s.get("reveal_declined_no_commitment", 0),
         "ungradeable": s.get("ungradeable_missing_result", 0),
+        "ungradeable_by_market": s.get("ungradeable_by_market", {}),
+        "fixtures_missing_stats": s.get("fixtures_missing_stats", []),
+        "settled_via_authoritative_status": s.get("settled_via_authoritative_status", 0),
+        "settled_via_kickoff_backstop": s.get("settled_via_kickoff_backstop", 0),
+        "awaiting_past_expected_window": s.get("awaiting_past_expected_window", []),
         "per_cell_settled_added": s.get("per_cell_settled_added", {}),
     }
     if s.get("reveal_declined_no_commitment", 0) > 0:
@@ -359,8 +381,26 @@ def _phase_settle(stats: dict) -> None:
             "%d finished fixture(s) had NO prior commitment and cannot be revealed "
             "(never backdated).", s["reveal_declined_no_commitment"],
         )
+    # LOUD: cells that could not be graded because /stats was missing. This is the
+    # exact silent-failure mode that quietly starved the corners/cards cells — it is
+    # now a visible number broken down by market.
+    if s.get("ungradeable_by_market"):
+        logger.warning(
+            "UNGRADEABLE cells this run by market: %s (fixtures missing /stats: %s). "
+            "These corners/cards cells could not be graded and were NOT silently "
+            "skipped — they are counted and will retry if the API later publishes stats.",
+            s.get("ungradeable_by_market"), s.get("fixtures_missing_stats", [])[:5],
+        )
     for err in s.get("errors", [])[:5]:
         logger.warning("settlement: %s", err)
+    # LOUD: fixtures awaiting settlement past their expected finish window.
+    awaiting = s.get("awaiting_past_expected_window", [])
+    if awaiting:
+        logger.warning(
+            "%d fixture(s) are awaiting settlement PAST their expected window "
+            "(kicked off >3h ago, authoritative status still not finished): %s",
+            len(awaiting), awaiting[:5],
+        )
 
 
 # ── health report (weekly early-warning) ─────────────────────────────────────
@@ -459,6 +499,99 @@ def _per_cell_settled_counts() -> dict:
         except Exception:
             pass
     return counts
+
+
+def _coverage_and_settlement_health() -> dict:
+    """Compute the LOUD drift counters the fixes introduced, for the health report.
+
+    Three counters that must be visible without reading logs:
+      1. out-of-coverage committed fixtures, by league — decides whether the
+         pre-registered covered-league sample is compromised. The ledger is
+         append-only, so these are a DOCUMENTED analysis-time exclusion, not edits.
+      2. ungradeable-by-market — corners/cards (and goals/btts) cells that could not
+         be graded because /stats (or the final score) was unavailable. A silent
+         zero made visible.
+      3. fixtures awaiting settlement past their expected window — committed,
+         kicked-off >3h ago, not yet revealed.
+    """
+    from src.research.forward.attestation_ledger import AttestationLedger
+    from src.research.forward.league_coverage import (
+        COVERED_LEAGUE_COMP_IDS, is_covered_comp,
+    )
+
+    led = AttestationLedger(commit_path=COMMIT_LEDGER, reveal_path=REVEAL_LEDGER)
+    commitments = led.load_commitments()
+    reveals = led.load_reveals()
+    revealed_pids = set(r["prediction_id"] for r in reveals)
+
+    meta = {}
+    if FIXTURE_LIST.exists():
+        try:
+            meta = json.load(open(FIXTURE_LIST)).get("meta", {})
+        except Exception:
+            meta = {}
+
+    # 1. out-of-coverage committed fixtures by league (read-only audit).
+    ooc = {}
+    seen_fixt = set()
+    for c in commitments:
+        mid = c["fixture_id"]
+        if mid in seen_fixt:
+            continue
+        seen_fixt.add(mid)
+        comp = meta.get(mid, {}).get("comp")
+        if not is_covered_comp(comp):
+            label = COVERED_LEAGUE_COMP_IDS.get(comp, comp or "UNKNOWN")
+            ooc[label] = ooc.get(label, 0) + 1
+
+    # 2. ungradeable cells by market: finished-but-unrevealed corners/cards where
+    #    the stats cache indicates no gradeable stats. We approximate "finished" via
+    #    kickoff+3h (the health report is a snapshot; the settle pass is authoritative).
+    now = time.time()
+    ungradeable_by_market = {}
+    awaiting_past_window = []
+    for c in commitments:
+        pid = c["prediction_id"]
+        if pid in revealed_pids:
+            continue
+        parts = pid.split(":")
+        market = parts[2] if len(parts) > 2 else ""
+        mid = c["fixture_id"]
+        ts = meta.get(mid, {}).get("ts", 0) or c.get("kickoff_timestamp", 0)
+        finished_ish = ts and (ts + 3 * 3600) < now
+        if not finished_ish:
+            continue
+        # Finished-ish but not revealed -> awaiting settlement past expected window.
+        if mid not in awaiting_past_window:
+            awaiting_past_window.append(mid)
+        # For corners/cards, check whether stats are cached/gradeable.
+        if market in ("corners", "cards"):
+            stats_file = Path(
+                f"/home/ubuntu/data/thestatsapi/championship/pilotC_stats_{mid}.json")
+            if not stats_file.exists():
+                ungradeable_by_market[market] = ungradeable_by_market.get(market, 0) + 1
+
+    return {
+        "out_of_coverage_committed": {
+            "n_fixtures": sum(ooc.values()),
+            "by_league": ooc,
+            "note": "Append-only ledger — NOT deleted/edited. Documented analysis-time "
+                    "exclusion from the covered-league pre-registered sample. The predict "
+                    "gate now rejects out-of-coverage fixtures so no NEW ones can appear.",
+        },
+        "ungradeable_cells_by_market": {
+            "counts": ungradeable_by_market,
+            "note": "Finished-but-unrevealed corners/cards cells whose /stats payload is "
+                    "unavailable (e.g. a league TheStatsAPI does not cover). Counted, not "
+                    "silently skipped. A visible number replaces the former silent zero.",
+        },
+        "fixtures_awaiting_settlement_past_window": {
+            "n": len(awaiting_past_window),
+            "fixtures": awaiting_past_window[:20],
+            "note": "Committed, kicked off >3h ago, still not revealed. Investigate if "
+                    "this persists — settlement may be stuck.",
+        },
+    }
 
 
 def emit_health_report() -> dict:
@@ -600,6 +733,7 @@ def emit_health_report() -> dict:
     quota = _quota_remaining()
     ledger_ok, ledger_problems = _verify_ledger_chain()
     discovery = _discovery_health()
+    coverage_settlement = _coverage_and_settlement_health()
 
     report = {
         "generated": _now_iso(),
@@ -623,6 +757,11 @@ def emit_health_report() -> dict:
             "covered_fixtures_lost_to_missed_prekickoff_window": missed_windows,
             "missed_window_note": "Permanent sample loss — never backdated.",
         },
+        # ── LOUD drift counters (the fixes' visibility requirement) ──
+        # These make each formerly-silent failure a visible number in the weekly
+        # report: out-of-coverage commitments, ungradeable corners/cards cells, and
+        # fixtures stuck awaiting settlement past their expected window.
+        "integrity_counters": coverage_settlement,
         "sample_progress": {
             "per_cell_settled_revealed": per_cell,
             "target_n_per_cell": TARGET_N_PER_CELL,
@@ -709,6 +848,30 @@ def emit_health_report() -> dict:
         logger.warning("DISCOVERY EMPTY (may be legitimate): %s", discovery.get("note"))
     if not ledger_ok:
         logger.error("LEDGER CHAIN FAILED VERIFICATION: %s", ledger_problems[:3])
+    # LOUD integrity counters — surface drift without reading logs.
+    ic = coverage_settlement
+    logger.info("HEALTH INTEGRITY: out_of_coverage_committed=%s by_league=%s "
+                "ungradeable_cells_by_market=%s awaiting_settlement_past_window=%s",
+                ic["out_of_coverage_committed"]["n_fixtures"],
+                ic["out_of_coverage_committed"]["by_league"],
+                ic["ungradeable_cells_by_market"]["counts"],
+                ic["fixtures_awaiting_settlement_past_window"]["n"])
+    if ic["out_of_coverage_committed"]["n_fixtures"] > 0:
+        logger.warning(
+            "OUT-OF-COVERAGE in committed ledger: %d fixture(s) by league %s. These are "
+            "a documented analysis-time exclusion from the covered-league pre-registered "
+            "sample (ledger is append-only, NOT edited).",
+            ic["out_of_coverage_committed"]["n_fixtures"],
+            ic["out_of_coverage_committed"]["by_league"])
+    if ic["ungradeable_cells_by_market"]["counts"]:
+        logger.warning(
+            "UNGRADEABLE corners/cards cells (missing /stats): %s — counted, not "
+            "silently skipped.", ic["ungradeable_cells_by_market"]["counts"])
+    if ic["fixtures_awaiting_settlement_past_window"]["n"] > 0:
+        logger.warning(
+            "%d fixture(s) awaiting settlement past their expected window — settlement "
+            "may be stuck; investigate if persistent.",
+            ic["fixtures_awaiting_settlement_past_window"]["n"])
     if ratio is not None and ratio < 0.5 and covered_available:
         logger.warning("committed/available ratio %.2f is well below 1.0 — "
                        "collection is missing available covered fixtures.", ratio)
