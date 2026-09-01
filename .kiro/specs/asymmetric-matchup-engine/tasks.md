@@ -83,7 +83,7 @@ Commit-and-push checkpoints (Req 14.1) are embedded as sub-steps; the `hypothesi
     - Commit `profile_dimensions.py`, `profiles.py`, and their tests; push. No shared-config change
     - _Requirements: 14.1_
 
-- [ ] 4. Implement the directional count model (elastic-net + shrinkage)
+- [x] 4. Implement the directional count model (elastic-net + shrinkage)
   - [x] 4.1 Implement `DirectionalCountModel` in `directional_model.py`
     - Extend the reused MLE from `src/research/models/count_regression.py`: reuse `_select_distribution` (`DistributionType.AUTO`, NB vs Poisson) and report the empirical dispersion ratio
     - Replace the L2-only penalty with elastic-net `lambda * (alpha_mix * sum(sqrt(w^2 + eps)) + (1 - alpha_mix) * sum(w^2))` (defaults `lambda=0.05`, `alpha_mix=0.5`), keeping L-BFGS-B stable via smoothed absolute value
@@ -113,31 +113,31 @@ Commit-and-push checkpoints (Req 14.1) are embedded as sub-steps; the `hypothesi
     - **Validates: Requirements 2.4, 2.5, 2.6, 2.7**
     - `# Feature: asymmetric-matchup-engine, Property 4: ...`, `@settings(max_examples=100)`
     - _Requirements: 2.4, 2.5, 2.6, 2.7_
-  - [-] 4.7 Commit and push the directional model
+  - [x] 4.7 Commit and push the directional model
     - Commit `directional_model.py` and tests; push. No shared-config change
     - _Requirements: 14.1_
 
 - [ ] 5. Implement the Interaction_Model (two directions) with cards conditioning
-  - [~] 5.1 Implement referee card-rate conditioning
+  - [x] 5.1 Implement referee card-rate conditioning
     - Add `RefereeCardRate` (adapting `src/features/referee_volatility.py`): expanding, look-ahead-free, league-fallback; when referee is missing or insufficiently observed, substitute the league-level expanding card rate and set `referee_substituted=True`
     - Treat the league-level expanding-window card rate as the PRIMARY pre-match conditioning path (not merely a fallback), because referee assignment is unavailable pre-match in both data sources; use a referee-specific rate ONLY in backtest on completed fixtures with a known post-match referee id; the Analysis_CLI never conditions a pre-match cards prediction on a referee-specific rate
     - _Requirements: 2.7, 2.11, 16.1, 16.2, 16.3, 16.4_
-  - [~] 5.2 Implement `InteractionModel` in `interaction.py`
+  - [x] 5.2 Implement `InteractionModel` in `interaction.py`
     - Model each fixture as exactly two Directions (A-attack vs B-defence, B-attack vs A-defence), each a separately fitted `DirectionalCountModel`; never collapse to a symmetric feature
     - Build the linear predictor from attacker's attacking dimensions + defender's defensive dimensions + named interaction cross-terms; add the referee card-rate term for the cards target
     - Implement `fit(dataset)` and `predict_fixture(fixture_ctx)` returning per-side full predictive distributions for corners, cards, goals, SOT with named driving features surfaced
     - _Requirements: 2.1, 2.2, 2.3, 2.4, 2.5, 2.6, 2.7, 2.8, 2.11_
-  - [ ]* 5.3 Write property test for directions never collapsing
+  - [x]* 5.3 Write property test for directions never collapsing
     - **Property 1: Directions never collapse to a symmetric output** — differing profiles give non-identical direction distributions; swapping A and B swaps the outputs
     - **Validates: Requirements 2.1, 2.2, 2.3**
     - Uses the `fixture_contexts` strategy; `# Feature: asymmetric-matchup-engine, Property 1: ...`, `@settings(max_examples=100)`
     - _Requirements: 2.1, 2.2, 2.3_
-  - [ ]* 5.4 Write property test for referee substitution and flagging
+  - [x]* 5.4 Write property test for referee substitution and flagging
     - **Property 5: Referee substitution and flagging for cards** — uses referee rate when assigned and observed; otherwise substitutes league rate and sets `referee_substituted=True`; substituted prediction equals the league-rate-conditioned prediction
     - **Validates: Requirements 2.7, 2.11**
     - `# Feature: asymmetric-matchup-engine, Property 5: ...`, `@settings(max_examples=100)`
     - _Requirements: 2.7, 2.11_
-  - [~] 5.5 Commit and push the interaction model
+  - [-] 5.5 Commit and push the interaction model
     - Commit `interaction.py`, referee conditioning, and tests; push. No shared-config change
     - _Requirements: 14.1_
 
