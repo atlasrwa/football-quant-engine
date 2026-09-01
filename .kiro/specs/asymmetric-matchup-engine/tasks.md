@@ -257,46 +257,46 @@ Commit-and-push checkpoints (Req 14.1) are embedded as sub-steps; the `hypothesi
     - Commit `reporting.py` and tests; push. No shared-config change
     - _Requirements: 14.1_
 
-- [ ] 11. Implement the Analysis_CLI
-  - [~] 11.1 Implement team resolution and fixture lookup in `resolution.py`
+- [x] 11. Implement the Analysis_CLI
+  - [x] 11.1 Implement team resolution and fixture lookup in `resolution.py`
     - Resolve home/away names: unrecognised → reject and identify the name; ambiguous → reject and list candidates; no scheduled fixture on the date → report no matching fixture; all without producing predictions
     - _Requirements: 9.13, 9.14, 9.15_
-  - [~] 11.2 Implement `CappedLiveFetcher` in `live_fetch.py`
+  - [x] 11.2 Implement `CappedLiveFetcher` in `live_fetch.py`
     - Reuse `research/footystats/client.py` / `scripts/thestatsapi_client.py` for capped live fetch; admit spend up to the cap; when the next fetch would breach the cap, refuse it and set `cap_exceeded=True`; report `spend_units` = sum of admitted costs; confined to the CLI package, never imported into build/backtest
     - _Requirements: 9.16, 12.3, 12.4_
-  - [~] 11.3 Implement `scripts/asymmetric_analyze.py` CLI
+  - [x] 11.3 Implement `scripts/asymmetric_analyze.py` CLI
     - Accept `--home`, `--away`, `--date` (ISO 8601 YYYY-MM-DD); resolve teams and fixture; cache-then-live-fetch via `CappedLiveFetcher`
     - Coverage handling: zero cached history → report no profile, identify team, terminate without predictions; `>=1` but `< 5` → flag reduced-coverage, state count vs minimum, continue with reduced profile
     - Narrative sections: profiles as named dimensions with numeric values; per-side predictions for corners/cards/goals/SOT with named driving features; derived totals + BTTS; explicit asymmetry statement naming the dominating side and responsible driving feature per outcome; per-team coverage (match count and populated-vs-absent rich fields)
     - EV section: present a distinct labelled EV section only for Per_Side_Priced_Markets (team corners, team total goals, team shots on target) from Priced_Books — bet365 for Championship fixtures, and BOTH bet365 and betmgm-uk for EPL fixtures presented per book unblended; present team cards without a per-side EV and state no per-side price is available (team-cards EV only via the derived total-cards market where priced); reuse `src/research/ev_calculator.py`
     - Append the mandatory caveat to every output including reduced-coverage and error outputs
     - _Requirements: 9.1, 9.2, 9.3, 9.4, 9.5, 9.6, 9.7, 9.8, 9.9, 9.10, 9.11, 9.12, 9.16, 15.1, 15.2, 15.3, 15.4, 15.5, 15.7_
-  - [ ]* 11.4 Write property test for mandatory caveat on every output
+  - [x]* 11.4 Write property test for mandatory caveat on every output
     - **Property 20: Mandatory caveat on every output** — success, reduced-coverage, unrecognised, ambiguous, no-fixture, zero-history, and cap-exceeded outputs all contain the mandatory caveat
     - **Validates: Requirements 9.12**
     - `# Feature: asymmetric-matchup-engine, Property 20: ...`, `@settings(max_examples=100)`
     - _Requirements: 9.12_
-  - [ ]* 11.5 Write property test for reject-without-predictions on bad resolution
+  - [x]* 11.5 Write property test for reject-without-predictions on bad resolution
     - **Property 21: Reject-without-predictions on bad resolution** — unrecognised, ambiguous, or no-fixture invocations produce no predictions and identify the offending input
     - **Validates: Requirements 9.13, 9.14, 9.15**
     - `# Feature: asymmetric-matchup-engine, Property 21: ...`, `@settings(max_examples=100)`
     - _Requirements: 9.13, 9.14, 9.15_
-  - [ ]* 11.6 Write property test for live-fetch spend cap
+  - [x]* 11.6 Write property test for live-fetch spend cap
     - **Property 22: Live-fetch spend cap** — cumulative admitted spend never exceeds the cap; a breaching fetch is refused and sets `cap_exceeded`; reported `spend_units` equals sum of admitted costs
     - **Validates: Requirements 12.4**
     - Uses the `fetch_cost_sequences` strategy; `# Feature: asymmetric-matchup-engine, Property 22: ...`, `@settings(max_examples=100)`
     - _Requirements: 12.4_
-  - [ ]* 11.7 Write unit/edge tests for CLI narrative and coverage branches
+  - [x]* 11.7 Write unit/edge tests for CLI narrative and coverage branches
     - Assert narrative sections present on a resolved cached fixture (9.2–9.6); EV section distinct and labelled when odds exist (9.9); coverage branches at exactly 0 and 5 matches (9.7, 9.8)
     - _Requirements: 9.2, 9.3, 9.4, 9.5, 9.6, 9.7, 9.8, 9.9_
-  - [~] 11.8 Commit and push the CLI
+  - [x] 11.8 Commit and push the CLI
     - Commit `resolution.py`, `live_fetch.py`, `scripts/asymmetric_analyze.py`, and tests; push. No shared-config change
     - _Requirements: 14.1_
-  - [~] 11.9 Implement audit-grounded EV_Layer book/market coverage in the CLI EV section
+  - [x] 11.9 Implement audit-grounded EV_Layer book/market coverage in the CLI EV section
     - Map league→books (Championship→[bet365]; EPL→[bet365, betmgm-uk]); compute per-side EV only for Per_Side_Priced_Markets from those books; present each EPL book separately (unblended); omit and record when a book does not price a requested market; never compute per-side EV for team cards
     - Reuse `src/research/ev_calculator.py`
     - _Requirements: 9.9, 9.10, 9.11, 15.1, 15.2, 15.3, 15.4, 15.5, 15.6, 15.7_
-  - [ ]* 11.10 Write property test for audit-grounded per-side EV coverage
+  - [x]* 11.10 Write property test for audit-grounded per-side EV coverage
     - **Property 24: Audit-grounded per-side EV coverage** — EV computed iff market is a Per_Side_Priced_Market and a Priced_Book prices it for that league; team cards never gets per-side EV; Championship uses bet365 only; EPL priced by both books presents both separately
     - **Validates: Requirements 9.9, 9.10, 9.11, 15**
     - `# Feature: asymmetric-matchup-engine, Property 24: ...`, `@settings(max_examples=100)`
