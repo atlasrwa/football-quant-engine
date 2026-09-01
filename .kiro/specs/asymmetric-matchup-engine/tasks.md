@@ -197,7 +197,7 @@ Commit-and-push checkpoints (Req 14.1) are embedded as sub-steps; the `hypothesi
     - Commit `gates.py` and tests; push. No shared-config change
     - _Requirements: 14.1_
 
-- [ ] 9. Implement the asymmetry evaluator, symmetric baseline, and fresh FDR family
+- [x] 9. Implement the asymmetry evaluator, symmetric baseline, and fresh FDR family
   - [x] 9.1 Implement `SymmetricBaseline` in `evaluation.py`
     - Same Poisson/NB family using only the team's own marginal rate for the target, with no interaction layer
     - _Requirements: 8.1_
@@ -237,23 +237,23 @@ Commit-and-push checkpoints (Req 14.1) are embedded as sub-steps; the `hypothesi
   - [x]* 9.9 Write integration test for fresh-family isolation from prior efforts
     - Assert the constructed family is disjoint from prior-effort families and that no prior-effort scripts are imported in the build path (13.3)
     - _Requirements: 8.10, 13.3_
-  - [-] 9.10 Commit and push the evaluator and FDR family
+  - [x] 9.10 Commit and push the evaluator and FDR family
     - Commit `evaluation.py`, `fdr_family.py`, and tests; push. No shared-config change
     - _Requirements: 14.1_
 
-- [ ] 10. Implement reporting
-  - [~] 10.1 Implement `reporting.py` report assembly
+- [x] 10. Implement reporting
+  - [x] 10.1 Implement `reporting.py` report assembly
     - Assemble headline per-side vs baseline per market and per league; rich-vs-broad comparison; readable elastic-net coefficients per dimension; ECE and reliability curves per target via `src/research/calibration.py` `CalibrationEvaluator`; out-of-sample BSS vs naive baseline, Brier, and ECE; all results including failures with no post-hoc selection; fresh FDR family size; a CI for every reported estimate; label any estimate whose CI spans zero as "not a result"
     - _Requirements: 4.4, 4.5, 5.7, 10.1, 10.2, 10.3, 10.4, 10.5, 10.6, 10.7, 10.8, 10.9_
-  - [ ]* 10.2 Write property test for CI presence and CI-spanning-zero suppression
+  - [x]* 10.2 Write property test for CI presence and CI-spanning-zero suppression
     - **Property 15: Confidence interval on every estimate and CI-spanning-zero suppression** — `ci_low <= point <= ci_high`; estimate is a result iff its CI does not span zero; spanning-zero labelled "not a result"
     - **Validates: Requirements 10.8, 10.9**
     - Uses the `estimates` strategy; `# Feature: asymmetric-matchup-engine, Property 15: ...`, `@settings(max_examples=100)`
     - _Requirements: 10.8, 10.9_
-  - [ ]* 10.3 Write unit test for tail-calibration bins
+  - [x]* 10.3 Write unit test for tail-calibration bins
     - Assert tail-calibration bins are produced against realised outcomes via `CalibrationEvaluator` (5.7)
     - _Requirements: 5.7, 10.4_
-  - [~] 10.4 Commit and push reporting
+  - [x] 10.4 Commit and push reporting
     - Commit `reporting.py` and tests; push. No shared-config change
     - _Requirements: 14.1_
 
