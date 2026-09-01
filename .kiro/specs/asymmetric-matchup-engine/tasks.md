@@ -169,7 +169,7 @@ Commit-and-push checkpoints (Req 14.1) are embedded as sub-steps; the `hypothesi
 - [x] 7. Checkpoint - Ensure all tests pass
   - Ensure all tests pass, ask the user if questions arise.
 
-- [ ] 8. Implement the Feature_Verification_Gate and Sanity_Gate
+- [x] 8. Implement the Feature_Verification_Gate and Sanity_Gate
   - [x] 8.1 Implement the five-check `FeatureVerificationGate` in `gates.py`
     - Implement team-identity trace (print for 3–5 teams), known-signal (xG→goals >= ~0.10, rolling goals→goals positive), orientation (team_a features align with team_a outcomes, verified against source), look-ahead (recompute from truncated history and assert equality), shuffle-null (permuted mapping collapses to chance)
     - Run before any modelling; report every check; on any failure set `passed=False`, `stopped_modelling=True`, and stop before modelling
@@ -193,51 +193,51 @@ Commit-and-push checkpoints (Req 14.1) are embedded as sub-steps; the `hypothesi
   - [x]* 8.6 Write the point-in-time enforcement verification test
     - Verify the look-ahead gate check recomputes a sampled feature from truncated history (strictly before M) and asserts equality with the pipeline value across profiling, interaction modelling, and validation
     - _Requirements: 6.5, 11.1, 11.3_
-  - [-] 8.7 Commit and push the gates
+  - [x] 8.7 Commit and push the gates
     - Commit `gates.py` and tests; push. No shared-config change
     - _Requirements: 14.1_
 
 - [ ] 9. Implement the asymmetry evaluator, symmetric baseline, and fresh FDR family
-  - [~] 9.1 Implement `SymmetricBaseline` in `evaluation.py`
+  - [x] 9.1 Implement `SymmetricBaseline` in `evaluation.py`
     - Same Poisson/NB family using only the team's own marginal rate for the target, with no interaction layer
     - _Requirements: 8.1_
-  - [~] 9.2 Implement `build_asymmetric_family` in `fdr_family.py`
+  - [x] 9.2 Implement `build_asymmetric_family` in `fdr_family.py`
     - Wrap `src/research/fdr/family.py` `ResearchFamilyBuilder`: build a fresh family with `hypothesis_count` = number of target×direction×league models tested; deterministic `family_id` from this engine's run identity, dataset version, and model family; never inherit any prior-effort family
     - _Requirements: 8.8, 8.10, 13.3_
-  - [~] 9.3 Implement `AsymmetryEvaluator` in `evaluation.py`
+  - [x] 9.3 Implement `AsymmetryEvaluator` in `evaluation.py`
     - Drive walk-forward CV folds from `src/research/walkforward/folds.py`; compare Interaction vs Symmetric_Baseline out-of-sample per market and per league; never report interaction performance in isolation
     - Beat criterion: BSS improvement strictly positive with bootstrap 95% CI lower bound > 0, else report failure; require within-league significance at alpha 0.05; label pooled-only significance as artifact; label below-minimum within-league sample as insufficient-sample and exclude from findings/artifacts
     - Correct within-league significance via Benjamini-Hochberg q=0.05 through `src/research/fdr/adapter.py` `FDRAdapter`; report the FDR family size
     - _Requirements: 8.1, 8.2, 8.3, 8.4, 8.5, 8.6, 8.7, 8.9, 8.11, 11.2_
-  - [ ]* 9.4 Write property test for out-of-sample fold disjointness
+  - [x]* 9.4 Write property test for out-of-sample fold disjointness
     - **Property 12: Out-of-sample fold disjointness** — fit fixture ids disjoint from score fixture ids for every fold
     - **Validates: Requirements 8.2, 11.2**
     - Uses the `match_histories` strategy; `# Feature: asymmetric-matchup-engine, Property 12: ...`, `@settings(max_examples=100)`
     - _Requirements: 8.2, 11.2_
-  - [ ]* 9.5 Write property test for asymmetry verdict decision logic
+  - [x]* 9.5 Write property test for asymmetry verdict decision logic
     - **Property 16: Asymmetry verdict decision logic** — verdict is "finding" only if BSS improvement strictly positive with 95% CI lower bound > 0 AND within-league significant at 0.05 AND survives BH q=0.05; otherwise "fails"
     - **Validates: Requirements 8.1, 8.3, 8.5, 8.6, 8.9**
     - Uses the `estimates` strategy; `# Feature: asymmetric-matchup-engine, Property 16: ...`, `@settings(max_examples=100)`
     - _Requirements: 8.1, 8.3, 8.5, 8.6, 8.9_
-  - [ ]* 9.6 Write property test for pooled-only artifact labelling
+  - [x]* 9.6 Write property test for pooled-only artifact labelling
     - **Property 17: Pooled-only significance is an artifact** — significant only when pooled and not within league yields verdict "artifact", never "finding"
     - **Validates: Requirements 8.7**
     - `# Feature: asymmetric-matchup-engine, Property 17: ...`, `@settings(max_examples=100)`
     - _Requirements: 8.7_
-  - [ ]* 9.7 Write property test for insufficient-sample exclusion
+  - [x]* 9.7 Write property test for insufficient-sample exclusion
     - **Property 18: Insufficient-sample exclusion** — below-minimum within-league sample yields verdict "insufficient-sample" and is excluded from findings and artifacts
     - **Validates: Requirements 8.11**
     - `# Feature: asymmetric-matchup-engine, Property 18: ...`, `@settings(max_examples=100)`
     - _Requirements: 8.11_
-  - [ ]* 9.8 Write property test for fresh FDR family sizing
+  - [x]* 9.8 Write property test for fresh FDR family sizing
     - **Property 19: Fresh FDR family sizing** — `hypothesis_count` equals number of target×direction×league models tested; `family_id` is a deterministic function of only this engine's run identity, dataset version, and model family
     - **Validates: Requirements 8.8, 8.10, 13.3**
     - `# Feature: asymmetric-matchup-engine, Property 19: ...`, `@settings(max_examples=100)`
     - _Requirements: 8.8, 8.10, 13.3_
-  - [ ]* 9.9 Write integration test for fresh-family isolation from prior efforts
+  - [x]* 9.9 Write integration test for fresh-family isolation from prior efforts
     - Assert the constructed family is disjoint from prior-effort families and that no prior-effort scripts are imported in the build path (13.3)
     - _Requirements: 8.10, 13.3_
-  - [~] 9.10 Commit and push the evaluator and FDR family
+  - [-] 9.10 Commit and push the evaluator and FDR family
     - Commit `evaluation.py`, `fdr_family.py`, and tests; push. No shared-config change
     - _Requirements: 14.1_
 
