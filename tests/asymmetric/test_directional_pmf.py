@@ -8,16 +8,17 @@ both the Poisson and negative-binomial paths.
 
 Validates: Requirements 2.4, 2.5, 2.6, 2.7.
 
-NOTE: ``hypothesis`` is not yet installed (added as a dev dependency in task
-12.1). This is written as a deterministic ``pytest`` test over several fitted
-models and feature rows. When task 12.1 lands, convert to ``@given(...)``
-drawing count samples and feature rows with ``@settings(max_examples=100)``.
+Property-based via Hypothesis over drawn feature rows and count means with
+``@settings(max_examples=100)`` (finalized in task 12.1). The parametrized
+Poisson/NB cases are retained as concrete regression checks.
 """
 
 from __future__ import annotations
 
 import numpy as np
 import pytest
+from hypothesis import given, settings
+from hypothesis import strategies as st
 
 from src.research.asymmetric.directional_model import DirectionalCountModel
 from src.research.models.count_regression import DistributionType
@@ -77,3 +78,23 @@ def test_unfitted_model_returns_valid_pmf():
     model = DirectionalCountModel(target_field="count", line=2.5)
     pmf = model.predict_distribution({"x_att": 0.0}, max_k=15)
     _assert_valid_pmf(pmf, 15)
+
+
+@settings(max_examples=100, deadline=None)
+@given(
+    mean_count=st.floats(min_value=0.5, max_value=12.0, allow_nan=False, allow_infinity=False),
+    x_att=st.floats(min_value=-3.0, max_value=3.0, allow_nan=False, allow_infinity=False),
+    x_def=st.floats(min_value=-3.0, max_value=3.0, allow_nan=False, allow_infinity=False),
+    max_k=st.integers(min_value=5, max_value=40),
+)
+def test_predict_distribution_valid_pmf_property(
+    mean_count: float, x_att: float, x_def: float, max_k: int
+) -> None:
+    """A fitted model returns a valid PMF for any drawn feature row (Property 4)."""
+    rng = np.random.default_rng(int(mean_count * 1000) % 9973)
+    counts = rng.poisson(mean_count, size=300)
+    feat_a = rng.normal(0, 1, size=300)
+    feat_b = rng.normal(0, 1, size=300)
+    model = _fit(counts, feat_a, feat_b, DistributionType.AUTO)
+    pmf = model.predict_distribution({"x_att": x_att, "x_def": x_def}, max_k=max_k)
+    _assert_valid_pmf(pmf, max_k)

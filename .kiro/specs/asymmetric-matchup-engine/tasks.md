@@ -302,8 +302,8 @@ Commit-and-push checkpoints (Req 14.1) are embedded as sub-steps; the `hypothesi
     - `# Feature: asymmetric-matchup-engine, Property 24: ...`, `@settings(max_examples=100)`
     - _Requirements: 9.9, 9.10, 9.11, 15_
 
-- [ ] 12. Add hypothesis dev dependency and finalize property-test suite
-  - [~] 12.1 Add `hypothesis` as a dev dependency and flag the shared-config change
+- [x] 12. Add hypothesis dev dependency and finalize property-test suite
+  - [x] 12.1 Add `hypothesis` as a dev dependency and flag the shared-config change
     - Add `hypothesis==6.*` to `[project.optional-dependencies].dev` in `pyproject.toml`; add the custom strategies module (`match_histories`, `count_pmfs`, `fixture_contexts`, `estimates`, `fetch_cost_sequences`) under `tests/asymmetric/`
     - Commit and push; **flag this as a shared/global configuration change** per Req 14.2 in the commit message
     - _Requirements: 14.1, 14.2_

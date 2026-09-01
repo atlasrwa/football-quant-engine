@@ -9,22 +9,57 @@ in ``n``.
 
 Validates: Requirements 5.1, 5.6.
 
-NOTE: ``hypothesis`` is not yet installed (added as a dev dependency in task
-12.1). This is therefore written as a deterministic ``pytest`` test that sweeps
-``n`` over a wide range for several (team_mean, global_mean) pairs, exercising
-the same invariant a Hypothesis strategy would. When task 12.1 lands, convert
-to ``@given(...)`` over ``n``, ``team_mean``, ``global_mean`` with
-``@settings(max_examples=100)`` — the per-example assertions map directly onto
-the checks below.
+Property-based via Hypothesis over ``n``, ``team_mean``, ``global_mean`` with
+``@settings(max_examples=100)`` (finalized in task 12.1). The deterministic
+anchor cases below are retained as concrete regression checks.
 """
 
 from __future__ import annotations
+
+from hypothesis import given, settings
+from hypothesis import strategies as st
 
 from src.research.asymmetric.directional_model import (
     SHRINKAGE_K,
     shrink_estimate,
     shrinkage_weight,
 )
+
+_MEANS = st.floats(min_value=-50.0, max_value=50.0, allow_nan=False, allow_infinity=False)
+
+
+@settings(max_examples=100, deadline=None)
+@given(n=st.integers(min_value=0, max_value=5000))
+def test_weight_monotone_and_bounded_property(n: int) -> None:
+    """``n/(n+k)`` is in [0,1) and strictly greater than the weight at n-1."""
+    w = shrinkage_weight(n)
+    assert 0.0 <= w < 1.0
+    if n > 0:
+        assert w > shrinkage_weight(n - 1)
+
+
+@settings(max_examples=100, deadline=None)
+@given(team_mean=_MEANS, global_mean=_MEANS, n=st.integers(min_value=0, max_value=2000))
+def test_shrunk_estimate_never_moves_away_from_team_mean_property(
+    team_mean: float, global_mean: float, n: int
+) -> None:
+    """The gap to the team mean is non-increasing as n grows (Property 8)."""
+    gap_n = abs(shrink_estimate(team_mean, global_mean, n) - team_mean)
+    gap_next = abs(shrink_estimate(team_mean, global_mean, n + 1) - team_mean)
+    assert gap_next <= gap_n + 1e-9
+
+
+@settings(max_examples=100, deadline=None)
+@given(team_mean=_MEANS, global_mean=_MEANS)
+def test_endpoint_and_convex_combination_property(
+    team_mean: float, global_mean: float
+) -> None:
+    """n=0 -> global mean; any n -> the exact convex combination."""
+    assert shrink_estimate(team_mean, global_mean, 0) == global_mean
+    for n in (1, 5, 50):
+        w = shrinkage_weight(n, SHRINKAGE_K)
+        expected = w * team_mean + (1 - w) * global_mean
+        assert abs(shrink_estimate(team_mean, global_mean, n) - expected) < 1e-9
 
 
 def test_weight_strictly_increasing_in_n():
