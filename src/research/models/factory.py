@@ -75,6 +75,28 @@ _MARKET_MODEL_MAP: dict[str, dict[str, Any]] = {
         "model_type": "count_regression",
         "params": {"target_field": "total_offsides", "line": 4.5},
     },
+    # ── Asymmetric per-side markets (asymmetric-matchup-engine) ──────────
+    # Each is one direction's Per_Side_Target modelled by the elastic-net
+    # DirectionalCountModel. These are the per-side counts the InteractionModel
+    # fits per direction; the factory exposes them so the walk-forward
+    # orchestrator can select them by market type. Team cards has no per-side
+    # PRICE (audit) but is still a modelled per-side count here.
+    "ASYM_TEAM_CORNERS": {
+        "model_type": "asymmetric_directional",
+        "params": {"line": 4.5},
+    },
+    "ASYM_TEAM_GOALS": {
+        "model_type": "asymmetric_directional",
+        "params": {"line": 1.5},
+    },
+    "ASYM_TEAM_SOT": {
+        "model_type": "asymmetric_directional",
+        "params": {"line": 4.5},
+    },
+    "ASYM_TEAM_CARDS": {
+        "model_type": "asymmetric_directional",
+        "params": {"line": 2.5},
+    },
 }
 
 
@@ -208,6 +230,17 @@ def _create_model_instance(model_type: str, params: dict[str, Any]) -> Probabili
     elif model_type == "poisson":
         return PoissonModel(line=params.get("line", 2.5))
 
+    elif model_type == "asymmetric_directional":
+        # Lazy import keeps the isolated asymmetric package out of the default
+        # import graph and avoids any cycle; the build/backtest path here never
+        # touches the CLI-only live_fetch module.
+        from src.research.asymmetric.directional_model import DirectionalCountModel
+
+        return DirectionalCountModel(
+            target_field=params.get("target_field", "count"),
+            line=params.get("line", 2.5),
+        )
+
     else:
         # Unknown model type — fall back to logistic regression
         return LogisticRegressionModel()
@@ -228,4 +261,5 @@ AVAILABLE_MODELS = {
     "logistic_regression": "Generic logistic regression (existing baseline)",
     "historical_frequency": "Historical frequency baseline",
     "poisson": "Simple Poisson model (existing)",
+    "asymmetric_directional": "Elastic-net Poisson/NB per-side directional count model (asymmetric-matchup-engine)",
 }

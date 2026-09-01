@@ -308,18 +308,18 @@ Commit-and-push checkpoints (Req 14.1) are embedded as sub-steps; the `hypothesi
     - Commit and push; **flag this as a shared/global configuration change** per Req 14.2 in the commit message
     - _Requirements: 14.1, 14.2_
 
-- [ ] 13. Dual-corpus wiring and end-to-end run
-  - [~] 13.1 Wire the full build/backtest pipeline across both corpora
+- [x] 13. Dual-corpus wiring and end-to-end run
+  - [x] 13.1 Wire the full build/backtest pipeline across both corpora
     - Connect Loaders → Team_Profiler (full for Rich, reduced for Broad) → Feature_Verification_Gate → Sanity_Gate → Interaction_Model → Per_Side predictions → Derived_Outcome combiner + correlation check → AsymmetryEvaluator (fresh FDR) → Reporting, using `src/research/models/factory.py` extended with asymmetric per-side entries; ensure the build/backtest path never imports `live_fetch.py`
     - Produce the final report: per-side-vs-baseline (per market/league), rich-vs-broad comparison, ECE/reliability per target, FDR family size, and CIs on every estimate
     - _Requirements: 4.1, 4.2, 4.4, 4.5, 10.1, 10.2, 10.4, 10.5, 10.7, 10.8, 13.1, 13.4_
-  - [ ]* 13.2 Write the zero-API build/backtest assertion test
+  - [x]* 13.2 Write the zero-API build/backtest assertion test
     - Inject an API client stub that raises on any call and run a small end-to-end build/backtest slice, asserting the live client is never invoked (complements Property 23)
     - _Requirements: 12.1, 12.2_
-  - [ ]* 13.3 Write end-to-end integration tests on a small cached slice
+  - [x]* 13.3 Write end-to-end integration tests on a small cached slice
     - Verify walk-forward BSS/Brier/ECE reporting via `CalibrationEvaluator`, fresh FDR family construction + BH correction via `FDRAdapter`, and the rich-vs-broad comparison (1–3 representative examples)
     - _Requirements: 4.4, 4.5, 8.9, 10.4, 10.5_
-  - [~] 13.4 Commit and push the wired pipeline
+  - [x] 13.4 Commit and push the wired pipeline
     - Commit the wiring and end-to-end tests; push. No shared-config change
     - _Requirements: 14.1_
 
