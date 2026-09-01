@@ -13,24 +13,24 @@ Commit-and-push checkpoints (Req 14.1) are embedded as sub-steps; the `hypothesi
 ## Tasks
 
 - [ ] 1. Scaffold the isolated package and pydantic data models
-  - [ ] 1.1 Create the `src/research/asymmetric/` package scaffold and test tree
+  - [x] 1.1 Create the `src/research/asymmetric/` package scaffold and test tree
     - Create `src/research/asymmetric/__init__.py` and empty module files per the design's package layout: `profiles.py`, `profile_dimensions.py`, `interaction.py`, `directional_model.py`, `derived.py`, `correlation.py`, `gates.py`, `evaluation.py`, `fdr_family.py`, `reporting.py`, `corpus.py`, `resolution.py`, `live_fetch.py`, `models.py`
     - Create `tests/asymmetric/__init__.py` and a `conftest.py` matching the existing `pytest` `pythonpath=["."]` convention
     - Ensure the package imports nothing from Pilot C, Pipeline A, manual work, or flagged ledgers (isolation)
     - _Requirements: 13.2, 13.4_
-  - [ ] 1.2 Implement pydantic v2 data models in `models.py`
+  - [x] 1.2 Implement pydantic v2 data models in `models.py`
     - Implement `ProfileDimension`, `AttackingProfile`, `DefensiveProfile`, `TeamMatchProfiles`, `DirectionPrediction`, `FixturePrediction`, `DerivedOutcomes`, `GateCheckResult`, `GateResult`, `Estimate`, `AsymmetryComparison`, `SpendReport` exactly as specified in the design's Data Models section (frozen `ConfigDict`, `pydantic==2.6.1`)
     - Implement `AttackingProfile.vector()` / `DefensiveProfile.vector()` returning continuous feature vectors, and `Estimate.spans_zero` / `Estimate.is_result` properties
     - _Requirements: 1.1, 1.2, 1.16, 2.4, 2.8, 3.1, 10.8, 10.9_
-  - [ ]* 1.3 Write unit tests for data models
+  - [x]* 1.3 Write unit tests for data models
     - Test frozen immutability, `vector()` ordering/length, and `Estimate.spans_zero`/`is_result` boundary behaviour (CI touching zero)
     - _Requirements: 1.2, 10.8, 10.9_
-  - [ ] 1.4 Commit and push the scaffold
+  - [-] 1.4 Commit and push the scaffold
     - Commit `src/research/asymmetric/` scaffold and `models.py`; push. No shared-config change in this unit
     - _Requirements: 14.1_
 
 - [ ] 2. Implement cached corpus loaders (zero-API)
-  - [ ] 2.1 Implement `RichCorpusLoader` and `BroadCorpusLoader` in `corpus.py`
+  - [~] 2.1 Implement `RichCorpusLoader` and `BroadCorpusLoader` in `corpus.py`
     - Reuse `research/data_source.py` `ResearchMatch` and `research/footystats/` to load the Rich_Corpus (`data/thestatsapi`, ~3189) and Broad_Corpus (FootyStats, ~15362) from cache only
     - Loaders MUST accept an injected data source that reads cache exclusively and MUST NOT import `live_fetch.py`
     - Preserve NULL≠ZERO field semantics from the normalizer
@@ -45,20 +45,20 @@ Commit-and-push checkpoints (Req 14.1) are embedded as sub-steps; the `hypothesi
     - _Requirements: 12.1, 12.2_
 
 - [ ] 3. Implement the Team_Profiler
-  - [ ] 3.1 Implement named profile dimensions and reduced-profile map in `profile_dimensions.py`
+  - [~] 3.1 Implement named profile dimensions and reduced-profile map in `profile_dimensions.py`
     - Define the five attacking dimensions (`width`, `central_penetration`, `volume_vs_quality`, `set_piece_reliance`, `directness`) and five defensive dimensions (`block_orientation`, `aerial_vs_ground`, `shot_suppression`, `gk_contribution`, `discipline`) with their source raw fields
     - Define the Broad_Corpus reduced-profile map (width from corners, directness from attacks-vs-dangerous-attacks ratio, discipline from fouls and cards; rich-only dimensions marked absent)
     - Build the `gk_contribution` dimension from saves (and `high_claims` where present) and NOT from `goals_prevented`, which the coverage audit found zero-populated across the Rich_Corpus leagues
     - Flag `central_penetration` as reduced-confidence for the Championship because `touches_in_penalty_area` is thin (~5%) there
     - _Requirements: 1.6, 1.7, 1.8, 1.9, 1.10, 1.11, 1.12, 1.13, 1.14, 1.15, 4.3, 17.1, 17.2, 17.3_
-  - [ ] 3.2 Implement `TeamProfiler` in `profiles.py`
+  - [~] 3.2 Implement `TeamProfiler` in `profiles.py`
     - Reuse the "compute-before-update" chronological discipline from `src/features/rolling_form.py` (`deque(maxlen=10)`), expanding fallback under 10 matches, keyed on team identity across home and away matches, all leagues
     - Team identity used only as an aggregation key, never as a feature (identity-free vectors)
     - Mark profiles `insufficient=True` when `< 5` completed matches; record `missing_fields` and exclude affected matches per feature when a raw field is unavailable
     - When `goals_prevented` is unavailable for a league, compute the `gk_contribution` feature from the available goalkeeper fields and record `goals_prevented` in `missing_fields`; carry a reduced-confidence flag on `central_penetration` where `touches_in_penalty_area` is thin
     - Implement `compute_profiles_map(matches)` and `profile_for_team_at(team, as_of_unix, history)`
     - _Requirements: 1.1, 1.2, 1.3, 1.4, 1.5, 1.16, 1.17, 1.18, 11.1, 11.3, 11.4, 17.1, 17.2, 17.3_
-  - [ ] 3.3 Implement the reduced-profile variant path in `TeamProfiler`
+  - [~] 3.3 Implement the reduced-profile variant path in `TeamProfiler`
     - When `reduced=True`, build only the Broad_Corpus dimensions and carry the `reduced` flag on the profile for rich-vs-broad reporting
     - _Requirements: 4.3, 4.5_
   - [ ]* 3.4 Write property test for point-in-time invariance
@@ -79,18 +79,18 @@ Commit-and-push checkpoints (Req 14.1) are embedded as sub-steps; the `hypothesi
   - [ ]* 3.7 Write edge-case unit tests for min-history boundary and reduced dimensions
     - Test the `< 5` insufficient boundary exactly at 4 and 5 matches (1.16); test the reduced-profile dimension set for Broad_Corpus (4.3)
     - _Requirements: 1.16, 4.3_
-  - [ ] 3.8 Commit and push the profiler
+  - [~] 3.8 Commit and push the profiler
     - Commit `profile_dimensions.py`, `profiles.py`, and their tests; push. No shared-config change
     - _Requirements: 14.1_
 
 - [ ] 4. Implement the directional count model (elastic-net + shrinkage)
-  - [ ] 4.1 Implement `DirectionalCountModel` in `directional_model.py`
+  - [~] 4.1 Implement `DirectionalCountModel` in `directional_model.py`
     - Extend the reused MLE from `src/research/models/count_regression.py`: reuse `_select_distribution` (`DistributionType.AUTO`, NB vs Poisson) and report the empirical dispersion ratio
     - Replace the L2-only penalty with elastic-net `lambda * (alpha_mix * sum(sqrt(w^2 + eps)) + (1 - alpha_mix) * sum(w^2))` (defaults `lambda=0.05`, `alpha_mix=0.5`), keeping L-BFGS-B stable via smoothed absolute value
     - Remove the team-identity effect layer; apply `n/(n+k)` (`k=10.0`) shrinkage to per-team profile-feature estimates toward the global mean
     - Implement `fit`, `predict_distribution` (full PMF via Poisson/NB), `predict_expected_count`; keep coefficients readable for reporting
     - _Requirements: 5.1, 5.3, 5.4, 5.5, 5.6, 10.3_
-  - [ ] 4.2 Wire binary derived outcomes to the logistic model
+  - [~] 4.2 Wire binary derived outcomes to the logistic model
     - Use the existing `LogisticRegressionModel` in `probability.py` for binary Derived_Outcomes
     - _Requirements: 5.2_
   - [ ]* 4.3 Write property test for shrinkage monotonicity
@@ -113,16 +113,16 @@ Commit-and-push checkpoints (Req 14.1) are embedded as sub-steps; the `hypothesi
     - **Validates: Requirements 2.4, 2.5, 2.6, 2.7**
     - `# Feature: asymmetric-matchup-engine, Property 4: ...`, `@settings(max_examples=100)`
     - _Requirements: 2.4, 2.5, 2.6, 2.7_
-  - [ ] 4.7 Commit and push the directional model
+  - [~] 4.7 Commit and push the directional model
     - Commit `directional_model.py` and tests; push. No shared-config change
     - _Requirements: 14.1_
 
 - [ ] 5. Implement the Interaction_Model (two directions) with cards conditioning
-  - [ ] 5.1 Implement referee card-rate conditioning
+  - [~] 5.1 Implement referee card-rate conditioning
     - Add `RefereeCardRate` (adapting `src/features/referee_volatility.py`): expanding, look-ahead-free, league-fallback; when referee is missing or insufficiently observed, substitute the league-level expanding card rate and set `referee_substituted=True`
     - Treat the league-level expanding-window card rate as the PRIMARY pre-match conditioning path (not merely a fallback), because referee assignment is unavailable pre-match in both data sources; use a referee-specific rate ONLY in backtest on completed fixtures with a known post-match referee id; the Analysis_CLI never conditions a pre-match cards prediction on a referee-specific rate
     - _Requirements: 2.7, 2.11, 16.1, 16.2, 16.3, 16.4_
-  - [ ] 5.2 Implement `InteractionModel` in `interaction.py`
+  - [~] 5.2 Implement `InteractionModel` in `interaction.py`
     - Model each fixture as exactly two Directions (A-attack vs B-defence, B-attack vs A-defence), each a separately fitted `DirectionalCountModel`; never collapse to a symmetric feature
     - Build the linear predictor from attacker's attacking dimensions + defender's defensive dimensions + named interaction cross-terms; add the referee card-rate term for the cards target
     - Implement `fit(dataset)` and `predict_fixture(fixture_ctx)` returning per-side full predictive distributions for corners, cards, goals, SOT with named driving features surfaced
@@ -137,16 +137,16 @@ Commit-and-push checkpoints (Req 14.1) are embedded as sub-steps; the `hypothesi
     - **Validates: Requirements 2.7, 2.11**
     - `# Feature: asymmetric-matchup-engine, Property 5: ...`, `@settings(max_examples=100)`
     - _Requirements: 2.7, 2.11_
-  - [ ] 5.5 Commit and push the interaction model
+  - [~] 5.5 Commit and push the interaction model
     - Commit `interaction.py`, referee conditioning, and tests; push. No shared-config change
     - _Requirements: 14.1_
 
 - [ ] 6. Implement the Derived_Outcome combiner and correlation check
-  - [ ] 6.1 Implement `DerivedOutcomeCombiner` in `derived.py`
+  - [~] 6.1 Implement `DerivedOutcomeCombiner` in `derived.py`
     - Mirror `src/research/models/derived_goals.py`: derive total corners/cards/goals via discrete convolution of the two per-side distributions; BTTS = `P(A>=1)*P(B>=1)`; clean sheet per side = `P(opponent goals = 0)`, all under the stated independence assumption emitted alongside each outcome
     - Never model any Derived_Outcome directly
     - _Requirements: 2.9, 2.10, 3.1_
-  - [ ] 6.2 Implement Correlation_Structure constants and comparison in `correlation.py`
+  - [~] 6.2 Implement Correlation_Structure constants and comparison in `correlation.py`
     - Encode measured constants (cards×corners -0.033, cards×goals -0.030, corners×goals -0.028, 95% CI ±0.016); compute implied correlation from the per-side joint; red-flag when implied lies outside `measured ± max(CI, 0.05)`; always report measured values and CIs alongside the comparison
     - _Requirements: 3.2, 3.3, 3.4_
   - [ ]* 6.3 Write property test for derived combination under independence
@@ -162,19 +162,19 @@ Commit-and-push checkpoints (Req 14.1) are embedded as sub-steps; the `hypothesi
   - [ ]* 6.5 Write unit tests for derive-don't-model and reported constants
     - Assert no Derived_Outcome is modelled directly (2.10); assert measured correlation constants and ±0.016 CI are reported (3.4)
     - _Requirements: 2.10, 3.4_
-  - [ ] 6.6 Commit and push the combiner and correlation check
+  - [~] 6.6 Commit and push the combiner and correlation check
     - Commit `derived.py`, `correlation.py`, and tests; push. No shared-config change
     - _Requirements: 14.1_
 
-- [ ] 7. Checkpoint - Ensure all tests pass
+- [~] 7. Checkpoint - Ensure all tests pass
   - Ensure all tests pass, ask the user if questions arise.
 
 - [ ] 8. Implement the Feature_Verification_Gate and Sanity_Gate
-  - [ ] 8.1 Implement the five-check `FeatureVerificationGate` in `gates.py`
+  - [~] 8.1 Implement the five-check `FeatureVerificationGate` in `gates.py`
     - Implement team-identity trace (print for 3–5 teams), known-signal (xG→goals >= ~0.10, rolling goals→goals positive), orientation (team_a features align with team_a outcomes, verified against source), look-ahead (recompute from truncated history and assert equality), shuffle-null (permuted mapping collapses to chance)
     - Run before any modelling; report every check; on any failure set `passed=False`, `stopped_modelling=True`, and stop before modelling
     - _Requirements: 6.1, 6.2, 6.3, 6.4, 6.5, 6.6, 6.7, 6.8_
-  - [ ] 8.2 Implement the `SanityGate` records in `gates.py`
+  - [~] 8.2 Implement the `SanityGate` records in `gates.py`
     - Record (do not re-diagnose) corners near-zero team-level persistence (7.2) and cards disciplinary-persistence absence in the Championship across three seasons (7.3); run per league and per target; surface `SanityRecord` entries; skip re-diagnosis
     - _Requirements: 7.1, 7.2, 7.3, 7.4_
   - [ ]* 8.3 Write property test for gate stopping on any failure
@@ -193,18 +193,18 @@ Commit-and-push checkpoints (Req 14.1) are embedded as sub-steps; the `hypothesi
   - [ ]* 8.6 Write the point-in-time enforcement verification test
     - Verify the look-ahead gate check recomputes a sampled feature from truncated history (strictly before M) and asserts equality with the pipeline value across profiling, interaction modelling, and validation
     - _Requirements: 6.5, 11.1, 11.3_
-  - [ ] 8.7 Commit and push the gates
+  - [~] 8.7 Commit and push the gates
     - Commit `gates.py` and tests; push. No shared-config change
     - _Requirements: 14.1_
 
 - [ ] 9. Implement the asymmetry evaluator, symmetric baseline, and fresh FDR family
-  - [ ] 9.1 Implement `SymmetricBaseline` in `evaluation.py`
+  - [~] 9.1 Implement `SymmetricBaseline` in `evaluation.py`
     - Same Poisson/NB family using only the team's own marginal rate for the target, with no interaction layer
     - _Requirements: 8.1_
-  - [ ] 9.2 Implement `build_asymmetric_family` in `fdr_family.py`
+  - [~] 9.2 Implement `build_asymmetric_family` in `fdr_family.py`
     - Wrap `src/research/fdr/family.py` `ResearchFamilyBuilder`: build a fresh family with `hypothesis_count` = number of target×direction×league models tested; deterministic `family_id` from this engine's run identity, dataset version, and model family; never inherit any prior-effort family
     - _Requirements: 8.8, 8.10, 13.3_
-  - [ ] 9.3 Implement `AsymmetryEvaluator` in `evaluation.py`
+  - [~] 9.3 Implement `AsymmetryEvaluator` in `evaluation.py`
     - Drive walk-forward CV folds from `src/research/walkforward/folds.py`; compare Interaction vs Symmetric_Baseline out-of-sample per market and per league; never report interaction performance in isolation
     - Beat criterion: BSS improvement strictly positive with bootstrap 95% CI lower bound > 0, else report failure; require within-league significance at alpha 0.05; label pooled-only significance as artifact; label below-minimum within-league sample as insufficient-sample and exclude from findings/artifacts
     - Correct within-league significance via Benjamini-Hochberg q=0.05 through `src/research/fdr/adapter.py` `FDRAdapter`; report the FDR family size
@@ -237,12 +237,12 @@ Commit-and-push checkpoints (Req 14.1) are embedded as sub-steps; the `hypothesi
   - [ ]* 9.9 Write integration test for fresh-family isolation from prior efforts
     - Assert the constructed family is disjoint from prior-effort families and that no prior-effort scripts are imported in the build path (13.3)
     - _Requirements: 8.10, 13.3_
-  - [ ] 9.10 Commit and push the evaluator and FDR family
+  - [~] 9.10 Commit and push the evaluator and FDR family
     - Commit `evaluation.py`, `fdr_family.py`, and tests; push. No shared-config change
     - _Requirements: 14.1_
 
 - [ ] 10. Implement reporting
-  - [ ] 10.1 Implement `reporting.py` report assembly
+  - [~] 10.1 Implement `reporting.py` report assembly
     - Assemble headline per-side vs baseline per market and per league; rich-vs-broad comparison; readable elastic-net coefficients per dimension; ECE and reliability curves per target via `src/research/calibration.py` `CalibrationEvaluator`; out-of-sample BSS vs naive baseline, Brier, and ECE; all results including failures with no post-hoc selection; fresh FDR family size; a CI for every reported estimate; label any estimate whose CI spans zero as "not a result"
     - _Requirements: 4.4, 4.5, 5.7, 10.1, 10.2, 10.3, 10.4, 10.5, 10.6, 10.7, 10.8, 10.9_
   - [ ]* 10.2 Write property test for CI presence and CI-spanning-zero suppression
@@ -253,18 +253,18 @@ Commit-and-push checkpoints (Req 14.1) are embedded as sub-steps; the `hypothesi
   - [ ]* 10.3 Write unit test for tail-calibration bins
     - Assert tail-calibration bins are produced against realised outcomes via `CalibrationEvaluator` (5.7)
     - _Requirements: 5.7, 10.4_
-  - [ ] 10.4 Commit and push reporting
+  - [~] 10.4 Commit and push reporting
     - Commit `reporting.py` and tests; push. No shared-config change
     - _Requirements: 14.1_
 
 - [ ] 11. Implement the Analysis_CLI
-  - [ ] 11.1 Implement team resolution and fixture lookup in `resolution.py`
+  - [~] 11.1 Implement team resolution and fixture lookup in `resolution.py`
     - Resolve home/away names: unrecognised → reject and identify the name; ambiguous → reject and list candidates; no scheduled fixture on the date → report no matching fixture; all without producing predictions
     - _Requirements: 9.13, 9.14, 9.15_
-  - [ ] 11.2 Implement `CappedLiveFetcher` in `live_fetch.py`
+  - [~] 11.2 Implement `CappedLiveFetcher` in `live_fetch.py`
     - Reuse `research/footystats/client.py` / `scripts/thestatsapi_client.py` for capped live fetch; admit spend up to the cap; when the next fetch would breach the cap, refuse it and set `cap_exceeded=True`; report `spend_units` = sum of admitted costs; confined to the CLI package, never imported into build/backtest
     - _Requirements: 9.16, 12.3, 12.4_
-  - [ ] 11.3 Implement `scripts/asymmetric_analyze.py` CLI
+  - [~] 11.3 Implement `scripts/asymmetric_analyze.py` CLI
     - Accept `--home`, `--away`, `--date` (ISO 8601 YYYY-MM-DD); resolve teams and fixture; cache-then-live-fetch via `CappedLiveFetcher`
     - Coverage handling: zero cached history → report no profile, identify team, terminate without predictions; `>=1` but `< 5` → flag reduced-coverage, state count vs minimum, continue with reduced profile
     - Narrative sections: profiles as named dimensions with numeric values; per-side predictions for corners/cards/goals/SOT with named driving features; derived totals + BTTS; explicit asymmetry statement naming the dominating side and responsible driving feature per outcome; per-team coverage (match count and populated-vs-absent rich fields)
@@ -289,10 +289,10 @@ Commit-and-push checkpoints (Req 14.1) are embedded as sub-steps; the `hypothesi
   - [ ]* 11.7 Write unit/edge tests for CLI narrative and coverage branches
     - Assert narrative sections present on a resolved cached fixture (9.2–9.6); EV section distinct and labelled when odds exist (9.9); coverage branches at exactly 0 and 5 matches (9.7, 9.8)
     - _Requirements: 9.2, 9.3, 9.4, 9.5, 9.6, 9.7, 9.8, 9.9_
-  - [ ] 11.8 Commit and push the CLI
+  - [~] 11.8 Commit and push the CLI
     - Commit `resolution.py`, `live_fetch.py`, `scripts/asymmetric_analyze.py`, and tests; push. No shared-config change
     - _Requirements: 14.1_
-  - [ ] 11.9 Implement audit-grounded EV_Layer book/market coverage in the CLI EV section
+  - [~] 11.9 Implement audit-grounded EV_Layer book/market coverage in the CLI EV section
     - Map league→books (Championship→[bet365]; EPL→[bet365, betmgm-uk]); compute per-side EV only for Per_Side_Priced_Markets from those books; present each EPL book separately (unblended); omit and record when a book does not price a requested market; never compute per-side EV for team cards
     - Reuse `src/research/ev_calculator.py`
     - _Requirements: 9.9, 9.10, 9.11, 15.1, 15.2, 15.3, 15.4, 15.5, 15.6, 15.7_
@@ -303,13 +303,13 @@ Commit-and-push checkpoints (Req 14.1) are embedded as sub-steps; the `hypothesi
     - _Requirements: 9.9, 9.10, 9.11, 15_
 
 - [ ] 12. Add hypothesis dev dependency and finalize property-test suite
-  - [ ] 12.1 Add `hypothesis` as a dev dependency and flag the shared-config change
+  - [~] 12.1 Add `hypothesis` as a dev dependency and flag the shared-config change
     - Add `hypothesis==6.*` to `[project.optional-dependencies].dev` in `pyproject.toml`; add the custom strategies module (`match_histories`, `count_pmfs`, `fixture_contexts`, `estimates`, `fetch_cost_sequences`) under `tests/asymmetric/`
     - Commit and push; **flag this as a shared/global configuration change** per Req 14.2 in the commit message
     - _Requirements: 14.1, 14.2_
 
 - [ ] 13. Dual-corpus wiring and end-to-end run
-  - [ ] 13.1 Wire the full build/backtest pipeline across both corpora
+  - [~] 13.1 Wire the full build/backtest pipeline across both corpora
     - Connect Loaders → Team_Profiler (full for Rich, reduced for Broad) → Feature_Verification_Gate → Sanity_Gate → Interaction_Model → Per_Side predictions → Derived_Outcome combiner + correlation check → AsymmetryEvaluator (fresh FDR) → Reporting, using `src/research/models/factory.py` extended with asymmetric per-side entries; ensure the build/backtest path never imports `live_fetch.py`
     - Produce the final report: per-side-vs-baseline (per market/league), rich-vs-broad comparison, ECE/reliability per target, FDR family size, and CIs on every estimate
     - _Requirements: 4.1, 4.2, 4.4, 4.5, 10.1, 10.2, 10.4, 10.5, 10.7, 10.8, 13.1, 13.4_
@@ -319,11 +319,11 @@ Commit-and-push checkpoints (Req 14.1) are embedded as sub-steps; the `hypothesi
   - [ ]* 13.3 Write end-to-end integration tests on a small cached slice
     - Verify walk-forward BSS/Brier/ECE reporting via `CalibrationEvaluator`, fresh FDR family construction + BH correction via `FDRAdapter`, and the rich-vs-broad comparison (1–3 representative examples)
     - _Requirements: 4.4, 4.5, 8.9, 10.4, 10.5_
-  - [ ] 13.4 Commit and push the wired pipeline
+  - [~] 13.4 Commit and push the wired pipeline
     - Commit the wiring and end-to-end tests; push. No shared-config change
     - _Requirements: 14.1_
 
-- [ ] 14. Final checkpoint - Ensure all tests pass
+- [~] 14. Final checkpoint - Ensure all tests pass
   - Ensure all tests pass, ask the user if questions arise.
 
 ## Notes
