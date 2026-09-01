@@ -12,7 +12,7 @@ Commit-and-push checkpoints (Req 14.1) are embedded as sub-steps; the `hypothesi
 
 ## Tasks
 
-- [ ] 1. Scaffold the isolated package and pydantic data models
+- [x] 1. Scaffold the isolated package and pydantic data models
   - [x] 1.1 Create the `src/research/asymmetric/` package scaffold and test tree
     - Create `src/research/asymmetric/__init__.py` and empty module files per the design's package layout: `profiles.py`, `profile_dimensions.py`, `interaction.py`, `directional_model.py`, `derived.py`, `correlation.py`, `gates.py`, `evaluation.py`, `fdr_family.py`, `reporting.py`, `corpus.py`, `resolution.py`, `live_fetch.py`, `models.py`
     - Create `tests/asymmetric/__init__.py` and a `conftest.py` matching the existing `pytest` `pythonpath=["."]` convention
@@ -25,61 +25,61 @@ Commit-and-push checkpoints (Req 14.1) are embedded as sub-steps; the `hypothesi
   - [x]* 1.3 Write unit tests for data models
     - Test frozen immutability, `vector()` ordering/length, and `Estimate.spans_zero`/`is_result` boundary behaviour (CI touching zero)
     - _Requirements: 1.2, 10.8, 10.9_
-  - [-] 1.4 Commit and push the scaffold
+  - [x] 1.4 Commit and push the scaffold
     - Commit `src/research/asymmetric/` scaffold and `models.py`; push. No shared-config change in this unit
     - _Requirements: 14.1_
 
-- [ ] 2. Implement cached corpus loaders (zero-API)
-  - [~] 2.1 Implement `RichCorpusLoader` and `BroadCorpusLoader` in `corpus.py`
+- [x] 2. Implement cached corpus loaders (zero-API)
+  - [x] 2.1 Implement `RichCorpusLoader` and `BroadCorpusLoader` in `corpus.py`
     - Reuse `research/data_source.py` `ResearchMatch` and `research/footystats/` to load the Rich_Corpus (`data/thestatsapi`, ~3189) and Broad_Corpus (FootyStats, ~15362) from cache only
     - Loaders MUST accept an injected data source that reads cache exclusively and MUST NOT import `live_fetch.py`
     - Preserve NULL≠ZERO field semantics from the normalizer
     - _Requirements: 4.1, 4.2, 12.1, 12.2, 13.4_
-  - [ ]* 2.2 Write unit tests for corpus loaders
+  - [x]* 2.2 Write unit tests for corpus loaders
     - Test that both loaders read from cache, surface `None` for absent fields (NULL≠ZERO), and expose league identity per match
     - _Requirements: 4.1, 4.2_
-  - [ ]* 2.3 Write property test for zero API during build/backtest
+  - [x]* 2.3 Write property test for zero API during build/backtest
     - **Property 23: Zero API during build and backtest** — inject an API client stub that raises on any call; assert loaders and any build/backtest path never invoke it
     - **Validates: Requirements 12.1, 12.2**
     - `# Feature: asymmetric-matchup-engine, Property 23: ...`, `@settings(max_examples=100)`
     - _Requirements: 12.1, 12.2_
 
 - [ ] 3. Implement the Team_Profiler
-  - [~] 3.1 Implement named profile dimensions and reduced-profile map in `profile_dimensions.py`
+  - [x] 3.1 Implement named profile dimensions and reduced-profile map in `profile_dimensions.py`
     - Define the five attacking dimensions (`width`, `central_penetration`, `volume_vs_quality`, `set_piece_reliance`, `directness`) and five defensive dimensions (`block_orientation`, `aerial_vs_ground`, `shot_suppression`, `gk_contribution`, `discipline`) with their source raw fields
     - Define the Broad_Corpus reduced-profile map (width from corners, directness from attacks-vs-dangerous-attacks ratio, discipline from fouls and cards; rich-only dimensions marked absent)
     - Build the `gk_contribution` dimension from saves (and `high_claims` where present) and NOT from `goals_prevented`, which the coverage audit found zero-populated across the Rich_Corpus leagues
     - Flag `central_penetration` as reduced-confidence for the Championship because `touches_in_penalty_area` is thin (~5%) there
     - _Requirements: 1.6, 1.7, 1.8, 1.9, 1.10, 1.11, 1.12, 1.13, 1.14, 1.15, 4.3, 17.1, 17.2, 17.3_
-  - [~] 3.2 Implement `TeamProfiler` in `profiles.py`
+  - [-] 3.2 Implement `TeamProfiler` in `profiles.py`
     - Reuse the "compute-before-update" chronological discipline from `src/features/rolling_form.py` (`deque(maxlen=10)`), expanding fallback under 10 matches, keyed on team identity across home and away matches, all leagues
     - Team identity used only as an aggregation key, never as a feature (identity-free vectors)
     - Mark profiles `insufficient=True` when `< 5` completed matches; record `missing_fields` and exclude affected matches per feature when a raw field is unavailable
     - When `goals_prevented` is unavailable for a league, compute the `gk_contribution` feature from the available goalkeeper fields and record `goals_prevented` in `missing_fields`; carry a reduced-confidence flag on `central_penetration` where `touches_in_penalty_area` is thin
     - Implement `compute_profiles_map(matches)` and `profile_for_team_at(team, as_of_unix, history)`
     - _Requirements: 1.1, 1.2, 1.3, 1.4, 1.5, 1.16, 1.17, 1.18, 11.1, 11.3, 11.4, 17.1, 17.2, 17.3_
-  - [~] 3.3 Implement the reduced-profile variant path in `TeamProfiler`
+  - [x] 3.3 Implement the reduced-profile variant path in `TeamProfiler`
     - When `reduced=True`, build only the Broad_Corpus dimensions and carry the `reduced` flag on the profile for rich-vs-broad reporting
     - _Requirements: 4.3, 4.5_
-  - [ ]* 3.4 Write property test for point-in-time invariance
+  - [x]* 3.4 Write property test for point-in-time invariance
     - **Property 2: Point-in-time invariance** — profile for match M from full history equals profile from history truncated strictly before M
     - **Validates: Requirements 1.4, 6.5, 11.1, 11.3**
     - Uses the `match_histories` strategy; `# Feature: asymmetric-matchup-engine, Property 2: ...`, `@settings(max_examples=100)`
     - _Requirements: 1.4, 11.1, 11.3_
-  - [ ]* 3.5 Write property test for identity relabel-invariance and all-leagues aggregation
+  - [x]* 3.5 Write property test for identity relabel-invariance and all-leagues aggregation
     - **Property 3: Team-identity relabel-invariance and all-leagues aggregation** — relabelling identity (only) yields identical vectors; match count aggregated equals completed-match count across all leagues
     - **Validates: Requirements 1.3, 1.5, 1.18, 11.4**
     - `# Feature: asymmetric-matchup-engine, Property 3: ...`, `@settings(max_examples=100)`
     - _Requirements: 1.3, 1.5, 1.18, 11.4_
-  - [ ]* 3.6 Write property test for missing-field exclusion
+  - [x]* 3.6 Write property test for missing-field exclusion
     - **Property 11: Missing-field exclusion** — each affected feature computed only from present-field matches and equals the feature over that subset; absent field recorded in `missing_fields`
     - **Validates: Requirements 1.17**
     - `# Feature: asymmetric-matchup-engine, Property 11: ...`, `@settings(max_examples=100)`
     - _Requirements: 1.17_
-  - [ ]* 3.7 Write edge-case unit tests for min-history boundary and reduced dimensions
+  - [x]* 3.7 Write edge-case unit tests for min-history boundary and reduced dimensions
     - Test the `< 5` insufficient boundary exactly at 4 and 5 matches (1.16); test the reduced-profile dimension set for Broad_Corpus (4.3)
     - _Requirements: 1.16, 4.3_
-  - [~] 3.8 Commit and push the profiler
+  - [-] 3.8 Commit and push the profiler
     - Commit `profile_dimensions.py`, `profiles.py`, and their tests; push. No shared-config change
     - _Requirements: 14.1_
 
