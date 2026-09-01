@@ -90,12 +90,28 @@ def adapt_match(fixture, stats_json):
 
 def _rich_fields(sd):
     """Extract the richer TheStatsAPI fields (home/away all-period) for new-field
-    candidate metrics. Returns dict of name -> (home, away) or None."""
+    candidate metrics. Returns dict of name -> (home, away) or None.
+
+    NULL != ZERO is preserved by ``grab()``: a pair is emitted only when BOTH the
+    home AND away cell are non-null for the ``all`` period; otherwise the field is
+    ``None`` (not-populated). A genuine 0 in both cells is kept as ``(0, 0)``.
+
+    This mapping is additive: every key present in prior versions is retained so
+    downstream consumers (``corpus._adapted_to_research_match`` and the
+    field-population audit) keep working unchanged. The block was broadened for
+    the asymmetric-matchup-engine profiler to surface the rich fields needed by
+    the previously-unpopulated profile dimensions (central_penetration,
+    block_orientation, aerial_vs_ground, gk_contribution) and to complete the
+    partially-populated ones (width, volume_vs_quality, set_piece_reliance,
+    shot_suppression). See scripts/multisrc_field_population.FIELD_GROUPS for the
+    authoritative group-per-field mapping mirrored here.
+    """
     def grab(group, stat):
         h = _cell(sd, group, stat, "all", "home")
         a = _cell(sd, group, stat, "all", "away")
         return (h, a) if (h is not None and a is not None) else None
     return {
+        # --- pre-existing keys (unchanged) ---
         "corner_kicks": grab("overview", "corner_kicks"),
         "big_chances": grab("overview", "big_chances"),
         "big_chances_missed": grab("attack", "big_chances_missed"),
@@ -112,6 +128,24 @@ def _rich_fields(sd):
             if _cell(sd, "np_expected_goals", None, "all", "home") is not None else None),
         "fouls": grab("overview", "fouls"),
         "shots_on_target": grab("overview", "shots_on_target"),
+        # --- broadened keys for the asymmetric profiler ---
+        # shots group
+        "shots_inside_box": grab("shots", "shots_inside_box"),
+        "shots_outside_box": grab("shots", "shots_outside_box"),
+        "blocked_shots": grab("shots", "blocked_shots"),
+        # attack group
+        "fouled_in_final_third": grab("attack", "fouled_in_final_third"),
+        # passes group
+        "accurate_long_balls": grab("passes", "accurate_long_balls"),
+        # duels group (percentages)
+        "ground_duels_percentage": grab("duels", "ground_duels_percentage"),
+        "aerial_duels_percentage": grab("duels", "aerial_duels_percentage"),
+        # defending group
+        "tackles_won_percentage": grab("defending", "tackles_won_percentage"),
+        # goalkeeping group (goals_prevented is 0%-populated per audit -> stays None)
+        "saves": grab("goalkeeping", "saves"),
+        "high_claims": grab("goalkeeping", "high_claims"),
+        "goals_prevented": grab("goalkeeping", "goals_prevented"),
     }
 
 

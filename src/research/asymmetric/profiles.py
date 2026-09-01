@@ -49,53 +49,60 @@ required fields, the dimension is emitted with a NaN-safe default value ``0.0``,
 transparently "not populated" rather than fabricated.
 
 ---------------------------------------------------------------------------
-Computability from the current ``ResearchMatch`` (documented decision)
+Computability from ``ResearchMatch`` (current state — rich fields plumbed)
 ---------------------------------------------------------------------------
-The design's dimension source-field tables (``profile_dimensions.py``) name many
-rich TheStatsAPI fields (touches_in_penalty_area, accurate_crosses, clearances,
-interceptions, tackles, duels, saves, ...) that are NOT surfaced on
-``ResearchMatch`` — the Rich corpus loader only maps goals, shots-on-target,
-corners, cards, fouls, and xG through (see ``corpus._adapted_to_research_match``).
-Following task 3.2's guidance we take the pragmatic option (b): compute every
-dimension that the *available* ``ResearchMatch`` fields permit, and for any
-dimension whose required fields are entirely unavailable, emit a transparent
-not-populated ``ProfileDimension`` (value ``0.0``, all required fields recorded
-in ``missing_fields``) rather than fabricate a value. This keeps tasks 4-13
-(which depend on profiles existing) unblocked while never inventing data.
+The cached TheStatsAPI rich stats are now surfaced on ``ResearchMatch`` as
+optional per-side fields (see ``corpus._adapted_to_research_match``, fed by the
+broadened ``championship_adapter._rich_fields`` extraction). Every profile
+dimension is therefore derived from its real design fields. Each dimension is
+the *window mean of a per-match sum of the present components*; a match
+contributes iff at least one required component is present (NULL != ZERO —
+a genuine 0 counts as present), and any absent component (plus any design field
+with no surfaced backing) is recorded in ``ProfileDimension.missing_fields``.
 
-Per-dimension computability from the current ``ResearchMatch`` fields:
+Per-dimension rich formula (all now populated on the Rich_Corpus):
 
   Attacking
-    width               PARTIAL   corners_won <- corners_{home,away}; accurate_crosses,
-                                  wide_entries unavailable (recorded missing).
-    central_penetration NONE      touches_in_penalty_area, final_third_entries,
-                                  shots_inside_box all unavailable.
-    volume_vs_quality   PARTIAL   shots_on_target present; total_shots, big_chances,
-                                  npxg_per_shot unavailable (recorded missing).
-    set_piece_reliance  PARTIAL   corners_won present; fouls_won_advanced unavailable.
-    directness          NONE*     attacks, dangerous_attacks NOT surfaced by the Rich
-                                  loader on ResearchMatch (long_balls also absent). Fully
-                                  computable in the reduced/broad path where attacks +
-                                  dangerous_attacks are present; NONE in the current rich
-                                  ResearchMatch mapping.
+    width               = accurate_crosses + corners_won + final_third_entries
+                          (final_third_entries as the wide/entry proxy;
+                          ``wide_entries`` has no TheStatsAPI backing -> recorded
+                          as a permanent gap in missing_fields).
+    central_penetration = touches_in_penalty_area + final_third_entries
+                          + shots_inside_box. touches_in_penalty_area is
+                          Championship-thinner, so central_penetration is flagged
+                          reduced-confidence there (Req 17.3); the dimension still
+                          populates from the other two components.
+    volume_vs_quality   = shots_on_target + big_chances + npxg (npxg from
+                          np_expected_goals; thin/absent in Ligue 2 / La Liga 2
+                          per the audit -> that component is simply excluded when
+                          absent, SOT + big_chances still populate the dimension.
+                          ``total_shots`` is not individually surfaced ->
+                          recorded as a gap).
+    set_piece_reliance  = corners_won + fouled_in_final_third (advanced-area
+                          fouls-won proxy).
+    directness          = accurate_long_balls + dangerous_attacks/attacks ratio.
+                          RICH-GAP: ``attacks`` / ``dangerous_attacks`` are NOT in
+                          the TheStatsAPI stats (verified absent) and are NOT
+                          surfaced on the rich ResearchMatch, so the ratio term is
+                          recorded missing on rich matches and the rich directness
+                          is anchored on ``accurate_long_balls`` (long balls). The
+                          attacks-vs-dangerous ratio IS present in the FootyStats
+                          broad corpus, where the reduced directness computes from
+                          it (Req 4.3). This is the documented directness decision.
   Defensive
-    block_orientation   NONE      clearances, interceptions, tackles unavailable.
-    aerial_vs_ground    NONE      aerial/ground duel % unavailable.
-    shot_suppression    PARTIAL   conceded shots-on-target proxy from opponent
-                                  shots_on_target; inside/outside-box + blocked_shots
-                                  unavailable (recorded missing).
-    gk_contribution     NONE      saves/high_claims unavailable (goals_prevented also
-                                  absent, recorded missing per Req 17.1/17.2).
-    discipline          PARTIAL   cards + fouls_conceded present; tackle_success
-                                  unavailable (recorded missing).
-
-  * ``directness`` becomes fully computable the moment ``attacks`` /
-    ``dangerous_attacks`` are surfaced; the reduced (broad) profile below already
-    computes it because those fields exist on FootyStats matches.
-
-If/when the corpus path is extended to surface the rich fields, the derivation
-helpers below can read them directly; the missing-field machinery already
-degrades gracefully.
+    block_orientation   = clearances + interceptions + tackles.
+    aerial_vs_ground    = aerial_duels_percentage - ground_duels_percentage
+                          (signed orientation; both percentages required).
+    shot_suppression    = blocked_shots - (shots_conceded_inside_box
+                          + shots_conceded_outside_box), where the conceded side
+                          is the opponent's inside/outside-box shots in that match.
+    gk_contribution     = saves + high_claims (Req 17.1: NOT goals_prevented;
+                          goals_prevented is always recorded unavailable, and
+                          high_claims is thin so recorded when absent).
+    discipline          = fouls_conceded + cards + (100 - tackles_won_percentage)
+                          (tackle-failure contribution, so higher == more
+                          indiscipline; tackle_success recorded missing when the
+                          percentage is absent).
 
 ---------------------------------------------------------------------------
 Reduced-confidence surfacing mechanism (documented choice; Req 17.3)
@@ -216,6 +223,119 @@ class _TeamMatchView:
             else self._m.dangerous_attacks_away
         )
 
+    # -- rich produced (own) raw quantities -------------------------------- #
+    @property
+    def shots_inside_box_for(self) -> Optional[int]:
+        return (
+            self._m.shots_inside_box_home
+            if self._is_home
+            else self._m.shots_inside_box_away
+        )
+
+    @property
+    def big_chances_for(self) -> Optional[int]:
+        return self._m.big_chances_home if self._is_home else self._m.big_chances_away
+
+    @property
+    def npxg_for(self) -> Optional[float]:
+        return self._m.npxg_home if self._is_home else self._m.npxg_away
+
+    @property
+    def touches_in_box_for(self) -> Optional[int]:
+        return (
+            self._m.touches_in_box_home
+            if self._is_home
+            else self._m.touches_in_box_away
+        )
+
+    @property
+    def final_third_entries_for(self) -> Optional[int]:
+        return (
+            self._m.final_third_entries_home
+            if self._is_home
+            else self._m.final_third_entries_away
+        )
+
+    @property
+    def fouled_in_final_third_for(self) -> Optional[int]:
+        return (
+            self._m.fouled_in_final_third_home
+            if self._is_home
+            else self._m.fouled_in_final_third_away
+        )
+
+    @property
+    def accurate_crosses_for(self) -> Optional[int]:
+        return (
+            self._m.accurate_crosses_home
+            if self._is_home
+            else self._m.accurate_crosses_away
+        )
+
+    @property
+    def accurate_long_balls_for(self) -> Optional[int]:
+        return (
+            self._m.accurate_long_balls_home
+            if self._is_home
+            else self._m.accurate_long_balls_away
+        )
+
+    @property
+    def aerial_duel_pct_for(self) -> Optional[float]:
+        return (
+            self._m.aerial_duel_pct_home
+            if self._is_home
+            else self._m.aerial_duel_pct_away
+        )
+
+    @property
+    def ground_duel_pct_for(self) -> Optional[float]:
+        return (
+            self._m.ground_duel_pct_home
+            if self._is_home
+            else self._m.ground_duel_pct_away
+        )
+
+    @property
+    def tackles_for(self) -> Optional[int]:
+        return self._m.tackles_home if self._is_home else self._m.tackles_away
+
+    @property
+    def tackles_won_pct_for(self) -> Optional[float]:
+        return (
+            self._m.tackles_won_pct_home
+            if self._is_home
+            else self._m.tackles_won_pct_away
+        )
+
+    @property
+    def interceptions_for(self) -> Optional[int]:
+        return (
+            self._m.interceptions_home
+            if self._is_home
+            else self._m.interceptions_away
+        )
+
+    @property
+    def clearances_for(self) -> Optional[int]:
+        return self._m.clearances_home if self._is_home else self._m.clearances_away
+
+    @property
+    def saves_for(self) -> Optional[int]:
+        return self._m.saves_home if self._is_home else self._m.saves_away
+
+    @property
+    def high_claims_for(self) -> Optional[int]:
+        return self._m.high_claims_home if self._is_home else self._m.high_claims_away
+
+    @property
+    def goals_prevented_for(self) -> Optional[float]:
+        return (
+            self._m.goals_prevented_home
+            if self._is_home
+            else self._m.goals_prevented_away
+        )
+
     # -- conceded (opponent) raw quantities -------------------------------- #
     @property
     def sot_against(self) -> Optional[int]:
@@ -225,89 +345,278 @@ class _TeamMatchView:
             else self._m.shots_on_target_home
         )
 
+    @property
+    def shots_inside_box_against(self) -> Optional[int]:
+        return (
+            self._m.shots_inside_box_away
+            if self._is_home
+            else self._m.shots_inside_box_home
+        )
+
+    @property
+    def shots_outside_box_against(self) -> Optional[int]:
+        return (
+            self._m.shots_outside_box_away
+            if self._is_home
+            else self._m.shots_outside_box_home
+        )
+
+    @property
+    def blocked_shots_for(self) -> Optional[int]:
+        """Blocked shots made by this team's defence (own blocking action)."""
+        return (
+            self._m.blocked_shots_home
+            if self._is_home
+            else self._m.blocked_shots_away
+        )
+
 
 # --------------------------------------------------------------------------- #
 # Dimension derivations
 # --------------------------------------------------------------------------- #
-# Each derivation is a callable that, given a _TeamMatchView, returns either the
-# per-match derived scalar for the dimension, or None if a required raw field is
-# unavailable for that match (triggering per-feature exclusion, Req 1.17).
+# Each dimension is now derived from one or more *component accessors* on a
+# _TeamMatchView, using the rich per-side fields surfaced on ResearchMatch. A
+# component is a (design_field_name, accessor, kind) triple where ``kind`` is:
+#   "add"   -> the component's per-match value is added into the dimension score
+#   "sub"   -> subtracted (used only for conceded-vs-suppression contrast)
+# A match contributes to a dimension iff at least one of the dimension's
+# components is present (non-None) for that match (Req 1.17 per-feature
+# inclusion); every component that is None for an included match, and every
+# design-required field that has no surfaced backing at all, is recorded in the
+# dimension's ``missing_fields``. When no match has ANY component present the
+# dimension collapses to the transparent not-populated default (value 0.0,
+# n_matches_used 0, all required fields recorded missing).
 #
-# The dimension's ``spec.required_fields`` names *all* fields the design wants;
-# where a required field is not surfaced on ResearchMatch the derivation returns
-# None so the field is recorded missing and the match is excluded. For a
-# dimension whose fields are entirely unavailable, the derivation always returns
-# None and the dimension collapses to the not-populated default.
+# NULL != ZERO is preserved throughout: a genuine 0 counts as present and
+# contributes 0; only ``None`` triggers exclusion/recording.
+#
+# Documented per-dimension formulas (rich corpus), each a window mean of the
+# per-match sum of present components:
+#   width               = accurate_crosses + corners_won + final_third_entries
+#                         (final_third_entries as the wide/entry proxy; the
+#                          design's ``wide_entries`` field is not surfaced by
+#                          TheStatsAPI and is recorded as a permanent gap).
+#   central_penetration = touches_in_penalty_area + final_third_entries
+#                         + shots_inside_box.
+#   volume_vs_quality   = shots_on_target + big_chances + npxg (npxg via
+#                         np_expected_goals; "per shot" is captured by summing
+#                         npxg alongside shot counts — npxg is thin/absent in
+#                         Ligue 2 / La Liga 2 per the audit, handled by exclusion).
+#   set_piece_reliance  = corners_won + fouled_in_final_third (advanced-area
+#                         fouls-won proxy).
+#   directness          = dangerous_attacks / attacks (rich ResearchMatch does
+#                         NOT surface attacks/dangerous_attacks -> documented
+#                         rich-gap; see module docstring. accurate_long_balls IS
+#                         surfaced and is added as the long-balls directness
+#                         component so the dimension is derivable in the rich
+#                         corpus). Final rich formula: accurate_long_balls
+#                         (+ dangerous_attacks/attacks ratio where present).
+#   block_orientation   = clearances + interceptions + tackles.
+#   aerial_vs_ground    = aerial_duels_percentage - ground_duels_percentage
+#                         (signed orientation; both are percentages).
+#   shot_suppression    = blocked_shots - (shots_conceded_inside_box
+#                         + shots_conceded_outside_box) [conceded side = the
+#                         opponent's inside/outside-box shots in that match].
+#   gk_contribution     = saves + high_claims (NOT goals_prevented, Req 17.1);
+#                         goals_prevented always recorded unavailable.
+#   discipline          = fouls_conceded + cards + (100 - tackles_won_percentage)
+#                         (tackle success -> tackle-failure contribution, so
+#                         higher == more indiscipline; tackle_success recorded
+#                         missing when the percentage is absent).
 
 
-def _d_width(v: _TeamMatchView) -> Optional[float]:
-    """Width proxy from corners won (accurate_crosses/wide_entries unavailable)."""
-    c = v.corners_for
-    return float(c) if c is not None else None
+def _add(val: Optional[float], acc: list[float]) -> bool:
+    """Append ``val`` to ``acc`` if present; return True iff it was present."""
+    if val is None:
+        return False
+    acc.append(float(val))
+    return True
 
 
-def _d_central_penetration(v: _TeamMatchView) -> Optional[float]:
-    """touches_in_penalty_area / final_third_entries / shots_inside_box: none surfaced."""
-    return None
+def _d_width(v: _TeamMatchView) -> tuple[Optional[float], list[str]]:
+    parts: list[float] = []
+    missing: list[str] = []
+    if not _add(v.accurate_crosses_for, parts):
+        missing.append("accurate_crosses")
+    if not _add(v.corners_for, parts):
+        missing.append("corners_won")
+    if not _add(v.final_third_entries_for, parts):
+        missing.append("final_third_entries")
+    if not parts:
+        return None, missing
+    return sum(parts), missing
 
 
-def _d_volume_vs_quality(v: _TeamMatchView) -> Optional[float]:
-    """Volume-vs-quality proxy from shots on target (rich shot fields unavailable)."""
-    s = v.sot_for
-    return float(s) if s is not None else None
+def _d_central_penetration(v: _TeamMatchView) -> tuple[Optional[float], list[str]]:
+    parts: list[float] = []
+    missing: list[str] = []
+    if not _add(v.touches_in_box_for, parts):
+        missing.append("touches_in_penalty_area")
+    if not _add(v.final_third_entries_for, parts):
+        missing.append("final_third_entries")
+    if not _add(v.shots_inside_box_for, parts):
+        missing.append("shots_inside_box")
+    if not parts:
+        return None, missing
+    return sum(parts), missing
 
 
-def _d_set_piece_reliance(v: _TeamMatchView) -> Optional[float]:
-    """Set-piece reliance proxy from corners won (fouls_won_advanced unavailable)."""
-    c = v.corners_for
-    return float(c) if c is not None else None
+def _d_volume_vs_quality(v: _TeamMatchView) -> tuple[Optional[float], list[str]]:
+    parts: list[float] = []
+    missing: list[str] = []
+    if not _add(v.sot_for, parts):
+        missing.append("shots_on_target")
+    if not _add(v.big_chances_for, parts):
+        missing.append("big_chances")
+    if not _add(v.npxg_for, parts):
+        missing.append("npxg_per_shot")
+    # total_shots is not individually surfaced (only SOT); record it as a gap.
+    missing.append("total_shots")
+    if not parts:
+        return None, missing
+    return sum(parts), missing
 
 
-def _d_directness(v: _TeamMatchView) -> Optional[float]:
-    """Directness = dangerous_attacks / attacks (not surfaced on rich ResearchMatch)."""
-    return _TeamMatchView._ratio(v.dangerous_attacks_for, v.attacks_for)
+def _d_set_piece_reliance(v: _TeamMatchView) -> tuple[Optional[float], list[str]]:
+    parts: list[float] = []
+    missing: list[str] = []
+    if not _add(v.corners_for, parts):
+        missing.append("corners_won")
+    if not _add(v.fouled_in_final_third_for, parts):
+        missing.append("fouls_won_advanced")
+    if not parts:
+        return None, missing
+    return sum(parts), missing
 
 
-def _d_block_orientation(v: _TeamMatchView) -> Optional[float]:
-    """clearances / interceptions / tackles: none surfaced."""
-    return None
+def _d_directness(v: _TeamMatchView) -> tuple[Optional[float], list[str]]:
+    """Rich directness: accurate_long_balls, plus dangerous/attacks ratio if present.
 
-
-def _d_aerial_vs_ground(v: _TeamMatchView) -> Optional[float]:
-    """aerial/ground duel %: not surfaced."""
-    return None
-
-
-def _d_shot_suppression(v: _TeamMatchView) -> Optional[float]:
-    """Shot-suppression proxy: opponent shots on target conceded (lower is better).
-
-    Inside/outside-box splits and blocked_shots are unavailable; we use conceded
-    shots-on-target as the derivable conceded-side proxy.
+    The rich ResearchMatch mapping does not surface ``attacks`` /
+    ``dangerous_attacks`` (documented rich-gap); when a broad-corpus match DOES
+    carry them (reduced path / hand-built), the ratio is added. ``long_balls`` is
+    surfaced via ``accurate_long_balls`` and anchors the rich derivation.
     """
-    s = v.sot_against
-    return float(s) if s is not None else None
+    parts: list[float] = []
+    missing: list[str] = []
+    ratio = _TeamMatchView._ratio(v.dangerous_attacks_for, v.attacks_for)
+    if ratio is not None:
+        parts.append(ratio)
+    else:
+        missing.append("attacks")
+        missing.append("dangerous_attacks")
+    if not _add(v.accurate_long_balls_for, parts):
+        missing.append("long_balls")
+    if not parts:
+        return None, missing
+    return sum(parts), missing
 
 
-def _d_gk_contribution(v: _TeamMatchView) -> Optional[float]:
-    """saves / high_claims unavailable (goals_prevented also absent — Req 17.1/2)."""
-    return None
+def _d_block_orientation(v: _TeamMatchView) -> tuple[Optional[float], list[str]]:
+    parts: list[float] = []
+    missing: list[str] = []
+    if not _add(v.clearances_for, parts):
+        missing.append("clearances")
+    if not _add(v.interceptions_for, parts):
+        missing.append("interceptions")
+    if not _add(v.tackles_for, parts):
+        missing.append("tackles")
+    if not parts:
+        return None, missing
+    return sum(parts), missing
 
 
-def _d_discipline(v: _TeamMatchView) -> Optional[float]:
-    """Discipline from fouls conceded and cards (tackle_success unavailable).
+def _d_aerial_vs_ground(v: _TeamMatchView) -> tuple[Optional[float], list[str]]:
+    """Signed aerial-vs-ground orientation = aerial% - ground%.
 
-    Higher value == more indiscipline. Combines fouls and cards additively; if
-    both are None the match is excluded from this feature.
+    Both percentages are required for the contrast to be meaningful; if either
+    is absent the match is excluded and the absent field recorded.
     """
-    f, c = v.fouls_for, v.cards_for
-    if f is None and c is None:
-        return None
-    return float((f or 0) + (c or 0))
+    missing: list[str] = []
+    a = v.aerial_duel_pct_for
+    g = v.ground_duel_pct_for
+    if a is None:
+        missing.append("aerial_duel_pct")
+    if g is None:
+        missing.append("ground_duel_pct")
+    if a is None or g is None:
+        return None, missing
+    return float(a) - float(g), missing
 
 
-# Reduced (broad) derivations (Req 4.3): width from corners, directness from
-# attacks-vs-dangerous ratio, discipline from fouls and cards.
-_DERIVATIONS: dict[str, Callable[[_TeamMatchView], Optional[float]]] = {
+def _d_shot_suppression(v: _TeamMatchView) -> tuple[Optional[float], list[str]]:
+    """Shot suppression = blocked_shots - shots conceded inside/outside box.
+
+    Conceded side = the opponent's inside/outside-box shots in that match. A
+    match contributes iff at least one component is present; absent components
+    are recorded.
+    """
+    parts: list[float] = []
+    missing: list[str] = []
+    if not _add(v.blocked_shots_for, parts):
+        missing.append("blocked_shots")
+    ci = v.shots_inside_box_against
+    if ci is None:
+        missing.append("shots_conceded_inside_box")
+    else:
+        parts.append(-float(ci))
+    co = v.shots_outside_box_against
+    if co is None:
+        missing.append("shots_conceded_outside_box")
+    else:
+        parts.append(-float(co))
+    if not parts:
+        return None, missing
+    return sum(parts), missing
+
+
+def _d_gk_contribution(v: _TeamMatchView) -> tuple[Optional[float], list[str]]:
+    """GK contribution = saves + high_claims (never goals_prevented, Req 17.1)."""
+    parts: list[float] = []
+    missing: list[str] = []
+    if not _add(v.saves_for, parts):
+        missing.append("saves")
+    if not _add(v.high_claims_for, parts):
+        missing.append("high_claims")
+    if not parts:
+        return None, missing
+    return sum(parts), missing
+
+
+def _d_discipline(v: _TeamMatchView) -> tuple[Optional[float], list[str]]:
+    """Discipline (higher == more indiscipline) = fouls + cards + tackle-failure%.
+
+    tackle-failure% = (100 - tackles_won_percentage) so that low tackle success
+    raises the indiscipline score. A match contributes iff at least one of fouls
+    or cards is present; tackle success is an enrichment recorded when absent.
+    """
+    parts: list[float] = []
+    missing: list[str] = []
+    f = v.fouls_for
+    c = v.cards_for
+    anchor_present = False
+    if f is not None:
+        parts.append(float(f))
+        anchor_present = True
+    else:
+        missing.append("fouls_conceded")
+    if c is not None:
+        parts.append(float(c))
+        anchor_present = True
+    else:
+        missing.append("cards")
+    twp = v.tackles_won_pct_for
+    if twp is not None:
+        parts.append(100.0 - float(twp))
+    else:
+        missing.append("tackle_success")
+    if not anchor_present:
+        return None, missing
+    return sum(parts), missing
+
+
+# Rich derivations return (per_match_value_or_None, per_match_missing_fields).
+_DERIVATIONS: dict[str, Callable[[_TeamMatchView], "tuple[Optional[float], list[str]]"]] = {
     "width": _d_width,
     "central_penetration": _d_central_penetration,
     "volume_vs_quality": _d_volume_vs_quality,
@@ -320,18 +629,40 @@ _DERIVATIONS: dict[str, Callable[[_TeamMatchView], Optional[float]]] = {
     "discipline": _d_discipline,
 }
 
-# Which raw ResearchMatch field each dimension actually reads, so we can record
-# a precise missing-field entry when it is None for a match. Maps dimension ->
-# the accessor name(s) on _TeamMatchView used, paired with the design field name
-# recorded in missing_fields. For dimensions with no surfaced field, the whole
-# ``required_fields`` set is recorded missing.
-_PRIMARY_FIELD: dict[str, str] = {
-    "width": "corners_won",
-    "volume_vs_quality": "shots_on_target",
-    "set_piece_reliance": "corners_won",
-    "directness": "attacks",  # ratio needs attacks + dangerous_attacks
-    "shot_suppression": "shots_conceded",
-    "discipline": "cards",
+
+# Reduced (broad) derivations (Req 4.3): width from corners, directness from the
+# attacks-vs-dangerous ratio, discipline from fouls and cards. Same
+# (value, missing) contract; only these three are built in the reduced profile.
+def _rd_width(v: _TeamMatchView) -> tuple[Optional[float], list[str]]:
+    c = v.corners_for
+    if c is None:
+        return None, ["corners_won"]
+    return float(c), []
+
+
+def _rd_directness(v: _TeamMatchView) -> tuple[Optional[float], list[str]]:
+    ratio = _TeamMatchView._ratio(v.dangerous_attacks_for, v.attacks_for)
+    if ratio is None:
+        return None, ["attacks", "dangerous_attacks"]
+    return ratio, []
+
+
+def _rd_discipline(v: _TeamMatchView) -> tuple[Optional[float], list[str]]:
+    f, c = v.fouls_for, v.cards_for
+    if f is None and c is None:
+        return None, ["fouls_conceded", "cards"]
+    missing: list[str] = []
+    if f is None:
+        missing.append("fouls_conceded")
+    if c is None:
+        missing.append("cards")
+    return float((f or 0) + (c or 0)), missing
+
+
+_REDUCED_DERIVATIONS: dict[str, Callable[[_TeamMatchView], "tuple[Optional[float], list[str]]"]] = {
+    "width": _rd_width,
+    "directness": _rd_directness,
+    "discipline": _rd_discipline,
 }
 
 
@@ -511,13 +842,15 @@ class TeamProfiler:
         views: list[_TeamMatchView],
         league: Optional[str],
     ) -> ProfileDimension:
-        """Compute one dimension as the window mean over present-field matches.
+        """Compute one dimension as the window mean over present-component matches.
 
-        Missing-field handling (Req 1.17): matches whose required field is
-        unavailable (derivation returns ``None``) are excluded from THIS
-        dimension only; the primary field is recorded in ``missing_fields``. When
-        the dimension is present in the reduced profile, its reduced source
-        fields are used for reporting.
+        Missing-field handling (Req 1.17): a match contributes to the dimension
+        iff the derivation yields a non-None value (at least one required
+        component present); matches whose components are entirely absent are
+        excluded from THIS dimension only. Every component field that was absent
+        on an included match, plus every design-required field with no surfaced
+        backing, is recorded in ``missing_fields``. NULL != ZERO is preserved: a
+        genuine 0 counts as present.
         """
         spec = pdims.get_dimension(name)
         corpus = pdims.BROAD_CORPUS if self._reduced else pdims.RICH_CORPUS
@@ -533,53 +866,38 @@ class TeamProfiler:
                 missing_fields=spec.required_fields,
             )
 
-        derive = _DERIVATIONS[name]
+        derive = (
+            _REDUCED_DERIVATIONS[name]
+            if self._reduced
+            else _DERIVATIONS[name]
+        )
+
         present: list[float] = []
-        excluded = 0
+        missing_accum: list[str] = []
         for v in views:
-            val = derive(v)
+            val, per_match_missing = derive(v)
             if val is None:
-                excluded += 1
+                # Match excluded from this dimension; still surface which of its
+                # components were absent (Req 1.17 field recording).
+                missing_accum.extend(per_match_missing)
                 continue
             present.append(val)
+            missing_accum.extend(per_match_missing)
 
         source = spec.source_fields(corpus=corpus)
-        missing: list[str] = []
 
         if present:
             value = sum(present) / len(present)
         else:
             # Entirely not populated from available fields -> transparent default.
             value = 0.0
-
-        # Record missing fields: the design's required fields that are not
-        # surfaced on ResearchMatch, plus any per-match exclusions.
-        if not present:
-            # Nothing derivable at all -> record every required field.
-            missing.extend(spec.required_fields)
-        else:
-            # We derived from a proxy; record the design-required fields that are
-            # not backed by a surfaced ResearchMatch field, or that were None on
-            # some matches. The primary field is the one we actually read.
-            primary = _PRIMARY_FIELD.get(name)
-            for f in spec.required_fields:
-                # A required field is "missing" if it is not the primary surfaced
-                # field we computed from (proxies for the unavailable rich fields).
-                if primary is None or f != primary:
-                    # directness needs both attacks and dangerous_attacks; both are
-                    # surfaced together, so neither should be flagged when present.
-                    if name == "directness" and f in ("attacks", "dangerous_attacks"):
-                        continue
-                    missing.append(f)
-            if excluded:
-                # Some matches lacked the primary field; record it too.
-                if primary is not None and primary not in missing:
-                    missing.append(primary)
+            # Record every required field when nothing was derivable at all.
+            missing_accum.extend(spec.required_fields)
 
         # goals_prevented is optional+unavailable for gk_contribution: always
-        # record it as unavailable (Req 17.1, 17.2).
-        if name == "gk_contribution" and "goals_prevented" not in missing:
-            missing.append("goals_prevented")
+        # record it as unavailable (Req 17.1, 17.2), regardless of population.
+        if name == "gk_contribution":
+            missing_accum.append("goals_prevented")
 
         # Reduced-confidence sentinel (Req 17.3): surfaced via missing_fields.
         # The audit case is central_penetration in the Championship, where
@@ -589,12 +907,14 @@ class TeamProfiler:
             and name == "central_penetration"
             and pdims.is_reduced_confidence(league, name)
         ):
-            missing.append(f"{REDUCED_CONFIDENCE_PREFIX}touches_in_penalty_area")
+            missing_accum.append(
+                f"{REDUCED_CONFIDENCE_PREFIX}touches_in_penalty_area"
+            )
 
-        # De-duplicate while preserving order.
+        # De-duplicate while preserving first-seen order.
         seen: set[str] = set()
         deduped: list[str] = []
-        for f in missing:
+        for f in missing_accum:
             if f not in seen:
                 seen.add(f)
                 deduped.append(f)

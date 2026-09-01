@@ -134,8 +134,41 @@ def _adapted_to_research_match(
             int(a) if a is not None else None,
         )
 
+    def rich_pair_float(name: str) -> tuple[Optional[float], Optional[float]]:
+        """Float-valued rich pair (percentages, npxg). NULL != ZERO preserved."""
+        pair = rich.get(name)
+        if not pair:
+            return (None, None)
+        h, a = pair
+        return (
+            float(h) if h is not None else None,
+            float(a) if a is not None else None,
+        )
+
     ch, ca = rich_pair("corner_kicks")
     total_corners = (ch + ca) if (ch is not None and ca is not None) else None
+
+    # Broadened rich per-side fields for the asymmetric profiler. Each stays
+    # (None, None) when the source cell was absent on either side (NULL != ZERO).
+    sib_h, sib_a = rich_pair("shots_inside_box")
+    sob_h, sob_a = rich_pair("shots_outside_box")
+    blk_h, blk_a = rich_pair("blocked_shots")
+    bc_h, bc_a = rich_pair("big_chances")
+    npxg_h, npxg_a = rich_pair_float("np_expected_goals")
+    tib_h, tib_a = rich_pair("touches_in_penalty_area")
+    fte_h, fte_a = rich_pair("final_third_entries")
+    fft_h, fft_a = rich_pair("fouled_in_final_third")
+    acr_h, acr_a = rich_pair("accurate_crosses")
+    alb_h, alb_a = rich_pair("accurate_long_balls")
+    adp_h, adp_a = rich_pair_float("aerial_duels_percentage")
+    gdp_h, gdp_a = rich_pair_float("ground_duels_percentage")
+    tk_h, tk_a = rich_pair("tackles")
+    twp_h, twp_a = rich_pair_float("tackles_won_percentage")
+    intc_h, intc_a = rich_pair("interceptions")
+    clr_h, clr_a = rich_pair("clearances")
+    sv_h, sv_a = rich_pair("saves")
+    hc_h, hc_a = rich_pair("high_claims")
+    gp_h, gp_a = rich_pair_float("goals_prevented")
 
     yc_h = adapted.get("team_a_yellow_cards")
     yc_a = adapted.get("team_b_yellow_cards")
@@ -172,6 +205,45 @@ def _adapted_to_research_match(
         fouls_away=adapted.get("team_b_fouls"),
         home_xg=adapted.get("team_a_xg"),
         away_xg=adapted.get("team_b_xg"),
+        # Broadened rich per-side fields (asymmetric profiler)
+        shots_inside_box_home=sib_h,
+        shots_inside_box_away=sib_a,
+        shots_outside_box_home=sob_h,
+        shots_outside_box_away=sob_a,
+        blocked_shots_home=blk_h,
+        blocked_shots_away=blk_a,
+        big_chances_home=bc_h,
+        big_chances_away=bc_a,
+        npxg_home=npxg_h,
+        npxg_away=npxg_a,
+        touches_in_box_home=tib_h,
+        touches_in_box_away=tib_a,
+        final_third_entries_home=fte_h,
+        final_third_entries_away=fte_a,
+        fouled_in_final_third_home=fft_h,
+        fouled_in_final_third_away=fft_a,
+        accurate_crosses_home=acr_h,
+        accurate_crosses_away=acr_a,
+        accurate_long_balls_home=alb_h,
+        accurate_long_balls_away=alb_a,
+        aerial_duel_pct_home=adp_h,
+        aerial_duel_pct_away=adp_a,
+        ground_duel_pct_home=gdp_h,
+        ground_duel_pct_away=gdp_a,
+        tackles_home=tk_h,
+        tackles_away=tk_a,
+        tackles_won_pct_home=twp_h,
+        tackles_won_pct_away=twp_a,
+        interceptions_home=intc_h,
+        interceptions_away=intc_a,
+        clearances_home=clr_h,
+        clearances_away=clr_a,
+        saves_home=sv_h,
+        saves_away=sv_a,
+        high_claims_home=hc_h,
+        high_claims_away=hc_a,
+        goals_prevented_home=gp_h,
+        goals_prevented_away=gp_a,
     )
 
 

@@ -96,6 +96,59 @@ class ResearchMatch:
     home_xg: Optional[float] = None
     away_xg: Optional[float] = None
 
+    # --- Rich per-side fields (POST-MATCH ONLY; TheStatsAPI Rich_Corpus) --------
+    # Optional, default None: backward-compatible additive extension used by the
+    # asymmetric-matchup-engine Team_Profiler to derive the previously
+    # unpopulated / partially-populated profile dimensions from cached rich
+    # stats. NULL != ZERO is preserved: a field absent from the source (or absent
+    # on either side of the match) stays None; a genuine 0 is kept as 0.
+    # Sources not present in the FootyStats broad corpus stay None there.
+
+    # Shots detail (shots group)
+    shots_inside_box_home: Optional[int] = None
+    shots_inside_box_away: Optional[int] = None
+    shots_outside_box_home: Optional[int] = None
+    shots_outside_box_away: Optional[int] = None
+    blocked_shots_home: Optional[int] = None
+    blocked_shots_away: Optional[int] = None
+    # Chance quality (overview / npxg)
+    big_chances_home: Optional[int] = None
+    big_chances_away: Optional[int] = None
+    npxg_home: Optional[float] = None
+    npxg_away: Optional[float] = None
+    # Attack / entries (attack + passes groups)
+    touches_in_box_home: Optional[int] = None
+    touches_in_box_away: Optional[int] = None
+    final_third_entries_home: Optional[int] = None
+    final_third_entries_away: Optional[int] = None
+    fouled_in_final_third_home: Optional[int] = None
+    fouled_in_final_third_away: Optional[int] = None
+    accurate_crosses_home: Optional[int] = None
+    accurate_crosses_away: Optional[int] = None
+    accurate_long_balls_home: Optional[int] = None
+    accurate_long_balls_away: Optional[int] = None
+    # Duels (duels group, percentages)
+    aerial_duel_pct_home: Optional[float] = None
+    aerial_duel_pct_away: Optional[float] = None
+    ground_duel_pct_home: Optional[float] = None
+    ground_duel_pct_away: Optional[float] = None
+    # Defending (defending group)
+    tackles_home: Optional[int] = None
+    tackles_away: Optional[int] = None
+    tackles_won_pct_home: Optional[float] = None
+    tackles_won_pct_away: Optional[float] = None
+    interceptions_home: Optional[int] = None
+    interceptions_away: Optional[int] = None
+    clearances_home: Optional[int] = None
+    clearances_away: Optional[int] = None
+    # Goalkeeping (goalkeeping group; goals_prevented is 0%-populated per audit)
+    saves_home: Optional[int] = None
+    saves_away: Optional[int] = None
+    high_claims_home: Optional[int] = None
+    high_claims_away: Optional[int] = None
+    goals_prevented_home: Optional[float] = None
+    goals_prevented_away: Optional[float] = None
+
     # Referee
     referee: Optional[str] = None
 
