@@ -252,3 +252,25 @@ Sample: 132 played of 3114 matches (forward cache is mostly upcoming fixtures wi
 - Monthly quota: 4768 → 4718 remaining (**50 live requests spent**; all on the live per-side probe of paddy-power/betmgm-uk/bet365 in Championship+EPL). Everything else answered from cache.
 
 - Sample sizes: cached market analysis n=222/book (Championship); live per-side probe n=10/league/book; FootyStats field population n=132 played (low-confidence — forward cache).
+
+
+## Dual-book EPL per-side coverage (follow-up probe)
+
+After the spec was scoped to dual-book EPL (bet365 + betmgm-uk) plus bet365 Championship,
+a follow-up read of the cached EPL per-side probe (n=10 upcoming EPL fixtures per book) found:
+
+| book | team_total_goals | team_corners | team_shots | team_shots_on_target | fixtures with ANY markets |
+|---|---|---|---|---|---|
+| bet365 | 10/10 | 4/10 | 1/10 | 1/10 | 10/10 |
+| betmgm-uk | 1/10 | 1/10 | 1/10 | 1/10 | 1/10 |
+
+**Operational finding:** betmgm-uk priced only 1 of the 10 sampled EPL fixtures at probe time
+(9/10 returned no markets), but when it did price a fixture it carried the FULL per-side set
+(team_corners, team_total_goals, team_shots, team_shots_on_target) — matching bet365's per-side
+capability. betmgm-uk appears to price fixtures closer to kickoff than bet365.
+
+**Implication for the EV layer:** betmgm-uk per-side prices are available-when-priced and are
+often absent for fixtures queried early. The EV layer must omit and record betmgm-uk for a market
+it does not price at query time (Req 15.6), and bet365 is the more consistently available EPL
+per-side source. Re-querying betmgm-uk nearer kickoff is expected to raise its coverage.
+Sample sizes are small (n=10/book); treat coverage rates as low-confidence.
