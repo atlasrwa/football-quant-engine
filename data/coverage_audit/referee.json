@@ -1,0 +1,35 @@
+{
+  "pre_match_availability": {
+    "thestatsapi": {
+      "available": false,
+      "evidence": "fixture records carry no referee field; /stats has no referee node"
+    },
+    "footystats": {
+      "available": false,
+      "evidence": "refereeID is None for 2982/2982 upcoming (incomplete) matches in the forward cache; populates only post-match"
+    }
+  },
+  "post_match_availability": {
+    "footystats_refereeID": {
+      "forward_cache_complete": {
+        "present": 0,
+        "total": 132,
+        "pct": 0.0,
+        "low_confidence": false
+      },
+      "ground_truth_complete": {
+        "present": 9,
+        "total": 9,
+        "pct": 100.0,
+        "low_confidence": true
+      },
+      "note": "refereeID is an integer id populated AFTER the match completes"
+    }
+  },
+  "history_classification": {
+    "footystats": "per-match refereeID (id only) available post-match; career card/foul RATES are NOT provided by the API and must be derived by aggregating the corpus (as scripts/raw_stats_discovery.py does with expanding rates)",
+    "thestatsapi": "no referee data in fixture or /stats payloads observed"
+  },
+  "per_league_coverage_note": "Because referee assignment is post-match only, pre-match per-league coverage is 0% in both sources across EPL/Championship/Ligue2/LaLiga2.",
+  "implication_for_engine": "The asymmetric engine's cards conditioning cannot use the actual assigned referee pre-match. The league-level expanding card-rate is the PRIMARY pre-match path, not a fallback. A referee-specific rate is only usable in backtest (post-match id) or if a separate pre-match referee-assignment feed is added."
+}
