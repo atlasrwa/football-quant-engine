@@ -141,7 +141,7 @@ Commit-and-push checkpoints (Req 14.1) are embedded as sub-steps; the `hypothesi
     - Commit `interaction.py`, referee conditioning, and tests; push. No shared-config change
     - _Requirements: 14.1_
 
-- [ ] 6. Implement the Derived_Outcome combiner and correlation check
+- [x] 6. Implement the Derived_Outcome combiner and correlation check
   - [x] 6.1 Implement `DerivedOutcomeCombiner` in `derived.py`
     - Mirror `src/research/models/derived_goals.py`: derive total corners/cards/goals via discrete convolution of the two per-side distributions; BTTS = `P(A>=1)*P(B>=1)`; clean sheet per side = `P(opponent goals = 0)`, all under the stated independence assumption emitted alongside each outcome
     - Never model any Derived_Outcome directly
@@ -162,38 +162,38 @@ Commit-and-push checkpoints (Req 14.1) are embedded as sub-steps; the `hypothesi
   - [x]* 6.5 Write unit tests for derive-don't-model and reported constants
     - Assert no Derived_Outcome is modelled directly (2.10); assert measured correlation constants and ±0.016 CI are reported (3.4)
     - _Requirements: 2.10, 3.4_
-  - [-] 6.6 Commit and push the combiner and correlation check
+  - [x] 6.6 Commit and push the combiner and correlation check
     - Commit `derived.py`, `correlation.py`, and tests; push. No shared-config change
     - _Requirements: 14.1_
 
-- [~] 7. Checkpoint - Ensure all tests pass
+- [x] 7. Checkpoint - Ensure all tests pass
   - Ensure all tests pass, ask the user if questions arise.
 
 - [ ] 8. Implement the Feature_Verification_Gate and Sanity_Gate
-  - [~] 8.1 Implement the five-check `FeatureVerificationGate` in `gates.py`
+  - [x] 8.1 Implement the five-check `FeatureVerificationGate` in `gates.py`
     - Implement team-identity trace (print for 3–5 teams), known-signal (xG→goals >= ~0.10, rolling goals→goals positive), orientation (team_a features align with team_a outcomes, verified against source), look-ahead (recompute from truncated history and assert equality), shuffle-null (permuted mapping collapses to chance)
     - Run before any modelling; report every check; on any failure set `passed=False`, `stopped_modelling=True`, and stop before modelling
     - _Requirements: 6.1, 6.2, 6.3, 6.4, 6.5, 6.6, 6.7, 6.8_
-  - [~] 8.2 Implement the `SanityGate` records in `gates.py`
+  - [x] 8.2 Implement the `SanityGate` records in `gates.py`
     - Record (do not re-diagnose) corners near-zero team-level persistence (7.2) and cards disciplinary-persistence absence in the Championship across three seasons (7.3); run per league and per target; surface `SanityRecord` entries; skip re-diagnosis
     - _Requirements: 7.1, 7.2, 7.3, 7.4_
-  - [ ]* 8.3 Write property test for gate stopping on any failure
+  - [x]* 8.3 Write property test for gate stopping on any failure
     - **Property 14: Gate stops modelling on any failure** — any failing check yields `passed=False` and `stopped_modelling=True`; no downstream modelling
     - **Validates: Requirements 6.1, 6.7, 6.8**
     - `# Feature: asymmetric-matchup-engine, Property 14: ...`, `@settings(max_examples=100)`
     - _Requirements: 6.1, 6.7, 6.8_
-  - [ ]* 8.4 Write property test for shuffle-null collapse
+  - [x]* 8.4 Write property test for shuffle-null collapse
     - **Property 13: Shuffle-null collapses to chance** — permuted feature-to-outcome mapping yields out-of-sample BSS within tolerance of zero
     - **Validates: Requirements 6.6**
     - `# Feature: asymmetric-matchup-engine, Property 13: ...`, `@settings(max_examples=100)`
     - _Requirements: 6.6_
-  - [ ]* 8.5 Write unit tests for gate reporting and sanity records
+  - [x]* 8.5 Write unit tests for gate reporting and sanity records
     - Assert the identity trace prints 3–5 teams (6.2), known-signal threshold check (6.3), orientation cross-check against source (6.4), and that sanity records are present and not re-diagnosed (7.2–7.4)
     - _Requirements: 6.2, 6.3, 6.4, 7.2, 7.3, 7.4_
-  - [ ]* 8.6 Write the point-in-time enforcement verification test
+  - [x]* 8.6 Write the point-in-time enforcement verification test
     - Verify the look-ahead gate check recomputes a sampled feature from truncated history (strictly before M) and asserts equality with the pipeline value across profiling, interaction modelling, and validation
     - _Requirements: 6.5, 11.1, 11.3_
-  - [~] 8.7 Commit and push the gates
+  - [-] 8.7 Commit and push the gates
     - Commit `gates.py` and tests; push. No shared-config change
     - _Requirements: 14.1_
 
