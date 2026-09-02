@@ -62,6 +62,27 @@ LEAGUES = {
         "seasons": ["sn_8437950", "sn_8425423"],  # 25/26, 24/25
         "fixture_prefix": "laliga2",
     },
+    # ── Top flights added for the league-family transfer test ────────────────
+    # Same country as an already-held second tier; 2 most recent COMPLETE seasons.
+    # TheStatsAPI competition ids: EPL=comp_3039, LaLiga=comp_8814, Ligue1=comp_0256.
+    "epl": {
+        "display": "EPL",
+        "comp": "comp_3039",
+        "seasons": ["sn_6125938", "sn_3057848"],  # 25/26, 24/25
+        "fixture_prefix": "epl",
+    },
+    "laliga": {
+        "display": "La Liga",
+        "comp": "comp_8814",
+        "seasons": ["sn_7246390", "sn_5761468"],  # 25/26, 24/25
+        "fixture_prefix": "laliga",
+    },
+    "ligue1": {
+        "display": "Ligue 1",
+        "comp": "comp_0256",
+        "seasons": ["sn_6120181", "sn_6184519"],  # 25/26, 24/25
+        "fixture_prefix": "ligue1",
+    },
 }
 
 

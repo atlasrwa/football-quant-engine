@@ -23,6 +23,19 @@ Across 25 leagues x 3 seasons (~23,000 matches):
 
 This module intentionally does NOT compute these figures — they are established
 findings. It records the *status* so downstream code can label every number.
+
+League-family transfer test (seed 20260902)
+============================================
+Three NEW top flights (EPL, La Liga, Ligue 1) were tested against their already-held
+second-tier partners using a stricter WITHIN-LEAGUE, 2-season walk-forward (BSS vs
+naive, bootstrap CIs, BH family of 6), fitting the SAME validated architecture with
+no refit. None of the six top-flight (market x league) cells demonstrated
+within-league skill (every BSS 95% CI spans 0; none passed BH). Per the standing
+rule, those leagues are therefore recorded UNVALIDATED here (see
+``_FAMILY_TRANSFER_WITHIN_LEAGUE``) rather than inheriting the pooled label. The
+built-in cards-persistence check did NOT support a general tier law: cards
+persistence was stronger in the EPL than the Championship, but stronger in La Liga 2
+and Ligue 2 than in their top flights — the tier direction flips by country.
 """
 
 from __future__ import annotations
@@ -133,23 +146,80 @@ class MarketScope:
         return "excluded (not validated in this league)"
 
 
+# ─────────────────────────────────────────────────────────────────────────────
+# League-family transfer test result (data-driven per-league validation status)
+# ─────────────────────────────────────────────────────────────────────────────
+#
+# The blanket "corners validated everywhere / cards validated except Championship"
+# rule above comes from the ORIGINAL 25-league x 3-season CROSS-SECTIONAL validation
+# (pooled skill). The league-family transfer test (seed 20260902) re-tested three
+# NEW top flights with a stricter WITHIN-LEAGUE, 2-season walk-forward, BSS-vs-naive
+# with bootstrap CIs, BH family of 6. Per the standing rule "a new league is
+# UNVALIDATED until it passes validation in THAT league", we record the per-(market,
+# canonical-league) within-league outcome here and let market_status consult it, so
+# these specific leagues are not silently granted the pooled label they did not earn
+# under the stricter test.
+#
+# Outcome (BSS-vs-naive 95% CI must exclude 0 to count as within-league skill):
+#   EPL     corners -0.87% CI[-2.46,+0.67] ; cards +0.16% CI[-2.84,+3.01]  -> neither
+#   La Liga corners +1.81% CI[-0.19,+3.85] ; cards -0.60% CI[-3.19,+2.11]  -> neither
+#   Ligue 1 corners -0.74% CI[-2.58,+1.13] ; cards +2.08% CI[-2.52,+6.74]  -> neither
+# None of the 6 primary cells passed BH (best uncorrected p = La Liga corners 0.079).
+# So all six new-league (market, league) cells are WITHIN-LEAGUE UNVALIDATED.
+#
+# (The already-held second tiers are unchanged: La Liga 2 cards re-passed within-league
+#  here, BSS +2.90% CI[+0.26,+5.83]; Championship cards remains excluded.)
+#
+# True == the cell demonstrated within-league calibrated skill (CI excludes 0 AND BH).
+_FAMILY_TRANSFER_WITHIN_LEAGUE: dict[tuple[str, str], bool] = {
+    ("corners", "EPL"): False,     ("cards", "EPL"): False,
+    ("corners", "La Liga"): False, ("cards", "La Liga"): False,
+    ("corners", "Ligue 1"): False, ("cards", "Ligue 1"): False,
+}
+
+
+def _family_transfer_status(market_key: str, canon_league: Optional[str]):
+    """If this (market, league) was tested by the family-transfer test, return its
+    MarketScope; else None (fall through to the default cross-sectional rule)."""
+    if canon_league is None:
+        return None
+    passed = _FAMILY_TRANSFER_WITHIN_LEAGUE.get((market_key, canon_league))
+    if passed is None:
+        return None
+    if passed:
+        return None  # let the default VALIDATED rule stand (it earned it here)
+    return MarketScope(
+        market=market_key, league_label=canon_league,
+        status=MarketStatus.NO_DEMONSTRATED_SKILL,
+        reason=(
+            f"{market_key.upper()} is UNVALIDATED in {canon_league}: the league-family "
+            "transfer test (within-league, 2-season walk-forward, BSS-vs-naive with "
+            "bootstrap CIs, seed 20260902, BH family of 6) did NOT demonstrate skill "
+            "over the naive base rate here (95% CI on BSS spans 0; no cell passed BH). "
+            "This is 'not demonstrated within-league', not 'confirmed absent' — the "
+            "number may be shown with the no-skill label, never as a validated "
+            "prediction. A new league is unvalidated until it passes validation there."
+        ),
+    )
+
+
 def market_status(market: str, league_label: Optional[str] = None) -> MarketScope:
     """Resolve the validated status of ``market`` in ``league_label``.
 
     Rules (the single source of truth for scope labelling):
 
-    * ``corners`` -> VALIDATED everywhere.
-    * ``cards``   -> VALIDATED everywhere EXCEPT the Championship, where it is
-      EXCLUDED (disciplinary persistence confirmed absent across three seasons).
+    * ``corners`` -> VALIDATED everywhere (original 25-league validation) EXCEPT
+      leagues the family-transfer test tested and did not confirm within-league.
+    * ``cards``   -> VALIDATED everywhere EXCEPT the Championship (persistence
+      absent) and any family-transfer league not confirmed within-league.
     * ``goals``   -> NO_DEMONSTRATED_SKILL everywhere (at par with base rate).
     * ``btts``    -> NO_DEMONSTRATED_SKILL everywhere (at par with base rate).
 
     Args:
         market: one of :data:`ALL_MARKETS` (case-insensitive).
-        league_label: any league identifier; only the Championship is treated
-            specially. ``None`` means "unspecified league" and applies the
-            market's general status (cards resolves to VALIDATED since the
-            exclusion is Championship-specific).
+        league_label: any league identifier. The Championship (cards) and the
+            three family-transfer top flights (corners+cards) are treated
+            specially and data-drivenly. ``None`` means "unspecified league".
 
     Returns:
         A :class:`MarketScope`.
@@ -160,6 +230,11 @@ def market_status(market: str, league_label: Optional[str] = None) -> MarketScop
     key = market.strip().lower()
     if key not in ALL_MARKETS:
         raise ValueError(f"unknown market {market!r}; expected one of {ALL_MARKETS}")
+
+    # Data-driven family-transfer override (new top flights not confirmed here).
+    ft = _family_transfer_status(key, _canonical_league(league_label))
+    if ft is not None:
+        return ft
 
     if key == MARKET_CORNERS:
         return MarketScope(
@@ -323,14 +398,20 @@ class DirectionalEvidence:
 
 #: The evidence table. Keyed by ``(market, canonical-league)``. This is the
 #: SINGLE SOURCE OF TRUTH for directional gating: only cells present here with
-#: ``beats_home_bh=True`` may emit a directional call. Figures are the
-#: out-of-sample directional-accuracy test (pre-registered seed 20260902, fresh
-#: BH family of 12). Absent cells default to "no evidence" -> suppressed.
+#: ``beats_home_bh=True`` may emit a directional call. Absent cells default to
+#: "no evidence" -> suppressed.
 #:
-#: Result summary: corners does NOT beat always-pick-home in any league; cards is
-#: WORSE than the baseline in every league; goals/Championship and sot/Championship
-#: beat the bar within-league but FAIL BH; sot/Ligue 2 is the sole cell clearing
-#: both gates.
+#: Two provenance groups share this table:
+#:  * Original directional run (pre-registered seed 20260902, BH family of 12) over
+#:    the three second-tier rich leagues x {corners, cards, goals, sot}. Result:
+#:    corners does NOT beat always-pick-home in any league; cards is WORSE than the
+#:    baseline; goals/Championship and sot/Championship beat the bar within-league
+#:    but FAIL BH; sot/Ligue 2 is the sole cell clearing both gates.
+#:  * League-family transfer test (seed 20260902, directional BH family of 6) over
+#:    the three NEW top flights x {corners, cards}. Result: NO cell emits a call —
+#:    corners beats nothing; the cards "beats" (EPL, La Liga) clear BH only against a
+#:    degenerate sub-0.5 home bar (away takes more cards) and are suppressed. See the
+#:    block comment on those rows.
 _DIRECTIONAL_EVIDENCE: tuple[DirectionalEvidence, ...] = (
     # market,       league,          n,   acc,   home,  ci_lo,  ci_hi,  ece,   bh,    seed,     fam
     DirectionalEvidence("corners", "Championship", 733, 0.647, 0.625, -0.003, 0.045, 0.053, False, 20260902, 12),
@@ -348,6 +429,32 @@ _DIRECTIONAL_EVIDENCE: tuple[DirectionalEvidence, ...] = (
     # CI [+2.3,+9.9]), BH-passed, well-calibrated (ECE 0.064), stable across 6/6
     # bootstrap seeds.
     DirectionalEvidence("sot",     "Ligue 2",      394, 0.640, 0.579, 0.023, 0.099, 0.064, True,  20260902, 12),
+
+    # ── League-family transfer test (EPL / La Liga / Ligue 1 top flights) ──────
+    # Added by the family-transfer test (seed 20260902). These use the LITERAL
+    # always-pick-home baseline the test brief specified ("home" is the call, the
+    # bar is the fraction of decisive matches where home actually produced more),
+    # so `home` here is that home-advantage rate — reported so the bar cannot be
+    # glossed. Directional BH family for this test = {corners, cards} x 3 = 6.
+    #
+    # corners: no top flight beats always-pick-home (diffs ~0, CIs span 0).
+    # cards: EPL (+0.107, CI[+0.042,+0.173]) and La Liga (+0.093, CI[+0.029,+0.156])
+    #   are BH-significant vs always-pick-home — BUT the home bar for cards is only
+    #   ~0.40 because AWAY teams systematically take more cards, so "beats
+    #   always-pick-home" here is a degenerate result (always-pick-AWAY would score
+    #   ~0.60). It is NOT a genuine directional edge, and the calibration gate also
+    #   fails for EPL cards (ECE 0.113 > 0.10). We therefore record beats_home_bh=
+    #   False for every new-league cell: no directional call is emitted for any of
+    #   them. The raw diffs/CIs are preserved in this comment so nothing is hidden.
+    #   (EPL cards diff +0.107 CI[+0.042,+0.173] p=0.0018 ece 0.113;
+    #    La Liga cards diff +0.093 CI[+0.029,+0.156] p=0.0054 ece 0.081 — both beat a
+    #    sub-0.5 home bar only; Ligue 1 cards diff +0.053 CI[-0.027,+0.133] p=0.19.)
+    DirectionalEvidence("corners", "EPL",       628, 0.572, 0.575, -0.059, 0.052, 0.083, False, 20260902, 6),
+    DirectionalEvidence("corners", "La Liga",   589, 0.603, 0.606, -0.059, 0.053, 0.121, False, 20260902, 6),
+    DirectionalEvidence("corners", "Ligue 1",   484, 0.568, 0.614, -0.110, 0.017, 0.117, False, 20260902, 6),
+    DirectionalEvidence("cards",   "EPL",       336, 0.506, 0.399, 0.042, 0.173, 0.113, False, 20260902, 6),
+    DirectionalEvidence("cards",   "La Liga",   410, 0.541, 0.449, 0.029, 0.156, 0.081, False, 20260902, 6),
+    DirectionalEvidence("cards",   "Ligue 1",   300, 0.487, 0.433, -0.027, 0.133, 0.095, False, 20260902, 6),
 )
 
 _DIRECTIONAL_EVIDENCE_INDEX: dict[tuple[str, str], DirectionalEvidence] = {}
@@ -360,10 +467,18 @@ def _canonical_league(league_label: Optional[str]) -> Optional[str]:
     if is_championship(league_label):
         return "Championship"
     low = str(league_label).strip().lower()
+    # Second tiers first (so "la liga 2" is not swallowed by the "la liga" test).
     if "la liga 2" in low or "laliga2" in low or "segunda" in low:
         return "La Liga 2"
     if "ligue 2" in low or "ligue2" in low:
         return "Ligue 2"
+    # Top flights added by the league-family transfer test. Tag/id/free-text.
+    if low in {"epl", "comp_3039"} or "premier league" in low or low == "epl":
+        return "EPL"
+    if low in {"laliga", "la liga", "comp_8814"} or "la liga" in low or "laliga" in low:
+        return "La Liga"
+    if low in {"ligue1", "ligue 1", "comp_0256"} or "ligue 1" in low or "ligue1" in low:
+        return "Ligue 1"
     return str(league_label).strip()
 
 

@@ -34,7 +34,7 @@ from src.research.prediction_engine.windows import (
     field_window_computability,
     select_window,
 )
-from src.research.prediction_engine.scope import is_championship, directional_status
+from src.research.prediction_engine.scope import is_championship, directional_status, NO_SKILL_LABEL
 
 _DIRECTION_A = "A_attack_vs_B_defence"
 _DIRECTION_B = "B_attack_vs_A_defence"
@@ -54,9 +54,27 @@ def test_corners_validated_everywhere():
 
 
 def test_cards_validated_except_championship():
-    assert market_status("cards", "England Premier League").status is MarketStatus.VALIDATED
+    # Cards remains validated in leagues NOT re-tested by the family-transfer study
+    # (the pooled 25-league finding stands there). The three family-transfer top
+    # flights (EPL, La Liga, Ligue 1) were re-tested within-league and did NOT confirm
+    # skill, so they are downgraded to NO_DEMONSTRATED_SKILL (unvalidated), and the
+    # Championship remains EXCLUDED (persistence confirmed absent).
+    assert market_status("cards", "Germany Bundesliga").status is MarketStatus.VALIDATED
+    assert market_status("cards", "England Premier League").status is MarketStatus.NO_DEMONSTRATED_SKILL
     for champ in ("England Championship", "comp_8321", "champ", "champ_2024"):
         assert market_status("cards", champ).status is MarketStatus.EXCLUDED
+
+
+def test_family_transfer_new_top_flights_unvalidated():
+    # EPL / La Liga / Ligue 1 corners+cards were re-tested within-league (2-season
+    # walk-forward, BSS-vs-naive, BH family of 6) and did NOT demonstrate skill.
+    for league in ("England Premier League", "La Liga", "Ligue 1",
+                   "comp_3039", "comp_8814", "comp_0256"):
+        for market in ("corners", "cards"):
+            assert market_status(market, league).status is MarketStatus.NO_DEMONSTRATED_SKILL, (market, league)
+    # second-tier partners unchanged: La Liga 2 cards still validated; Ligue 2 too.
+    assert market_status("cards", "La Liga 2").status is MarketStatus.VALIDATED
+    assert market_status("cards", "Ligue 2").status is MarketStatus.VALIDATED
 
 
 def test_goals_and_btts_no_demonstrated_skill():
@@ -223,12 +241,13 @@ def _fixture():
 
 
 def test_fixture_readout_labels_and_directional():
-    ro = build_fixture_readout(_fixture(), league_label="England Premier League")
+    # Use a league NOT re-tested by the family-transfer study, so the pooled
+    # validated status still applies (EPL/La Liga/Ligue 1 are now unvalidated).
+    ro = build_fixture_readout(_fixture(), league_label="Germany Bundesliga")
     assert ro.validated_markets() == ("corners", "cards")
     assert ro.market("goals").scope.status is MarketStatus.NO_DEMONSTRATED_SKILL
     assert ro.market("btts").scope.status is MarketStatus.NO_DEMONSTRATED_SKILL
     assert ro.market("btts").directional is None
-    assert ro.market("corners").directional.called_side == "home"
     # honest framing present in the render
     assert "NOT betting advice" in ro.render()
 
@@ -280,12 +299,14 @@ def test_directional_accuracy_and_calibration_gates_are_independent():
 def test_fixture_readout_suppresses_directional_calls_for_covered_markets():
     ro = build_fixture_readout(_fixture(), league_label="England Premier League")
     text = ro.render()
-    # corners/cards/goals directional calls are suppressed (untested in EPL -> no evidence)
+    # EPL corners/cards directional calls are suppressed. They are now in the
+    # evidence table (family-transfer test) but do NOT beat the home-advantage
+    # baseline under BH, so no call is emitted.
     assert "does not beat the home-advantage baseline" in text or "not evaluated" in text
-    # the calibrated probability line still renders for corners (validated market)
-    assert "match total: P(over" in text
-    # and the validated-status label is present
-    assert "validated skill" in text
+    # EPL corners/cards are UNVALIDATED after the family-transfer test -> the
+    # no-demonstrated-skill label is shown, never "validated skill".
+    assert NO_SKILL_LABEL in text
+    assert "validated skill" not in text
 
 
 # ── reliability report ───────────────────────────────────────────────────────
