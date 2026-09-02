@@ -213,6 +213,12 @@ class ResearchMarket:
     def fair_probability(self, over_odds: float, under_odds: float) -> tuple[float, float]:
         """Strip bookmaker margin to get fair probabilities (two-way markets).
 
+        .. deprecated::
+            Market-comparison (de-vig) helper — part of the deprecated EV layer.
+            Retained for Pilot C and internal research only; not a product claim.
+            Do not use to build user-facing edge/value output. The market
+            *definition* / settlement parts of this class remain in use.
+
         Uses multiplicative margin removal.
 
         Returns:
@@ -229,6 +235,10 @@ class ResearchMarket:
         self, home_odds: float, draw_odds: float, away_odds: float
     ) -> tuple[float, float, float]:
         """Strip bookmaker margin for three-way markets.
+
+        .. deprecated::
+            Market-comparison (de-vig) helper — part of the deprecated EV layer.
+            Retained for Pilot C and internal research only; not a product claim.
 
         Returns:
             (fair_home, fair_draw, fair_away) summing to 1.0

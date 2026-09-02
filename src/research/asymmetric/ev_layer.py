@@ -1,5 +1,13 @@
 """EV_Layer — audit-grounded per-side expected value (Req 9.9-9.11, 15).
 
+.. deprecated::
+    **DEPRECATED — EV / market-comparison layer.** The market-beating objective
+    is closed (edge ceiling measured directly). This per-side EV layer is retained
+    for internal research only and is **not a product claim**; no user-facing or
+    newly built artifact may present EV/edge/value framing. The supported
+    deliverable is the calibrated prediction engine in
+    :mod:`src.research.prediction_engine`. See :mod:`src.research._ev_deprecation`.
+
 Responsibility:
     Compute per-side expected value ONLY for ``Per_Side_Priced_Markets`` (team
     corners, team total goals, team shots on target) and ONLY from
@@ -203,6 +211,9 @@ class EVLayer:
     """
 
     def __init__(self, normalizer: Optional[MarketProbabilityNormalizer] = None) -> None:
+        from src.research._ev_deprecation import warn_ev_layer_deprecated
+
+        warn_ev_layer_deprecated("asymmetric EVLayer")
         self._normalizer = normalizer or MarketProbabilityNormalizer()
 
     def compute_entry(

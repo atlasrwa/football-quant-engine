@@ -1,5 +1,16 @@
 """Crypto-native signal exporter for Telegram/Discord communities.
 
+.. deprecated::
+    **DEPRECATED — user-facing EV/edge/stake framing.** The market-beating
+    objective is closed (edge ceiling measured directly). Signal payloads that
+    surface edge percentages, recommended stakes, and stake tiers are exactly the
+    "value bet" framing the project no longer makes. This exporter is retained for
+    internal research only — it is **not a product claim**, must not be presented
+    as betting advice, and no stake sizing may be added. The supported deliverable
+    is the calibrated prediction engine in ``src.research.prediction_engine``,
+    whose public output is calibrated probabilities and directional calls with no
+    edge/stake framing. See ``src.research._ev_deprecation``.
+
 Formats live signals into webhook payloads with risk-unit stake tiers
 and SHA-256 Proof-of-Alpha hashes for on-chain verification.
 """
