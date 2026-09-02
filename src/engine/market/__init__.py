@@ -1,8 +1,18 @@
-"""Layer 2: Market EV.
+"""Layer 2: Market EV (DEPRECATED — market-comparison, internal research only).
 
-Real-world edge measurement, closing line value, beat-the-bookie metrics,
-prediction settlement lifecycle, quarantine bridge, and signal dispatch
-to crypto/community channels.
+.. deprecated::
+    The market-beating objective is closed: the edge ceiling was measured
+    directly (median edge 0-1pp vs a 2-4pp requirement). The EV / edge / CLV /
+    beat-the-bookie constructs re-exported here are retained for Pilot C and
+    internal research **only** and are **not a product claim**. They must not be
+    surfaced in user-facing output, and no stake sizing may be added. The
+    supported deliverable is the calibrated prediction engine in
+    ``src.research.prediction_engine``. See ``src.research._ev_deprecation``.
+
+Historically: real-world edge measurement, closing line value, beat-the-bookie
+metrics, prediction settlement lifecycle, quarantine bridge, and signal dispatch.
+Settlement/quarantine/attestation-adjacent pieces here remain in use; the
+EV/edge/CLV pieces are deprecated market-comparison research tooling.
 """
 
 from src.engine.market.clv import CLVCalculator, CLVResult

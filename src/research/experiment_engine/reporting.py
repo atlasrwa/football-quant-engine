@@ -1,5 +1,14 @@
 """Experiment reporting — human-readable summaries.
 
+.. deprecated:: EV framing only
+    The EV/edge columns rendered here (Mean/Median EV, +EV rate, ROI) belong to
+    the deprecated market-comparison layer — the market-beating objective is
+    closed. Those fields are retained for internal research only and are **not a
+    product claim**; do not surface them in user-facing output. The calibration
+    and accuracy metrics in these reports remain valid and feed the calibrated
+    prediction engine (``src.research.prediction_engine``). See
+    ``src.research._ev_deprecation``.
+
 Generates clear, neutral research reports.
 Does NOT claim the strategy works.
 """

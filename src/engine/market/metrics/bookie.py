@@ -1,5 +1,14 @@
 """Beat the Bookie metric calculations.
 
+.. deprecated::
+    **DEPRECATED — "beats the market" metrics.** The market-beating objective is
+    closed (edge ceiling measured directly; median edge 0-1pp vs a 2-4pp
+    requirement). BTBR %, Vig-Adjusted Edge, and the associated retail/crypto
+    framing are retained for internal research only — they are **not a product
+    claim** and must not appear in any user-facing output. The supported
+    deliverable is the calibrated prediction engine in
+    ``src.research.prediction_engine``. See ``src.research._ev_deprecation``.
+
 Translates complex quant statistics into high-impact metrics for retail
 and crypto bettors: BTBR %, Vig-Adjusted Edge, and Confidence Index.
 """
@@ -51,6 +60,9 @@ class BookieMetricsCalculator:
     """
 
     def __init__(self, friction_config: MarketFrictionConfig | None = None) -> None:
+        from src.research._ev_deprecation import warn_ev_layer_deprecated
+
+        warn_ev_layer_deprecated("BookieMetricsCalculator (beat-the-bookie metrics)")
         self.friction = friction_config or MarketFrictionConfig()
 
     def compute(

@@ -1,5 +1,16 @@
 """Expected Value calculator and research prediction layer.
 
+.. deprecated::
+    **DEPRECATED — EV / edge / market-comparison layer.** The market-beating
+    objective is closed: the edge ceiling was *measured* (median edge 0-1pp vs a
+    2-4pp requirement; market realized rate inside the 95% CI of its price in
+    every well-populated bucket). This module is retained, NOT deleted, for
+    Pilot C's pre-registered forward experiment and for internal research only —
+    it is **not a product claim**. Do not build new user-facing features on it,
+    and never present EV/edge/value/"beats the market" framing. The supported
+    deliverable is the calibrated prediction engine in
+    :mod:`src.research.prediction_engine`. See :mod:`src.research._ev_deprecation`.
+
 Implements: EV = P(model outcome) × decimal_odds - 1
 
 Clearly distinguishes:
@@ -428,7 +439,14 @@ class EVCalculator:
 
         Args:
             normalizer: Method for margin removal. Defaults to multiplicative.
+
+        .. deprecated::
+            The EV layer is deprecated (market-beating objective closed). Retained
+            for Pilot C and internal research only — not a product claim.
         """
+        from src.research._ev_deprecation import warn_ev_layer_deprecated
+
+        warn_ev_layer_deprecated("EVCalculator")
         self._normalizer = normalizer or MarketProbabilityNormalizer()
 
     @staticmethod

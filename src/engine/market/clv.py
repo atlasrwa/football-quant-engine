@@ -1,5 +1,15 @@
 """Closing Line Value (CLV) calculator.
 
+.. deprecated::
+    **DEPRECATED — market-comparison / betting-edge metric.** The market-beating
+    objective is closed (edge ceiling measured directly). CLV is a betting-edge
+    measure and is retained for internal research only — it is **not a product
+    claim** and must not appear in user-facing output. NOTE: this is the
+    engine-layer CLV; Pilot C's forward experiment uses its own separate
+    ``src.research.paper.clv`` module, which is untouched. The supported
+    deliverable is the calibrated prediction engine in
+    ``src.research.prediction_engine``. See ``src.research._ev_deprecation``.
+
 CLV measures the movement from entry price to closing price.
 It requires ACTUAL market data — never model edge approximations.
 
@@ -38,7 +48,10 @@ class CLVCalculator:
     CLV = (entry_odds / closing_odds - 1) * 100
 
     Positive CLV means the bettor got better odds than the market close.
-    This is the gold-standard measure of betting edge.
+
+    .. deprecated::
+        Betting-edge metric, deprecated. Retained for internal research only;
+        not a product claim. Do not surface in user-facing output.
 
     Requirements:
     - entry_odds must be actual odds at signal generation time
