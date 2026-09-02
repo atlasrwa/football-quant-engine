@@ -1,10 +1,29 @@
-"""Feature windows (w5 and w10) with explicit per-field computability.
+"""Feature-window computability analysis (w5 / w10) — an OFFLINE utility.
 
-The engine uses TWO rolling windows — **w5** and **w10** — and lets the model
-select which window matters *per market and per league* rather than forcing one
-across all targets. Reporting which window carries weight where is itself a
-finding worth publishing (e.g. "cards respond to short-term form, corners to a
-longer-term team profile").
+Status: NOT wired into the prediction path
+==========================================
+This module is a standalone **analysis utility**. It is deliberately NOT part of
+the calibrated prediction engine's prediction path: the per-fixture readout and
+the validated ``InteractionModel`` do not consume windowed features, and the
+public engine surface (:mod:`src.research.prediction_engine`) does not re-export
+anything from here. Nothing in the user-facing output reports a "driving window"
+— the engine makes no such claim.
+
+What it is for
+==============
+It measures, from a cached corpus, whether a rolling feature at a given window
+(w5 or w10) is *computable* for a league — i.e. whether the raw field is
+populated often enough AND enough team-histories are deep enough to fill the
+window — and it can build look-ahead-free rolling-mean features for offline
+exploration. It exists so that IF windowed features are ever wired into the
+model, their availability is measured (NULL != ZERO) rather than assumed, and
+thin rich-data windows are excluded rather than silently zero-filled.
+
+:func:`select_window` scores which window carries fitted weight for a set of
+``*_w{n}``-named feature weights. It is only meaningful for a model that was
+actually fit on windowed features; the current prediction path is not, so this
+function is retained for offline analysis only and is not called from any
+user-facing artifact.
 
 Two stat sources, availability handled explicitly
 =================================================
@@ -397,12 +416,14 @@ def build_window_features(
 # ─────────────────────────────────────────────────────────────────────────────
 @dataclass(frozen=True)
 class WindowSelection:
-    """Which window (5 or 10) the model weights more for a market in a league.
+    """Which window (5 or 10) carries the most fitted weight for a market.
 
-    A publishable finding in its own right (Section 3b of the brief). ``weights``
-    holds the total absolute model weight attributed to each window's features;
-    ``selected_window`` is the argmax. When windows are effectively tied (within
-    ``tie_tolerance``) ``selected_window`` is None and ``tied`` is True.
+    ``weights`` holds the total absolute model weight attributed to each window's
+    features; ``selected_window`` is the argmax. When windows are effectively
+    tied (within ``tie_tolerance``) ``selected_window`` is None and ``tied`` is
+    True. This is an offline analysis result only — it is meaningful solely for a
+    model fitted on ``*_w{n}`` features, which the current prediction path is not,
+    and it is not surfaced in any user-facing artifact.
     """
 
     market: str
@@ -428,9 +449,9 @@ def select_window(
 
     Sums the absolute fitted model weights over features whose name ends in
     ``_w{window}`` (as produced by :func:`build_window_features`) and reports the
-    dominant window. This lets the engine state, per market and per league, that
-    e.g. cards respond to short-term (w5) form while corners respond to a
-    longer-term (w10) team profile — a finding worth publishing.
+    dominant window. Offline analysis only: it is meaningful solely for a model
+    fitted on windowed features (the current prediction path is not), and it is
+    not consulted by any user-facing artifact.
 
     Args:
         market: market key (labelling only).

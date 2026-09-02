@@ -21,13 +21,17 @@ from src.research.prediction_engine import (
     brier_skill_score,
     build_fixture_readout,
     build_reliability_report,
-    build_window_features,
     calibration_report,
     directional_call,
     directional_probabilities,
-    field_window_computability,
     honest_framing_lines,
     market_status,
+)
+# Windows are an offline computability/analysis utility, deliberately NOT part of
+# the public prediction-engine surface (not wired into the prediction path).
+from src.research.prediction_engine.windows import (
+    build_window_features,
+    field_window_computability,
     select_window,
 )
 from src.research.prediction_engine.scope import is_championship

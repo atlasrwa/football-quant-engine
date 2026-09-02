@@ -6,7 +6,7 @@ carrying:
 
 * the **calibrated probability** (the rigorous claim),
 * the **directional call** (the legible one: "home takes more corners than away"),
-* the **window and features** driving it, and
+* the named **profile features** driving it, and
 * its **validated status in that league**.
 
 Crucially, each market is labelled by its validated status:
@@ -70,7 +70,6 @@ class MarketReadout:
         expected_total: expected match total (PMF mean), for reference.
         directional: the per-side directional call (None for symmetric markets
             like BTTS where there is no A-vs-B count comparison).
-        window: the driving window (5 or 10) for this market, if known.
         driving_features: named features driving the per-side predictions.
     """
 
@@ -80,7 +79,6 @@ class MarketReadout:
     total_line: Optional[float]
     expected_total: Optional[float]
     directional: Optional[DirectionalCall]
-    window: Optional[int]
     driving_features: tuple[str, ...]
 
     @property
@@ -106,8 +104,6 @@ class MarketReadout:
             )
         if self.directional is not None:
             lines.append(f"    directional call: {self.directional.statement()}")
-        if self.window is not None:
-            lines.append(f"    driving window: w{self.window}")
         if self.driving_features:
             lines.append(
                 "    driving features: " + ", ".join(self.driving_features[:6])
@@ -195,7 +191,6 @@ def build_fixture_readout(
     fixture: FixturePrediction,
     *,
     league_label: Optional[str] = None,
-    windows_by_market: Optional[dict[str, int]] = None,
     total_lines: Optional[dict[str, float]] = None,
 ) -> FixtureReadout:
     """Assemble the multi-market readout from a validated-engine FixturePrediction.
@@ -215,13 +210,9 @@ def build_fixture_readout(
         fixture: the validated engine's per-fixture prediction (per-side PMFs +
             derived outcomes).
         league_label: league identifier used for scope resolution.
-        windows_by_market: optional ``{market -> window}`` from
-            :func:`src.research.prediction_engine.windows.select_window`, recording
-            which window drove each market.
         total_lines: optional override of the per-market total O/U lines.
     """
     lines_map = {**DEFAULT_TOTAL_LINES, **(total_lines or {})}
-    windows_by_market = windows_by_market or {}
     derived: DerivedOutcomes = fixture.derived
 
     readouts: list[MarketReadout] = []
@@ -235,7 +226,6 @@ def build_fixture_readout(
             target="corners",
             league_label=league_label,
             line=lines_map.get("corners", 9.5),
-            window=windows_by_market.get("corners"),
         )
     )
 
@@ -247,7 +237,7 @@ def build_fixture_readout(
             MarketReadout(
                 market="cards", scope=cards_scope, p_over_total=None,
                 total_line=None, expected_total=None, directional=None,
-                window=None, driving_features=(),
+                driving_features=(),
             )
         )
     else:
@@ -259,7 +249,6 @@ def build_fixture_readout(
                 target="cards",
                 league_label=league_label,
                 line=lines_map.get("cards", 4.5),
-                window=windows_by_market.get("cards"),
             )
         )
 
@@ -272,7 +261,6 @@ def build_fixture_readout(
             target="goals",
             league_label=league_label,
             line=lines_map.get("goals", 2.5),
-            window=windows_by_market.get("goals"),
         )
     )
 
@@ -286,7 +274,6 @@ def build_fixture_readout(
             total_line=None,
             expected_total=None,
             directional=None,
-            window=windows_by_market.get("btts"),
             driving_features=_driving_features(fixture, "goals"),
         )
     )
@@ -308,7 +295,6 @@ def _count_market_readout(
     target: str,
     league_label: Optional[str],
     line: float,
-    window: Optional[int],
 ) -> MarketReadout:
     """Build a count-market readout: match-total probability + directional call."""
     scope = market_status(market, league_label)
@@ -330,6 +316,5 @@ def _count_market_readout(
         total_line=line,
         expected_total=expected_total,
         directional=call,
-        window=window,
         driving_features=_driving_features(fixture, target),
     )

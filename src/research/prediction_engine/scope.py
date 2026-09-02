@@ -167,8 +167,8 @@ def market_status(market: str, league_label: Optional[str] = None) -> MarketScop
             league_label=league_label,
             status=MarketStatus.VALIDATED,
             reason=(
-                "Corners is the strongest validated market: +6.8% mean BSS over "
-                "naive across 25 leagues x 3 seasons (91% of league-seasons "
+                "Corners is the best-calibrated validated market: +6.8% mean BSS "
+                "over naive across 25 leagues x 3 seasons (91% of league-seasons "
                 "positive; original validation +9.6% BSS, ECE 0.018)."
             ),
         )

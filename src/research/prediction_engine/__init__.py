@@ -23,7 +23,7 @@ A model that states where it does NOT work is more trustworthy than one claiming
 universal coverage. Validated status is explicit per market and per league (see
 :mod:`src.research.prediction_engine.scope`):
 
-* **Corners** — validated, strongest. Included.
+* **Corners** — validated; best-calibrated. Included.
 * **Cards** — validated, EXCEPT the Championship, where disciplinary persistence
   is confirmed absent across three seasons (yellow-rate -> cards association
   -0.044 / +0.033 / +0.012, all p >= 0.37). Included elsewhere; excluded there.
@@ -90,15 +90,6 @@ from src.research.prediction_engine.calibration_metrics import (
     calibration_report,
     naive_base_rate_brier,
 )
-from src.research.prediction_engine.windows import (
-    WINDOWS,
-    FieldWindowComputability,
-    WindowFeatureRow,
-    WindowSelection,
-    build_window_features,
-    field_window_computability,
-    select_window,
-)
 from src.research.prediction_engine.directional import (
     DirectionalCall,
     directional_call,
@@ -142,14 +133,6 @@ __all__ = [
     "brier_skill_score",
     "calibration_report",
     "naive_base_rate_brier",
-    # windows
-    "WINDOWS",
-    "FieldWindowComputability",
-    "WindowFeatureRow",
-    "WindowSelection",
-    "build_window_features",
-    "field_window_computability",
-    "select_window",
     # directional calls
     "DirectionalCall",
     "directional_call",

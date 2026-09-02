@@ -129,7 +129,15 @@ class ReliabilityCell:
         ece = f"{cal.ece:.4f}" if cal.ece is not None else "n/a"
         brier = f"{cal.brier_score:.4f}" if cal.brier_score is not None else "n/a"
         lines.append(f"    ECE = {ece}   Brier = {brier}   (n = {cal.n_predictions})")
-        if self.report.bss is not None and self.report.bss.bss is not None:
+        # BSS-vs-naive is a supporting figure, shown ONLY for validated cells. On
+        # a no-demonstrated-skill cell a positive BSS number sitting above the
+        # no-skill note reads as self-contradictory (BSS measures sharpness vs the
+        # base rate, not an edge), so it is deliberately suppressed there.
+        if (
+            self.scope.status is not MarketStatus.NO_DEMONSTRATED_SKILL
+            and self.report.bss is not None
+            and self.report.bss.bss is not None
+        ):
             lines.append(
                 f"    BSS vs naive base rate = {self.report.bss.bss:+.4f} "
                 f"(supporting figure; n = {self.report.bss.n})"

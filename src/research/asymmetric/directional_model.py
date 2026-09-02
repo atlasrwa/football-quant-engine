@@ -578,11 +578,43 @@ class DirectionalCountModel(ProbabilityModel):
     def _predict_lambda(self, features: dict[str, float]) -> float:
         params = self._params
         assert params is not None
+        # CRITICAL: apply the SAME team-level shrinkage transform used in fit
+        # (Req 5.6). ``fit`` shrinks each profile input toward its all-team global
+        # mean by weight n/(n+k) BEFORE fitting; the coefficients are therefore
+        # calibrated for shrunk inputs. Prediction MUST feed the model shrunk
+        # inputs too, or the linear predictor is evaluated on a different scale
+        # than it was fit on and lambda is arbitrary. Rows carry the acting team's
+        # completed-match count under ``n_matches``; when absent (e.g. already-
+        # shrunk rows, or callers with no history bookkeeping) the features are
+        # used as-is, matching fit's "no n_matches -> unshrunk" convention.
+        shrunk = self._apply_prediction_shrinkage(features)
         log_lambda = params.intercept
         for name, weight in params.feature_weights.items():
-            log_lambda += weight * float(features.get(name, 0.0))
+            log_lambda += weight * float(shrunk.get(name, 0.0))
         log_lambda = max(-3.0, min(4.0, log_lambda))
         return math.exp(log_lambda)
+
+    def _apply_prediction_shrinkage(
+        self, features: dict[str, float]
+    ) -> dict[str, float]:
+        """Shrink a prediction feature row exactly as :meth:`fit` shrinks training
+        rows, so fit and predict operate on the same feature scale.
+
+        Mirrors the fit-time application point: only the model's fitted feature
+        fields are shrunk, toward the stored all-team global means, by the row's
+        ``n_matches`` count. Absent ``n_matches`` leaves the row untouched (a row
+        that was already shrunk, or one with no history bookkeeping, is used as-is
+        — the same convention ``fit`` uses for rows lacking ``n_matches``).
+        """
+        n_matches = features.get("n_matches")
+        if n_matches is None or not self._feature_fields:
+            return features
+        raw_row = {
+            name: float(features.get(name, 0.0)) for name in self._feature_fields
+        }
+        return shrink_profile_features(
+            raw_row, int(n_matches), self._global_means, self._k
+        )
 
     def _compute_p_over_at_line(self, lam: float, line: float) -> float:
         params = self._params
