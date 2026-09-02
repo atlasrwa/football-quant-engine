@@ -6,36 +6,61 @@ rate is more trustworthy than one that implies universal coverage. This module
 is the single source of truth for that status so no artifact can quietly present
 an unvalidated market as if it were validated.
 
-Validated status (from the project's cross-league validation)
-=============================================================
-Across 25 leagues x 3 seasons (~23,000 matches):
+Market status (corners & cards under re-validation — see audit note below)
+==========================================================================
 
-* **Corners** — validated skill. +6.8% mean BSS over naive, 91% of
-  league-seasons positive (original validation +9.6% BSS, ECE 0.018).
-* **Cards** — validated skill. +6.1% mean BSS over naive, 96% of league-seasons
-  positive (original validation +9.0% BSS, ECE 0.027) — **except the
-  Championship**, where disciplinary persistence is confirmed ABSENT across
-  three seasons (yellow-rate -> cards association -0.044 / +0.033 / +0.012, all
-  p >= 0.37). In the Championship, cards is NOT validated.
-* **Goals, BTTS** — roughly at par with the naive base rate. No demonstrated
-  skill over base rate. Shown only with an explicit label; never as a prediction
-  worth acting on.
+* **Corners** — status PROVISIONAL (under re-validation). Corners was previously
+  presented as validated skill, but an internal audit found the original figures
+  were inflated by SAME-MATCH FEATURE LEAKAGE and the specific BSS/ECE numbers have
+  been withdrawn (see the audit note below). No demonstrated-skill claim is made
+  until a leak-free rebuild completes.
+* **Cards** — status PROVISIONAL (under re-validation), for the same reason —
+  **except the Championship**, where disciplinary persistence is confirmed ABSENT
+  across three seasons (yellow-rate -> cards association -0.044 / +0.033 / +0.012,
+  all p >= 0.37); cards there is EXCLUDED regardless.
+* **Goals, BTTS** — roughly at par with the naive base rate. No demonstrated skill
+  over base rate. Shown only with an explicit label; never as a prediction worth
+  acting on. (Corroborated externally by a plain point-in-time Dixon-Coles, which
+  is ~at par with naive on goals O/U 2.5.)
 
-This module intentionally does NOT compute these figures — they are established
-findings. It records the *status* so downstream code can label every number.
+Leakage audit — why corners/cards are PROVISIONAL
+=================================================
+An internal forensic audit found that ``CountRegressionModel``'s DEFAULT feature
+construction fed the PREDICTED match's own FINAL statistics into the model — shots,
+attacks, dangerous attacks, possession (corners) and fouls (cards). The walk-forward
+split did not catch it because the leak is WITHIN-ROW (feature and label from the
+same match), not across-time. Zeroing the same-match features dropped corners BSS
+from +8.11% -> +1.03% and cards from +6.06% -> +1.32% — i.e. roughly 85% / 78% of
+the previously reported skill was leakage. The prior "validated" figures (corners
++9.6%/+6.8% BSS, cards +9.0%/+6.1%, ECE 0.018/0.027) are therefore WITHDRAWN as
+inflated. The harness, corpus, metrics, and the ``_predict_lambda`` shrinkage logic
+were all found sound; the negative rich-field results (EPL/La Liga/Ligue 1) were the
+HONEST ones. Re-validation on strictly-prior (leak-free) features is in progress; the
+counterfactual ~+1% zeroing numbers are NOT adopted as the new claim (they came from
+a zeroing exercise, not a proper prior-only rebuild).
+
+Provenance note: the earlier "25 leagues x 3 seasons (~23,000 matches)" description
+conflated two data sources. The PERSISTED FootyStats corpus
+(``data/discovery/corpus/manifest.json``) is 25 leagues x 2 seasons / 15,362
+completed matches. The 3-season / ~23k figure traces ONLY to a live-API run captured
+in ``robustness_results.json`` (``run_robustness_check.py``), not to the persisted
+corpus. The two must not be conflated.
+
+This module records market STATUS so downstream code can label every number; it does
+not itself compute skill figures.
 
 League-family transfer test (seed 20260902)
 ============================================
 Three NEW top flights (EPL, La Liga, Ligue 1) were tested against their already-held
 second-tier partners using a stricter WITHIN-LEAGUE, 2-season walk-forward (BSS vs
-naive, bootstrap CIs, BH family of 6), fitting the SAME validated architecture with
-no refit. None of the six top-flight (market x league) cells demonstrated
-within-league skill (every BSS 95% CI spans 0; none passed BH). Per the standing
-rule, those leagues are therefore recorded UNVALIDATED here (see
-``_FAMILY_TRANSFER_WITHIN_LEAGUE``) rather than inheriting the pooled label. The
-built-in cards-persistence check did NOT support a general tier law: cards
-persistence was stronger in the EPL than the Championship, but stronger in La Liga 2
-and Ligue 2 than in their top flights — the tier direction flips by country.
+naive, bootstrap CIs, BH family of 6), fitting the SAME architecture with no refit.
+None of the six top-flight (market x league) cells demonstrated within-league skill
+(every BSS 95% CI spans 0; none passed BH). Per the standing rule, those leagues are
+recorded UNVALIDATED here (see ``_FAMILY_TRANSFER_WITHIN_LEAGUE``). The built-in
+cards-persistence check did NOT support a general tier law: cards persistence was
+stronger in the EPL than the Championship, but stronger in La Liga 2 and Ligue 2 than
+in their top flights — the tier direction flips by country. (Note: this transfer test
+used the honest prior-only rolling-feature path, not the leaked default features.)
 """
 
 from __future__ import annotations
@@ -62,6 +87,12 @@ class MarketStatus(Enum):
 
     * ``VALIDATED`` — demonstrated calibrated skill over the naive base rate in
       this league (safe to present as a prediction, still with its sample size).
+    * ``PROVISIONAL`` — previously presented as validated, but that claim has been
+      withdrawn pending re-validation. Used for corners and cards after an internal
+      audit found the original skill figures were inflated by same-match feature
+      leakage (the model read the predicted match's own final statistics). The
+      probability may be shown but MUST carry the "under re-validation" label and
+      MUST NOT be presented as demonstrated skill until a leak-free rebuild lands.
     * ``NO_DEMONSTRATED_SKILL`` — at par with the naive base rate. The number may
       be shown, but it MUST carry the explicit "no demonstrated skill over base
       rate" label. A confident-looking probability from a model with no edge over
@@ -71,12 +102,17 @@ class MarketStatus(Enum):
     """
 
     VALIDATED = "validated"
+    PROVISIONAL = "provisional"
     NO_DEMONSTRATED_SKILL = "no_demonstrated_skill"
     EXCLUDED = "excluded"
 
 
 #: Human-readable label shown alongside every non-validated market number.
 NO_SKILL_LABEL = "no demonstrated skill over base rate"
+
+#: Label shown next to a market whose prior "validated" claim was withdrawn pending
+#: a leak-free re-validation (corners, cards — see the audit note in the module docstring).
+UNDER_REVALIDATION_LABEL = "under re-validation (prior skill figure withdrawn)"
 
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -141,6 +177,8 @@ class MarketScope:
         """Short label to render next to a number for this market."""
         if self.status is MarketStatus.VALIDATED:
             return "validated skill"
+        if self.status is MarketStatus.PROVISIONAL:
+            return UNDER_REVALIDATION_LABEL
         if self.status is MarketStatus.NO_DEMONSTRATED_SKILL:
             return NO_SKILL_LABEL
         return "excluded (not validated in this league)"
@@ -150,10 +188,12 @@ class MarketScope:
 # League-family transfer test result (data-driven per-league validation status)
 # ─────────────────────────────────────────────────────────────────────────────
 #
-# The blanket "corners validated everywhere / cards validated except Championship"
-# rule above comes from the ORIGINAL 25-league x 3-season CROSS-SECTIONAL validation
-# (pooled skill). The league-family transfer test (seed 20260902) re-tested three
-# NEW top flights with a stricter WITHIN-LEAGUE, 2-season walk-forward, BSS-vs-naive
+# The prior blanket "corners validated / cards validated except Championship" rule
+# came from the ORIGINAL 25-league x 3-season CROSS-SECTIONAL validation (pooled
+# skill) — now WITHDRAWN as leakage-inflated; corners & cards are PROVISIONAL pending
+# a leak-free rebuild. The league-family transfer test (seed 20260902) separately
+# re-tested three NEW top flights with a stricter WITHIN-LEAGUE, 2-season walk-forward,
+# BSS-vs-naive
 # with bootstrap CIs, BH family of 6. Per the standing rule "a new league is
 # UNVALIDATED until it passes validation in THAT league", we record the per-(market,
 # canonical-league) within-league outcome here and let market_status consult it, so
@@ -208,10 +248,12 @@ def market_status(market: str, league_label: Optional[str] = None) -> MarketScop
 
     Rules (the single source of truth for scope labelling):
 
-    * ``corners`` -> VALIDATED everywhere (original 25-league validation) EXCEPT
-      leagues the family-transfer test tested and did not confirm within-league.
-    * ``cards``   -> VALIDATED everywhere EXCEPT the Championship (persistence
-      absent) and any family-transfer league not confirmed within-league.
+    * ``corners`` -> PROVISIONAL (under re-validation) everywhere EXCEPT the
+      family-transfer leagues, which were tested leak-free and are recorded per
+      their within-league result.
+    * ``cards``   -> PROVISIONAL (under re-validation) everywhere EXCEPT the
+      Championship (EXCLUDED — persistence absent) and the family-transfer leagues
+      (per their within-league result).
     * ``goals``   -> NO_DEMONSTRATED_SKILL everywhere (at par with base rate).
     * ``btts``    -> NO_DEMONSTRATED_SKILL everywhere (at par with base rate).
 
@@ -240,11 +282,15 @@ def market_status(market: str, league_label: Optional[str] = None) -> MarketScop
         return MarketScope(
             market=key,
             league_label=league_label,
-            status=MarketStatus.VALIDATED,
+            status=MarketStatus.PROVISIONAL,
             reason=(
-                "Corners is the best-calibrated validated market: +6.8% mean BSS "
-                "over naive across 25 leagues x 3 seasons (91% of league-seasons "
-                "positive; original validation +9.6% BSS, ECE 0.018)."
+                "Corners is UNDER RE-VALIDATION. Its prior 'validated skill' figures "
+                "were withdrawn after an internal audit found the original result was "
+                "inflated by same-match feature leakage (the model read the predicted "
+                "match's own final shot/attack/possession counts). A leak-free, "
+                "strictly-prior rebuild is in progress; no demonstrated-skill claim is "
+                "made until it completes. The probability may be shown only with the "
+                "under-re-validation label, never as validated skill."
             ),
         )
 
@@ -265,11 +311,15 @@ def market_status(market: str, league_label: Optional[str] = None) -> MarketScop
         return MarketScope(
             market=key,
             league_label=league_label,
-            status=MarketStatus.VALIDATED,
+            status=MarketStatus.PROVISIONAL,
             reason=(
-                "Cards is validated outside the Championship: +6.1% mean BSS over "
-                "naive (96% of league-seasons positive; original validation "
-                "+9.0% BSS, ECE 0.027)."
+                "Cards is UNDER RE-VALIDATION. Its prior 'validated skill' figures "
+                "were withdrawn after an internal audit found the original result was "
+                "inflated by same-match feature leakage (the model read the predicted "
+                "match's own final foul/attack/possession counts). A leak-free, "
+                "strictly-prior rebuild is in progress; no demonstrated-skill claim is "
+                "made until it completes. The probability may be shown only with the "
+                "under-re-validation label, never as validated skill."
             ),
         )
 
@@ -581,10 +631,13 @@ HONEST_FRAMING: tuple[str, ...] = (
     "This model has NOT been shown to beat bookmaker prices. That was tested "
     "extensively and the finding is documented (edge ceiling measured directly; "
     "see the failure ledger).",
-    "The primary claim is CALIBRATED PROBABILITIES for corners and cards, scoped "
-    "per league (corners validated everywhere; cards validated except in the "
-    "Championship). Goals and BTTS show no demonstrated skill over the base rate "
-    "and are labelled as such.",
+    "The corners and cards markets are currently UNDER RE-VALIDATION: their prior "
+    "'validated skill' figures were withdrawn after an internal audit found the "
+    "original result was inflated by same-match feature leakage. No demonstrated-"
+    "skill claim is made for corners or cards until a leak-free rebuild completes; "
+    "any probability shown for them carries the 'under re-validation' label. Cards "
+    "in the Championship remains excluded. Goals and BTTS show no demonstrated skill "
+    "over the base rate and are labelled as such.",
     "Directional calls (which side produces more) are a SEPARATE, mostly "
     "UNVALIDATED claim: tested out-of-sample against an always-pick-the-favoured-"
     "side baseline, they beat it in only one market/league (shots on target in "
