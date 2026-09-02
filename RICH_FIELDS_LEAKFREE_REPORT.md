@@ -89,28 +89,64 @@ measured degradation. The baseline-on-rich-corpus figures themselves hover aroun
 (corners −1.7 to −0.8%, cards −1.3 to +0.9%, SOT −2.2 to +3.5%), consistent with the
 established FootyStats-only null (corners −1.83%, cards −1.82%).
 
-## 4. Formation / lineup availability (scoped, report only)
+## 4. Formation / lineup availability (investigated properly — report only)
 
-- **Cached corpus: no lineup/formation data in either source.** TheStatsAPI `/stats`
-  payloads contain only aggregate stat groups (overview/shots/attack/passes/duels/
-  defending/goalkeeping/npxg); its fixture objects carry no lineup/formation. The
-  FootyStats corpus was built from the League-Matches/schedule endpoint, which has
-  zero lineup/formation fields. An exhaustive grep of the cache found none.
-- **API capability:** FootyStats offers lineups only via its separate **Match Details**
-  endpoint ("Trends and Lineups"), not the schedule endpoint used for the corpus, and
-  it does not list formation as a field. TheStatsAPI's coverage metadata carries a
-  per-league `lineups: available` capability flag, so lineups are obtainable, but
-  formation is not a confirmed field and none is cached.
-- **Timing/retention:** official lineups publish ~1 hour before kickoff (per industry
-  docs; ~20–40 min elsewhere), and minor competitions may have none pre-match — the
-  same near-kickoff-only pattern as opening odds / Betfair. No confirmed historical
-  formation feed.
-- **Which case applies:** formations/lineups can at best be a **near-kickoff display
-  feature on imminent fixtures, not a backtestable modelling input.** The cached corpus
-  has none, lineups are only known ~1h pre-kickoff, and formation is not a confirmed
-  historical field. Backfilling historical lineups via FootyStats Match Details would
-  cost per-match API calls and still leave formation to be derived from positions, with
-  no confirmed historical formation source.
+**5a. What exists, and from when.**
+- **Neither source provides formation directly.** TheStatsAPI's per-league capability
+  list (`data_types`) is `{fixtures, team_stats, xg, odds, lineups, player_stats,
+  standings}` — `lineups: available` but **no `formations`** capability. FootyStats
+  exposes lineups only through its **Match Details** endpoint (separate from the
+  League-Matches/schedule endpoint the corpus was built from), and formation is not a
+  documented field there; it does expose per-player **position**.
+- **Timing:** official lineups are confirmed **~1 hour before kickoff** (SportMonks
+  docs; ~20–40 min elsewhere, e.g. API-Football), and minor competitions may have none
+  pre-match — the same near-kickoff-only retention pattern as opening odds / Betfair.
+- **Historical for the cached corpus: no.** An exhaustive check of the cache found
+  **zero** lineup/formation/position/player data. TheStatsAPI cached only
+  `stats/odds/matches/fixtures/seasons` files — no lineups endpoint was ever fetched;
+  the richest cached match-detail payload (`pilotC_match_*`) carries only
+  id/competition/season/matchday/status/date/teams/score/venue/referee/odds/xg flags.
+  The FootyStats corpus match (215 keys, schedule endpoint) contains no
+  lineup/formation/position/player field. So formation is **not backtestable now** —
+  it would require new per-fixture fetching.
+
+**5b. Derivability from lineups.** Since formation is not given directly, it would have
+to be derived from lineup positions. Both sources expose player **position**, and
+providers that *do* publish formation (API-Football `"formation": "3-4-3"`; SportMonks
+lineups include "formations, jersey numbers, and positions") demonstrate derivation is
+feasible **when positions are grid/coordinate-based**. Whether FootyStats/TheStatsAPI
+positions are grid-like (derivable) or generic role labels (guesswork) could not be
+confirmed under the zero-API rule — no sample lineup is cached. So: **derivation is
+plausible but unconfirmed, contingent on positional granularity.**
+
+**5c. Coverage.** Not applicable — there are zero historical formations/lineups in the
+corpus to characterise (coverage rate, distribution, both-teams-present all N/A).
+
+**5d. Timing asymmetry and the prior-only proxy.** Even with historical lineups, a
+formation derived from a *confirmed* lineup is only knowable ~1 hour pre-kickoff, so a
+lineup-formation model could only be *applied* to imminent fixtures — an on-demand
+analysis of tomorrow's match would have no formation. A **prior-only proxy** (a team's
+modal formation, or its formation distribution over the last N matches) would sidestep
+this: it is knowable days ahead, backtestable, and compatible with the leak-free
+discipline used throughout this project. **However, building even the proxy still
+requires historical lineups the corpus does not have** — so the proxy is viable in
+principle but blocked by the same data gap as the direct feature.
+
+**5e. Verdict — only recent/upcoming → forward-collection project.** Historical
+formation/lineup data is not present in either source's cached corpus, and lineups are
+a near-kickoff-only feed. Formation is therefore **not backtestable today**; it is a
+forward-collection effort. A collection design would fetch the lineups endpoint per
+fixture (TheStatsAPI `lineups`, or FootyStats Match Details per match) at ~1 request per
+fixture, going forward from now. Reaching a usable within-league sample comparable to
+the current corpus (~600–1,600 matches per league) implies roughly one to two full
+seasons of forward collection per league (months to ~a year of real time), and a
+prerequisite validation step confirming formation can be derived from the provider's
+position labels. Recommended sequencing if pursued: (1) fetch a small sample of live
+lineups and verify formation derivability from positions; (2) if derivable, stand up
+forward collection of confirmed lineups plus a prior-only modal-formation proxy; (3)
+once a season accrues, run a dedicated formation-vs-corners / formation-vs-cards test,
+including the proxy variant, under the same leak-free, within-league protocol.
+**No formation modelling was built in this task** — this section is scoping only.
 
 ---
 
