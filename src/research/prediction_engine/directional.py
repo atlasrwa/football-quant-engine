@@ -84,6 +84,18 @@ class DirectionalCall:
             f"(P={self.call_probability:.3f}; tie P={self.p_tie:.3f})"
         )
 
+    def statement_no_probability(self) -> str:
+        """The directional statement WITHOUT any probability figure.
+
+        Used when the accuracy gate passed but the calibration gate did not, so
+        the direction may be stated but its confidence must be withheld.
+        """
+        called = self.called_side
+        if called is None:
+            return f"{self.market}: neither side is clearly favoured to record more"
+        other = self.side_b_label if called == self.side_a_label else self.side_a_label
+        return f"{self.market}: {called} takes more than {other}"
+
 
 def _normalize(pmf: Sequence[float]) -> list[float]:
     vals = [max(0.0, float(x)) for x in pmf]

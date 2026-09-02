@@ -38,7 +38,10 @@ Every user-facing artifact built on this engine MUST state:
 1. These are **calibrated probability estimates, not betting advice**.
 2. The model has **NOT** been shown to beat bookmaker prices. That was tested
    extensively and the finding is documented (see the failure ledger).
-3. The **per-league scope**, including where the model does not work.
+3. The **per-league scope**, including where the model does not work. The primary
+   claim is calibrated probabilities for corners and cards; directional calls are
+   a separate, mostly-unvalidated claim (they beat the home-advantage baseline in
+   only one market/league) and are gated/suppressed accordingly.
 4. **No profit claims, no implied profitability, no staking guidance of any
    kind.**
 
@@ -77,8 +80,12 @@ from __future__ import annotations
 from src.research.prediction_engine.scope import (
     HONEST_FRAMING,
     MIN_SETTLED_FOR_CALIBRATION,
+    DIRECTIONAL_MAX_ECE,
+    DirectionalEvidence,
+    DirectionalStatus,
     MarketStatus,
     ValidatedScope,
+    directional_status,
     honest_framing_lines,
     market_status,
 )
@@ -122,8 +129,12 @@ __all__ = [
     # scope + framing
     "HONEST_FRAMING",
     "MIN_SETTLED_FOR_CALIBRATION",
+    "DIRECTIONAL_MAX_ECE",
+    "DirectionalEvidence",
+    "DirectionalStatus",
     "MarketStatus",
     "ValidatedScope",
+    "directional_status",
     "honest_framing_lines",
     "market_status",
     # calibration metrics

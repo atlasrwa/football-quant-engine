@@ -4,8 +4,12 @@ For a given fixture this assembles the full picture across markets — corners
 (match total and per side), cards (match total and per side), goals, BTTS — each
 carrying:
 
-* the **calibrated probability** (the rigorous claim),
-* the **directional call** (the legible one: "home takes more corners than away"),
+* the **calibrated probability** (the rigorous claim, the primary output),
+* the **directional call** — a SEPARATE claim that is GATED: it is shown only for
+  market/league cells where it was proven out-of-sample to beat the
+  always-pick-the-favoured-side (home-advantage) baseline, and its probability is
+  shown only where that call is also calibrated. Everywhere else the call is
+  SUPPRESSED with a plain reason (never shown with a caveat),
 * the named **profile features** driving it, and
 * its **validated status in that league**.
 
@@ -14,6 +18,12 @@ Crucially, each market is labelled by its validated status:
 * corners, cards -> validated skill (except cards in the Championship);
 * goals, BTTS    -> at par with naive, shown but explicitly marked
   "no demonstrated skill over base rate".
+
+The calibrated-probability claim and the directional-call claim are INDEPENDENT.
+Corners/cards probabilities are validated; directional calls for those same
+markets are NOT (they do not beat the home-advantage baseline) and are therefore
+suppressed. The directional gate is data-driven, resolved via
+:func:`src.research.prediction_engine.scope.directional_status`.
 
 A fixture readout may show a high BTTS probability, but if BTTS has no
 demonstrated skill in that league that MUST be stated alongside the number. A
@@ -35,8 +45,10 @@ from src.research.asymmetric.derived import pmf_mean
 from src.research.asymmetric.models import DerivedOutcomes, DirectionPrediction, FixturePrediction
 from src.research.prediction_engine.directional import DirectionalCall, directional_call
 from src.research.prediction_engine.scope import (
+    DirectionalStatus,
     MarketScope,
     MarketStatus,
+    directional_status,
     honest_framing_lines,
     market_status,
 )
@@ -70,6 +82,9 @@ class MarketReadout:
         expected_total: expected match total (PMF mean), for reference.
         directional: the per-side directional call (None for symmetric markets
             like BTTS where there is no A-vs-B count comparison).
+        dir_status: the data-driven directional gate result for this market/league
+            (governs whether the call is emitted, shown with a probability, or
+            suppressed with a plain reason).
         driving_features: named features driving the per-side predictions.
     """
 
@@ -79,6 +94,7 @@ class MarketReadout:
     total_line: Optional[float]
     expected_total: Optional[float]
     directional: Optional[DirectionalCall]
+    dir_status: Optional[DirectionalStatus]
     driving_features: tuple[str, ...]
 
     @property
@@ -102,8 +118,22 @@ class MarketReadout:
                 f"    match total: P(over {self.total_line}) = {self.p_over_total:.3f} "
                 f"(E[total] = {self.expected_total:.2f})"
             )
-        if self.directional is not None:
-            lines.append(f"    directional call: {self.directional.statement()}")
+        # Directional call is GATED (data-driven, from scope.directional_status):
+        # emitted only where it beats the home-advantage baseline; the probability
+        # is shown only where it is also calibrated. Elsewhere it is SUPPRESSED
+        # (a plain reason, never a caveated call).
+        if self.directional is not None and self.dir_status is not None:
+            if self.dir_status.emit_call and self.dir_status.show_probability:
+                lines.append(f"    directional call: {self.directional.statement()}")
+            elif self.dir_status.emit_call:
+                # Accuracy gate passed but calibration failed: state direction,
+                # withhold the probability figure.
+                lines.append(
+                    f"    directional call: {self.directional.statement_no_probability()} "
+                    "(confidence withheld — not calibrated)"
+                )
+            else:
+                lines.append(f"    {self.dir_status.reason}")
         if self.driving_features:
             lines.append(
                 "    driving features: " + ", ".join(self.driving_features[:6])
@@ -237,7 +267,7 @@ def build_fixture_readout(
             MarketReadout(
                 market="cards", scope=cards_scope, p_over_total=None,
                 total_line=None, expected_total=None, directional=None,
-                driving_features=(),
+                dir_status=None, driving_features=(),
             )
         )
     else:
@@ -274,6 +304,7 @@ def build_fixture_readout(
             total_line=None,
             expected_total=None,
             directional=None,
+            dir_status=None,
             driving_features=_driving_features(fixture, "goals"),
         )
     )
@@ -308,6 +339,7 @@ def _count_market_readout(
         call = directional_call(
             market, pmf_home, pmf_away, side_a_label="home", side_b_label="away"
         )
+    dir_status = directional_status(market, league_label)
 
     return MarketReadout(
         market=market,
@@ -316,5 +348,6 @@ def _count_market_readout(
         total_line=line,
         expected_total=expected_total,
         directional=call,
+        dir_status=dir_status,
         driving_features=_driving_features(fixture, target),
     )

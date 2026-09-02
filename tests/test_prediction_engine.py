@@ -34,7 +34,7 @@ from src.research.prediction_engine.windows import (
     field_window_computability,
     select_window,
 )
-from src.research.prediction_engine.scope import is_championship
+from src.research.prediction_engine.scope import is_championship, directional_status
 
 _DIRECTION_A = "A_attack_vs_B_defence"
 _DIRECTION_B = "B_attack_vs_A_defence"
@@ -76,13 +76,14 @@ def test_unknown_market_raises():
         market_status("offsides")
 
 
-def test_honest_framing_has_all_four_statements():
+def test_honest_framing_has_all_five_statements():
     lines = honest_framing_lines()
-    assert len(lines) == 4
+    assert len(lines) == 5
     joined = " ".join(lines).lower()
     assert "not betting advice" in joined
     assert "not been shown to beat" in joined
-    assert "per-league" in joined
+    assert "primary claim" in joined and "calibrated probabilities" in joined
+    assert "directional calls" in joined
     assert "no stake" in joined or "no staking" in joined or "staking guidance" in joined
 
 
@@ -238,6 +239,53 @@ def test_fixture_readout_excludes_cards_in_championship():
     assert cards.scope.status is MarketStatus.EXCLUDED
     assert cards.p_over_total is None and cards.directional is None
     assert ro.validated_markets() == ("corners",)
+
+
+# ── directional gate (data-driven, accuracy + calibration separate) ───────────
+
+def test_directional_gate_suppressed_for_corners_cards_goals_all_leagues():
+    for market in ("corners", "cards", "goals"):
+        for league in ("England Championship", "La Liga 2", "Ligue 2"):
+            st = directional_status(market, league)
+            assert st.emit_call is False, (market, league)
+            assert st.show_probability is False, (market, league)
+            assert "no directional call" in st.reason
+
+
+def test_directional_gate_passes_only_sot_ligue2():
+    st = directional_status("sot", "Ligue 2")
+    assert st.emit_call is True and st.show_probability is True
+    # every other sot cell is suppressed
+    for league in ("Championship", "La Liga 2"):
+        assert directional_status("sot", league).emit_call is False
+
+
+def test_directional_gate_untested_cell_defaults_suppressed():
+    st = directional_status("corners", "Serie A")  # not in the evidence table
+    assert st.emit_call is False and st.show_probability is False
+    assert "not evaluated" in st.reason
+
+
+def test_directional_accuracy_and_calibration_gates_are_independent():
+    from src.research.prediction_engine.scope import DirectionalEvidence
+    # accuracy passes, calibration fails -> emit call, withhold probability
+    ev = DirectionalEvidence(
+        market="sot", league_label="Test", n_decisive=300,
+        model_accuracy=0.64, home_baseline=0.58, diff_ci_low=0.02, diff_ci_high=0.10,
+        ece=0.20, beats_home_bh=True, seed=1, family_size=12)
+    assert ev.accuracy_gate_passed is True
+    assert ev.calibration_gate_passed is False
+
+
+def test_fixture_readout_suppresses_directional_calls_for_covered_markets():
+    ro = build_fixture_readout(_fixture(), league_label="England Premier League")
+    text = ro.render()
+    # corners/cards/goals directional calls are suppressed (untested in EPL -> no evidence)
+    assert "does not beat the home-advantage baseline" in text or "not evaluated" in text
+    # the calibrated probability line still renders for corners (validated market)
+    assert "match total: P(over" in text
+    # and the validated-status label is present
+    assert "validated skill" in text
 
 
 # ── reliability report ───────────────────────────────────────────────────────
