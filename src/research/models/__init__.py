@@ -29,6 +29,17 @@ from src.research.models.factory import (
     create_model_factory_for_market,
     AVAILABLE_MODELS,
 )
+from src.research.models.market_relative import (
+    MarketRelativeCountModel,
+    MarketRelativeParams,
+    implied_lambda_from_p_over,
+)
+from src.research.models.latent_team_state import (
+    LatentTeamStateForecaster,
+    MatchObservation,
+    ScorelineForecast,
+    StateOffset,
+)
 
 __all__ = [
     # Core models
@@ -44,6 +55,15 @@ __all__ = [
     "CalibratedModel",
     "PlattScaler",
     "IsotonicCalibrator",
+    # Market-relative research model
+    "MarketRelativeCountModel",
+    "MarketRelativeParams",
+    "implied_lambda_from_p_over",
+    # Latent raw-stat team state
+    "LatentTeamStateForecaster",
+    "MatchObservation",
+    "ScorelineForecast",
+    "StateOffset",
     # Factory
     "create_model_for_market",
     "create_model_factory_for_market",

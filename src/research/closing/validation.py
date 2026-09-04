@@ -1,21 +1,8 @@
-"""Closing Line Validation — verifies closing odds observations are genuine.
-
-A closing odds observation must satisfy:
-1. Same fixture as the paper trade
-2. Same market
-3. Same selection
-4. closing_timestamp > entry_timestamp
-5. closing_timestamp <= kickoff (where applicable)
-6. No post-kickoff information
-7. Source provenance exists
-8. Odds are valid decimal (>= 1.0)
-9. No impossible timestamp ordering
-10. No duplicate observations
-"""
+"""Strict closing-line validation with no post-kickoff tolerance."""
 
 from __future__ import annotations
 
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from typing import Any, Optional
 
 from src.research.closing.provider import (
@@ -28,6 +15,7 @@ from src.research.closing.provider import (
 @dataclass(frozen=True)
 class ClosingValidationResult:
     """Result of validating a closing odds observation."""
+
     valid: bool
     observation_id: str = ""
     status: ClosingOddsStatus = ClosingOddsStatus.VALID
@@ -45,19 +33,11 @@ class ClosingValidationResult:
 
 
 class ClosingLineValidator:
-    """Validates closing odds observations against paper trades.
-
-    Rejects observations that fail any validation rule.
-    Never silently accepts ambiguous data.
-    """
+    """Fail-closed validation of a closing quote against one trade."""
 
     def __init__(self, max_closing_delay_seconds: float = 7200.0) -> None:
-        """Initialize validator.
-
-        Args:
-            max_closing_delay_seconds: Maximum acceptable delay between
-                closing_timestamp and kickoff (default 2h).
-        """
+        # Kept for constructor compatibility. Post-kickoff tolerance is no longer
+        # applied because closing quotes must be strictly pre-kickoff.
         self._max_delay = max_closing_delay_seconds
 
     def validate(
@@ -69,73 +49,67 @@ class ClosingLineValidator:
         trade_entry_timestamp: float,
         trade_kickoff_timestamp: float,
         seen_observation_ids: Optional[set[str]] = None,
+        *,
+        expected_line: Optional[float] = None,
+        expected_bookmaker: Optional[str] = None,
+        require_same_book: bool = False,
     ) -> ClosingValidationResult:
-        """Validate a closing odds observation against a paper trade.
-
-        Returns ClosingValidationResult with detailed errors if invalid.
-        """
+        """Validate identity, exact market, provenance, and strict timing."""
         errors: list[str] = []
         warnings: list[str] = []
 
-        # 1. Same fixture
         if observation.fixture_id != trade_fixture_id:
             errors.append(
                 f"Fixture mismatch: obs={observation.fixture_id} != trade={trade_fixture_id}"
             )
-
-        # 2. Same market
         if observation.market != trade_market:
             errors.append(
                 f"Market mismatch: obs={observation.market} != trade={trade_market}"
             )
-
-        # 3. Same selection
         if observation.selection != trade_selection:
             errors.append(
                 f"Selection mismatch: obs={observation.selection} != trade={trade_selection}"
             )
+        if expected_line is not None and observation.line != expected_line:
+            errors.append(f"Line mismatch: obs={observation.line} != expected={expected_line}")
+        if require_same_book:
+            if not expected_bookmaker:
+                errors.append("Same-book validation requires expected_bookmaker")
+            elif observation.bookmaker.casefold() != expected_bookmaker.casefold():
+                errors.append(
+                    f"Bookmaker mismatch: obs={observation.bookmaker} "
+                    f"!= expected={expected_bookmaker}"
+                )
 
-        # 4. Closing timestamp > entry timestamp
         if observation.closing_timestamp <= trade_entry_timestamp:
             errors.append(
                 f"Closing timestamp ({observation.closing_timestamp}) must be > "
                 f"entry timestamp ({trade_entry_timestamp})"
             )
+        if trade_kickoff_timestamp <= 0:
+            errors.append("Missing or invalid kickoff timestamp")
+        elif observation.closing_timestamp >= trade_kickoff_timestamp:
+            errors.append(
+                f"Closing timestamp ({observation.closing_timestamp}) must be strictly "
+                f"before kickoff ({trade_kickoff_timestamp})"
+            )
+            warnings.append("Closing timestamp is at or after kickoff (post-kickoff ineligible)")
 
-        # 5. Closing timestamp <= kickoff (with tolerance)
-        if trade_kickoff_timestamp > 0:
-            if observation.closing_timestamp > trade_kickoff_timestamp + self._max_delay:
-                errors.append(
-                    f"Closing timestamp ({observation.closing_timestamp}) is too far after "
-                    f"kickoff ({trade_kickoff_timestamp})"
-                )
-
-        # 6. No post-kickoff data used (heuristic: closing must be near kickoff)
-        if observation.closing_timestamp > trade_kickoff_timestamp + 300:  # 5 min tolerance
-            warnings.append("Closing timestamp is after kickoff + 5min (may be post-kickoff)")
-
-        # 7. Source provenance
         if not observation.source:
             errors.append("Missing source provenance")
-
-        # 8. Valid decimal odds
-        if observation.decimal_odds < 1.0:
-            errors.append(f"Invalid odds: {observation.decimal_odds} < 1.0")
-
-        # 9. Timestamp ordering
+        if observation.decimal_odds <= 1.0:
+            errors.append(f"Invalid odds: {observation.decimal_odds} <= 1.0")
         if observation.closing_timestamp < 0:
             errors.append("Negative closing timestamp")
-
-        # 10. Duplicate check
         if seen_observation_ids and observation.observation_id in seen_observation_ids:
             errors.append(f"Duplicate observation: {observation.observation_id}")
 
-        # Determine status
         if errors:
             status = ClosingOddsStatus.INVALID
-        elif observation.timestamp_semantics == TimestampSemantics.EXACT_CLOSE:
-            status = ClosingOddsStatus.VALID
-        elif observation.timestamp_semantics == TimestampSemantics.LAST_BEFORE_KICKOFF:
+        elif observation.timestamp_semantics in (
+            TimestampSemantics.EXACT_CLOSE,
+            TimestampSemantics.LAST_BEFORE_KICKOFF,
+        ):
             status = ClosingOddsStatus.VALID
         elif observation.timestamp_semantics == TimestampSemantics.PROVIDER_ESTIMATED:
             status = ClosingOddsStatus.ESTIMATED
@@ -145,7 +119,7 @@ class ClosingLineValidator:
             warnings.append("Timestamp semantics unknown — treat with caution")
 
         return ClosingValidationResult(
-            valid=len(errors) == 0,
+            valid=not errors,
             observation_id=observation.observation_id,
             status=status,
             errors=tuple(errors),
