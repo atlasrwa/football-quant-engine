@@ -130,17 +130,24 @@ class ReliabilityCell:
         brier = f"{cal.brier_score:.4f}" if cal.brier_score is not None else "n/a"
         lines.append(f"    ECE = {ece}   Brier = {brier}   (n = {cal.n_predictions})")
         # BSS-vs-naive is a supporting figure, shown ONLY for validated cells. On
-        # a no-demonstrated-skill cell a positive BSS number sitting above the
-        # no-skill note reads as self-contradictory (BSS measures sharpness vs the
-        # base rate, not an edge), so it is deliberately suppressed there.
+        # a no-demonstrated-skill OR provisional (under-re-validation) cell, a
+        # positive BSS number sitting above the caveat reads as self-contradictory
+        # (BSS measures sharpness vs the base rate, not an edge), so it is
+        # deliberately suppressed there.
         if (
-            self.scope.status is not MarketStatus.NO_DEMONSTRATED_SKILL
+            self.scope.status is MarketStatus.VALIDATED
             and self.report.bss is not None
             and self.report.bss.bss is not None
         ):
             lines.append(
                 f"    BSS vs naive base rate = {self.report.bss.bss:+.4f} "
                 f"(supporting figure; n = {self.report.bss.n})"
+            )
+        if self.scope.status is MarketStatus.PROVISIONAL:
+            lines.append(
+                "    NOTE: UNDER RE-VALIDATION — prior skill figure withdrawn "
+                "(same-match feature leakage found by audit); BSS suppressed, "
+                "calibration shown for transparency only, not as an edge."
             )
         if self.scope.status is MarketStatus.NO_DEMONSTRATED_SKILL:
             lines.append(

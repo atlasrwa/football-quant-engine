@@ -27,8 +27,10 @@ The ledger is deliberately append-only JSONL. It does not delete or rewrite.
 
 from __future__ import annotations
 
+import fcntl
 import hashlib
 import json
+import os
 import time
 from dataclasses import dataclass
 from datetime import datetime, timezone
@@ -138,6 +140,75 @@ def compute_document_hash(path: Path | str) -> str:
     return h.hexdigest()
 
 
+def _load_document_rows(ledger_path: Path) -> list[dict]:
+    """Load document rows, treating malformed content as ledger tampering."""
+    rows: list[dict] = []
+    if not ledger_path.exists():
+        return rows
+    try:
+        with open(ledger_path, encoding="utf-8") as handle:
+            for line_number, line in enumerate(handle, start=1):
+                if not line.strip():
+                    continue
+                row = json.loads(line)
+                if not isinstance(row, dict):
+                    raise ValueError("row is not a JSON object")
+                rows.append(row)
+    except (OSError, json.JSONDecodeError, ValueError) as exc:
+        raise LedgerTamperError(
+            f"document attestation ledger is malformed at or before line "
+            f"{locals().get('line_number', '?')}: {exc}"
+        ) from exc
+    return rows
+
+
+def _verify_document_rows(rows: list[dict]) -> None:
+    """Fail closed on broken links, content edits, backdating, or duplicate IDs."""
+    prev = GENESIS_PREV_HASH
+    last_anchor: Optional[float] = None
+    seen_ids: set[str] = set()
+    for index, row in enumerate(rows):
+        document_id = row.get("document_id")
+        if not isinstance(document_id, str) or not document_id:
+            raise LedgerTamperError(f"document ledger row {index} has no document_id")
+        if document_id in seen_ids:
+            raise LedgerTamperError(
+                f"document ledger row {index} repeats immutable document_id "
+                f"{document_id!r}"
+            )
+        seen_ids.add(document_id)
+        document_hash = row.get("document_hash")
+        if (
+            not isinstance(document_hash, str)
+            or len(document_hash) != 64
+            or any(char not in "0123456789abcdef" for char in document_hash)
+        ):
+            raise LedgerTamperError(
+                f"document ledger row {index} ({document_id}) has invalid document_hash"
+            )
+        if row.get("prev_hash") != prev:
+            raise LedgerTamperError(
+                f"document ledger row {index} ({document_id}) has a prev_hash mismatch"
+            )
+        recomputed = _record_link_hash(row)
+        if row.get("link_hash") != recomputed:
+            raise LedgerTamperError(
+                f"document ledger row {index} ({document_id}) has a link_hash mismatch"
+            )
+        try:
+            anchor = float(row["anchor_unix"])
+        except (KeyError, TypeError, ValueError) as exc:
+            raise LedgerTamperError(
+                f"document ledger row {index} ({document_id}) has invalid anchor_unix"
+            ) from exc
+        if last_anchor is not None and anchor < last_anchor:
+            raise LedgerTamperError(
+                f"document ledger row {index} ({document_id}) backdates anchor_unix"
+            )
+        last_anchor = anchor
+        prev = row["link_hash"]
+
+
 def attest_document(
     ledger_path: Path | str,
     *,
@@ -145,43 +216,58 @@ def attest_document(
     document_id: str,
     clock=time.time,
 ) -> dict:
-    """Append an immutable, hash-chained attestation of a document (e.g. a
-    pre-registration plan). Idempotent per (document_id, document_hash): if the
-    exact same document is already attested, returns the existing record.
+    """Attest an immutable versioned document after verifying the whole chain.
 
-    The recorded ``anchor_unix`` is this process's clock at append time, so the
-    registration time cannot be backdated. Any later edit to the document changes
-    its hash, so a stale attestation is trivially detected by re-hashing the file.
+    Repeating an unchanged ``document_id`` is idempotent.  Reusing that ID for
+    different bytes is refused: revisions require a new versioned ID.  A sidecar
+    lock serializes verification and append so concurrent identical calls cannot
+    fork or duplicate the chain.
     """
+    if not isinstance(document_id, str) or not document_id.strip():
+        raise AttestationError("document_id must be a non-empty versioned identifier")
+
     ledger_path = Path(ledger_path)
-    doc_hash = compute_document_hash(document_path)
-
-    rows: list[dict] = []
-    if ledger_path.exists():
-        with open(ledger_path) as f:
-            for line in f:
-                line = line.strip()
-                if line:
-                    rows.append(json.loads(line))
-    for r in rows:
-        if r.get("document_id") == document_id and r.get("document_hash") == doc_hash:
-            return r  # already attested, unchanged
-
-    now = float(clock())
-    prev = rows[-1]["link_hash"] if rows else GENESIS_PREV_HASH
-    record = {
-        "document_id": document_id,
-        "document_path": str(document_path),
-        "document_hash": doc_hash,
-        "anchor_unix": now,
-        "registered_at": datetime.fromtimestamp(now, tz=timezone.utc).isoformat(),
-        "prev_hash": prev,
-    }
-    record["link_hash"] = _record_link_hash(record)
+    document_path = Path(document_path)
     ledger_path.parent.mkdir(parents=True, exist_ok=True)
-    with open(ledger_path, "a") as f:
-        f.write(json.dumps(record) + "\n")
-    return record
+    lock_path = ledger_path.with_name(f"{ledger_path.name}.lock")
+
+    with open(lock_path, "a+") as lock_handle:
+        fcntl.flock(lock_handle.fileno(), fcntl.LOCK_EX)
+        rows = _load_document_rows(ledger_path)
+        _verify_document_rows(rows)
+        doc_hash = compute_document_hash(document_path)
+
+        for row in rows:
+            if row["document_id"] != document_id:
+                continue
+            if row["document_hash"] == doc_hash:
+                return row
+            raise AttestationError(
+                f"document_id {document_id!r} is already bound to different content; "
+                "create a new versioned document_id"
+            )
+
+        now = float(clock())
+        if rows and now < float(rows[-1]["anchor_unix"]):
+            raise AttestationError(
+                f"clock regression: now={now:.6f} < last anchor "
+                f"{float(rows[-1]['anchor_unix']):.6f}; refusing to backdate"
+            )
+        prev = rows[-1]["link_hash"] if rows else GENESIS_PREV_HASH
+        record = {
+            "document_id": document_id,
+            "document_path": str(document_path),
+            "document_hash": doc_hash,
+            "anchor_unix": now,
+            "registered_at": datetime.fromtimestamp(now, tz=timezone.utc).isoformat(),
+            "prev_hash": prev,
+        }
+        record["link_hash"] = _record_link_hash(record)
+        with open(ledger_path, "a", encoding="utf-8") as handle:
+            handle.write(json.dumps(record, sort_keys=True) + "\n")
+            handle.flush()
+            os.fsync(handle.fileno())
+        return record
 
 
 class AttestationLedger:

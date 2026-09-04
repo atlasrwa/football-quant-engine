@@ -138,6 +138,13 @@ class MarketReadout:
             lines.append(
                 "    driving features: " + ", ".join(self.driving_features[:6])
             )
+        if self.scope.status is MarketStatus.PROVISIONAL:
+            lines.append(
+                "    NOTE: UNDER RE-VALIDATION — the prior 'validated skill' figure for "
+                "this market was withdrawn after an internal audit found same-match "
+                "feature leakage. Shown for completeness, not as demonstrated skill, "
+                "pending a leak-free rebuild."
+            )
         if self.scope.status is MarketStatus.NO_DEMONSTRATED_SKILL:
             lines.append(
                 "    NOTE: no demonstrated skill over base rate in this league — "

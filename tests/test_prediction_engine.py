@@ -34,7 +34,7 @@ from src.research.prediction_engine.windows import (
     field_window_computability,
     select_window,
 )
-from src.research.prediction_engine.scope import is_championship, directional_status
+from src.research.prediction_engine.scope import is_championship, directional_status, NO_SKILL_LABEL
 
 _DIRECTION_A = "A_attack_vs_B_defence"
 _DIRECTION_B = "B_attack_vs_A_defence"
@@ -48,15 +48,47 @@ def _poisson_pmf(mean: float, n: int = 15) -> tuple[float, ...]:
 
 # ── scope ────────────────────────────────────────────────────────────────────
 
-def test_corners_validated_everywhere():
-    assert market_status("corners").status is MarketStatus.VALIDATED
-    assert market_status("corners", "England Championship").status is MarketStatus.VALIDATED
+def test_corners_provisional_under_revalidation():
+    # Corners was previously "validated everywhere"; after the leakage audit its
+    # prior figures are withdrawn and it is PROVISIONAL (under re-validation) in the
+    # default (non-family-transfer) leagues.
+    assert market_status("corners").status is MarketStatus.PROVISIONAL
+    assert market_status("corners", "Germany Bundesliga").status is MarketStatus.PROVISIONAL
+    assert market_status("corners", "England Championship").status is MarketStatus.PROVISIONAL
 
 
-def test_cards_validated_except_championship():
-    assert market_status("cards", "England Premier League").status is MarketStatus.VALIDATED
+def test_cards_provisional_except_championship():
+    # Cards is PROVISIONAL (under re-validation) in default leagues; the three
+    # family-transfer top flights (EPL, La Liga, Ligue 1) were re-tested leak-free
+    # and are NO_DEMONSTRATED_SKILL; the Championship remains EXCLUDED (persistence
+    # confirmed absent).
+    assert market_status("cards", "Germany Bundesliga").status is MarketStatus.PROVISIONAL
+    assert market_status("cards", "England Premier League").status is MarketStatus.NO_DEMONSTRATED_SKILL
     for champ in ("England Championship", "comp_8321", "champ", "champ_2024"):
         assert market_status("cards", champ).status is MarketStatus.EXCLUDED
+
+
+def test_provisional_markets_are_not_validated():
+    # PROVISIONAL must NOT count as validated anywhere downstream.
+    for mk in ("corners", "cards"):
+        s = market_status(mk, "Germany Bundesliga")
+        assert s.status is MarketStatus.PROVISIONAL
+        assert s.is_validated is False
+        assert "under re-validation" in s.label
+
+
+def test_family_transfer_new_top_flights_unvalidated():
+    # EPL / La Liga / Ligue 1 corners+cards were re-tested within-league (2-season
+    # walk-forward, BSS-vs-naive, BH family of 6) leak-free and did NOT demonstrate
+    # skill -> NO_DEMONSTRATED_SKILL (distinct from the leakage-driven PROVISIONAL).
+    for league in ("England Premier League", "La Liga", "Ligue 1",
+                   "comp_3039", "comp_8814", "comp_0256"):
+        for market in ("corners", "cards"):
+            assert market_status(market, league).status is MarketStatus.NO_DEMONSTRATED_SKILL, (market, league)
+    # second-tier partners: not carved out in the family-transfer table, so they take
+    # the default corners/cards status, which is now PROVISIONAL pending the rebuild.
+    assert market_status("cards", "La Liga 2").status is MarketStatus.PROVISIONAL
+    assert market_status("cards", "Ligue 2").status is MarketStatus.PROVISIONAL
 
 
 def test_goals_and_btts_no_demonstrated_skill():
@@ -82,7 +114,9 @@ def test_honest_framing_has_all_five_statements():
     joined = " ".join(lines).lower()
     assert "not betting advice" in joined
     assert "not been shown to beat" in joined
-    assert "primary claim" in joined and "calibrated probabilities" in joined
+    # corners/cards are now under re-validation (prior figures withdrawn as leakage)
+    assert "under re-validation" in joined
+    assert "corners" in joined and "cards" in joined
     assert "directional calls" in joined
     assert "no stake" in joined or "no staking" in joined or "staking guidance" in joined
 
@@ -223,14 +257,22 @@ def _fixture():
 
 
 def test_fixture_readout_labels_and_directional():
-    ro = build_fixture_readout(_fixture(), league_label="England Premier League")
-    assert ro.validated_markets() == ("corners", "cards")
+    # After the leakage audit, corners & cards are PROVISIONAL (under re-validation),
+    # so NO market is "validated" in a default league. The readout must render them
+    # with the under-re-validation label and count zero validated markets.
+    ro = build_fixture_readout(_fixture(), league_label="Germany Bundesliga")
+    assert ro.validated_markets() == ()
+    assert ro.market("corners").scope.status is MarketStatus.PROVISIONAL
+    assert ro.market("cards").scope.status is MarketStatus.PROVISIONAL
     assert ro.market("goals").scope.status is MarketStatus.NO_DEMONSTRATED_SKILL
     assert ro.market("btts").scope.status is MarketStatus.NO_DEMONSTRATED_SKILL
     assert ro.market("btts").directional is None
-    assert ro.market("corners").directional.called_side == "home"
-    # honest framing present in the render
-    assert "NOT betting advice" in ro.render()
+    text = ro.render()
+    assert "NOT betting advice" in text          # honest framing present
+    assert "under re-validation" in text.lower()  # provisional label surfaced
+    # No market is labelled as having validated skill (the label renders as
+    # "[validated skill]"; the framing text may still MENTION the withdrawn claim).
+    assert "[validated skill]" not in text
 
 
 def test_fixture_readout_excludes_cards_in_championship():
@@ -238,7 +280,9 @@ def test_fixture_readout_excludes_cards_in_championship():
     cards = ro.market("cards")
     assert cards.scope.status is MarketStatus.EXCLUDED
     assert cards.p_over_total is None and cards.directional is None
-    assert ro.validated_markets() == ("corners",)
+    # corners is PROVISIONAL here (not validated), so no market is validated.
+    assert ro.market("corners").scope.status is MarketStatus.PROVISIONAL
+    assert ro.validated_markets() == ()
 
 
 # ── directional gate (data-driven, accuracy + calibration separate) ───────────
@@ -280,12 +324,14 @@ def test_directional_accuracy_and_calibration_gates_are_independent():
 def test_fixture_readout_suppresses_directional_calls_for_covered_markets():
     ro = build_fixture_readout(_fixture(), league_label="England Premier League")
     text = ro.render()
-    # corners/cards/goals directional calls are suppressed (untested in EPL -> no evidence)
+    # EPL corners/cards directional calls are suppressed. They are now in the
+    # evidence table (family-transfer test) but do NOT beat the home-advantage
+    # baseline under BH, so no call is emitted.
     assert "does not beat the home-advantage baseline" in text or "not evaluated" in text
-    # the calibrated probability line still renders for corners (validated market)
-    assert "match total: P(over" in text
-    # and the validated-status label is present
-    assert "validated skill" in text
+    # EPL corners/cards are UNVALIDATED after the family-transfer test -> the
+    # no-demonstrated-skill label is shown, never the "[validated skill]" label.
+    assert NO_SKILL_LABEL in text
+    assert "[validated skill]" not in text
 
 
 # ── reliability report ───────────────────────────────────────────────────────

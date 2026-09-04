@@ -189,6 +189,7 @@ def test_reveal_after_commit_succeeds_and_binds_commitment(tmp_path):
 # ── document attestation (pre-registration) ──────────────────────────────
 
 from src.research.forward.attestation_ledger import (  # noqa: E402
+    AttestationError,
     attest_document,
     compute_document_hash,
 )
@@ -211,17 +212,49 @@ def test_attest_document_records_hash_and_is_idempotent(tmp_path):
     assert len([l for l in open(ledger) if l.strip()]) == 1
 
 
-def test_attest_document_detects_edit_via_hash_change(tmp_path):
+def test_attest_document_refuses_changed_content_under_same_version_id(tmp_path):
     doc = tmp_path / "prereg.json"
     doc.write_text('{"plan": "original"}')
     ledger = tmp_path / "prereg_ledger.jsonl"
     clock = FakeClock(1000.0)
     r1 = attest_document(ledger, document_path=doc, document_id="prereg_v1", clock=clock)
 
-    # edit the document after registration -> hash changes -> new attestation row
     doc.write_text('{"plan": "SECRETLY CHANGED"}')
     clock.t = 3000.0
-    r2 = attest_document(ledger, document_path=doc, document_id="prereg_v1", clock=clock)
+    with pytest.raises(AttestationError, match="new versioned document_id"):
+        attest_document(ledger, document_path=doc, document_id="prereg_v1", clock=clock)
+    assert len([line for line in open(ledger) if line.strip()]) == 1
+
+    # An honestly versioned revision appends and extends the verified chain.
+    r2 = attest_document(ledger, document_path=doc, document_id="prereg_v2", clock=clock)
     assert r2["document_hash"] != r1["document_hash"]
-    # two distinct rows now exist — the tampering is on the permanent record
-    assert len([l for l in open(ledger) if l.strip()]) == 2
+    assert r2["prev_hash"] == r1["link_hash"]
+    assert len([line for line in open(ledger) if line.strip()]) == 2
+
+
+def test_attest_document_verifies_chain_before_idempotent_return(tmp_path):
+    doc = tmp_path / "prereg.json"
+    doc.write_text('{"plan": "original"}')
+    ledger = tmp_path / "prereg_ledger.jsonl"
+    clock = FakeClock(1000.0)
+    attest_document(ledger, document_path=doc, document_id="prereg_v1", clock=clock)
+
+    rows = [json.loads(line) for line in open(ledger)]
+    rows[0]["document_path"] = "tampered.json"
+    ledger.write_text("".join(json.dumps(row) + "\n" for row in rows))
+    with pytest.raises(LedgerTamperError, match="link_hash mismatch"):
+        attest_document(ledger, document_path=doc, document_id="prereg_v1", clock=clock)
+
+
+def test_attest_document_refuses_clock_regression(tmp_path):
+    first = tmp_path / "first.json"
+    second = tmp_path / "second.json"
+    first.write_text("{}")
+    second.write_text('{"version": 2}')
+    ledger = tmp_path / "prereg_ledger.jsonl"
+    clock = FakeClock(2000.0)
+    attest_document(ledger, document_path=first, document_id="prereg_v1", clock=clock)
+    clock.t = 1000.0
+    with pytest.raises(AttestationError, match="clock regression"):
+        attest_document(ledger, document_path=second, document_id="prereg_v2", clock=clock)
+    assert len([line for line in open(ledger) if line.strip()]) == 1
