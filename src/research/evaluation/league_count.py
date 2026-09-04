@@ -20,6 +20,7 @@ from typing import Mapping, Sequence
 import numpy as np
 from scipy.stats import norm
 
+from src.research.evaluation.laliga_corners import summarize_confirmation
 from src.research.models.hierarchical_count import (
     COUNT_ARMS,
     HIERARCHICAL_ARM,
@@ -110,6 +111,7 @@ class LeagueCountEvaluationReport:
     walk_forward: dict[str, object]
     pooled_results: list[dict[str, object]]
     cells: list[dict[str, object]]
+    confirmation_protocols: list[dict[str, object]]
 
     def to_dict(self) -> dict[str, object]:
         return asdict(self)
@@ -412,6 +414,7 @@ class LeagueCountEvaluator:
             for market in markets
             for line in market.lines
         }
+        confirmation_protocols = [summarize_confirmation(cells)]
         return LeagueCountEvaluationReport(
             schema_version="league-count-evaluation/v1",
             generated_at=datetime.now(timezone.utc).isoformat(),
@@ -455,6 +458,7 @@ class LeagueCountEvaluator:
             },
             pooled_results=pooled_results,
             cells=cells,
+            confirmation_protocols=confirmation_protocols,
         )
 
     def _walk_forward(
@@ -604,6 +608,7 @@ class LeagueCountEvaluator:
                 set(record.probabilities) == set(ALL_EVALUATED_ARMS) for record in records
             ),
             "arm_metrics": metrics,
+            "fold_stability": self._fold_stability(records, contrast),
             "effects": {},
             "fdr": {
                 "raw_p": None,
@@ -685,6 +690,35 @@ class LeagueCountEvaluator:
                 probabilities, outcomes, bins=self.config.calibration_bins
             )
         return output
+
+    def _fold_stability(
+        self, records: Sequence[_Prediction], contrast: Contrast
+    ) -> dict[str, object]:
+        """Return paired fold effects for stability gates without rerunning fits."""
+        by_fold: dict[int, list[_Prediction]] = defaultdict(list)
+        for record in records:
+            by_fold[record.fold_id].append(record)
+        folds: list[dict[str, object]] = []
+        for fold_id, fold_records in sorted(by_fold.items()):
+            metrics = self._arm_metrics(fold_records)
+            if not metrics:
+                continue
+            candidate = metrics[contrast.candidate]
+            reference = metrics[contrast.reference]
+            folds.append({
+                "fold_id": fold_id,
+                "n_predictions": len(fold_records),
+                "brier_effect": reference["brier"] - candidate["brier"],
+                "log_loss_effect": reference["log_loss"] - candidate["log_loss"],
+                "ece_effect": reference["ece"] - candidate["ece"],
+            })
+        return {
+            "fold_count": len(folds),
+            "positive_brier_folds": sum(
+                float(fold["brier_effect"]) > 0.0 for fold in folds
+            ),
+            "folds": folds,
+        }
 
     def _bootstrap_effects(
         self,

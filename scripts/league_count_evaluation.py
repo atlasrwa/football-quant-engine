@@ -24,6 +24,7 @@ from src.discovery.corpus import (
     load_discovery_set,
     load_heldout_set,
 )
+from src.research.evaluation.laliga_corners import protocol_definition
 from src.research.evaluation.league_count import (
     LeagueCountEvaluationConfig,
     LeagueCountEvaluator,
@@ -153,9 +154,15 @@ def main(argv: Sequence[str] | None = None) -> None:
     }
     args.output.parent.mkdir(parents=True, exist_ok=True)
     args.output.write_text(json.dumps(report, indent=2) + "\n", encoding="utf-8")
+    confirmation = report["confirmation_protocols"][0]
     print(
         f"wrote {args.output} ({len(report['cells'])} complete preregistered cells; "
         f"valid BH family={report['governance']['valid_family_size']})"
+    )
+    print(
+        "La Liga corners confirmation "
+        f"[{protocol_definition()['document_id']}]: status={confirmation['status']} "
+        f"decision={confirmation['decision']} (research only; not promotable)"
     )
 
 
