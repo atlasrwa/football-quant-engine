@@ -232,3 +232,38 @@ def _fixture(
         "team_b_shots": away_shots,
         "totalCornerCount": 10,
     }
+
+
+
+def test_report_includes_fail_closed_laliga_corners_confirmation_protocol() -> None:
+    spec = _spec()
+    rows = [
+        {
+            "_fixture_id": f"Spain La Liga-{week}",
+            "_league": "Spain La Liga",
+            "_season": "s1",
+            "date_unix": 1_700_000_000 + week * 604_800,
+            "_date_block": f"d{week}",
+            "_league_week_block": f"Spain La Liga:w{week}",
+            "home_team_id": 1,
+            "away_team_id": 2,
+            "total_goals": float(week % 4),
+        }
+        for week in range(20)
+    ]
+    report = LeagueCountEvaluator(
+        LeagueCountEvaluationConfig(
+            min_global_train=5,
+            min_league_train=3,
+            refit_every_kickoff_batches=3,
+            min_cell_predictions=5,
+            min_bootstrap_blocks=3,
+            bootstrap_draws=10,
+        )
+    ).evaluate({"goals": rows}, (spec,), preregistered_leagues=("Spain La Liga",))
+
+    protocol = report.confirmation_protocols[0]
+    assert protocol["protocol"]["document_id"] == "laliga-corners-hierarchical-v2"
+    assert protocol["status"] == "insufficient"
+    assert protocol["decision"] == "RESEARCH_ONLY_NOT_PROMOTABLE"
+    assert all(value is False for value in protocol["promotion_gate"].values())
