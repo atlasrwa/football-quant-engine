@@ -294,10 +294,56 @@ def discover(dry_run: bool = False) -> dict:
             fixtures, used, ok = _fetch_league_scheduled(comp_id, day_bucket)
             requests_used += used
         except SystemExit as e:
-            # client hit a cap / abort — record and stop cleanly (partial discovery)
-            hit_cap = True
-            errors.append(f"{name}: client abort (SystemExit {e.code})")
-            break
+            # Distinguish a deliberate budget stop from broken plumbing. The old
+            # blanket catch set hit_cap=True for ANY exit code, so a missing
+            # THESTATS_API_KEY (code 2) and an API auth rejection (code 6) were both
+            # written to the status file as "hit_request_cap": true. That is exactly
+            # how this pipeline reported a tidy quota stop for 98.7 hours while
+            # authentication was failing and nothing was being collected.
+            code, clean, reason = api.describe_abort(e)
+            errors.append(f"{name}: client abort (SystemExit {code}): {reason}")
+            if clean:
+                hit_cap = True
+                break
+            # Broken plumbing is not a quota outcome. Record it as a hard failure and
+            # re-raise so the caller and the monitor see a failed run, not a clean one.
+            stats = {
+                "generated": _now_iso(),
+                "window_days": WINDOW_DAYS,
+                "covered_leagues": COVERED_LEAGUES,
+                "per_league": per_league,
+                "upcoming_fixtures_in_window_seen": total_in_window,
+                "covered_settleable_fixtures_in_window": total_covered_in_window,
+                "fixtures_added": added,
+                "fixtures_refreshed_in_place": refreshed,
+                "universe_size_after": len(match_ids),
+                "requests": {
+                    "live_requests_used_this_run": requests_used,
+                    "per_run_request_cap": REQUEST_CAP,
+                    "monthly_remaining_before": quota_before,
+                    "monthly_remaining_after": quota_before,
+                    "monthly_quota_used_this_run": 0,
+                    "assumed_discovery_runs_per_week": DISCOVERY_RUNS_PER_WEEK,
+                    "projected_weekly_request_consumption": 0.0,
+                    "weeks_of_runway_at_this_rate": None,
+                    "note": (
+                        f"Discovery aborted: {reason}. This is NOT a quota outcome — "
+                        "no conclusion about budget may be drawn from this run."
+                    ),
+                },
+                "errors": errors,
+                "hit_request_cap": False,
+                "hard_abort": True,
+                "abort_code": code,
+                "abort_reason": reason,
+                "duration_seconds": round(time.time() - run_start, 1),
+                "dry_run": dry_run,
+                "state": "failed",
+                "SEPARATION_NOTE": "Writes only Pilot C's fixture universe; never Pipeline A.",
+            }
+            _write_status("failed", stats)
+            _print_summary(stats)
+            raise
         except Exception as e:  # network/parse — treat as failure for this league
             errors.append(f"{name}: {type(e).__name__}: {str(e)[:120]}")
             per_league[comp_id] = {"league": name, "error": str(e)[:120]}

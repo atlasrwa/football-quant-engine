@@ -1,0 +1,18 @@
+[Unit]
+Description=Forecast broadcast heartbeat watchdog (Telegram: stale ledger, coverage gap, delivery failures, quiet-hours hold, stale universe, provider failure, low quota)
+Documentation=file:///home/ubuntu/scripts/forecast_broadcast_heartbeat.py
+# Successor to pilotc-heartbeat.service, retired when Pilot C was deprecated (F024).
+# Independent of the broadcaster's own schedule and read-only against its records:
+# every check observes an artifact, never a component's self-report. That distinction
+# is why Pilot C's outage went unnoticed for 98.7h and why the stale-ledger check is
+# the one that eventually caught it.
+
+[Service]
+Type=oneshot
+WorkingDirectory=/home/ubuntu
+# Do not let a slow Telegram call or filesystem stall wedge the timer.
+TimeoutStartSec=120
+ExecStart=/home/ubuntu/.venv/bin/python /home/ubuntu/scripts/forecast_broadcast_heartbeat.py
+# Loud but bounded logging (view: journalctl --user -u forecast-broadcast-heartbeat).
+StandardOutput=journal
+StandardError=journal

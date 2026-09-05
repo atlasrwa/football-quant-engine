@@ -1,60 +1,78 @@
 #!/usr/bin/env bash
-# Install the Pilot C forward-loop cron entries — idempotently.
+# Install the shared data-pipeline cron entries — idempotently.
 #
-# Pilot C is a SEPARATE experiment from Pipeline A (corners/cards). It has its own
-# ledger and pre-registration and must never be pooled with Pipeline A. This script
-# ADDS Pilot C entries and leaves Pipeline A's entry (quarantine_forward_loop.py)
-# untouched.
+# HISTORY: this script used to install the Pilot C forward loop as well. Pilot C was
+# deprecated on 2026-09-05 (see public_site/failure_ledger.json F024) and its four
+# entries — the 6-hourly full cycle, the 03:30 and 20:20 settle-only passes, and the
+# Monday 08:20 health report — were REMOVED. Its ledgers are preserved untouched;
+# only the collection schedule is gone. A deprecated experiment must not keep
+# spending budget or paging a human.
 #
-# CRITICAL: Pilot C's predictor uses scikit-learn, which lives ONLY in the project
-# virtualenv (/home/ubuntu/.venv), NOT in /usr/bin/python3. The cron entries below
-# therefore invoke the venv interpreter explicitly. (Pipeline A uses /usr/bin/python3
-# because its model has no sklearn dependency.)
+# The entries below are NOT Pilot C's. They serve the shared fixture/odds data
+# pipeline and the daily signals delivery, and are retained.
 #
-# Schedule:
-#   - full loop every 6 hours (fetch odds -> predict+commit -> settle+reveal).
-#     6-hourly gives margin to recover a failed run before a fixture's pre-kickoff
-#     window (2h) closes. A missed pre-kickoff window is PERMANENT sample loss.
-#   - a dedicated daily settle-only pass at 03:30 so reveals bind promptly even if
-#     a full run was skipped.
-#   - an EXTRA settle-only pass at 20:00 UTC to close the 18:00->00:00 gap so
-#     afternoon kickoffs (which finish ~late afternoon/early evening UTC) settle the
-#     SAME day rather than waiting for the 03:30 pass the next morning.
-#   - a weekly health report Monday 08:00 (early warning for projection slippage).
+# CRITICAL — CREDENTIALS: these entries invoke the venv interpreter directly, and
+# cron runs with a minimal environment. THESTATS_API_KEY is currently exported only
+# from ~/.bashrc, which returns early for non-interactive shells, so cron cannot see
+# it. Scripts here call load_env() to read /home/ubuntu/.env, so the key belongs in
+# .env alongside FOOTYSTATS_API_KEY. Until it is there, every TheStatsAPI call from
+# cron aborts with SystemExit 2. That is exactly what killed Pilot C, and it is why
+# thestatsapi_client.is_clean_stop() now exists: an auth failure must never be
+# recorded as a tidy budget stop.
 #
-# Re-running this script is safe: it removes any prior Pilot C block (delimited by
-# the markers below) before re-adding the current one. It never touches other lines.
+# Schedule (UTC):
+#   - daily simple-model signals + Telegram delivery at 00:00.
+#   - hourly raw-provider and price-change scan; flock prevents a slow scan from
+#     overlapping the next invocation. Only fully gated candidates are alerted.
+#   - provider league identity/capability registry refresh daily at 00:30. Metadata
+#     only; it never promotes research leagues.
+#
+# Re-running this script is safe: it removes any prior block (both the legacy Pilot C
+# marker and the current one) before re-adding the current block. It never touches
+# other lines, including Pipeline A's quarantine_forward_loop entry and the forecast
+# broadcast block managed by install_forecast_broadcast_cron.sh.
 
 set -euo pipefail
 
 PY="/home/ubuntu/.venv/bin/python"
 REPO="/home/ubuntu"
-LOG="${REPO}/logs/pilotC_loop.log"
-BEGIN="# >>> pilotC forward loop (managed by install_pilotC_cron.sh) >>>"
-END="# <<< pilotC forward loop <<<"
+LOG="${REPO}/logs/daily_signals_telegram.log"
+ALERT_LOG="${REPO}/logs/fixture_alert_watcher.log"
+SYNC_LOG="${REPO}/logs/provider_league_sync.log"
+
+# Current marker.
+BEGIN="# >>> shared data pipeline (managed by install_pilotC_cron.sh) >>>"
+END="# <<< shared data pipeline <<<"
+# Legacy marker from when this block also carried Pilot C. Stripped so a re-run
+# cleanly migrates an existing crontab instead of leaving both blocks installed.
+LEGACY_BEGIN="# >>> pilotC forward loop (managed by install_pilotC_cron.sh) >>>"
+LEGACY_END="# <<< pilotC forward loop <<<"
 
 if [[ ! -x "${PY}" ]]; then
-  echo "ERROR: venv python not found at ${PY} (Pilot C needs sklearn from the venv)." >&2
+  echo "ERROR: venv python not found at ${PY}." >&2
   exit 1
 fi
 
 mkdir -p "${REPO}/logs"
 
-# Current crontab (empty string if none), with any existing Pilot C block stripped.
+# Current crontab (empty string if none), with both the legacy and current blocks
+# stripped. sed addresses are literal comment lines, so nothing else is touched.
 current="$(crontab -l 2>/dev/null || true)"
-stripped="$(printf '%s\n' "${current}" | sed "/${BEGIN}/,/${END}/d")"
+stripped="$(printf '%s\n' "${current}" \
+  | sed "\\|${LEGACY_BEGIN}|,\\|${LEGACY_END}|d" \
+  | sed "\\|${BEGIN}|,\\|${END}|d")"
 
 block="$(cat <<EOF
 ${BEGIN}
-# Full cycle every 6 hours: fetch odds -> predict+commit(before kickoff) -> settle+reveal
-0 */6 * * * cd ${REPO} && ${PY} scripts/pilotC_forward_loop.py >> ${LOG} 2>&1
-# Daily settle-only pass so reveals bind promptly
-30 3 * * * cd ${REPO} && ${PY} scripts/pilotC_forward_loop.py --settle-only >> ${LOG} 2>&1
-# Extra settle-only pass at 20:00 UTC — closes the 18:00->00:00 gap so afternoon
-# kickoffs settle the SAME day instead of waiting for the 03:30 pass next morning.
-0 20 * * * cd ${REPO} && ${PY} scripts/pilotC_forward_loop.py --settle-only >> ${LOG} 2>&1
-# Weekly health report (Mon 08:00 UTC)
-0 8 * * 1 cd ${REPO} && ${PY} scripts/pilotC_forward_loop.py --health >> ${LOG} 2>&1
+CRON_TZ=UTC
+# NOTE: Pilot C's four entries were removed here on 2026-09-05 (deprecated, see F024).
+# Its ledgers are preserved; only the collection schedule was withdrawn.
+# Generate the daily simple-model signals and deliver any new Telegram messages at 00:00 UTC.
+0 0 * * * cd ${REPO} && /usr/bin/flock -n /tmp/daily_signals_telegram.lock /bin/bash -lc '${PY} -m src.cli daily-signals && ${PY} scripts/signals_telegram_bot.py' >> ${LOG} 2>&1
+# Revalidate today's fixtures every 60 minutes, starting at 00:00 UTC; alert only EV candidates that pass every gate.
+0 * * * * cd ${REPO} && /usr/bin/flock -n /tmp/fixture_alert_watcher.lock ${PY} scripts/fixture_alert_watcher.py >> ${ALERT_LOG} 2>&1
+# Refresh the fail-closed FootyStats <-> TheStatsAPI league registry daily.
+30 0 * * * cd ${REPO} && /usr/bin/flock -n /tmp/provider_league_sync.lock ${PY} scripts/sync_provider_leagues.py --refresh >> ${SYNC_LOG} 2>&1
 ${END}
 EOF
 )"
@@ -65,5 +83,5 @@ EOF
   printf '%s\n' "${block}"
 } | crontab -
 
-echo "Installed Pilot C cron entries. Current crontab:"
+echo "Installed shared data-pipeline cron entries (Pilot C entries removed). Current crontab:"
 crontab -l

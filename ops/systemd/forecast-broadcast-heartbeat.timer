@@ -1,0 +1,19 @@
+[Unit]
+Description=Run the forecast broadcast heartbeat watchdog every 15 minutes
+Documentation=file:///home/ubuntu/scripts/forecast_broadcast_heartbeat.py
+
+[Timer]
+# Every 15 minutes, anchored to the quarter hour — matching the broadcaster's own tick
+# so a missed publication is detected within one cycle rather than at the next
+# horizon. Offset by 7 minutes so the watchdog observes a settled state rather than
+# racing the broadcaster mid-write.
+OnCalendar=*:7/15
+# Fire shortly after boot so a reboot does not blind the watchdog until the next tick.
+OnBootSec=2min
+# Catch up a missed tick on the next opportunity.
+Persistent=true
+AccuracySec=30s
+Unit=forecast-broadcast-heartbeat.service
+
+[Install]
+WantedBy=timers.target

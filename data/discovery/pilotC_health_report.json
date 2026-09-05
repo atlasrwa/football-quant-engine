@@ -1,56 +1,23 @@
 {
-  "generated": "2026-09-01T01:32:10.644865+00:00",
+  "generated": "2026-09-05T03:30:03.663710+00:00",
   "STATUS": "Pilot C forward-collection health. MEASUREMENT ONLY \u2014 no edge claim. No edge conclusion may be drawn from unsettled fixtures.",
   "ledger_chain_verifies": true,
   "ledger_problems": [],
   "discovery_health": {
-    "discovery_state": "found",
-    "interpretation": "healthy",
-    "healthy": true,
-    "last_discovery": "2026-08-31T18:00:03.995978+00:00",
-    "age_hours": 7.5,
+    "discovery_state": "failed",
+    "interpretation": "broken",
+    "healthy": false,
+    "last_discovery": "2026-09-03T18:10:04.597599+00:00",
+    "age_hours": 33.3,
     "stale_threshold_hours": 96,
     "window_days": 10,
-    "upcoming_in_window_seen": 69,
-    "covered_settleable_in_window": 39,
+    "upcoming_in_window_seen": 0,
+    "covered_settleable_in_window": 0,
     "fixtures_added_last_run": 0,
-    "per_league": {
-      "comp_8321": {
-        "league": "England Championship",
-        "fixtures_returned": 60,
-        "upcoming_in_window": 36,
-        "covered_settleable_in_window": 27,
-        "added": 0,
-        "coverage_gap": 9
-      },
-      "comp_3039": {
-        "league": "England Premier League",
-        "fixtures_returned": 31,
-        "upcoming_in_window": 11,
-        "covered_settleable_in_window": 10,
-        "added": 0,
-        "coverage_gap": 1
-      },
-      "comp_9777": {
-        "league": "France Ligue 2",
-        "fixtures_returned": 28,
-        "upcoming_in_window": 10,
-        "covered_settleable_in_window": 2,
-        "added": 0,
-        "coverage_gap": 8
-      },
-      "comp_0976": {
-        "league": "Spain La Liga 2",
-        "fixtures_returned": 46,
-        "upcoming_in_window": 12,
-        "covered_settleable_in_window": 0,
-        "added": 0,
-        "coverage_gap": 12
-      }
-    },
+    "per_league": {},
     "requests_last_run": 0,
     "projected_weekly_request_consumption": 0.0,
-    "note": "Discovery ran and found upcoming covered fixtures. Inflow is live."
+    "note": "Discovery DID NOT complete (failed/never-ran). Inflow has stopped; the universe will drain and the loop will fall silent. Investigate immediately."
   },
   "attestation": {
     "total_commitments": 160,
@@ -77,15 +44,26 @@
     },
     "ungradeable_cells_by_market": {
       "counts": {
-        "corners": 2
+        "corners": 11,
+        "cards": 9
       },
       "note": "Finished-but-unrevealed corners/cards cells whose /stats payload is unavailable (e.g. a league TheStatsAPI does not cover). Counted, not silently skipped. A visible number replaces the former silent zero."
     },
     "fixtures_awaiting_settlement_past_window": {
-      "n": 2,
+      "n": 12,
       "fixtures": [
         "mt_894607998",
-        "mt_465182668"
+        "mt_465182668",
+        "mt_200170326",
+        "mt_022532705",
+        "mt_511941653",
+        "mt_988328092",
+        "mt_377416880",
+        "mt_988327182",
+        "mt_899703553",
+        "mt_466280764",
+        "mt_022531425",
+        "mt_200193979"
       ],
       "note": "Committed, kicked off >3h ago, still not revealed. Investigate if this persists \u2014 settlement may be stuck."
     }
@@ -111,11 +89,11 @@
     "observed_weekly_settle_rate": 30.0,
     "estimated_weeks_to_readout_at_observed_settle_rate": 114.5,
     "settle_rate_note": "Weeks-to-readout from the SETTLE rate is a noisy extrapolation until many fixtures have settled; treat it as indicative only while total_settled is small.",
-    "observed_covered_inflow_per_week": 27.3,
+    "observed_covered_inflow_per_week": 0.0,
     "assumed_covered_inflow_per_week": 10.0,
-    "inflow_assumption_holds": true,
-    "inflow_shortfall_pct_vs_assumption": -173.0,
-    "estimated_weeks_to_readout_at_observed_inflow": 14.0,
+    "inflow_assumption_holds": false,
+    "inflow_shortfall_pct_vs_assumption": 100.0,
+    "estimated_weeks_to_readout_at_observed_inflow": null,
     "original_projection_weeks": 38.5,
     "inflow_note": "Inflow is the binding constraint early on. The ~38.5-week projection assumes ~10 covered fixtures/week. If observed inflow is materially below that, the timeline slips \u2014 surfaced here, not at the readout date.",
     "slippage_note": "If weeks-to-readout at the observed rate exceeds the original ~38.5-week projection, collection is running slower than planned."
@@ -125,12 +103,12 @@
     "all_time_ratio_note": "Dragged down by the unscheduled-gap backlog and the 22 permanently-missed windows (sunk, never backdated). NOT the steady-state measure.",
     "first_full_week_ratio": 1.0,
     "first_week_committed": 128,
-    "first_week_available_estimate": 27.3,
+    "first_week_available_estimate": 0.0,
     "discovery_live_since": "2026-08-31T01:32:11.420975+00:00",
     "first_week_ratio_note": "This is the real measure of steady-state capture once discovery+scheduler are live. Should recover toward 1.0; the 0.18 baseline reflects the unscheduled gap, not steady-state performance."
   },
   "quota": {
-    "monthly_remaining": 4768,
+    "monthly_remaining": 1391,
     "low_quota_threshold": 500,
     "low_quota": false
   }

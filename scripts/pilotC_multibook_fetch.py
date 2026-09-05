@@ -47,6 +47,14 @@ def _ordered_ids(fx):
 
 
 def main():
+    # Pre-flight visibility: the client is cache-first, so a fully-cached re-run needs
+    # no key. But if the key is absent AND any live fetch is required, the client will
+    # exit(2) and this script now fails hard (see the SystemExit handler below) instead
+    # of the old behaviour that reported a clean run with zero requests.
+    if not os.environ.get('THESTATS_API_KEY'):
+        print("WARNING: THESTATS_API_KEY not set. Only cache hits can succeed; any "
+              "fixture needing a live fetch will FAIL THE RUN (no longer a silent "
+              "'clean stop').", file=sys.stderr)
     fx=json.load(open(LIST)); meta=fx['meta']
     ids=_ordered_ids(fx)
     stats={'live_calls':0,'cached':0,'empty':0,'populated':0,'fixtures_attempted':len(ids),
@@ -60,9 +68,25 @@ def main():
                 data,m=api.get_json(f"/football/matches/{mid}/odds",
                                     params={"bookmaker":bk}, cache_key=ck,
                                     allow_status=(200,404,422))
-            except SystemExit:
-                print("CAP/così budget stop reached — halting cleanly.")
-                _dump(stats,saved); return
+            except SystemExit as e:
+                # Distinguish a CLEAN budget/cap stop (client exit code 3) from a HARD
+                # failure such as missing auth (exit code 2) or anything else. The old
+                # blanket catch reported fetch_ok=true with zero errors even when the
+                # API key was absent, masking a broken measurement pipeline (see the
+                # executive review, S5). Only code 3 is a clean stop; everything else
+                # must fail the run so the heartbeat/monitor can see it.
+                code = e.code if isinstance(e.code, int) else 1
+                if code == 3:
+                    print("CAP: local request budget reached — halting cleanly.")
+                    stats['clean_cap_stop'] = True
+                    _dump(stats,saved)
+                    return
+                print(f"ABORT: fetch failed hard (SystemExit code={code}); "
+                      f"NOT a clean stop. Failing the run.", file=sys.stderr)
+                stats['hard_abort'] = True
+                stats['abort_code'] = code
+                _dump(stats,saved)
+                raise  # propagate: non-zero exit so the run is visibly failed
             if m.get('from_cache'): stats['cached']+=1
             elif m.get('http_status')==200: stats['live_calls']+=1
             bks=(data or {}).get('data',{}).get('bookmakers',[]) if data else []

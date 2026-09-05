@@ -1,10 +1,13 @@
 # Atlas Watchtower — every 15 minutes (replaces GitHub Actions)
 0 */4 * * * cd /home/ubuntu && /usr/bin/python3 scripts/quarantine_forward_loop.py >> logs/forward_loop.log 2>&1
-# >>> pilotC forward loop (managed by install_pilotC_cron.sh) >>>
-# Full cycle every 6 hours: fetch odds -> predict+commit(before kickoff) -> settle+reveal
-0 */6 * * * cd /home/ubuntu && /home/ubuntu/.venv/bin/python scripts/pilotC_forward_loop.py >> /home/ubuntu/logs/pilotC_loop.log 2>&1
-# Daily settle-only pass so reveals bind promptly
-30 3 * * * cd /home/ubuntu && /home/ubuntu/.venv/bin/python scripts/pilotC_forward_loop.py --settle-only >> /home/ubuntu/logs/pilotC_loop.log 2>&1
-# Weekly health report (Mon 08:00 UTC)
-0 8 * * 1 cd /home/ubuntu && /home/ubuntu/.venv/bin/python scripts/pilotC_forward_loop.py --health >> /home/ubuntu/logs/pilotC_loop.log 2>&1
-# <<< pilotC forward loop <<<
+# >>> shared data pipeline (managed by install_pilotC_cron.sh) >>>
+CRON_TZ=UTC
+# NOTE: Pilot C's four entries were removed here on 2026-09-05 (deprecated, see F024).
+# Its ledgers are preserved; only the collection schedule was withdrawn.
+# Generate the daily simple-model signals and deliver any new Telegram messages at 00:00 UTC.
+0 0 * * * cd /home/ubuntu && /usr/bin/flock -n /tmp/daily_signals_telegram.lock /bin/bash -lc '/home/ubuntu/.venv/bin/python -m src.cli daily-signals && /home/ubuntu/.venv/bin/python scripts/signals_telegram_bot.py' >> /home/ubuntu/logs/daily_signals_telegram.log 2>&1
+# Revalidate today's fixtures every 60 minutes, starting at 00:00 UTC; alert only EV candidates that pass every gate.
+0 * * * * cd /home/ubuntu && /usr/bin/flock -n /tmp/fixture_alert_watcher.lock /home/ubuntu/.venv/bin/python scripts/fixture_alert_watcher.py >> /home/ubuntu/logs/fixture_alert_watcher.log 2>&1
+# Refresh the fail-closed FootyStats <-> TheStatsAPI league registry daily.
+30 0 * * * cd /home/ubuntu && /usr/bin/flock -n /tmp/provider_league_sync.lock /home/ubuntu/.venv/bin/python scripts/sync_provider_leagues.py --refresh >> /home/ubuntu/logs/provider_league_sync.log 2>&1
+# <<< shared data pipeline <<<
