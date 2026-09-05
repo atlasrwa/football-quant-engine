@@ -58,10 +58,6 @@ FORECAST_PAYLOAD_CONTRACT = "forecast-broadcast-payload/v1"
 #: hash from the persisted record reproduces the published hash exactly.
 _PROB_PLACES = 4
 
-#: Probabilities are displayed at this precision. The under side is rendered as the
-#: complement of the *displayed* over, so the two figures shown always sum to 1.00.
-_DISPLAY_PLACES = 2
-
 
 class ForecastContentError(ValueError):
     """The rendered message violates the forecast-only contract.
@@ -180,12 +176,18 @@ class MarketForecast:
         return self.p_over is not None
 
     def display_pair(self) -> tuple[str, str]:
-        """Displayed over/under figures, guaranteed to sum to 1.00."""
+        """Displayed over/under figures as whole-number percentages summing to 100%.
+
+        The under side is the complement of the *displayed* over percentage, so the
+        two figures shown always sum to 100% regardless of rounding. This is a
+        presentation-only change: the stored/hashed probabilities keep ``_PROB_PLACES``
+        precision, so commitment hashes are unaffected.
+        """
         if not self.is_priced:
             return ("n/a", "n/a")
-        over = round(float(self.p_over), _DISPLAY_PLACES)
-        under = round(1.0 - over, _DISPLAY_PLACES)
-        return (f"{over:.{_DISPLAY_PLACES}f}", f"{under:.{_DISPLAY_PLACES}f}")
+        over_pct = round(float(self.p_over) * 100.0)
+        under_pct = 100 - over_pct
+        return (f"{over_pct}%", f"{under_pct}%")
 
     def canonical_dict(self) -> dict[str, Any]:
         return {
@@ -488,9 +490,13 @@ def assert_forecast_only(
             raise ForecastContentError(
                 f"market {market.market!r} does not show both probabilities"
             )
-        if abs(float(over_display) + float(under_display) - 1.0) > 1e-9:
+        # display_pair() renders whole-number percentages like "59%"/"41%"; parse the
+        # numeric part and require the two shown sides to sum to 100%.
+        over_pct = float(over_display.rstrip("%"))
+        under_pct = float(under_display.rstrip("%"))
+        if abs(over_pct + under_pct - 100.0) > 1e-9:
             raise ForecastContentError(
-                f"market {market.market!r} displayed sides do not sum to 1.00"
+                f"market {market.market!r} displayed sides do not sum to 100%"
             )
 
     for field_name, value in (

@@ -135,11 +135,11 @@ class TestMessageContent:
             assert spec.over_label in message
             assert spec.under_label in message
 
-    def test_every_displayed_pair_sums_to_one(self, message):
-        pairs = re.findall(r"(\d\.\d\d)\s+/\s+.*?(\d\.\d\d)", message)
+    def test_every_displayed_pair_sums_to_one_hundred_percent(self, message):
+        pairs = re.findall(r"(\d+)%\s+/\s+.*?(\d+)%", message)
         assert pairs, "no market rows rendered"
         for over, under in pairs:
-            assert abs(float(over) + float(under) - 1.0) < 1e-9
+            assert int(over) + int(under) == 100
 
     def test_carries_all_four_provenance_fields(self, message, payload):
         assert f"model_version: {MODEL_VERSION}" in message
