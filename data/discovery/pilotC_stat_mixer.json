@@ -1,4 +1,21 @@
 {
+  "PRIMARY_CLAIM": "CALIBRATION, not skill. ECE per cell is 0.006-0.026 (goals/btts best, cards ~0.024-0.026): the probabilities are well-calibrated and mean what they say. Lead with this.",
+  "skill_claim_caveat": {
+    "status": "UNRESOLVED — do NOT present bss_pct as demonstrated skill.",
+    "what_bss_pct_is": "Pooled, cross-league, single chronological 70/30 split, corpus-internal (out-of-sample-in-time), un-FDR-corrected. It measures sharpness vs ONE global base rate over all leagues combined.",
+    "per_league_contradiction": {
+      "summary": "The identical methodology run independently per league does NOT replicate the pooled positive BSS.",
+      "positive_cells": "41 of 189 league x market cells positive (21.7%).",
+      "every_market_median_bss": "<= 0 (or ~0) at league level; pooled was positive on all 9.",
+      "data_richest_leagues_are_worst": "England Championship (n=1114) mean -1.66; USA MLS (n=1062) -2.00; Germany 2. Bundesliga -2.53.",
+      "source": "PER_LEAGUE_STATMIXER_REPORT.md / data/results/pilotC_per_league.json"
+    },
+    "likely_explanation": "The pooled BSS may be a cross-league pooling artifact (between-league base-rate dispersion a single global base rate cannot match), not per-league skill. It may also reflect a variance problem that hierarchical partial pooling would address. Either reading is consistent with the evidence.",
+    "decisive_test_outstanding": "The within-league comparison — scoring the pooled model's predictions INSIDE each league against a league-aware baseline on identical fixtures — has NOT been run. Until it is, pooled skill is unresolved.",
+    "do_not_substitute_per_league_as_headline": "The per-league figures are also single-split and un-FDR-corrected across the 189-cell family; they are candidate signal generators, not validated edges.",
+    "forward_oos_status": "This is a corpus single-split result, NOT settled forward-out-of-sample. The forward track is still accumulating and has produced no verdict.",
+    "bss_labeling": "bss_pct below is retained for the record but is pooled/cross-league/single-split and contradicted by the per-league run. Not skill."
+  },
   "method": "elastic-net logistic (CV C + l1_ratio) on mechanism-valid raw-stat pools, PIT team-keyed",
   "validation": {
     "outer_split": "first 70% train / final 30% test, chronological",

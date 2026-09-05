@@ -189,10 +189,31 @@ class TestContentGate:
         "ROI 6.1%",
         "bankroll 2%",
         "beats the market",
+        # skill / edge-over-base-rate framing — the pooled BSS does not replicate
+        # per-league, so skill claims must never reach a reader.
+        "the model has genuine, modest skill over the base rate",
+        "demonstrated skill in this league",
+        "proven skill",
+        "beats the base rate",
+        "edge over the naive baseline",
+        "this model outperforms the base rate",
+        "validated: BSS +1.5%",
+        "Brier skill score +1.67%",
+        "the model beats naive here",
     ])
     def test_rejects_forbidden_framing(self, message, payload, addition):
         with pytest.raises(P.ForecastContentError):
             P.assert_forecast_only(f"{message}\n{addition}", payload)
+
+    @pytest.mark.parametrize("skill_word", [
+        "skill", "skilful", "outperform", "proven", "validated", "beats",
+    ])
+    def test_rejects_skill_claim_vocabulary(self, message, payload, skill_word):
+        """A forecast is a calibrated probability, never a skill claim. The pooled
+        BSS was contradicted by the per-league run, so any reintroduction of skill
+        framing must fail the gate at send time (defence in depth for CI)."""
+        with pytest.raises(P.ForecastContentError):
+            P.assert_forecast_only(f"{message}\n{skill_word} demonstrated", payload)
 
     def test_rejects_a_message_that_drops_the_under_side(self, message, payload):
         one_sided = "\n".join(

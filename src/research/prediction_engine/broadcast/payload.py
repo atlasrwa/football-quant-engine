@@ -93,6 +93,12 @@ FORBIDDEN_TOKENS: tuple[str, ...] = (
     # persuasion
     "lock", "banger", "banker", "nap", "guaranteed", "profit", "profitable",
     "winner", "beats", "sharp",
+    # skill / validation framing — a forecast states a calibrated probability, never
+    # a claim that the model has skill or an edge over the base rate. The pooled BSS
+    # does not replicate per-league (see data/discovery/pilotC_stat_mixer.json
+    # skill_claim_caveat), so this vocabulary must never reach a reader.
+    "skill", "skilful", "skillful", "outperform", "outperforms",
+    "outperformed", "proven", "validated", "replicates", "beat",
 )
 
 #: Multi-word phrasing that must never appear, checked case-insensitively.
@@ -100,6 +106,10 @@ FORBIDDEN_PHRASES: tuple[str, ...] = (
     "expected value", "value bet", "beat the market", "beats the market",
     "+ev", "-ev", "worth backing", "worth a", "place a", "get on",
     "back the", "lay the", "double chance play", "best price",
+    # skill / edge-over-base-rate framing
+    "beats the base rate", "beat the base rate", "over the base rate",
+    "edge over", "demonstrated skill", "proven skill", "genuine skill",
+    "modest skill", "brier skill", "beats naive", "beat naive",
 )
 
 #: Only permitted when a confidence rule is declared in config.
