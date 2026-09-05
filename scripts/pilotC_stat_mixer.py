@@ -29,7 +29,11 @@ from collections import defaultdict
 import numpy as np
 warnings.filterwarnings('ignore')
 sys.path.insert(0,'/home/ubuntu'); sys.path.insert(0,'/home/ubuntu/scripts')
-from sklearn.linear_model import LogisticRegressionCV
+from sklearn.impute import SimpleImputer
+from sklearn.linear_model import LogisticRegression
+from sklearn.model_selection import GridSearchCV, TimeSeriesSplit
+from sklearn.pipeline import Pipeline
+from sklearn.preprocessing import StandardScaler
 
 CORPUS='/home/ubuntu/data/discovery/corpus'
 
@@ -57,7 +61,11 @@ def load_corpus():
     for f in sorted(glob.glob(f'{CORPUS}/league-matches_*.json')):
         try: ms+=json.load(open(f)).get('data',[])
         except: pass
-    ms=[m for m in ms if m.get('date_unix') and m.get('home_name') and m.get('away_name')]
+    # Only completed matches may enter training or rolling inference histories.
+    # Scheduled rows contain provider placeholders (including zeroes and -1 values)
+    # that would otherwise contaminate both model fitting and current features.
+    ms=[m for m in ms if m.get('date_unix') and m.get('home_name') and m.get('away_name')
+        and str(m.get('status') or '').casefold() == 'complete']
     ms.sort(key=lambda m:m['date_unix'])
     return ms
 
@@ -148,24 +156,48 @@ def train_eval(ms, hist, market, line):
     if len(y)<400: return None
     n=len(y); split=int(n*0.7)
     Xtr_raw=X[:split]; ytr=np.array(y[:split]); Xte_raw=X[split:]; yte=np.array(y[split:])
-    # coverage filter (>=60% on train) then median impute
+    # Apply the predeclared unsupervised coverage rule on the outer-training period
+    # only. The untouched final 30% never influences the feature set, and this matches
+    # the feature-selection rule used by forward refits.
     cov=np.mean([[v is not None for v in r] for r in Xtr_raw],axis=0)
     keep=[i for i in range(len(names)) if cov[i]>=0.6]
     if len(keep)<3: return None
     names=[names[i] for i in keep]
     def mat(raw):
         return np.array([[ (np.nan if r[i] is None else r[i]) for i in keep] for r in raw],float)
-    Xtr=mat(Xtr_raw); Xte=mat(Xte_raw)
+    Xtr_raw_matrix=mat(Xtr_raw); Xte_raw_matrix=mat(Xte_raw)
+    if len(set(ytr.tolist()))<2 or len(set(yte.tolist()))<2: return None
+
+    # Tune preprocessing and elastic-net hyperparameters together inside expanding,
+    # chronological folds. Fitting medians/scales on all outer-training rows before
+    # CV would leak later fold distribution information into earlier folds.
+    tuning = Pipeline([
+        ('imputer', SimpleImputer(strategy='median')),
+        ('scaler', StandardScaler()),
+        ('model', LogisticRegression(penalty='elasticnet', solver='saga',
+                                     max_iter=4000, random_state=0)),
+    ])
+    search = GridSearchCV(
+        tuning,
+        param_grid={'model__C':[0.01,0.03,0.1,0.3,1.0],
+                    'model__l1_ratio':[0.2,0.5,0.8]},
+        cv=TimeSeriesSplit(n_splits=4), scoring='neg_log_loss', refit=True,
+    )
+    search.fit(Xtr_raw_matrix, ytr)
+    selected_C=float(search.best_params_['model__C'])
+    selected_l1=float(search.best_params_['model__l1_ratio'])
+
+    # Refit the selected fixed specification on all outer-training rows and evaluate
+    # once on the untouched final 30%. These final preprocessing parameters are also
+    # the same form used by forward inference.
+    Xtr=Xtr_raw_matrix.copy(); Xte=Xte_raw_matrix.copy()
     med=np.nanmedian(Xtr,0); med=np.where(np.isnan(med),0,med)
     for A in (Xtr,Xte):
         idx=np.where(np.isnan(A)); A[idx]=np.take(med,idx[1])
     mu,sd=Xtr.mean(0),Xtr.std(0); sd[sd==0]=1
     Xtr=(Xtr-mu)/sd; Xte=(Xte-mu)/sd
-    if len(set(ytr.tolist()))<2 or len(set(yte.tolist()))<2: return None
-    # ELASTIC-NET regulator: CV over C and l1_ratio
-    clf=LogisticRegressionCV(Cs=[0.01,0.03,0.1,0.3,1.0], cv=4, penalty='elasticnet',
-                             solver='saga', l1_ratios=[0.2,0.5,0.8], scoring='neg_log_loss',
-                             max_iter=4000, refit=True)
+    clf=LogisticRegression(penalty='elasticnet', solver='saga', C=selected_C,
+                           l1_ratio=selected_l1, max_iter=4000, random_state=0)
     clf.fit(Xtr,ytr)
     coefs=clf.coef_[0]; nsel=int(np.sum(np.abs(coefs)>1e-8))
     p=np.clip(clf.predict_proba(Xte)[:,1],0.01,0.99)
@@ -178,7 +210,7 @@ def train_eval(ms, hist, market, line):
     order=np.argsort(-np.abs(coefs))
     top=[{'feature':names[i],'coef':round(float(coefs[i]),3)} for i in order if abs(coefs[i])>1e-8][:8]
     return {'market':market,'line':line,'n_train':len(ytr),'n_test':len(yte),'base_rate':round(float(base),3),
-            'C':float(clf.C_[0]),'l1_ratio':float(clf.l1_ratio_[0]),'n_pool':len(names),'n_selected':nsel,
+            'C':selected_C,'l1_ratio':selected_l1,'n_pool':len(names),'n_selected':nsel,
             'bss_pct':round(bss,3),'ece':round(ece,4),'top_features':top}
 
 
@@ -187,7 +219,13 @@ def main():
     print(f'corpus {len(ms)} matches')
     targets=[('goals',1.5),('goals',2.5),('goals',3.5),('corners',8.5),('corners',9.5),
              ('corners',10.5),('cards',3.5),('cards',4.5),('btts',None)]
-    out={'method':'elastic-net logistic (CV C + l1_ratio) on mechanism-valid raw-stat pools, PIT team-keyed','models':[]}
+    out={'method':'elastic-net logistic (CV C + l1_ratio) on mechanism-valid raw-stat pools, PIT team-keyed',
+         'validation': {'outer_split': 'first 70% train / final 30% test, chronological',
+                        'inner_cv': 'TimeSeriesSplit(n_splits=4), expanding and chronological',
+                        'inner_preprocessing': 'median imputation and standardization fitted inside each tuning fold',
+                        'feature_coverage_selection': 'predeclared >=60% rule on outer-training period only',
+                        'random_state': 0},
+         'models':[]}
     for market,line in targets:
         r=train_eval(ms,hist,market,line)
         if r:
