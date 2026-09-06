@@ -1,21 +1,4 @@
 {
-  "PRIMARY_CLAIM": "CALIBRATION, not skill. ECE per cell is 0.006-0.026 (goals/btts best, cards ~0.024-0.026): the probabilities are well-calibrated and mean what they say. Lead with this.",
-  "skill_claim_caveat": {
-    "status": "UNRESOLVED — do NOT present bss_pct as demonstrated skill.",
-    "what_bss_pct_is": "Pooled, cross-league, single chronological 70/30 split, corpus-internal (out-of-sample-in-time), un-FDR-corrected. It measures sharpness vs ONE global base rate over all leagues combined.",
-    "per_league_contradiction": {
-      "summary": "The identical methodology run independently per league does NOT replicate the pooled positive BSS.",
-      "positive_cells": "41 of 189 league x market cells positive (21.7%).",
-      "every_market_median_bss": "<= 0 (or ~0) at league level; pooled was positive on all 9.",
-      "data_richest_leagues_are_worst": "England Championship (n=1114) mean -1.66; USA MLS (n=1062) -2.00; Germany 2. Bundesliga -2.53.",
-      "source": "PER_LEAGUE_STATMIXER_REPORT.md / data/results/pilotC_per_league.json"
-    },
-    "likely_explanation": "The pooled BSS may be a cross-league pooling artifact (between-league base-rate dispersion a single global base rate cannot match), not per-league skill. It may also reflect a variance problem that hierarchical partial pooling would address. Either reading is consistent with the evidence.",
-    "decisive_test_outstanding": "The within-league comparison — scoring the pooled model's predictions INSIDE each league against a league-aware baseline on identical fixtures — has NOT been run. Until it is, pooled skill is unresolved.",
-    "do_not_substitute_per_league_as_headline": "The per-league figures are also single-split and un-FDR-corrected across the 189-cell family; they are candidate signal generators, not validated edges.",
-    "forward_oos_status": "This is a corpus single-split result, NOT settled forward-out-of-sample. The forward track is still accumulating and has produced no verdict.",
-    "bss_labeling": "bss_pct below is retained for the record but is pooled/cross-league/single-split and contradicted by the per-league run. Not skill."
-  },
   "method": "elastic-net logistic (CV C + l1_ratio) on mechanism-valid raw-stat pools, PIT team-keyed",
   "validation": {
     "outer_split": "first 70% train / final 30% test, chronological",
@@ -28,140 +11,140 @@
     {
       "market": "goals",
       "line": 1.5,
-      "n_train": 10753,
-      "n_test": 4609,
-      "base_rate": 0.774,
-      "C": 0.01,
-      "l1_ratio": 0.2,
+      "n_train": 13071,
+      "n_test": 5602,
+      "base_rate": 0.787,
+      "C": 0.03,
+      "l1_ratio": 0.8,
       "n_pool": 72,
-      "n_selected": 33,
-      "bss_pct": 1.528,
-      "ece": 0.0064,
+      "n_selected": 32,
+      "bss_pct": 1.197,
+      "ece": 0.0054,
       "top_features": [
         {
-          "feature": "h_shotsOnTarget_for_std",
-          "coef": 0.094
+          "feature": "a_shotsOnTarget_for_std",
+          "coef": 0.08
         },
         {
-          "feature": "a_xg_against_std",
-          "coef": 0.062
+          "feature": "h_shotsOnTarget_for_std",
+          "coef": 0.071
+        },
+        {
+          "feature": "h_shotsOnTarget_for_10",
+          "coef": 0.069
         },
         {
           "feature": "h_shots_against_std",
-          "coef": 0.056
+          "coef": 0.067
         },
         {
-          "feature": "a_shotsOnTarget_for_std",
-          "coef": 0.045
-        },
-        {
-          "feature": "h_shotsOnTarget_against_5",
-          "coef": 0.044
+          "feature": "a_shotsOnTarget_against_std",
+          "coef": 0.062
         },
         {
           "feature": "a_attacks_against_10",
-          "coef": -0.036
+          "coef": -0.058
         },
         {
-          "feature": "h_possession_against_10",
-          "coef": -0.034
+          "feature": "h_possession_for_std",
+          "coef": 0.04
         },
         {
-          "feature": "h_possession_for_10",
-          "coef": 0.034
+          "feature": "h_possession_against_std",
+          "coef": -0.04
         }
       ]
     },
     {
       "market": "goals",
       "line": 2.5,
-      "n_train": 10753,
-      "n_test": 4609,
-      "base_rate": 0.538,
+      "n_train": 13071,
+      "n_test": 5602,
+      "base_rate": 0.556,
       "C": 0.01,
       "l1_ratio": 0.2,
       "n_pool": 72,
-      "n_selected": 33,
-      "bss_pct": 1.669,
-      "ece": 0.0073,
+      "n_selected": 39,
+      "bss_pct": 1.664,
+      "ece": 0.0041,
       "top_features": [
         {
           "feature": "h_shotsOnTarget_for_std",
-          "coef": 0.081
+          "coef": 0.094
         },
         {
           "feature": "a_shotsOnTarget_for_std",
-          "coef": 0.077
+          "coef": 0.087
         },
         {
-          "feature": "a_xg_against_std",
-          "coef": 0.057
+          "feature": "a_possession_against_5",
+          "coef": -0.044
         },
         {
-          "feature": "h_possession_against_10",
-          "coef": -0.056
-        },
-        {
-          "feature": "h_possession_for_10",
-          "coef": 0.056
-        },
-        {
-          "feature": "h_dangerous_attacks_against_std",
-          "coef": 0.053
-        },
-        {
-          "feature": "h_dangerous_attacks_for_std",
-          "coef": 0.042
+          "feature": "a_possession_for_5",
+          "coef": 0.044
         },
         {
           "feature": "a_shotsOnTarget_against_10",
-          "coef": 0.041
+          "coef": 0.039
+        },
+        {
+          "feature": "h_dangerous_attacks_against_std",
+          "coef": 0.038
+        },
+        {
+          "feature": "h_shotsOnTarget_for_10",
+          "coef": 0.035
+        },
+        {
+          "feature": "h_possession_for_10",
+          "coef": 0.032
         }
       ]
     },
     {
       "market": "goals",
       "line": 3.5,
-      "n_train": 10753,
-      "n_test": 4609,
-      "base_rate": 0.299,
-      "C": 0.01,
-      "l1_ratio": 0.2,
+      "n_train": 13071,
+      "n_test": 5602,
+      "base_rate": 0.324,
+      "C": 0.03,
+      "l1_ratio": 0.8,
       "n_pool": 72,
-      "n_selected": 32,
-      "bss_pct": 1.821,
-      "ece": 0.019,
+      "n_selected": 25,
+      "bss_pct": 1.695,
+      "ece": 0.0202,
       "top_features": [
         {
-          "feature": "h_shotsOnTarget_against_std",
-          "coef": 0.083
+          "feature": "h_shotsOnTarget_for_std",
+          "coef": 0.112
         },
         {
-          "feature": "h_shotsOnTarget_for_std",
-          "coef": 0.081
+          "feature": "h_shotsOnTarget_against_std",
+          "coef": 0.089
         },
         {
           "feature": "a_shotsOnTarget_against_10",
-          "coef": 0.064
-        },
-        {
-          "feature": "h_dangerous_attacks_against_std",
-          "coef": 0.059
-        },
-        {
-          "feature": "a_shotsOnTarget_for_10",
-          "coef": 0.056
+          "coef": 0.084
         },
         {
           "feature": "h_attacks_against_10",
-          "coef": -0.052
+          "coef": -0.064
+        },
+        {
+          "feature": "h_dangerous_attacks_against_std",
+          "coef": 0.063
         },
         {
           "feature": "h_attacks_for_std",
-          "coef": 0.048
+          "coef": 0.06
         },
         {
-          "feature": "a_xg_against_std",
+          "feature": "a_shotsOnTarget_for_std",
+          "coef": 0.051
+        },
+        {
+          "feature": "h_shotsOnTarget_for_10",
           "coef": 0.043
         }
       ]
@@ -169,282 +152,282 @@
     {
       "market": "corners",
       "line": 8.5,
-      "n_train": 10734,
-      "n_test": 4601,
-      "base_rate": 0.624,
+      "n_train": 13052,
+      "n_test": 5594,
+      "base_rate": 0.634,
       "C": 0.03,
       "l1_ratio": 0.8,
       "n_pool": 72,
-      "n_selected": 35,
-      "bss_pct": 1.617,
-      "ece": 0.0141,
+      "n_selected": 41,
+      "bss_pct": 1.547,
+      "ece": 0.0106,
       "top_features": [
         {
+          "feature": "h_corners_for_std",
+          "coef": 0.122
+        },
+        {
           "feature": "a_corners_for_std",
-          "coef": 0.113
+          "coef": 0.073
         },
         {
           "feature": "h_corners_against_std",
-          "coef": 0.107
-        },
-        {
-          "feature": "h_corners_for_std",
-          "coef": 0.091
-        },
-        {
-          "feature": "a_corners_against_std",
-          "coef": 0.055
-        },
-        {
-          "feature": "a_shots_for_10",
-          "coef": 0.039
+          "coef": 0.067
         },
         {
           "feature": "a_dangerous_attacks_against_10",
-          "coef": 0.036
-        },
-        {
-          "feature": "h_dangerous_attacks_against_std",
-          "coef": 0.035
+          "coef": 0.063
         },
         {
           "feature": "a_shotsOffTarget_against_5",
-          "coef": -0.031
+          "coef": -0.051
+        },
+        {
+          "feature": "a_attacks_against_std",
+          "coef": 0.05
+        },
+        {
+          "feature": "a_shots_for_10",
+          "coef": 0.041
+        },
+        {
+          "feature": "a_corners_against_std",
+          "coef": 0.033
         }
       ]
     },
     {
       "market": "corners",
       "line": 9.5,
-      "n_train": 10734,
-      "n_test": 4601,
-      "base_rate": 0.513,
+      "n_train": 13052,
+      "n_test": 5594,
+      "base_rate": 0.523,
       "C": 0.01,
-      "l1_ratio": 0.2,
+      "l1_ratio": 0.5,
       "n_pool": 72,
-      "n_selected": 40,
-      "bss_pct": 1.518,
-      "ece": 0.0234,
+      "n_selected": 25,
+      "bss_pct": 1.832,
+      "ece": 0.0208,
       "top_features": [
         {
+          "feature": "h_corners_for_std",
+          "coef": 0.101
+        },
+        {
           "feature": "h_corners_against_std",
-          "coef": 0.123
+          "coef": 0.083
         },
         {
           "feature": "a_corners_for_std",
-          "coef": 0.092
-        },
-        {
-          "feature": "h_corners_for_std",
-          "coef": 0.09
-        },
-        {
-          "feature": "a_corners_against_std",
-          "coef": 0.058
-        },
-        {
-          "feature": "a_shotsOffTarget_against_5",
-          "coef": -0.053
+          "coef": 0.046
         },
         {
           "feature": "a_shots_for_10",
-          "coef": 0.049
+          "coef": 0.043
         },
         {
           "feature": "a_dangerous_attacks_against_10",
-          "coef": 0.041
+          "coef": 0.043
         },
         {
-          "feature": "h_dangerous_attacks_for_std",
-          "coef": 0.037
+          "feature": "h_corners_for_10",
+          "coef": 0.029
+        },
+        {
+          "feature": "a_corners_against_std",
+          "coef": 0.026
+        },
+        {
+          "feature": "a_dangerous_attacks_against_std",
+          "coef": 0.026
         }
       ]
     },
     {
       "market": "corners",
       "line": 10.5,
-      "n_train": 10734,
-      "n_test": 4601,
-      "base_rate": 0.399,
+      "n_train": 13052,
+      "n_test": 5594,
+      "base_rate": 0.416,
       "C": 0.03,
-      "l1_ratio": 0.5,
+      "l1_ratio": 0.8,
       "n_pool": 72,
-      "n_selected": 28,
-      "bss_pct": 1.659,
-      "ece": 0.0183,
+      "n_selected": 27,
+      "bss_pct": 2.116,
+      "ece": 0.0062,
       "top_features": [
         {
-          "feature": "h_corners_against_std",
-          "coef": 0.11
-        },
-        {
-          "feature": "a_dangerous_attacks_against_10",
-          "coef": 0.101
-        },
-        {
-          "feature": "a_corners_for_std",
-          "coef": 0.096
-        },
-        {
           "feature": "h_corners_for_std",
-          "coef": 0.092
-        },
-        {
-          "feature": "a_corners_against_std",
-          "coef": 0.086
+          "coef": 0.097
         },
         {
           "feature": "h_corners_for_10",
-          "coef": 0.079
+          "coef": 0.086
+        },
+        {
+          "feature": "a_dangerous_attacks_against_10",
+          "coef": 0.074
+        },
+        {
+          "feature": "a_corners_for_std",
+          "coef": 0.073
+        },
+        {
+          "feature": "h_corners_against_std",
+          "coef": 0.06
         },
         {
           "feature": "h_shots_against_5",
-          "coef": 0.069
+          "coef": 0.057
         },
         {
           "feature": "a_shots_for_10",
-          "coef": 0.06
+          "coef": 0.053
+        },
+        {
+          "feature": "a_corners_against_std",
+          "coef": 0.052
         }
       ]
     },
     {
       "market": "cards",
       "line": 3.5,
-      "n_train": 10751,
-      "n_test": 4608,
-      "base_rate": 0.594,
+      "n_train": 13067,
+      "n_test": 5601,
+      "base_rate": 0.582,
       "C": 0.01,
       "l1_ratio": 0.2,
       "n_pool": 48,
-      "n_selected": 32,
-      "bss_pct": 4.076,
-      "ece": 0.0244,
+      "n_selected": 29,
+      "bss_pct": 2.67,
+      "ece": 0.0263,
       "top_features": [
         {
           "feature": "h_yellow_cards_for_std",
-          "coef": 0.122
-        },
-        {
-          "feature": "a_yellow_cards_for_std",
-          "coef": 0.11
+          "coef": 0.095
         },
         {
           "feature": "a_yellow_cards_against_std",
-          "coef": 0.108
+          "coef": 0.086
         },
         {
           "feature": "h_yellow_cards_against_10",
-          "coef": 0.065
+          "coef": 0.07
         },
         {
-          "feature": "h_yellow_cards_against_std",
-          "coef": 0.058
-        },
-        {
-          "feature": "h_attacks_for_10",
-          "coef": -0.051
+          "feature": "a_yellow_cards_for_std",
+          "coef": 0.066
         },
         {
           "feature": "h_fouls_for_std",
-          "coef": 0.048
+          "coef": 0.054
+        },
+        {
+          "feature": "h_yellow_cards_against_std",
+          "coef": 0.053
         },
         {
           "feature": "a_yellow_cards_against_10",
-          "coef": 0.039
+          "coef": 0.052
+        },
+        {
+          "feature": "h_attacks_for_10",
+          "coef": -0.052
         }
       ]
     },
     {
       "market": "cards",
       "line": 4.5,
-      "n_train": 10751,
-      "n_test": 4608,
-      "base_rate": 0.412,
-      "C": 0.03,
-      "l1_ratio": 0.8,
+      "n_train": 13067,
+      "n_test": 5601,
+      "base_rate": 0.401,
+      "C": 0.01,
+      "l1_ratio": 0.5,
       "n_pool": 48,
       "n_selected": 23,
-      "bss_pct": 3.779,
-      "ece": 0.0259,
+      "bss_pct": 3.154,
+      "ece": 0.028,
       "top_features": [
         {
-          "feature": "a_yellow_cards_against_std",
-          "coef": 0.135
+          "feature": "h_yellow_cards_against_std",
+          "coef": 0.111
         },
         {
-          "feature": "h_yellow_cards_against_std",
-          "coef": 0.127
+          "feature": "a_yellow_cards_against_std",
+          "coef": 0.094
         },
         {
           "feature": "h_yellow_cards_for_std",
-          "coef": 0.1
+          "coef": 0.076
         },
         {
           "feature": "a_yellow_cards_for_std",
-          "coef": 0.099
+          "coef": 0.07
         },
         {
           "feature": "h_fouls_for_std",
-          "coef": 0.046
+          "coef": 0.06
+        },
+        {
+          "feature": "h_yellow_cards_for_5",
+          "coef": 0.055
+        },
+        {
+          "feature": "a_fouls_against_std",
+          "coef": 0.051
         },
         {
           "feature": "h_attacks_for_10",
           "coef": -0.045
-        },
-        {
-          "feature": "h_fouls_against_10",
-          "coef": 0.039
-        },
-        {
-          "feature": "a_fouls_against_5",
-          "coef": 0.032
         }
       ]
     },
     {
       "market": "btts",
       "line": null,
-      "n_train": 10753,
-      "n_test": 4609,
-      "base_rate": 0.551,
-      "C": 0.01,
-      "l1_ratio": 0.2,
+      "n_train": 13071,
+      "n_test": 5602,
+      "base_rate": 0.569,
+      "C": 0.03,
+      "l1_ratio": 0.8,
       "n_pool": 48,
-      "n_selected": 17,
-      "bss_pct": 0.544,
-      "ece": 0.0079,
+      "n_selected": 19,
+      "bss_pct": 0.93,
+      "ece": 0.0095,
       "top_features": [
         {
           "feature": "h_shotsOnTarget_for_std",
-          "coef": 0.092
-        },
-        {
-          "feature": "a_dangerous_attacks_against_std",
-          "coef": 0.058
+          "coef": 0.071
         },
         {
           "feature": "a_shotsOnTarget_for_std",
-          "coef": 0.049
+          "coef": 0.058
+        },
+        {
+          "feature": "a_dangerous_attacks_against_std",
+          "coef": 0.047
         },
         {
           "feature": "a_shotsOnTarget_against_10",
-          "coef": 0.034
-        },
-        {
-          "feature": "h_dangerous_attacks_against_10",
-          "coef": -0.034
+          "coef": 0.042
         },
         {
           "feature": "a_xg_for_10",
-          "coef": 0.03
+          "coef": 0.038
         },
         {
-          "feature": "h_dangerous_attacks_against_5",
-          "coef": 0.028
+          "feature": "h_shotsOnTarget_for_10",
+          "coef": 0.024
         },
         {
           "feature": "h_xg_against_5",
-          "coef": 0.024
+          "coef": 0.022
+        },
+        {
+          "feature": "a_shotsOnTarget_for_5",
+          "coef": 0.019
         }
       ]
     }

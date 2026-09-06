@@ -70,12 +70,71 @@ def load_corpus():
     return ms
 
 
+# ── Early-season / minimum-history discipline ──────────────────────────────
+# A rolling "recent form" window must describe the CURRENT season. Blending prior
+# seasons to fill a window that the current season cannot yet fill produces a feature
+# that is mostly last season's squad/manager/context, presented as current form — a
+# variant of the stale-corpus failure (failure ledger F026). Every window here is
+# therefore drawn from a single season-instance, and below a floor of completed
+# current-season matches a team's form is not estimated at all.
+#
+# N was chosen at 3: it is the smallest count at which a season-to-date mean is not
+# dominated by a single match, and it matches the existing >=3 floor on the
+# season-to-date ('std') window and the minimum-sample discipline used before any
+# calibration figure is shown. Below it the honest behaviour is to abstain — the
+# fixture is published with the market unpriced and the reason stated — rather than
+# to fabricate form. (When hierarchical partial pooling lands, a 3-match team should
+# shrink hard toward the league prior; until then this gate is the interim guard.)
+MIN_CURRENT_SEASON_MATCHES = 3
+
+
+def _season_key(m):
+    """The season-instance a corpus match belongs to.
+
+    In this corpus ``competition_id`` is the provider's per-season id (a distinct id
+    for each league-season, e.g. Arsenal 2024/25 vs 2025/26 vs 2026/27 carry three
+    different ids), so it alone identifies the season-instance. ``season`` (e.g.
+    "2026/2027") is the human label used only for reporting. Resolved from the data,
+    never from a hard-coded season list, so it cannot silently age out.
+    """
+    c = m.get('competition_id')
+    return str(c) if c is not None else None
+
+
 def build_histories(ms):
     h=defaultdict(list)
     for m in ms:
         h[m['home_name']].append((m['date_unix'],m,'home'))
         h[m['away_name']].append((m['date_unix'],m,'away'))
     return h
+
+
+def current_season_key(hist, team, before):
+    """The season-instance of ``team``'s most recent completed match before ``before``.
+
+    This is what "current season" means for a fixture: the season the team's latest
+    result belongs to. Derived per team from the data so a mid-table side and a
+    newly-promoted side are each judged against their own current season, and so the
+    definition tracks the calendar automatically. Returns ``None`` when the team has
+    no prior completed match at all.
+    """
+    rows=[(d,m) for d,m,_ in hist.get(team,[]) if d<before]
+    if not rows: return None
+    return _season_key(max(rows, key=lambda t: t[0])[1])
+
+
+def current_season_match_count(hist, team, before):
+    """How many completed current-season matches ``team`` has before ``before``.
+
+    "Current season" is :func:`current_season_key`. This is the count the
+    minimum-history gate is applied to and the number reported in per-fixture
+    provenance, so a forecast built on 3 matches is distinguishable from one built
+    on 10.
+    """
+    season=current_season_key(hist, team, before)
+    if season is None: return 0
+    return sum(1 for d,m,_ in hist.get(team,[])
+               if d<before and _season_key(m)==season)
 
 
 def _v(m,field):
@@ -85,13 +144,39 @@ def _v(m,field):
     return v if v>=0 else None
 
 
-def roll(hist, team, stat, side, window, before):
-    """team's rolling mean of `stat` (for=own, against=opponent) using prior matches only."""
+def roll(hist, team, stat, side, window, before, season=None):
+    """Team's rolling mean of ``stat`` over CURRENT-SEASON matches only, prior to ``before``.
+
+    ``for`` reads the team's own value, ``against`` the opponent's. Windows never
+    span seasons: the eligible rows are restricted to the season-instance of the
+    team's most recent completed match (:func:`current_season_key`) BEFORE the window
+    is taken. That restriction is the fix for the early-season backfill — a fixed
+    ``window`` (w5/w10) that the current season cannot fill returns ``None`` (abstain)
+    instead of borrowing prior-season matches to reach ``window`` rows.
+
+    Per window, with a team early in a new season:
+      * ``window`` set (w5/w10): abstains unless there are >= ``window`` completed
+        current-season matches. No prior-season padding, no zero-fill.
+      * ``window`` is None (season-to-date): the mean over ALL completed
+        current-season matches, requiring at least
+        :data:`MIN_CURRENT_SEASON_MATCHES`. This is a genuine current-season-to-date
+        figure, not a cross-season expanding mean.
+
+    ``season`` may be supplied by the caller when the current-season key for
+    ``(team, before)`` is already known (``match_features`` computes it once per team),
+    avoiding a redundant history scan per feature; when ``None`` it is resolved here.
+    """
     hf,af=FIELD[stat]
-    rows=[(d,m,r) for d,m,r in hist.get(team,[]) if d<before]
-    if window: rows=rows[-window:]
-    if window and len(rows)<window: return None
-    if not window and len(rows)<3: return None
+    if season is None:
+        season=current_season_key(hist, team, before)
+    if season is None: return None
+    rows=[(d,m,r) for d,m,r in hist.get(team,[])
+          if d<before and _season_key(m)==season]
+    if window:
+        rows=rows[-window:]
+        if len(rows)<window: return None
+    else:
+        if len(rows)<MIN_CURRENT_SEASON_MATCHES: return None
     vals=[]
     for _,m,r in rows:
         if side=='for':  fld = hf if r=='home' else af
@@ -114,13 +199,62 @@ def feat_names(market):
 
 def match_features(hist, m, market):
     home,away,d=m['home_name'],m['away_name'],m['date_unix']
+    # Resolve each team's current-season key once (not per stat/side/window): roll()
+    # would otherwise rescan the full history on every one of its ~144 calls per match.
+    season={'h':current_season_key(hist,home,d),'a':current_season_key(hist,away,d)}
     row=[]
     for stat in POOLS[market]:
         for who,team in (('h',home),('a',away)):
             for side in ('for','against'):
                 for w in WINDOWS:
-                    row.append(roll(hist,team,stat,side,w,d))
+                    row.append(roll(hist,team,stat,side,w,d,season=season[who]))
     return row
+
+
+def _team_window_provenance(hist, team, before):
+    """Which rolling windows actually apply for ``team`` at ``before``, and why.
+
+    Reports the current-season label and completed-match count, whether the team
+    clears :data:`MIN_CURRENT_SEASON_MATCHES`, and for each declared window whether it
+    is populated (>= window current-season matches) or abstains. This is what makes a
+    forecast built on 3 matches visibly different from one built on 10 in the
+    published provenance — the window that "applied" is stated, not inferred.
+    """
+    season=current_season_key(hist, team, before)
+    n=current_season_match_count(hist, team, before)
+    windows={}
+    for w in WINDOWS:
+        label='std' if w is None else f'w{w}'
+        if w is None:
+            windows[label]='populated' if n>=MIN_CURRENT_SEASON_MATCHES else 'abstain'
+        else:
+            windows[label]='populated' if n>=w else 'abstain'
+    return {
+        'current_season': season,
+        'current_season_matches': n,
+        'meets_min_history': n>=MIN_CURRENT_SEASON_MATCHES,
+        'windows': windows,
+    }
+
+
+def history_provenance(hist, home, away, before):
+    """Per-fixture history provenance for both teams.
+
+    ``min_current_season_matches`` is the declared floor; ``sufficient`` is True only
+    when BOTH teams clear it. The broadcast records this alongside each forecast and
+    uses ``sufficient`` as the minimum-history gate: below the floor for either team,
+    the fixture is not priced.
+    """
+    return {
+        'min_current_season_matches': MIN_CURRENT_SEASON_MATCHES,
+        'windows_declared': [('std' if w is None else f'w{w}') for w in WINDOWS],
+        'home': _team_window_provenance(hist, home, before),
+        'away': _team_window_provenance(hist, away, before),
+        'sufficient': (
+            current_season_match_count(hist, home, before) >= MIN_CURRENT_SEASON_MATCHES
+            and current_season_match_count(hist, away, before) >= MIN_CURRENT_SEASON_MATCHES
+        ),
+    }
 
 
 def outcome(m, market, line=None):

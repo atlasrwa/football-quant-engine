@@ -629,8 +629,10 @@ class ForecastEngine:
     ) -> tuple[
         dict[tuple[str, Optional[float]], Optional[float]],
         dict[tuple[str, Optional[float]], str],
+        dict[str, Any],
     ]:
-        """Engine ``P(over line)`` for every declared cell, plus reasons for gaps.
+        """Engine ``P(over line)`` for every declared cell, the reasons for gaps, and
+        the per-fixture history provenance.
 
         Only declared cells are computed — the loop iterates the config, so no market
         or line outside declared scope can enter a payload.
@@ -639,6 +641,16 @@ class ForecastEngine:
         history strictly before the fixture's kickoff. That inequality is asserted
         here rather than assumed, because it is the one convention in this pipeline
         whose violation is both invisible in the output and fatal to the claim.
+
+        The minimum-history gate runs before any cell is priced: a team below
+        ``pilotC_stat_mixer.MIN_CURRENT_SEASON_MATCHES`` completed current-season
+        matches has no trustworthy current-season form, so every cell abstains and the
+        reason names the thin side. This is the interim protection for early-season
+        fixtures — the rolling windows themselves already refuse to backfill from a
+        prior season, so a thin team yields ``None`` per window rather than a form
+        figure that is mostly last season. The history provenance is returned either
+        way, so a forecast built on three matches is distinguishable in the record
+        from one built on ten.
         """
         # Structural refusal, not a filter: if this fixture's own result is already
         # in the corpus, no probability is produced for it at all.
@@ -648,6 +660,34 @@ class ForecastEngine:
             away_team=away_team,
             kickoff_unix=kickoff_unix,
         )
+        history = self._mix.history_provenance(
+            self._hist, home_team, away_team, kickoff_unix
+        )
+        probs: dict[tuple[str, Optional[float]], Optional[float]] = {}
+        reasons: dict[tuple[str, Optional[float]], str] = {}
+
+        # Minimum-history gate. Below the floor for either team, the fixture is not
+        # priced: an early-season side with too few completed matches has no
+        # current-season form to estimate, and borrowing last season's is the failure
+        # this whole change exists to prevent.
+        if not history["sufficient"]:
+            thin = [
+                f"{team} ({side['current_season_matches']} completed "
+                f"current-season match(es))"
+                for team, side in (("home", history["home"]), ("away", history["away"]))
+                if not side["meets_min_history"]
+            ]
+            reason = (
+                "insufficient current-season history (minimum "
+                f"{history['min_current_season_matches']} per team): "
+                + "; ".join(thin)
+                + ". Rolling form would otherwise rest on a prior season."
+            )
+            for spec in self._config.markets:
+                probs[spec.cell] = None
+                reasons[spec.cell] = reason
+            return probs, reasons, history
+
         missing_history = [
             team for team in (home_team, away_team) if team not in self._hist
         ]
@@ -684,7 +724,7 @@ class ForecastEngine:
                 continue
             # No threshold, no confidence gate. Whatever the engine says is published.
             probs[spec.cell] = float(p_over)
-        return probs, reasons
+        return probs, reasons, history
 
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -844,7 +884,8 @@ def _health_report(
             for key in (
                 "started_at_utc", "finished_at_utc", "due", "committed", "sent",
                 "not_published", "blocked_by_freshness_gate",
-                "same_match_leakage_refused", "content_gate_blocked",
+                "same_match_leakage_refused", "insufficient_current_season_history",
+                "content_gate_blocked",
                 "delivery_failed", "queued_quiet_hours", "model_version",
                 "data_cutoff_utc",
             )
@@ -883,6 +924,7 @@ def run(
         "not_published": 0,
         "blocked_by_freshness_gate": 0,
         "same_match_leakage_refused": 0,
+        "insufficient_current_season_history": 0,
         "missed_horizon_past_kickoff": 0,
         "price_rows_written": 0,
         "price_gaps": 0,
@@ -1036,7 +1078,7 @@ def run(
 
         generated_at = _now_iso()
         try:
-            probs, reasons = engine.probabilities(
+            probs, reasons, history = engine.probabilities(
                 home_team=home, away_team=away, kickoff_unix=kickoff
             )
         except SameMatchLeakageError as exc:
@@ -1062,6 +1104,12 @@ def run(
             )
             logger.warning("fixture %s (%s vs %s): %s", fixture_id, home, away, reason)
             summary["not_published"] += 1
+            if not history.get("sufficient", True):
+                # Distinguished from a generic "no features" outcome: this fixture was
+                # withheld specifically because a team is too early in its season for a
+                # trustworthy current-season form, which is the early-season protection
+                # working, not a data gap.
+                summary["insufficient_current_season_history"] += 1
             if not dry_run:
                 ledger.append_not_published(
                     fixture_id=fixture_id, comp_id=info.get("comp"),
@@ -1082,6 +1130,7 @@ def run(
             model_version=engine.model_version,
             data_cutoff_utc=engine.data_cutoff_utc,
             corpus_provenance=engine.corpus_provenance(),
+            history_provenance=history,
             generated_at_utc=generated_at,
         )
         commitment = payload.commitment_hash()

@@ -53,7 +53,7 @@ from src.research.prediction_engine.broadcast.scope_config import (
 #: Payload contract written by the current producer. Bumping this changes every
 #: commitment hash it produces, which is correct: a payload with different semantics
 #: is not comparable to an older one.
-FORECAST_PAYLOAD_CONTRACT = "forecast-broadcast-payload/v2"
+FORECAST_PAYLOAD_CONTRACT = "forecast-broadcast-payload/v3"
 
 #: Contracts this module can rebuild and re-hash. Verification must remain possible
 #: for records written under older contracts: the ledger is append-only and
@@ -64,13 +64,23 @@ FORECAST_PAYLOAD_CONTRACT = "forecast-broadcast-payload/v2"
 SUPPORTED_PAYLOAD_CONTRACTS: tuple[str, ...] = (
     "forecast-broadcast-payload/v1",
     "forecast-broadcast-payload/v2",
+    "forecast-broadcast-payload/v3",
 )
 
 #: Contracts whose payloads carry corpus content provenance. v1 payloads carried only
 #: ``model_version`` and ``data_cutoff_utc``. An explicit set rather than a version
 #: comparison, so adding v10 later cannot silently sort below v2.
 _CONTRACTS_WITH_CORPUS_PROVENANCE: frozenset[str] = frozenset(
-    {"forecast-broadcast-payload/v2"}
+    {"forecast-broadcast-payload/v2", "forecast-broadcast-payload/v3"}
+)
+
+#: Contracts whose payloads carry per-fixture history provenance (each team's
+#: completed current-season match count and which rolling window actually applied).
+#: Added at v3. A forecast built on three current-season matches must be
+#: distinguishable in the committed record from one built on ten, and that fact is
+#: part of the claim, so it is inside the commitment hash rather than beside it.
+_CONTRACTS_WITH_HISTORY_PROVENANCE: frozenset[str] = frozenset(
+    {"forecast-broadcast-payload/v3"}
 )
 
 #: Probabilities are stored at this precision and hashed as stored, so a recomputed
@@ -292,6 +302,12 @@ class ForecastPayload:
     #: match count, newest and oldest observation, seasons covered. Present from
     #: contract v2. ``None`` on rebuilt v1 records, which predate it.
     corpus_provenance: Optional[dict[str, Any]] = None
+    #: Per-fixture history provenance: each team's completed current-season match
+    #: count, the current season, whether it clears the minimum-history floor, and
+    #: which rolling window applied. Present from contract v3; ``None`` on rebuilt
+    #: v1/v2 records. Makes a thin early-season forecast distinguishable from a
+    #: full-window one directly in the committed record.
+    history_provenance: Optional[dict[str, Any]] = None
     #: The contract this payload hashes under. Defaults to the current one for new
     #: payloads and is set from the record when rebuilding an old one.
     payload_contract: str = FORECAST_PAYLOAD_CONTRACT
@@ -337,6 +353,8 @@ class ForecastPayload:
         }
         if self.payload_contract in _CONTRACTS_WITH_CORPUS_PROVENANCE:
             out["corpus_provenance"] = self.corpus_provenance
+        if self.payload_contract in _CONTRACTS_WITH_HISTORY_PROVENANCE:
+            out["history_provenance"] = self.history_provenance
         return out
 
     def commitment_hash(self) -> str:
@@ -357,6 +375,7 @@ def build_forecast_payload(
     model_version: str,
     data_cutoff_utc: str,
     corpus_provenance: Optional[dict[str, Any]] = None,
+    history_provenance: Optional[dict[str, Any]] = None,
     generated_at_utc: str,
 ) -> ForecastPayload:
     """Assemble a fixture payload covering **every** market in declared scope.
@@ -389,6 +408,10 @@ def build_forecast_payload(
             content hash, match count, newest observation, seasons covered. Recorded
             in the commitment so a reader can later tell *which* observations produced
             the forecast, not merely how many there were and when they stopped.
+        history_provenance: per-fixture history provenance — each team's completed
+            current-season match count, the season, and which rolling window applied.
+            Recorded in the commitment so a thin early-season forecast is
+            distinguishable from a full-window one.
         generated_at_utc: when this payload was generated.
 
     Returns:
@@ -419,6 +442,7 @@ def build_forecast_payload(
         model_version=model_version,
         data_cutoff_utc=data_cutoff_utc,
         corpus_provenance=dict(corpus_provenance) if corpus_provenance else None,
+        history_provenance=dict(history_provenance) if history_provenance else None,
         generated_at_utc=generated_at_utc,
         scope_version_hash=config.scope_version_hash,
         horizon_hours_before_kickoff=config.horizon_hours_before_kickoff,
@@ -477,6 +501,18 @@ def render_message(payload: ForecastPayload) -> str:
         seasons = provenance.get("corpus_seasons") or []
         if seasons:
             lines.append(f"corpus_seasons: {', '.join(str(s) for s in seasons)}")
+    history = payload.history_provenance or {}
+    if history.get("home") and history.get("away"):
+        # State how many completed current-season matches each side had and which
+        # window applied, so a reader can see at a glance whether this forecast rests
+        # on a full window or an early-season season-to-date figure.
+        h, a = history["home"], history["away"]
+        lines.append(
+            "current_season_matches: "
+            f"{payload.home_team} {h.get('current_season_matches')}, "
+            f"{payload.away_team} {a.get('current_season_matches')} "
+            f"(min {history.get('min_current_season_matches')})"
+        )
     lines.append(f"generated_at_utc: {payload.generated_at_utc}")
     lines.append(f"commitment: {payload.commitment_hash()}")
     return "\n".join(lines)
@@ -627,6 +663,7 @@ def payload_from_canonical_dict(obj: dict[str, Any]) -> ForecastPayload:
         horizon_hours_before_kickoff=int(obj["horizon_hours_before_kickoff"]),
         horizon_target_utc=obj["horizon_target_utc"],
         corpus_provenance=obj.get("corpus_provenance"),
+        history_provenance=obj.get("history_provenance"),
         # Rebuild under the contract the record was written with, never under the
         # current one, so re-hashing an older record reproduces its published hash.
         payload_contract=str(contract),

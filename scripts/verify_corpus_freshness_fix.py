@@ -94,7 +94,7 @@ def check_1_fresh_run_uses_current_season() -> dict[str, Any]:
     for kickoff, fixture_id, info in upcoming:
         home, away = str(info.get("home") or ""), str(info.get("away") or "")
         newest = engine.newest_observations(home, away)
-        probs, reasons = engine.probabilities(
+        probs, reasons, history = engine.probabilities(
             home_team=home, away_team=away, kickoff_unix=kickoff
         )
         entry: dict[str, Any] = {
@@ -102,6 +102,7 @@ def check_1_fresh_run_uses_current_season() -> dict[str, Any]:
             "fixture": f"{home} vs {away}",
             "kickoff_utc": _iso(kickoff),
             "newest_observation_per_team": {},
+            "history_provenance": history,
             "probabilities": {
                 f"{market}|{line}": (round(p, 4) if p is not None else None)
                 for (market, line), p in probs.items()
@@ -149,9 +150,16 @@ def check_2_gate_fires_when_aged() -> dict[str, Any]:
         now_unix=now,
     )
 
-    # Age the corpus by dropping everything from the current season — exactly the
-    # pre-fix state, reconstructed from the same data.
-    aged = [m for m in matches if str(m.get("season")) != "2026/2027"]
+    # Age the corpus by removing every observation from the last 45 days — the shape
+    # of the pre-fix state, where the newest match the engine held predated the
+    # current season's matchdays. Dropping by DATE rather than by one season label is
+    # deliberate: the corpus spans several concurrent competitions (including
+    # calendar-year leagues labelled "2026"), so removing only "2026/2027" would leave
+    # another league's recent matches as the newest observation and the corpus would
+    # still read fresh. The failure being reproduced is "newest observation is months
+    # old", which is a statement about dates, not season labels.
+    cutoff = now - 45 * DAY
+    aged = [m for m in matches if float(m.get("date_unix", 0)) < cutoff]
     aged_verdict = evaluate_corpus_freshness(
         fingerprint=fingerprint_matches(aged),
         reference_kickoffs=kickoffs,
@@ -169,7 +177,6 @@ def check_2_gate_fires_when_aged() -> dict[str, Any]:
     except CorpusFreshnessError as exc:
         raised = True
         detail = exc.verdict.detail
-
     return {
         "live_corpus_state": live.state.value,
         "live_lag_hours": live.metrics.get("corpus_lag_hours"),

@@ -556,7 +556,7 @@ class TestPayloadContractCompatibility:
                 f"v1 record {rec['commitment_hash'][:12]} no longer verifies"
             )
 
-    def test_v2_carries_corpus_provenance_in_the_hash(self):
+    def test_current_contract_carries_corpus_provenance_in_the_hash(self):
         from src.research.prediction_engine.broadcast.payload import (
             FORECAST_PAYLOAD_CONTRACT,
             build_forecast_payload,
@@ -577,12 +577,48 @@ class TestPayloadContractCompatibility:
         two = build_forecast_payload(**common, corpus_provenance={"corpus_content_hash": "bbb"})
 
         assert one.payload_contract == FORECAST_PAYLOAD_CONTRACT == (
-            "forecast-broadcast-payload/v2"
+            "forecast-broadcast-payload/v3"
         )
         assert "corpus_provenance" in one.canonical_dict()
         # A different corpus must produce a different commitment, or the provenance
         # would be decorative.
         assert one.commitment_hash() != two.commitment_hash()
+
+    def test_current_contract_carries_history_provenance_in_the_hash(self):
+        # The early-season history provenance (how many completed current-season
+        # matches each team had, which window applied) is part of the claim, so it
+        # must be inside the commitment: a 3-match forecast and a 10-match forecast,
+        # identical in every other field, must not collide on the same hash.
+        from src.research.prediction_engine.broadcast.payload import (
+            FORECAST_PAYLOAD_CONTRACT,
+            build_forecast_payload,
+        )
+        from src.research.prediction_engine.broadcast.scope_config import (
+            load_scope_config,
+        )
+
+        config = load_scope_config(require_recorded_change=False)
+        common = dict(
+            config=config, fixture_id="mt_x", comp_id=config.leagues[0].comp_id,
+            home_team="A FC", away_team="B FC", kickoff_unix=1788600000,
+            probabilities={spec.cell: 0.5 for spec in config.markets},
+            model_version="mv", data_cutoff_utc="2026-09-05T19:00:00+00:00",
+            corpus_provenance={"corpus_content_hash": "aaa"},
+            generated_at_utc="2026-09-06T01:00:00+00:00",
+        )
+        thin = build_forecast_payload(
+            **common,
+            history_provenance={"home": {"current_season_matches": 3},
+                                "away": {"current_season_matches": 4}},
+        )
+        full = build_forecast_payload(
+            **common,
+            history_provenance={"home": {"current_season_matches": 10},
+                                "away": {"current_season_matches": 12}},
+        )
+        assert FORECAST_PAYLOAD_CONTRACT == "forecast-broadcast-payload/v3"
+        assert "history_provenance" in thin.canonical_dict()
+        assert thin.commitment_hash() != full.commitment_hash()
 
     def test_v1_canonical_dict_omits_corpus_provenance(self):
         from src.research.prediction_engine.broadcast.payload import (
