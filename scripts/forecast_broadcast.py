@@ -10,10 +10,14 @@ Evaluated by the scheduler, never on demand. On each tick it:
 2. Finds every fixture whose competition is in declared scope and whose horizon
    moment (kickoff minus the declared hours) has arrived, and which has not already
    fired. Each fixture fires exactly once, ever.
-3. For each, computes the engine probability for every declared market cell, states
-   both sides, hashes the payload, records the commitment append-only, gates the
+3. Refreshes the training corpus with completed current-season matches, then checks it
+   against the fixture calendar. A corpus that lags what has actually been played
+   blocks the whole run — see ``corpus_freshness``. The refresh is a phase here rather
+   than a separate cron entry so it cannot fall behind the run that depends on it.
+4. For each fixture, computes the engine probability for every declared market cell,
+   states both sides, hashes the payload, records the commitment append-only, gates the
    rendered message, and delivers it.
-4. Independently captures available prices for the same markets into the CLV panel
+5. Independently captures available prices for the same markets into the CLV panel
    store, with the collection timestamp.
 
 WHAT IT DELIBERATELY DOES NOT DO
@@ -64,13 +68,29 @@ import time
 import warnings
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Any, Optional
+from typing import Any, Optional, Sequence
 
 warnings.filterwarnings("ignore")
 sys.path.insert(0, "/home/ubuntu")
 sys.path.insert(0, "/home/ubuntu/scripts")
 
 from src.research.prediction_engine.broadcast import price_panel as pp
+from src.research.prediction_engine.broadcast.corpus_freshness import (
+    CorpusFreshnessError,
+    FreshnessState,
+    FreshnessVerdict,
+    in_scope_kickoffs,
+    require_fresh_corpus,
+)
+from src.research.prediction_engine.broadcast.corpus_snapshot import (
+    CorpusFingerprint,
+    CorpusIntegrityError,
+    SameMatchLeakageError,
+    assert_fixture_absent_from_history,
+    build_snapshot,
+    newest_observation_per_team,
+    observations_per_season,
+)
 from src.research.prediction_engine.broadcast.delivery import (
     ForecastDeliverer,
     PendingQueue,
@@ -112,7 +132,21 @@ PRICE_REQUEST_CAP = int(os.environ.get("FORECAST_BROADCAST_PRICE_REQUEST_CAP", "
 
 #: Identifies the probability source inside the model_version hash.
 PREDICTOR_IDENTITY = "pilotC_stat_mixer.elasticnet_logistic_full_corpus"
-MODEL_VERSION_CONTRACT = "forecast-broadcast-model/v1"
+MODEL_VERSION_CONTRACT = "forecast-broadcast-model/v2"
+
+#: Where the run states what the freshness gate decided. Written on every run,
+#: including clean ones, because a health report that only appears on failure cannot
+#: be distinguished from a monitor that stopped running — the F024 lesson.
+HEALTH_REPORT = DEFAULT_RECORD_ROOT / "health_report.json"
+
+#: Minimum gap between corpus refreshes attempted by the broadcast run. The run ticks
+#: every 15 minutes; refreshing on every tick would spend provider quota to re-fetch
+#: seasons that gain matches a few times a week. A stale-corpus verdict overrides this
+#: interval, so the throttle can delay a routine refresh but can never suppress the
+#: one that a blocked run needs.
+CORPUS_REFRESH_MIN_INTERVAL_MINUTES = float(
+    os.environ.get("FORECAST_CORPUS_REFRESH_INTERVAL_MINUTES", "180")
+)
 
 logger = logging.getLogger("forecast_broadcast")
 
@@ -200,15 +234,258 @@ def due_fixtures(
 # ─────────────────────────────────────────────────────────────────────────────
 # Forecast source
 # ─────────────────────────────────────────────────────────────────────────────
+def _evaluate_freshness_only(
+    fingerprint: CorpusFingerprint,
+    reference_kickoffs: Sequence[float],
+    now_unix: float,
+) -> FreshnessVerdict:
+    """Evaluate the gate without enforcing it, for research callers.
+
+    Kept as a named function rather than a boolean branch inside the engine so that
+    the non-enforcing path is grep-able. A silent way to switch the gate off is how
+    gates die.
+    """
+    from src.research.prediction_engine.broadcast.corpus_freshness import (
+        evaluate_corpus_freshness,
+    )
+
+    return evaluate_corpus_freshness(
+        fingerprint=fingerprint,
+        reference_kickoffs=reference_kickoffs,
+        now_unix=now_unix,
+    )
+
+
+def emit_health_report(
+    report: dict[str, Any], *, path: Path = HEALTH_REPORT, dry_run: bool = False
+) -> None:
+    """Write the run's health report, overwriting the previous one.
+
+    Overwrite rather than append: this file answers "what is the state right now",
+    and the durable history lives in the append-only ledger. The heartbeat reads it
+    and alerts on both its content and its age, so a run that stops writing it is
+    itself an alertable condition.
+    """
+    if dry_run:
+        return
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(
+        json.dumps(report, indent=2, sort_keys=True, default=str) + "\n",
+        encoding="utf-8",
+    )
+
+
+def alert_operator(title: str, detail: str, *, dry_run: bool = False) -> bool:
+    """Send an operational alert to the monitoring channel.
+
+    Used for conditions that block publication. A blocked run that alerted nobody is
+    the failure mode this whole change exists to remove, so the send is attempted
+    even though the health report and the log already carry the same information —
+    three independent surfaces, because each has failed alone before.
+
+    Returns:
+        ``True`` if the alert was delivered.
+    """
+    if dry_run:
+        return False
+    token = os.environ.get("HEARTBEAT_TELEGRAM_BOT_TOKEN", "").strip()
+    chat_id = os.environ.get("HEARTBEAT_TELEGRAM_CHAT_ID", "").strip()
+    if not token or not chat_id:
+        logger.error(
+            "cannot alert: HEARTBEAT_TELEGRAM_BOT_TOKEN/CHAT_ID not configured. "
+            "Alert was: %s — %s", title, detail,
+        )
+        return False
+    import urllib.error
+    import urllib.parse
+    import urllib.request
+
+    body = urllib.parse.urlencode(
+        {
+            "chat_id": chat_id,
+            "text": f"\u26d4 {title}\n\n{detail}",
+            "disable_web_page_preview": "true",
+        }
+    ).encode("utf-8")
+    request = urllib.request.Request(
+        f"https://api.telegram.org/bot{token}/sendMessage",
+        data=body,
+        headers={"Content-Type": "application/x-www-form-urlencoded"},
+    )
+    try:
+        with urllib.request.urlopen(request, timeout=20) as response:
+            return 200 <= response.status < 300
+    except (urllib.error.URLError, OSError, TimeoutError) as exc:
+        # The alert transport failing must not mask the condition being alerted on.
+        logger.error("alert delivery failed (%s). Alert was: %s — %s",
+                     exc, title, detail)
+        return False
+
+
+def ensure_corpus_current(
+    *,
+    config: ScopeConfig,
+    universe: dict[str, dict[str, Any]],
+    now_unix: float,
+    dry_run: bool,
+) -> dict[str, Any]:
+    """Bring the training corpus up to date before anything is fitted or published.
+
+    This runs as a phase of the broadcast rather than on its own schedule. An
+    independently scheduled refresh can lag the thing it feeds — if the refresh cron
+    slips, is disabled, or simply runs after the broadcast on a given day, the
+    broadcast fits on yesterday's corpus and nothing says so. Making it a phase makes
+    the ordering a property of the code instead of a property of two crontab lines
+    that have to stay in the right order forever.
+
+    Refresh is attempted when either:
+
+    * the last refresh is older than :data:`CORPUS_REFRESH_MIN_INTERVAL_MINUTES`, or
+    * the corpus is currently stale against the fixture calendar.
+
+    The second condition is what makes the throttle safe. A time-based interval alone
+    would mean a blocked run waits out the interval before it may even try to fix
+    itself; here a stale verdict always earns an immediate attempt.
+
+    Returns:
+        A phase report for the run summary. Never raises: a refresh failure must not
+        stop the run, because the freshness gate downstream is what decides whether
+        the resulting corpus may be published from. Letting an exception escape here
+        would conflate "could not fetch" with "must not publish".
+    """
+    import pilotC_stat_mixer as mix
+    from src.research.prediction_engine.broadcast.corpus_freshness import (
+        evaluate_corpus_freshness,
+    )
+    from src.research.prediction_engine.broadcast.corpus_snapshot import (
+        fingerprint_matches,
+    )
+
+    phase: dict[str, Any] = {"attempted": False, "reason": "", "api_requests": 0}
+
+    try:
+        import refresh_corpus
+    except Exception as exc:  # noqa: BLE001
+        phase["reason"] = f"refresh module unavailable: {type(exc).__name__}: {exc}"
+        logger.error("corpus refresh unavailable: %s", exc)
+        return phase
+
+    before = fingerprint_matches(mix.load_corpus())
+    verdict = evaluate_corpus_freshness(
+        fingerprint=before,
+        reference_kickoffs=in_scope_kickoffs(universe, config.is_in_scope),
+        now_unix=now_unix,
+    )
+    phase["freshness_before"] = verdict.state.value
+
+    last_refresh_age_minutes: Optional[float] = None
+    report_path = refresh_corpus.REFRESH_REPORT
+    if report_path.exists():
+        try:
+            previous = json.loads(report_path.read_text(encoding="utf-8"))
+            finished = datetime.fromisoformat(str(previous["finished_at_utc"]))
+            if finished.tzinfo is None:
+                finished = finished.replace(tzinfo=timezone.utc)
+            last_refresh_age_minutes = (
+                now_unix - finished.timestamp()
+            ) / 60.0
+        except (json.JSONDecodeError, KeyError, ValueError, OSError):
+            # An unreadable previous report is treated as no report: refresh.
+            last_refresh_age_minutes = None
+    phase["last_refresh_age_minutes"] = (
+        round(last_refresh_age_minutes, 1)
+        if last_refresh_age_minutes is not None else None
+    )
+
+    due_by_interval = (
+        last_refresh_age_minutes is None
+        or last_refresh_age_minutes >= CORPUS_REFRESH_MIN_INTERVAL_MINUTES
+    )
+    if verdict.is_stale:
+        phase["reason"] = f"corpus is {verdict.state.value}; refresh forced"
+    elif due_by_interval:
+        phase["reason"] = (
+            f"last refresh {phase['last_refresh_age_minutes']}min ago, interval "
+            f"{CORPUS_REFRESH_MIN_INTERVAL_MINUTES:.0f}min"
+        )
+    else:
+        phase["reason"] = (
+            f"corpus {verdict.state.value} and refreshed "
+            f"{phase['last_refresh_age_minutes']}min ago; skipped"
+        )
+        return phase
+
+    if dry_run:
+        phase["reason"] += " (dry run: no fetch)"
+        return phase
+
+    phase["attempted"] = True
+    try:
+        report = refresh_corpus.refresh(all_leagues=False)
+    except Exception as exc:  # noqa: BLE001
+        phase["error"] = f"{type(exc).__name__}: {exc}"
+        logger.error("corpus refresh failed: %s", exc)
+        return phase
+
+    phase["api_requests"] = report.get("api_requests", 0)
+    phase["matches_added"] = report.get("matches_added")
+    phase["corpus_changed"] = report.get("corpus_changed")
+    phase["refresh_errors"] = report.get("errors") or []
+    if phase["refresh_errors"]:
+        # Surfaced, not swallowed. The gate still decides publication, but a partial
+        # refresh has to be visible in the run summary and the health report.
+        logger.error("corpus refresh reported errors: %s", phase["refresh_errors"])
+    logger.info(
+        "corpus refresh: %s match(es) added, %d API request(s), changed=%s",
+        phase.get("matches_added"), phase["api_requests"], phase.get("corpus_changed"),
+    )
+    return phase
+
+
 class ForecastEngine:
     """The declared market cells, fitted once per run, plus their provenance.
 
     Fitting is done once and reused for every fixture in the run so that every
     forecast published by a run carries the same ``model_version`` and the same
     ``data_cutoff_utc``.
+
+    Construction order is deliberate and load-bearing:
+
+    1. Freeze the corpus at an explicit cutoff and fingerprint it.
+    2. Run the freshness gate.
+    3. Only then fit.
+
+    The gate precedes the fit so that a stale corpus never produces a fitted model at
+    all. If fitting came first there would be a usable model sitting in memory next to
+    a failed gate, and the next edit to this file could plausibly publish from it.
     """
 
-    def __init__(self, config: ScopeConfig) -> None:
+    def __init__(
+        self,
+        config: ScopeConfig,
+        *,
+        reference_kickoffs: Sequence[float] = (),
+        snapshot_cutoff_unix: Optional[float] = None,
+        enforce_freshness: bool = True,
+    ) -> None:
+        """Fit the declared cells on a frozen, freshness-checked corpus snapshot.
+
+        Args:
+            config: the declared scope in force.
+            reference_kickoffs: in-scope fixture kick-offs from the discovered
+                universe. The freshness gate's independent benchmark.
+            snapshot_cutoff_unix: the corpus boundary. Defaults to now. Only matches
+                that had certainly finished before it enter the snapshot.
+            enforce_freshness: when ``False`` the gate is evaluated and reported but
+                does not raise. Reserved for research and backtest callers that are
+                deliberately reconstructing a historical corpus state; the scheduled
+                path never sets it.
+
+        Raises:
+            CorpusFreshnessError: the corpus is stale relative to the calendar.
+            CorpusIntegrityError: the snapshot contains a match that had not finished.
+            ScopeConfigError: a declared cell has no frozen model.
+        """
         import pilotC_forward_predict as fp
         import pilotC_stat_mixer as mix
 
@@ -232,23 +509,51 @@ class ForecastEngine:
                 "artifact is stale."
             )
 
-        matches = mix.load_corpus()
-        self._hist = mix.build_histories(matches)
-        cutoffs = [
-            float(m["date_unix"]) for m in matches if m.get("date_unix")
-        ]
-        self._data_cutoff_unix = max(cutoffs) if cutoffs else 0.0
-        self._n_matches = len(matches)
+        # 1. Freeze. The cutoff is recorded rather than implied by when the directory
+        #    happened to be read, and the snapshot is immutable so nothing can be
+        #    appended to the training set after it was fingerprinted.
+        self._snapshot_cutoff_unix = (
+            float(snapshot_cutoff_unix) if snapshot_cutoff_unix is not None
+            else time.time()
+        )
+        snapshot, fingerprint = build_snapshot(
+            mix.load_corpus(), cutoff_unix=self._snapshot_cutoff_unix
+        )
+        self._fingerprint = fingerprint
+        self._season_coverage = observations_per_season(snapshot)
+        self._data_cutoff_unix = float(fingerprint.latest_observation_unix)
+        self._n_matches = fingerprint.match_count
 
+        # 2. Gate. Raises before any model exists.
+        self._freshness = require_fresh_corpus(
+            fingerprint=fingerprint,
+            reference_kickoffs=reference_kickoffs,
+            now_unix=self._snapshot_cutoff_unix,
+        ) if enforce_freshness else _evaluate_freshness_only(
+            fingerprint, reference_kickoffs, self._snapshot_cutoff_unix
+        )
+        if self._freshness.state is FreshnessState.DORMANT:
+            logger.warning(
+                "corpus freshness could not be positively confirmed: %s",
+                self._freshness.detail,
+            )
+        else:
+            logger.info("corpus freshness: %s", self._freshness.detail)
+
+        self._hist = mix.build_histories(list(snapshot))
+
+        # 3. Fit.
         logger.info(
-            "fitting %d declared market cell(s) on %d corpus matches (cutoff %s)",
+            "fitting %d declared market cell(s) on %d corpus matches "
+            "(cutoff %s, content %s)",
             len(config.markets), self._n_matches, self.data_cutoff_utc,
+            fingerprint.content_hash[:12],
         )
         self._models: dict[tuple[str, Optional[float]], Any] = {}
         for spec in config.markets:
             C, l1r = saved[spec.cell]
             self._models[spec.cell] = fp.fit_full(
-                matches, self._hist, spec.market, spec.line, C, l1r
+                list(snapshot), self._hist, spec.market, spec.line, C, l1r
             )
 
         self._model_version = canonical_hash(
@@ -267,6 +572,11 @@ class ForecastEngine:
                     for spec in config.markets
                 },
                 "windows": list(mix.WINDOWS),
+                # The corpus is identified by the observations it contains, not by how
+                # many there were and when they stopped. A count-and-cutoff pair
+                # cannot distinguish two corpora that swapped one match for another
+                # of the same date; the content hash can.
+                "corpus_content_hash": fingerprint.content_hash,
                 "corpus_n_matches": self._n_matches,
                 "data_cutoff_unix": int(self._data_cutoff_unix),
             }
@@ -277,10 +587,42 @@ class ForecastEngine:
         return self._model_version
 
     @property
+    def fingerprint(self) -> CorpusFingerprint:
+        return self._fingerprint
+
+    @property
+    def freshness(self) -> FreshnessVerdict:
+        return self._freshness
+
+    @property
+    def season_coverage(self) -> dict[str, dict[str, Any]]:
+        return self._season_coverage
+
+    @property
+    def snapshot_cutoff_utc(self) -> str:
+        return datetime.fromtimestamp(
+            self._snapshot_cutoff_unix, timezone.utc
+        ).isoformat()
+
+    @property
     def data_cutoff_utc(self) -> str:
         return datetime.fromtimestamp(
             self._data_cutoff_unix, timezone.utc
         ).isoformat()
+
+    def corpus_provenance(self) -> dict[str, Any]:
+        """The corpus provenance block published with every forecast."""
+        return self._fingerprint.provenance_dict()
+
+    def newest_observations(self, *teams: str) -> dict[str, Optional[dict[str, Any]]]:
+        """The newest corpus match for each named team.
+
+        Lets an operator or a verification run answer "what is the engine treating as
+        this team's recent form" directly, instead of inferring it from the aggregate
+        cutoff. The stale corpus was invisible partly because that question had no
+        cheap answer.
+        """
+        return newest_observation_per_team(self._hist, teams)
 
     def probabilities(
         self, *, home_team: str, away_team: str, kickoff_unix: float
@@ -294,8 +636,18 @@ class ForecastEngine:
         or line outside declared scope can enter a payload.
 
         Features are point-in-time by construction: ``match_features`` reads only
-        history strictly before the fixture's kickoff.
+        history strictly before the fixture's kickoff. That inequality is asserted
+        here rather than assumed, because it is the one convention in this pipeline
+        whose violation is both invisible in the output and fatal to the claim.
         """
+        # Structural refusal, not a filter: if this fixture's own result is already
+        # in the corpus, no probability is produced for it at all.
+        assert_fixture_absent_from_history(
+            self._hist,
+            home_team=home_team,
+            away_team=away_team,
+            kickoff_unix=kickoff_unix,
+        )
         missing_history = [
             team for team in (home_team, away_team) if team not in self._hist
         ]
@@ -463,6 +815,50 @@ def log_price_gap(
 # ─────────────────────────────────────────────────────────────────────────────
 # The run
 # ─────────────────────────────────────────────────────────────────────────────
+def _health_report(
+    summary: dict[str, Any],
+    config: ScopeConfig,
+    *,
+    engine: Optional["ForecastEngine"],
+    verdict: Optional[FreshnessVerdict],
+) -> dict[str, Any]:
+    """Assemble the machine-readable health report for one run.
+
+    Includes the freshness verdict on success as well as failure. A report that only
+    carries the gate's decision when it fails cannot distinguish "the gate passed"
+    from "the gate was removed", and that distinction is the entire point.
+    """
+    gate = None
+    if verdict is not None:
+        gate = verdict.to_dict()
+    elif engine is not None:
+        gate = engine.freshness.to_dict()
+    report: dict[str, Any] = {
+        "report_contract": "forecast-broadcast-health/v1",
+        "generated_at_utc": _now_iso(),
+        "scope_version_hash": config.scope_version_hash,
+        "freshness_gate": gate,
+        "publication_blocked": bool(gate and not gate.get("may_publish", True)),
+        "run_summary": {
+            key: summary.get(key)
+            for key in (
+                "started_at_utc", "finished_at_utc", "due", "committed", "sent",
+                "not_published", "blocked_by_freshness_gate",
+                "same_match_leakage_refused", "content_gate_blocked",
+                "delivery_failed", "queued_quiet_hours", "model_version",
+                "data_cutoff_utc",
+            )
+        },
+        "errors": list(summary.get("errors") or []),
+        "corpus_refresh": summary.get("corpus_refresh"),
+    }
+    if engine is not None:
+        report["corpus_provenance"] = engine.corpus_provenance()
+        report["corpus_season_coverage"] = engine.season_coverage
+        report["snapshot_cutoff_utc"] = engine.snapshot_cutoff_utc
+    return report
+
+
 def run(
     *,
     config: ScopeConfig,
@@ -485,6 +881,8 @@ def run(
         "delivery_failed": 0,
         "content_gate_blocked": 0,
         "not_published": 0,
+        "blocked_by_freshness_gate": 0,
+        "same_match_leakage_refused": 0,
         "missed_horizon_past_kickoff": 0,
         "price_rows_written": 0,
         "price_gaps": 0,
@@ -525,16 +923,81 @@ def run(
         summary["finished_at_utc"] = _now_iso()
         return summary
 
-    # 3. Fit once, so every forecast in this run shares one model_version.
+    # 3. Refresh the corpus, then fit once so every forecast in this run shares one
+    #    model_version. The freshness gate runs inside the engine, before the fit, and
+    #    blocks the entire run rather than degrading to stale features per fixture.
+    summary["corpus_refresh"] = ensure_corpus_current(
+        config=config, universe=universe, now_unix=now_unix, dry_run=dry_run
+    )
+    reference_kickoffs = in_scope_kickoffs(universe, config.is_in_scope)
     try:
-        engine = ForecastEngine(config)
+        engine = ForecastEngine(
+            config,
+            reference_kickoffs=reference_kickoffs,
+            snapshot_cutoff_unix=now_unix,
+        )
+    except CorpusFreshnessError as exc:
+        verdict = exc.verdict
+        logger.error("FRESHNESS GATE: %s", verdict.detail)
+        summary["errors"].append(f"corpus_freshness_gate: {verdict.detail}")
+        summary["freshness_gate"] = verdict.to_dict()
+        summary["blocked_by_freshness_gate"] = len(due)
+        summary["not_published"] += len(due)
+        summary["finished_at_utc"] = _now_iso()
+        # Every due fixture is recorded as not published with the gate's reasoning.
+        # Without this the run would leave a coverage hole indistinguishable from
+        # fixtures that were never in scope — the ambiguity that let the stale
+        # corpus go unnoticed.
+        if not dry_run:
+            for fixture_id, info in due:
+                ledger.append_not_published(
+                    fixture_id=fixture_id,
+                    comp_id=info.get("comp"),
+                    kickoff_unix=_kickoff_or_none(info) or 0.0,
+                    reason=f"corpus freshness gate refused publication: "
+                           f"{verdict.detail}",
+                    scope_version_hash=config.scope_version_hash,
+                )
+        emit_health_report(
+            _health_report(summary, config, engine=None, verdict=verdict),
+            dry_run=dry_run,
+        )
+        summary["alert_sent"] = alert_operator(
+            "Forecast broadcast BLOCKED — corpus freshness gate",
+            f"{verdict.detail}\n\n"
+            f"{len(due)} due fixture(s) were not published and remain due.\n"
+            f"corpus newest observation: "
+            f"{verdict.metrics.get('corpus_latest_observation_utc')}\n"
+            f"lag: {verdict.metrics.get('corpus_lag_hours')}h",
+            dry_run=dry_run,
+        )
+        return summary
+    except CorpusIntegrityError as exc:
+        logger.error("CORPUS INTEGRITY: %s", exc)
+        summary["errors"].append(f"corpus_integrity: {exc}")
+        summary["finished_at_utc"] = _now_iso()
+        emit_health_report(
+            _health_report(summary, config, engine=None, verdict=None),
+            dry_run=dry_run,
+        )
+        summary["alert_sent"] = alert_operator(
+            "Forecast broadcast BLOCKED — corpus integrity", str(exc),
+            dry_run=dry_run,
+        )
+        return summary
     except Exception as exc:  # noqa: BLE001
         logger.error("forecast engine unavailable: %s", exc)
         summary["errors"].append(f"engine_unavailable: {exc}")
         summary["finished_at_utc"] = _now_iso()
+        emit_health_report(
+            _health_report(summary, config, engine=None, verdict=None),
+            dry_run=dry_run,
+        )
         return summary
     summary["model_version"] = engine.model_version
     summary["data_cutoff_utc"] = engine.data_cutoff_utc
+    summary["freshness_gate"] = engine.freshness.to_dict()
+    summary["corpus_provenance"] = engine.corpus_provenance()
 
     price_requests_used = 0
     store = pp.PriceCaptureStore()
@@ -572,9 +1035,26 @@ def run(
             continue
 
         generated_at = _now_iso()
-        probs, reasons = engine.probabilities(
-            home_team=home, away_team=away, kickoff_unix=kickoff
-        )
+        try:
+            probs, reasons = engine.probabilities(
+                home_team=home, away_team=away, kickoff_unix=kickoff
+            )
+        except SameMatchLeakageError as exc:
+            # The fixture's own result is already in the corpus. This is not a
+            # "no features" case to be recorded and moved past quietly: it means the
+            # corpus and the fixture universe disagree about whether this match has
+            # been played, and a probability produced here would be a postdiction.
+            logger.error("fixture %s: %s", fixture_id, exc)
+            summary["same_match_leakage_refused"] += 1
+            summary["not_published"] += 1
+            summary["errors"].append(f"{fixture_id}: same_match_leakage: {exc}")
+            if not dry_run:
+                ledger.append_not_published(
+                    fixture_id=fixture_id, comp_id=info.get("comp"),
+                    kickoff_unix=kickoff, reason=f"same-match leakage refused: {exc}",
+                    scope_version_hash=config.scope_version_hash,
+                )
+            continue
 
         if not any(p is not None for p in probs.values()):
             reason = "no declared market could be priced: " + "; ".join(
@@ -601,6 +1081,7 @@ def run(
             unavailable_reasons=reasons,
             model_version=engine.model_version,
             data_cutoff_utc=engine.data_cutoff_utc,
+            corpus_provenance=engine.corpus_provenance(),
             generated_at_utc=generated_at,
         )
         commitment = payload.commitment_hash()
@@ -671,6 +1152,9 @@ def run(
             )
 
     summary["finished_at_utc"] = _now_iso()
+    emit_health_report(
+        _health_report(summary, config, engine=engine, verdict=None), dry_run=dry_run
+    )
     return summary
 
 

@@ -100,6 +100,8 @@ BUDGET_STATE = Path(os.environ.get(
     str(HOME / "data" / "thestatsapi" / "championship" / "_budget_state.json")))
 STATE_PATH = Path(os.environ.get(
     "FORECAST_HB_STATE_PATH", str(RECORD_ROOT / "heartbeat_state.json")))
+HEALTH_REPORT = Path(os.environ.get(
+    "FORECAST_HB_HEALTH_REPORT", str(RECORD_ROOT / "health_report.json")))
 
 # ── thresholds (env-overridable so verification can force conditions) ────────
 # The broadcaster ticks every 15 minutes. If an in-scope horizon has passed inside
@@ -126,6 +128,11 @@ STALE_UNIVERSE_HOURS = float(os.environ.get("FORECAST_HB_STALE_UNIVERSE_HOURS", 
 PROVIDER_FAILURE_WINDOW_HOURS = float(
     os.environ.get("FORECAST_HB_PROVIDER_FAILURE_WINDOW_HOURS", "24"))
 LOW_QUOTA_THRESHOLD = int(os.environ.get("FORECAST_HB_LOW_QUOTA_THRESHOLD", "500"))
+# The freshness gate writes a verdict on every broadcast run that reaches the fit. If
+# no verdict has been recorded for this long, the gate is not being evaluated — which
+# is the pre-fix state, and has to be alertable in its own right.
+STALE_HEALTH_REPORT_HOURS = float(
+    os.environ.get("FORECAST_HB_STALE_HEALTH_REPORT_HOURS", "36"))
 # Re-alert an ongoing, unresolved condition at most this often.
 RENOTIFY_HOURS = float(os.environ.get("FORECAST_HB_RENOTIFY_HOURS", "6"))
 # Emit the routine all-clear at most this often.
@@ -563,6 +570,98 @@ def check_stale_fixture_universe(state: dict) -> dict | None:
     }
 
 
+def check_stale_corpus(state: dict) -> dict | None:
+    """The training corpus is behind the fixture calendar, or nobody is checking.
+
+    This is the 2026-09-05 failure promoted to a first-class alert. For three months
+    the engine fitted on a corpus ending 2026-05-31 and published normally; the
+    evidence was in every payload's ``data_cutoff_utc`` and no monitor read it.
+
+    Two distinct conditions are alerted, because they fail differently:
+
+    * The run's own health report says the freshness gate refused publication. The run
+      already alerted, and this is the independent second surface — if the run itself
+      dies mid-alert, the heartbeat still reports the block.
+    * The health report is missing or has stopped being written. A gate whose verdict
+      nobody records is indistinguishable from a gate that was deleted, which is the
+      F024 rule applied to this new component: monitor the artifact, not the
+      component's self-report.
+    """
+    report = _read_json(HEALTH_REPORT)
+    if not report:
+        # Only alert on a missing report once the broadcaster has had cause to write
+        # one. A brand-new install with no due fixtures yet is not a fault.
+        rows = _ledger_rows()
+        if not rows:
+            return None
+        return {
+            "severity": SEV_ALERT,
+            "title": "CORPUS FRESHNESS UNVERIFIED (no health report)",
+            "detail": (
+                f"No freshness gate report at {HEALTH_REPORT}, but the broadcast "
+                "ledger has rows. Either the gate is not running or it is not "
+                "recording its verdict. A corpus that nobody checks is how forecasts "
+                "came to be published on 3-month-old features."
+            ),
+            "metrics": {"path": str(HEALTH_REPORT)},
+        }
+
+    generated = _iso_to_unix(report.get("generated_at_utc"))
+    age_h = _hours(_now() - generated) if generated is not None else None
+    gate = report.get("freshness_gate") or {}
+    gate_state = str(gate.get("state") or "UNKNOWN")
+    metrics = gate.get("metrics") or {}
+    base_metrics = {
+        "gate_state": gate_state,
+        "report_age_h": age_h,
+        "corpus_latest_observation_utc": metrics.get(
+            "corpus_latest_observation_utc"),
+        "corpus_lag_hours": metrics.get("corpus_lag_hours"),
+        "corpus_match_count": metrics.get("corpus_match_count"),
+        "corpus_content_hash": metrics.get("corpus_content_hash"),
+    }
+
+    if report.get("publication_blocked"):
+        return {
+            "severity": SEV_ALERT,
+            "title": "CORPUS STALE — PUBLICATION BLOCKED",
+            "detail": (
+                f"The freshness gate refused publication: {gate.get('detail')} "
+                f"Report written {age_h}h ago. Due fixtures were recorded as not "
+                "published and remain due; run scripts/refresh_corpus.py."
+            ),
+            "metrics": base_metrics,
+        }
+
+    if age_h is not None and age_h > STALE_HEALTH_REPORT_HOURS:
+        return {
+            "severity": SEV_ALERT,
+            "title": "CORPUS FRESHNESS REPORT STALE",
+            "detail": (
+                f"The freshness gate last recorded a verdict {age_h}h ago "
+                f"(> {STALE_HEALTH_REPORT_HOURS:g}h). The gate is not being "
+                "evaluated, so the corpus could be drifting unobserved — which is "
+                "the original failure mode, not a new one."
+            ),
+            "metrics": base_metrics,
+        }
+
+    if gate_state == "DORMANT":
+        return {
+            "severity": SEV_NOTICE,
+            "title": "CORPUS FRESHNESS UNCONFIRMED (dormant calendar)",
+            "detail": (
+                "The freshness gate could not positively confirm the corpus is "
+                f"current: {gate.get('detail')} This is expected during an "
+                "international break or off-season and publication continues. "
+                "Reported so 'the gate passed' is never confused with 'the gate had "
+                "nothing to compare against'."
+            ),
+            "metrics": base_metrics,
+        }
+    return None
+
+
 def check_provider_auth_failure(state: dict) -> dict | None:
     """The price layer recorded a hard provider failure, not a clean budget stop.
 
@@ -627,6 +726,7 @@ ALERT_CHECKS = [
     ("delivery_failures", check_delivery_failures),
     ("quiet_hours_hold", check_quiet_hours_hold),
     ("stale_fixture_universe", check_stale_fixture_universe),
+    ("stale_corpus", check_stale_corpus),
     ("provider_auth_failure", check_provider_auth_failure),
     ("low_quota", check_low_quota),
 ]
@@ -637,6 +737,7 @@ TITLE_MAP = {
     "delivery_failures": "DELIVERY FAILING",
     "quiet_hours_hold": "QUIET-HOURS SUPPRESSION",
     "stale_fixture_universe": "STALE FIXTURE UNIVERSE",
+    "stale_corpus": "STALE TRAINING CORPUS",
     "provider_auth_failure": "PROVIDER FAILURE",
     "low_quota": "LOW QUOTA",
 }

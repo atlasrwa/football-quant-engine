@@ -46,9 +46,30 @@ DEFAULT_RECORD_ROOT = _HOME / "data" / "forecast_broadcast"
 BROADCAST_LEDGER_NAME = "broadcasts.jsonl"
 DELIVERY_LOG_NAME = "delivery_log.jsonl"
 OUTCOME_LEDGER_NAME = "outcomes.jsonl"
+ANNOTATION_LEDGER_NAME = "record_annotations.jsonl"
 
 #: Contract for rows in the broadcast ledger.
 BROADCAST_RECORD_CONTRACT = "forecast-broadcast-record/v1"
+
+#: Contract for rows in the annotation ledger.
+RECORD_ANNOTATION_CONTRACT = "forecast-broadcast-annotation/v1"
+
+
+class AnnotationType(str, Enum):
+    """What an annotation asserts about an already-committed record.
+
+    Annotations exist because a published forecast can later be found to have been
+    produced under conditions that were not known, or not checked, at the time. The
+    honest response is to say so next to the record, not to change the record: the
+    commitment hash is over the payload as published, so editing it would both break
+    verification and erase the evidence that the forecast was ever made in that form.
+    """
+
+    #: The forecast was fitted on a corpus that had fallen behind the fixture
+    #: calendar, so its rolling form features described a superseded period.
+    AFFECTED_BY_STALE_CORPUS = "AFFECTED_BY_STALE_CORPUS"
+    #: Free-form provenance correction that does not fit a named category.
+    PROVENANCE_CORRECTION = "PROVENANCE_CORRECTION"
 
 
 class RecordType(str, Enum):
@@ -151,6 +172,7 @@ class BroadcastLedger:
         self.broadcast_path = self.root / BROADCAST_LEDGER_NAME
         self.delivery_path = self.root / DELIVERY_LOG_NAME
         self.outcome_path = self.root / OUTCOME_LEDGER_NAME
+        self.annotation_path = self.root / ANNOTATION_LEDGER_NAME
 
     # ── writes (append only) ────────────────────────────────────────────────
     def append_commitment(
@@ -178,6 +200,54 @@ class BroadcastLedger:
             "payload": payload.canonical_dict(),
         }
         _append_jsonl(self.broadcast_path, record)
+        return record
+
+    def append_annotation(
+        self,
+        *,
+        commitment_hash: str,
+        annotation_type: AnnotationType,
+        detail: str,
+        failure_ledger_entry: Optional[str] = None,
+        evidence: Optional[dict[str, Any]] = None,
+        fixture_id: Optional[str] = None,
+        recorded_at_utc: Optional[str] = None,
+    ) -> dict[str, Any]:
+        """Annotate an existing commitment without touching it.
+
+        Written to a *separate* append-only file, keyed by commitment hash. The
+        broadcast ledger is never opened for writing here, so an annotation cannot
+        alter, reorder, or invalidate a published record: re-hashing every stored
+        payload still reproduces its published hash after any number of annotations.
+
+        This is the honest way to mark a forecast as unrepresentative. Deleting or
+        editing the row would destroy the evidence that the claim was made, and would
+        make the record's own integrity check fail — turning a data-quality problem
+        into a tamper signal.
+
+        Args:
+            commitment_hash: the record being annotated.
+            annotation_type: what is being asserted.
+            detail: plain statement of the condition and its consequence.
+            failure_ledger_entry: the failure-ledger id this annotation belongs to.
+            evidence: supporting figures, e.g. observed feature staleness.
+            fixture_id: convenience denormalisation for reading without a join.
+            recorded_at_utc: override for tests.
+
+        Returns:
+            The written annotation row.
+        """
+        record = {
+            "annotation_contract": RECORD_ANNOTATION_CONTRACT,
+            "commitment_hash": str(commitment_hash),
+            "fixture_id": fixture_id,
+            "annotation_type": AnnotationType(annotation_type).value,
+            "detail": str(detail),
+            "failure_ledger_entry": failure_ledger_entry,
+            "evidence": evidence or {},
+            "recorded_at_utc": recorded_at_utc or _now_iso(),
+        }
+        _append_jsonl(self.annotation_path, record)
         return record
 
     def append_not_published(
@@ -282,6 +352,33 @@ class BroadcastLedger:
 
     def outcomes(self) -> list[dict[str, Any]]:
         return _read_jsonl(self.outcome_path)
+
+    def annotations(self) -> list[dict[str, Any]]:
+        return _read_jsonl(self.annotation_path)
+
+    def annotations_by_commitment(self) -> dict[str, list[dict[str, Any]]]:
+        """Annotations grouped by the commitment hash they refer to.
+
+        Used when presenting or auditing the record so an annotated forecast is never
+        read as if it were unqualified. A reader that only loads ``records()`` sees the
+        forecast exactly as published, which is correct but incomplete; this is how the
+        later knowledge gets attached without rewriting history.
+        """
+        grouped: dict[str, list[dict[str, Any]]] = {}
+        for row in self.annotations():
+            grouped.setdefault(str(row.get("commitment_hash")), []).append(row)
+        return grouped
+
+    def annotated_commitment_hashes(
+        self, annotation_type: Optional[AnnotationType] = None
+    ) -> frozenset[str]:
+        """Commitment hashes carrying an annotation, optionally of one type."""
+        wanted = AnnotationType(annotation_type).value if annotation_type else None
+        return frozenset(
+            str(row.get("commitment_hash"))
+            for row in self.annotations()
+            if wanted is None or row.get("annotation_type") == wanted
+        )
 
     def commitments(self) -> Iterator[dict[str, Any]]:
         for rec in self.records():

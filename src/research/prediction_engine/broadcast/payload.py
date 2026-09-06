@@ -50,9 +50,28 @@ from src.research.prediction_engine.broadcast.scope_config import (
     ScopeConfig,
 )
 
-#: Payload contract. Bumping this changes every commitment hash, which is correct:
-#: a payload with different semantics is not comparable to an older one.
-FORECAST_PAYLOAD_CONTRACT = "forecast-broadcast-payload/v1"
+#: Payload contract written by the current producer. Bumping this changes every
+#: commitment hash it produces, which is correct: a payload with different semantics
+#: is not comparable to an older one.
+FORECAST_PAYLOAD_CONTRACT = "forecast-broadcast-payload/v2"
+
+#: Contracts this module can rebuild and re-hash. Verification must remain possible
+#: for records written under older contracts: the ledger is append-only and
+#: hash-verified, so a reader that refused to rebuild a v1 record would report the
+#: existing history as *altered*, which would be a false integrity failure and would
+#: destroy the value of the check. New records are written at
+#: :data:`FORECAST_PAYLOAD_CONTRACT`; old ones keep hashing exactly as published.
+SUPPORTED_PAYLOAD_CONTRACTS: tuple[str, ...] = (
+    "forecast-broadcast-payload/v1",
+    "forecast-broadcast-payload/v2",
+)
+
+#: Contracts whose payloads carry corpus content provenance. v1 payloads carried only
+#: ``model_version`` and ``data_cutoff_utc``. An explicit set rather than a version
+#: comparison, so adding v10 later cannot silently sort below v2.
+_CONTRACTS_WITH_CORPUS_PROVENANCE: frozenset[str] = frozenset(
+    {"forecast-broadcast-payload/v2"}
+)
 
 #: Probabilities are stored at this precision and hashed as stored, so a recomputed
 #: hash from the persisted record reproduces the published hash exactly.
@@ -269,6 +288,13 @@ class ForecastPayload:
     scope_version_hash: str
     horizon_hours_before_kickoff: int
     horizon_target_utc: str
+    #: Content identity of the corpus the probabilities were fitted on: content hash,
+    #: match count, newest and oldest observation, seasons covered. Present from
+    #: contract v2. ``None`` on rebuilt v1 records, which predate it.
+    corpus_provenance: Optional[dict[str, Any]] = None
+    #: The contract this payload hashes under. Defaults to the current one for new
+    #: payloads and is set from the record when rebuilding an old one.
+    payload_contract: str = FORECAST_PAYLOAD_CONTRACT
 
     @property
     def kickoff_utc(self) -> str:
@@ -288,9 +314,12 @@ class ForecastPayload:
         Timestamps are included deliberately. In a commitment they are semantic
         inputs: when the forecast was generated, and how far back its data went, are
         part of the claim being made.
+
+        ``corpus_provenance`` is emitted only for contracts that declare it, so a
+        rebuilt v1 record reproduces its published hash byte for byte.
         """
-        return {
-            "payload_contract": FORECAST_PAYLOAD_CONTRACT,
+        out = {
+            "payload_contract": self.payload_contract,
             "fixture_id": self.fixture_id,
             "comp_id": self.comp_id,
             "league_label": self.league_label,
@@ -306,6 +335,9 @@ class ForecastPayload:
             "horizon_hours_before_kickoff": int(self.horizon_hours_before_kickoff),
             "horizon_target_utc": self.horizon_target_utc,
         }
+        if self.payload_contract in _CONTRACTS_WITH_CORPUS_PROVENANCE:
+            out["corpus_provenance"] = self.corpus_provenance
+        return out
 
     def commitment_hash(self) -> str:
         """64-char SHA-256 over the payload's canonical JSON."""
@@ -324,6 +356,7 @@ def build_forecast_payload(
     unavailable_reasons: Optional[dict[tuple[str, Optional[float]], str]] = None,
     model_version: str,
     data_cutoff_utc: str,
+    corpus_provenance: Optional[dict[str, Any]] = None,
     generated_at_utc: str,
 ) -> ForecastPayload:
     """Assemble a fixture payload covering **every** market in declared scope.
@@ -352,6 +385,10 @@ def build_forecast_payload(
         model_version: content hash identifying the model that produced these
             probabilities.
         data_cutoff_utc: latest observation the model was fitted on.
+        corpus_provenance: content identity of the corpus behind the probabilities —
+            content hash, match count, newest observation, seasons covered. Recorded
+            in the commitment so a reader can later tell *which* observations produced
+            the forecast, not merely how many there were and when they stopped.
         generated_at_utc: when this payload was generated.
 
     Returns:
@@ -381,10 +418,12 @@ def build_forecast_payload(
         markets=tuple(markets),
         model_version=model_version,
         data_cutoff_utc=data_cutoff_utc,
+        corpus_provenance=dict(corpus_provenance) if corpus_provenance else None,
         generated_at_utc=generated_at_utc,
         scope_version_hash=config.scope_version_hash,
         horizon_hours_before_kickoff=config.horizon_hours_before_kickoff,
         horizon_target_utc=horizon_target,
+        payload_contract=FORECAST_PAYLOAD_CONTRACT,
     )
 
 
@@ -427,6 +466,17 @@ def render_message(payload: ForecastPayload) -> str:
     lines.append("")
     lines.append(f"model_version: {payload.model_version}")
     lines.append(f"data_cutoff_utc: {payload.data_cutoff_utc}")
+    provenance = payload.corpus_provenance or {}
+    if provenance.get("corpus_content_hash"):
+        # The corpus is named by its content, so a reader can tell two forecasts apart
+        # by the observations behind them rather than by when a build ran. The seasons
+        # line is what makes a months-old training set visible at a glance instead of
+        # only to whoever thinks to compare the cutoff against a calendar.
+        lines.append(f"corpus_content_hash: {provenance['corpus_content_hash']}")
+        lines.append(f"corpus_matches: {provenance.get('corpus_match_count')}")
+        seasons = provenance.get("corpus_seasons") or []
+        if seasons:
+            lines.append(f"corpus_seasons: {', '.join(str(s) for s in seasons)}")
     lines.append(f"generated_at_utc: {payload.generated_at_utc}")
     lines.append(f"commitment: {payload.commitment_hash()}")
     return "\n".join(lines)
@@ -544,10 +594,10 @@ def payload_from_canonical_dict(obj: dict[str, Any]) -> ForecastPayload:
     exactly; if it does not, the record and the message have diverged.
     """
     contract = obj.get("payload_contract")
-    if contract != FORECAST_PAYLOAD_CONTRACT:
+    if contract not in SUPPORTED_PAYLOAD_CONTRACTS:
         raise ForecastContentError(
-            f"unsupported payload_contract {contract!r}; expected "
-            f"{FORECAST_PAYLOAD_CONTRACT!r}"
+            f"unsupported payload_contract {contract!r}; supported: "
+            f"{list(SUPPORTED_PAYLOAD_CONTRACTS)}"
         )
     markets = tuple(
         MarketForecast(
@@ -576,6 +626,10 @@ def payload_from_canonical_dict(obj: dict[str, Any]) -> ForecastPayload:
         scope_version_hash=obj["scope_version_hash"],
         horizon_hours_before_kickoff=int(obj["horizon_hours_before_kickoff"]),
         horizon_target_utc=obj["horizon_target_utc"],
+        corpus_provenance=obj.get("corpus_provenance"),
+        # Rebuild under the contract the record was written with, never under the
+        # current one, so re-hashing an older record reproduces its published hash.
+        payload_contract=str(contract),
     )
 
 

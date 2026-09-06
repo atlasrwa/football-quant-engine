@@ -86,9 +86,124 @@ LEAGUES = {
 }
 
 
+# ---------------------------------------------------------------------------
+# On-demand league registry (additive, persisted).
+#
+# The static LEAGUES dict above is the frozen, hand-verified corpus registry.
+# The on-demand engine (src/discovery/corpus.ingest_on_demand_rich_season) may
+# ingest ADDITIONAL competitions the API covers but that are not in the static
+# registry. To keep RichCorpusLoader a single-source loader (it iterates
+# LEAGUES), those extra leagues are persisted to a small JSON registry in the
+# cache dir and merged in here — additively, never overwriting a static entry.
+#
+# Registry file schema ({CACHE}/_on_demand_leagues.json):
+#   { "<tag>": {"display": str, "comp": str,
+#               "seasons": [season_id, ...], "fixture_prefix": str}, ... }
+# ---------------------------------------------------------------------------
+ON_DEMAND_REGISTRY_FILE = f"{CACHE}/_on_demand_leagues.json"
+
+
+def _on_demand_registry_path():
+    """Registry path resolved against the CURRENT CACHE dir.
+
+    ``CACHE`` may be repointed at runtime (e.g. RichCorpusLoader sets
+    ``module.CACHE = cache_dir``), so resolve the path live rather than trusting
+    the import-time ``ON_DEMAND_REGISTRY_FILE`` constant.
+    """
+    return f"{CACHE}/_on_demand_leagues.json"
+
+
+def load_on_demand_registry():
+    """Return the persisted on-demand league registry (tag -> meta), or {}.
+
+    Cache-only file read; never touches the network. Malformed/absent files
+    yield an empty registry rather than raising, so a bad registry can never
+    break the frozen static corpus.
+    """
+    path = _on_demand_registry_path()
+    if not os.path.exists(path):
+        return {}
+    try:
+        with open(path) as fh:
+            data = json.load(fh)
+        return data if isinstance(data, dict) else {}
+    except (json.JSONDecodeError, OSError):
+        return {}
+
+
+def merge_on_demand_registry():
+    """Merge the persisted on-demand registry into the in-memory LEAGUES dict.
+
+    Additive and idempotent: static entries always win (they are never
+    overwritten by an on-demand entry with the same tag); on-demand-only tags
+    are layered on top so RichCorpusLoader iterates a single unified registry.
+    For a tag present in both, the union of seasons is used so an on-demand
+    top-up of a static league's extra season still becomes loadable.
+
+    Returns the (mutated) LEAGUES dict for convenience.
+    """
+    for tag, meta in load_on_demand_registry().items():
+        if not isinstance(meta, dict):
+            continue
+        if tag in LEAGUES:
+            # Static entry wins; only extend its season list with any new ids.
+            existing = LEAGUES[tag].get("seasons", [])
+            extra = [s for s in meta.get("seasons", []) if s not in existing]
+            if extra:
+                LEAGUES[tag] = {**LEAGUES[tag], "seasons": existing + extra}
+        else:
+            LEAGUES[tag] = {
+                "display": meta.get("display", tag),
+                "comp": meta.get("comp", tag),
+                "seasons": list(meta.get("seasons", [])),
+                "fixture_prefix": meta.get("fixture_prefix", tag),
+            }
+    return LEAGUES
+
+
+def register_on_demand_league(tag, *, display, comp, season_id, fixture_prefix):
+    """Persist/extend an on-demand league in the registry file (cache-only).
+
+    Idempotent per (tag, season_id): re-registering the same season is a no-op;
+    a new season for an existing tag is appended. Static tags are recorded here
+    too (harmless) so a top-up of a static league's extra season survives across
+    processes; merge_on_demand_registry() still lets the static entry win on
+    conflicting fields.
+    """
+    registry = load_on_demand_registry()
+    entry = registry.get(tag) or {
+        "display": display,
+        "comp": comp,
+        "seasons": [],
+        "fixture_prefix": fixture_prefix,
+    }
+    # Keep the newest human-readable display/comp/prefix for on-demand-only tags.
+    entry["display"] = display or entry.get("display", tag)
+    entry["comp"] = comp or entry.get("comp", tag)
+    entry["fixture_prefix"] = (
+        fixture_prefix if fixture_prefix is not None else entry.get("fixture_prefix", tag)
+    )
+    seasons = entry.get("seasons", [])
+    if season_id not in seasons:
+        seasons.append(season_id)
+    entry["seasons"] = seasons
+    registry[tag] = entry
+    os.makedirs(CACHE, exist_ok=True)
+    with open(_on_demand_registry_path(), "w") as fh:
+        json.dump(registry, fh, indent=2)
+    return entry
+
+
 def fixture_path(tag, season_id):
-    """Path to the season's _all_fixtures_*.json, respecting the tag/no-tag rule."""
-    prefix = LEAGUES[tag]["fixture_prefix"]
+    """Path to the season's _all_fixtures_*.json, respecting the tag/no-tag rule.
+
+    Falls back to the on-demand registry for tags not in the static LEAGUES so
+    on-demand-ingested leagues resolve their fixture path correctly.
+    """
+    if tag in LEAGUES:
+        prefix = LEAGUES[tag]["fixture_prefix"]
+    else:
+        prefix = load_on_demand_registry().get(tag, {}).get("fixture_prefix", tag)
     if prefix:
         return f"{CACHE}/_all_fixtures_{prefix}_{season_id}.json"
     return f"{CACHE}/_all_fixtures_{season_id}.json"
@@ -101,7 +216,10 @@ def stats_path(tag, mid):
     tagged (<tag>_stats_<mid>.json).  We also fall back to the untagged name so
     partially-migrated caches still resolve.
     """
-    prefix = LEAGUES[tag]["fixture_prefix"]
+    if tag in LEAGUES:
+        prefix = LEAGUES[tag]["fixture_prefix"]
+    else:
+        prefix = load_on_demand_registry().get(tag, {}).get("fixture_prefix", tag)
     if prefix:
         tagged = f"{CACHE}/{prefix}_stats_{mid}.json"
         if os.path.exists(tagged):
