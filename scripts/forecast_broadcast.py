@@ -118,6 +118,10 @@ from src.research.prediction_engine.broadcast.scope_config import (
     load_scope_config,
     record_scope_change,
 )
+from src.research.prediction_engine.evaluation_window import (
+    EvaluationWindowError,
+    open_window,
+)
 
 HOME = Path("/home/ubuntu")
 ENV_PATH = HOME / ".env"
@@ -1168,6 +1172,30 @@ def run(
             )
             if outcome.status is DeliveryStatus.SENT:
                 summary["sent"] += 1
+                # The 30-day evaluation window opens on the first forecast
+                # actually delivered on the corrected corpus, and never moves
+                # afterwards. Everything published before that instant was built
+                # on the stale corpus and is excluded from the record. This is
+                # idempotent and deliberately non-fatal: failing to mark the epoch
+                # must not stop a forecast going out, but it must be visible.
+                try:
+                    window = open_window(
+                        commitment_hash=commitment,
+                        generated_at_utc=payload.generated_at_utc,
+                        generated_at_unix=int(
+                            datetime.fromisoformat(
+                                payload.generated_at_utc
+                            ).timestamp()
+                        ),
+                        model_version=payload.model_version,
+                        corpus_content_hash=(
+                            payload.corpus_provenance or {}
+                        ).get("corpus_content_hash"),
+                    )
+                    summary["evaluation_window_epoch"] = window.epoch_commitment_hash
+                    summary["evaluation_window_closes_utc"] = window.closes_at_utc
+                except (EvaluationWindowError, OSError, ValueError) as exc:
+                    summary["errors"].append(f"{fixture_id}: evaluation_window: {exc}")
             elif outcome.status is DeliveryStatus.QUEUED_QUIET_HOURS:
                 summary["queued_quiet_hours"] += 1
             else:

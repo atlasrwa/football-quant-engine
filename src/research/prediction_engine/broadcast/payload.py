@@ -503,19 +503,115 @@ def render_message(payload: ForecastPayload) -> str:
             lines.append(f"corpus_seasons: {', '.join(str(s) for s in seasons)}")
     history = payload.history_provenance or {}
     if history.get("home") and history.get("away"):
-        # State how many completed current-season matches each side had and which
-        # window applied, so a reader can see at a glance whether this forecast rests
-        # on a full window or an early-season season-to-date figure.
-        h, a = history["home"], history["away"]
-        lines.append(
-            "current_season_matches: "
-            f"{payload.home_team} {h.get('current_season_matches')}, "
-            f"{payload.away_team} {a.get('current_season_matches')} "
-            f"(min {history.get('min_current_season_matches')})"
-        )
+        lines.extend(_render_history_lines(payload, history))
     lines.append(f"generated_at_utc: {payload.generated_at_utc}")
     lines.append(f"commitment: {payload.commitment_hash()}")
     return "\n".join(lines)
+
+
+def _render_history_lines(
+    payload: ForecastPayload, history: dict[str, Any]
+) -> list[str]:
+    """Render per-team history provenance, including the per-team windows map.
+
+    The windows map is the single most important provenance field a reader has,
+    because it is the one that says whether a forecast rests on real rolling form
+    or on a handful of matches. It was being recorded in the ledger and folded into
+    the commitment hash while never appearing in the published message, so a reader
+    could see "3 matches, min 3" and have no way to tell that every rolling window
+    had abstained and the forecast was carried by a season-to-date mean alone. That
+    is exactly the case where a reader most needs to know.
+
+    Two provenance shapes are handled, because both are live:
+
+    * the fixed-window shape, whose ``windows`` map marks each declared window
+      ``populated`` or ``abstain``;
+    * the shrinking-window shape, which reports the matches actually **used**
+      against the window requested, since that window shrinks rather than
+      abstaining.
+
+    Shrinkage weights and prior-season contribution are rendered when present, so
+    a forecast leaning on the league average or still carrying last season is
+    distinguishable from one built on a full current-season record.
+    """
+    home, away = history["home"], history["away"]
+    rendered: list[str] = [
+        "current_season_matches: "
+        f"{payload.home_team} {home.get('current_season_matches')}, "
+        f"{payload.away_team} {away.get('current_season_matches')} "
+        f"(min {history.get('min_current_season_matches')})"
+    ]
+
+    declared = history.get("windows_declared") or history.get("window_declared")
+    if declared:
+        label = (
+            ", ".join(str(item) for item in declared)
+            if isinstance(declared, (list, tuple))
+            else str(declared)
+        )
+        rendered.append(f"windows_declared: {label}")
+
+    for team_label, side in (
+        (payload.home_team, home),
+        (payload.away_team, away),
+    ):
+        summary = _window_summary(side)
+        if summary:
+            rendered.append(f"windows[{team_label}]: {summary}")
+
+    policy = history.get("window_policy")
+    if policy:
+        rendered.append(f"window_policy: {policy}")
+    if history.get("gate_keys_on"):
+        rendered.append(f"history_gate_keys_on: {history['gate_keys_on']}")
+
+    shrinkage = history.get("shrinkage_weights")
+    if isinstance(shrinkage, dict) and shrinkage:
+        rendered.append(
+            "shrinkage_weights: "
+            + ", ".join(
+                f"{name}={_format_number(value)}"
+                for name, value in sorted(shrinkage.items())
+                if value is not None
+            )
+        )
+    prior_season = history.get("prior_season_contribution")
+    if isinstance(prior_season, dict) and prior_season:
+        rendered.append(
+            "prior_season_contribution: "
+            + ", ".join(
+                f"{name}={_format_number(value)}"
+                for name, value in sorted(prior_season.items())
+                if value is not None
+            )
+        )
+    return rendered
+
+
+def _window_summary(side: dict[str, Any]) -> str:
+    """One team's windows, in whichever provenance shape was recorded."""
+    windows = side.get("windows")
+    if isinstance(windows, dict) and windows:
+        # Fixed-window shape: each declared window is populated or abstains.
+        return ", ".join(f"{name}={state}" for name, state in sorted(windows.items()))
+    used = side.get("used")
+    requested = side.get("requested")
+    if used is not None and requested is not None:
+        parts = [f"{side.get('label', 'window')}={used}/{requested} matches used"]
+        status = side.get("status")
+        if status:
+            parts.append(str(status))
+        if side.get("season"):
+            parts.append(f"season {side['season']}")
+        return ", ".join(parts)
+    return ""
+
+
+def _format_number(value: Any) -> str:
+    try:
+        return f"{float(value):.2f}"
+    except (TypeError, ValueError):
+        return str(value)
 
 
 # ─────────────────────────────────────────────────────────────────────────────
