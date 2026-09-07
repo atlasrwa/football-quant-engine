@@ -1,10 +1,44 @@
 # Atlas Watchtower — every 15 minutes (replaces GitHub Actions)
 0 */4 * * * cd /home/ubuntu && /usr/bin/python3 scripts/quarantine_forward_loop.py >> logs/forward_loop.log 2>&1
-# >>> pilotC forward loop (managed by install_pilotC_cron.sh) >>>
-# Full cycle every 6 hours: fetch odds -> predict+commit(before kickoff) -> settle+reveal
-0 */6 * * * cd /home/ubuntu && /home/ubuntu/.venv/bin/python scripts/pilotC_forward_loop.py >> /home/ubuntu/logs/pilotC_loop.log 2>&1
-# Daily settle-only pass so reveals bind promptly
-30 3 * * * cd /home/ubuntu && /home/ubuntu/.venv/bin/python scripts/pilotC_forward_loop.py --settle-only >> /home/ubuntu/logs/pilotC_loop.log 2>&1
-# Weekly health report (Mon 08:00 UTC)
-0 8 * * 1 cd /home/ubuntu && /home/ubuntu/.venv/bin/python scripts/pilotC_forward_loop.py --health >> /home/ubuntu/logs/pilotC_loop.log 2>&1
-# <<< pilotC forward loop <<<
+# >>> shared data pipeline (managed by install_pilotC_cron.sh) >>>
+CRON_TZ=UTC
+# NOTE: Pilot C's four entries were removed here on 2026-09-05 (deprecated, see F024).
+# Its ledgers are preserved; only the collection schedule was withdrawn.
+# Generate the daily simple-model signals and deliver any new Telegram messages at 00:00 UTC.
+0 0 * * * cd /home/ubuntu && /usr/bin/flock -n /tmp/daily_signals_telegram.lock /bin/bash -lc '/home/ubuntu/.venv/bin/python -m src.cli daily-signals && /home/ubuntu/.venv/bin/python scripts/signals_telegram_bot.py' >> /home/ubuntu/logs/daily_signals_telegram.log 2>&1
+# Revalidate today's fixtures every 60 minutes, starting at 00:00 UTC; alert only EV candidates that pass every gate.
+0 * * * * cd /home/ubuntu && /usr/bin/flock -n /tmp/fixture_alert_watcher.lock /home/ubuntu/.venv/bin/python scripts/fixture_alert_watcher.py >> /home/ubuntu/logs/fixture_alert_watcher.log 2>&1
+# Refresh the fail-closed FootyStats <-> TheStatsAPI league registry daily.
+30 0 * * * cd /home/ubuntu && /usr/bin/flock -n /tmp/provider_league_sync.lock /home/ubuntu/.venv/bin/python scripts/sync_provider_leagues.py --refresh >> /home/ubuntu/logs/provider_league_sync.log 2>&1
+# <<< shared data pipeline <<<
+# >>> forecast broadcast T-8h (managed by install_forecast_broadcast_cron.sh) >>>
+CRON_TZ=UTC
+# Evaluate the T-8h horizon every 15 minutes. Runs through quiet hours as well, so a
+# suppressed forecast is queued at once and flushed on the first tick after the window
+# closes with its original generated_at_utc and commitment hash. flock keeps a slow
+# model fit from overlapping the next tick.
+#
+# The in-scope corpus refresh is a PHASE of this run, not a separate entry. That is
+# deliberate: an independently scheduled refresh can slip behind the broadcast that
+# consumes it, and on 2026-09-05 the absence of any refresh at all let the engine
+# publish on a corpus that ended 2026-05-31. Ordering is now a property of the code.
+*/15 * * * * cd /home/ubuntu && /usr/bin/flock -n /tmp/forecast_broadcast.lock /home/ubuntu/.venv/bin/python scripts/forecast_broadcast.py >> /home/ubuntu/logs/forecast_broadcast.log 2>&1
+# Daily coverage audit at 07:10 UTC — after quiet hours end and the queue has drained.
+# Exits non-zero if a fixture in declared scope has no row, or a commitment was never delivered.
+10 7 * * * cd /home/ubuntu && /usr/bin/flock -n /tmp/forecast_broadcast.lock /home/ubuntu/.venv/bin/python scripts/forecast_broadcast.py --coverage >> /home/ubuntu/logs/forecast_broadcast_coverage.log 2>&1
+# Wider pooled-training refresh — weekly (Sun 04:20 UTC). The broadcast phase keeps the
+# four in-scope seasons current, which covers every rolling feature that reaches a
+# published number. This one refreshes the current season of every registry league so
+# the pooled fit does not drift; ~53 provider requests, hence weekly rather than daily.
+# Shares the broadcaster's lock so it cannot overlap a tick's own refresh.
+20 4 * * 0 cd /home/ubuntu && /usr/bin/flock -n /tmp/forecast_broadcast.lock /home/ubuntu/.venv/bin/python scripts/refresh_corpus.py --all-leagues >> /home/ubuntu/logs/forecast_broadcast_corpus.log 2>&1
+# Fixture-universe inflow — twice weekly (Mon & Thu 06:00 UTC). Refreshes the shared
+# discovered fixture universe the broadcaster consumes, replacing the schedule lost when
+# Pilot C was deprecated. Cache-first + quota-capped; a separate lock so it never blocks
+# a broadcaster tick. Needs THESTATS_API_KEY in /home/ubuntu/.env (see header).
+#
+# This also feeds the freshness gate: the gate benchmarks the corpus against the newest
+# in-scope fixture that has finished, so the universe is its independent reference. A
+# stale universe is separately alerted by the heartbeat's check_stale_fixture_universe.
+0 6 * * 1,4 cd /home/ubuntu && /usr/bin/flock -n /tmp/forecast_broadcast_discovery.lock /home/ubuntu/.venv/bin/python scripts/pilotC_fixture_discovery.py >> /home/ubuntu/logs/forecast_broadcast_discovery.log 2>&1
+# <<< forecast broadcast T-8h <<<

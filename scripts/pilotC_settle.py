@@ -39,6 +39,38 @@ MARKETS_PER_FIXTURE=4  # goals 1.5/2.5/3.5 + btts (per pilotC_forward_predict)
 _FINISHED = {"finished", "complete", "completed", "ft", "full-time", "ended"}
 
 
+def _api_exit_reason(code):
+    """Return the precise client abort reason for an API ``SystemExit`` code."""
+    return {
+        2: "THESTATS_API_KEY is missing",
+        3: "local live-request cap reached",
+        4: "network request failed",
+        5: "API rate limit persisted after retry",
+        6: "API returned an unexpected HTTP status",
+        7: "API returned invalid JSON",
+    }.get(code, "unknown API client abort")
+
+
+def _record_api_abort(stats, exc, context, verbose):
+    """Record a precise cap stop or hard API abort and return its exit code."""
+    code = exc.code if isinstance(exc.code, int) else 1
+    reason = _api_exit_reason(code)
+    stats["api_abort_code"] = code
+    if code == 3:
+        message = f"local request cap reached during {context}"
+        if verbose:
+            print(f"CAP reached during {context} — halting safely.")
+        logger.warning(message)
+    else:
+        message = f"hard API abort during {context} (SystemExit {code}): {reason}"
+        stats["hard_abort"] = True
+        if verbose:
+            print(f"ABORT during {context}: {reason} (SystemExit {code}).")
+        logger.error(message)
+    stats["errors"].append(message)
+    return code
+
+
 def _pred_id(mid, market, line):
     return f"pilotC:{mid}:{market}:{line}"
 
@@ -293,10 +325,8 @@ def score(verbose=True):
             if mid not in detail_cache:
                 detail_cache[mid] = _fetch_match_detail(api, mid)
             detail, detail_http = detail_cache[mid]
-        except SystemExit:
-            stats["errors"].append("request cap reached during status fetch")
-            if verbose:
-                print("CAP reached during settlement status fetch — halting cleanly.")
+        except SystemExit as e:
+            _record_api_abort(stats, e, "settlement status fetch", verbose)
             break
         except Exception as e:
             stats["errors"].append(f"status {mid}: {type(e).__name__}: {str(e)[:80]}")
@@ -337,11 +367,8 @@ def score(verbose=True):
             if mid not in final_cache:
                 final_cache[mid] = _fetch_final(api, mid, detail=detail)
             final = final_cache[mid]
-        except SystemExit:
-            # client hit the request cap — stop cleanly, keep what we have
-            stats["errors"].append("request cap reached during settlement fetch")
-            if verbose:
-                print("CAP reached during settlement — halting cleanly.")
+        except SystemExit as e:
+            _record_api_abort(stats, e, "settlement result fetch", verbose)
             break
         except Exception as e:
             stats["errors"].append(f"fetch {mid}: {type(e).__name__}: {str(e)[:80]}")

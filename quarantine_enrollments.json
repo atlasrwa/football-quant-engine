@@ -41,6 +41,50 @@
       "predictions_attested": 190,
       "predictions_unattested": 4,
       "note": "Same as corners — predictions preserved as history, no longer product evidence."
+    },
+    {
+      "experiment": "pilot_c",
+      "hypothesis_id": "pilotC_forward_edge_test_v1",
+      "preregistration_document": "data/results/pilotC_preregistration.json",
+      "preregistration_document_hash": "ccc9a6d006588d7504c042201e6112a5ecf0200dd330eb6dfbe7086bc0a7fded",
+      "preregistration_anchor": "data/forward/preregistration_ledger.jsonl",
+      "status": "CLOSED",
+      "previous_status": "COLLECTING",
+      "closed_at": "2026-09-05T04:49:44+00:00",
+      "closed_reason": "Closed for two independent reasons. (1) OUTAGE: collection stopped on 2026-08-31 and stayed stopped. THESTATS_API_KEY is exported only from ~/.bashrc, which returns early for non-interactive shells, so no cron invocation could see it; every TheStatsAPI call aborted with SystemExit 2. Because pilotC_fixture_discovery.py caught every SystemExit and recorded it as \"hit_request_cap\": true, and the fetch layer reported fetch_ok=true with zero errors, the loop reported clean quota-safe runs while authentication was failing. The stale-ledger heartbeat eventually surfaced it after ~98.7h. (2) PREMISE OVERTAKEN: the offline work answered the question this pilot was built to test. Market-relative residual modelling returned goals -2.06% / corners -3.08% with 0 of 156 cells surviving Benjamini-Hochberg; the historical EV test had the market winning 13 of 17 comparisons with every ROI negative; the per-league run showed the pooled stat-mixer result was only 41 of 189 cells positive. At the observed settle rate the readout was ~114.5 weeks away. Collecting for over two years to confirm what four analyses already show is not defensible.",
+      "final_state": {
+        "commitments": 160,
+        "reveals": 30,
+        "settled_observations": 30,
+        "settled_fixtures": 6,
+        "target_n_per_cell": 385,
+        "cells": 9,
+        "target_cell_observations": 3465,
+        "cells_at_target": 0,
+        "per_cell_settled": {
+          "goals@1.5": 6, "goals@2.5": 6, "goals@3.5": 6,
+          "corners@8.5": 1, "corners@9.5": 2, "corners@10.5": 1,
+          "cards@3.5": 2, "cards@4.5": 0, "btts@None": 6
+        },
+        "last_commitment_utc": "2026-08-31T02:40:41+00:00",
+        "last_reveal_utc": "2026-08-31T23:18:32+00:00",
+        "estimated_weeks_to_readout_at_observed_rate": 114.5,
+        "ledger_chain_verifies": true
+      },
+      "preliminary_result": {
+        "model_brier": 0.2631,
+        "market_brier": 0.2527,
+        "reference_book": "betfair-exchange",
+        "n": 30,
+        "direction": "Brier is a loss, so the model scored 0.0103 WORSE than the de-vigged market price.",
+        "interpretation": "PRELIMINARY AND NOT A CONCLUSION. n=30 against a pre-registered target of 385 per cell, and 0 of 9 cells reached that target, so the pre-registered stopping point was never reached and the primary analysis was never triggered. This figure is recorded because suppressing an unflattering partial number would be worse than publishing it with its sample size attached. It does not establish that the model is worse than the market; it establishes that the pilot ended without evidence that it is better.",
+        "no_edge_claim": true
+      },
+      "records_preserved": true,
+      "records_preserved_detail": "Nothing was deleted, edited, archived away, or backdated. The commitment and reveal chains verify clean and are retained exactly as written: data/forward/pilotC_commitments.jsonl (160 rows), data/forward/pilotC_reveals.jsonl (30 rows), data/forward/pilotC_run_log.jsonl, data/discovery/pilotC_settled_log.json, data/discovery/pilotC_health_report.json, and data/discovery/pilotC_discovery_status.json — the last of which is deliberately kept because it is the outage evidence, recording \"England Championship: client abort (SystemExit 2)\" alongside \"hit_request_cap\": true. The pre-registration document and its ledger anchor are untouched, so the hash above still verifies. This closure is recorded here rather than in the anchored document, because editing a hash-anchored pre-registration to add a status would break the very chain that makes it worth anything.",
+      "what_stops": "The four cron entries (6-hourly full cycle, 03:30 and 20:20 settle-only passes, Monday 08:20 health report) were removed on 2026-09-05, and the pilotc-heartbeat systemd timer was retired. No further collection, settlement, or paging.",
+      "successor": "src/research/prediction_engine/broadcast/ — the T-8h forecast broadcast, which publishes both-sided probabilities with provenance on a pre-declared scope. It keeps the property worth keeping from Pilot C: predictions committed against a scope declared in advance, with visible NOT_PUBLISHED gaps, rather than selected fixture by fixture.",
+      "failure_ledger_entry": "F024"
     }
   ],
   "attestation_status": {

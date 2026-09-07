@@ -10,7 +10,7 @@ Design rules (per task brief):
     and records them to a running usage log so budget is always visible.
   * Abort on any non-200 (except documented 404/empty which callers handle) rather
     than silently retrying and burning budget. Respects Retry-After on 429.
-  * A hard local request cap (default 425) so a bug cannot blow the trial budget.
+  * A hard local request cap (default 100000) so a bug cannot blow the monthly budget.
 
 This module makes NO calls on import. Callers invoke get_json(path, params, cache_key).
 """
@@ -30,10 +30,12 @@ USAGE_LOG = f"{CACHE_DIR}/_usage_log.jsonl"
 BUDGET_STATE = f"{CACHE_DIR}/_budget_state.json"
 
 # Hard local safety cap on the number of *live* requests this process will make.
-# Overridable via env THESTATS_MAX_REQUESTS. The trial is ~425; keep a margin.
-MAX_LIVE_REQUESTS = int(os.environ.get("THESTATS_MAX_REQUESTS", "425"))
-
-_API_KEY = os.environ.get("THESTATS_API_KEY")
+# Overridable via env THESTATS_MAX_REQUESTS. Keep the configured ceiling immutable so
+# request stages may lower their own allowance but can never raise the process budget.
+# Default raised to 100000 to match the account's monthly quota, leaving ample room for
+# the daily alert watcher to re-poll odds (cache-first, so idempotent re-runs stay cheap).
+CONFIGURED_MAX_LIVE_REQUESTS = int(os.environ.get("THESTATS_MAX_REQUESTS", "100000"))
+MAX_LIVE_REQUESTS = CONFIGURED_MAX_LIVE_REQUESTS
 
 # in-process counter of live requests actually sent
 _live_requests_made = 0
@@ -85,6 +87,68 @@ def is_cached(cache_key):
     return os.path.exists(cache_path(cache_key))
 
 
+# ─────────────────────────────────────────────────────────────────────────────
+# Abort classification — the ONE place that says what an exit code means
+# ─────────────────────────────────────────────────────────────────────────────
+# Every abort below leaves this module as SystemExit(<code>). Callers must not
+# re-derive what a code means: treating "any SystemExit" as a clean budget stop is
+# the bug that hid Pilot C's outage for 98.7 hours. A missing key (2) and an API
+# rejection (6) were both reported as a tidy cap stop, so the collection loop wrote
+# fetch_ok=true with zero errors while authentication was failing.
+#
+# Only CLEAN_STOP_EXIT_CODES mean "we deliberately stopped to protect budget, and
+# everything fetched so far is valid". Everything else means the measurement did not
+# happen and the run must fail visibly.
+API_EXIT_REASONS = {
+    2: "THESTATS_API_KEY is missing from the environment",
+    3: "local live-request cap reached",
+    4: "network request failed",
+    5: "API rate limit persisted after retry",
+    6: "API returned an unexpected HTTP status (includes 401/403 auth rejection)",
+    7: "API returned invalid JSON",
+}
+
+#: The only code that is a deliberate, budget-protecting stop.
+CLEAN_STOP_EXIT_CODES = frozenset({3})
+
+#: Codes that mean the request could not be authenticated or configured at all.
+#: These must never be reported as a quota outcome — they are broken plumbing.
+CREDENTIAL_EXIT_CODES = frozenset({2, 6})
+
+
+def exit_code_of(exc):
+    """The integer exit code carried by a SystemExit, defaulting to 1."""
+    code = getattr(exc, "code", None)
+    return code if isinstance(code, int) else 1
+
+
+def api_exit_reason(code):
+    """Human-readable reason for an API client exit code."""
+    return API_EXIT_REASONS.get(code, "unknown API client abort")
+
+
+def is_clean_stop(exc):
+    """True only for a deliberate budget stop, never for auth/config/network failure.
+
+    Callers should branch on this rather than on ``except SystemExit`` alone::
+
+        try:
+            data, meta = api.get_json(...)
+        except SystemExit as exc:
+            if api.is_clean_stop(exc):
+                ...   # partial results are valid; stop collecting
+            else:
+                raise # broken plumbing: fail the run so monitoring sees it
+    """
+    return exit_code_of(exc) in CLEAN_STOP_EXIT_CODES
+
+
+def describe_abort(exc):
+    """``(code, is_clean, reason)`` for logging an abort precisely."""
+    code = exit_code_of(exc)
+    return code, code in CLEAN_STOP_EXIT_CODES, api_exit_reason(code)
+
+
 def get_json(path, params=None, cache_key=None, allow_status=(200,)):
     """Fetch BASE_URL+path with query params. Cache-first by cache_key.
 
@@ -103,7 +167,8 @@ def get_json(path, params=None, cache_key=None, allow_status=(200,)):
             data = json.load(f)
         return data, {"from_cache": True, "http_status": 200, "cache_key": cache_key}
 
-    if _API_KEY is None:
+    api_key = os.environ.get("THESTATS_API_KEY")
+    if not api_key:
         print("ABORT: THESTATS_API_KEY not set in environment.", file=sys.stderr)
         sys.exit(2)
 
@@ -118,7 +183,7 @@ def get_json(path, params=None, cache_key=None, allow_status=(200,)):
         url += "?" + urllib.parse.urlencode(params)
 
     req = urllib.request.Request(url, headers={
-        "Authorization": f"Bearer {_API_KEY}",
+        "Authorization": f"Bearer {api_key}",
         "Accept": "application/json",
         "User-Agent": "fqe-championship-slice/1.0",
     })

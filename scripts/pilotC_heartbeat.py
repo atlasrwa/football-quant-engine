@@ -1,5 +1,32 @@
 #!/usr/bin/env python3
-"""Pilot C Heartbeat — independent watchdog + Telegram alerter.
+"""Pilot C Heartbeat — RETIRED 2026-09-05. Superseded, kept as history.
+
+    ┌──────────────────────────────────────────────────────────────────────────┐
+    │ DEPRECATED. DO NOT RE-ENABLE.                                            │
+    │                                                                          │
+    │ Pilot C was closed on 2026-09-05 (public_site/failure_ledger.json F024,  │
+    │ quarantine_enrollments.json experiment "pilot_c" status CLOSED). Its     │
+    │ collection cron entries were removed and this watchdog's systemd timer   │
+    │ (pilotc-heartbeat.timer) was stopped and disabled. A deprecated          │
+    │ experiment must not page a human.                                        │
+    │                                                                          │
+    │ Three of its four checks are now meaningless: FLAT REVEALS and REPEATED  │
+    │ EMPTY DISCOVERY describe a loop that no longer runs, and STALE LEDGER    │
+    │ watches ledgers that are intentionally frozen — it would fire forever.   │
+    │                                                                          │
+    │ SUCCESSOR: scripts/forecast_broadcast_heartbeat.py                       │
+    │            (forecast-broadcast-heartbeat.timer)                          │
+    │                                                                          │
+    │ This file is retained unmodified below because it is the component that  │
+    │ actually caught the outage: its STALE LEDGER check was the only one of   │
+    │ the four that did not consume a self-report, and it is the reason the    │
+    │ successor's primary monitor is also stale-ledger. Deleting it would      │
+    │ discard the evidence of what worked.                                     │
+    └──────────────────────────────────────────────────────────────────────────┘
+
+Original documentation follows.
+
+Pilot C Heartbeat — independent watchdog + Telegram alerter.
 
 This runs on its OWN schedule (systemd --user timer), completely independent of the
 collection cron (scripts/pilotC_forward_loop.py). Its job is to answer one question

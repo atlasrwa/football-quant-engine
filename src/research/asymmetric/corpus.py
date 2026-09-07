@@ -289,6 +289,16 @@ class RichCorpusLoader:
                 self._source.CACHE = cache_dir
             except Exception:  # pragma: no cover - defensive
                 pass
+        # Merge any on-demand-ingested leagues into the registry so seasons the
+        # on-demand engine wrote into the cache become loadable here. This is a
+        # cache-only file read (no network) and additive: static corpus entries
+        # always win, so the frozen registry is never altered (Req 12.1, 12.2).
+        merge = getattr(self._source, "merge_on_demand_registry", None)
+        if callable(merge):
+            try:
+                merge()
+            except Exception:  # pragma: no cover - never let a bad registry break loads
+                pass
 
     @property
     def leagues(self) -> dict[str, Any]:

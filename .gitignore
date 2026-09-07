@@ -53,6 +53,7 @@ build/
 data/raw/*.json
 data/features/*.json
 data/results/*.json
+!data/results/laliga_topflight_corners_preregistration_v1.json
 data/errors/*.jsonl
 !.gitkeep
 
@@ -67,6 +68,12 @@ data/forward/manual_settled_log.json
 data/forward/manual_model_cache_*.pkl
 # Heartbeat watchdog dedup state (runtime).
 data/discovery/pilotC_heartbeat_state.json
+# Forecast broadcast watchdog dedup state — operational state, not a record.
+# The permanent record is the append-only ledger in data/forecast_broadcast/.
+data/forecast_broadcast/heartbeat_state.json
+# Pending-delivery queue is working state; it drains. Every transition is logged
+# permanently in data/forecast_broadcast/delivery_log.jsonl instead.
+data/forecast_broadcast/pending_queue.jsonl
 
 
 # On-demand fixture research runtime artifacts (versioned source snapshots, reports,

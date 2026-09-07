@@ -174,6 +174,18 @@ def _quota_remaining():
         return None
 
 
+def _api_exit_reason(code: int) -> str:
+    """Return the precise client abort reason for an API ``SystemExit`` code."""
+    return {
+        2: "THESTATS_API_KEY is missing",
+        3: "local live-request cap reached",
+        4: "network request failed",
+        5: "API rate limit persisted after retry",
+        6: "API returned an unexpected HTTP status",
+        7: "API returned invalid JSON",
+    }.get(code, "unknown API client abort")
+
+
 def _verify_ledger_chain() -> tuple[bool, list[str]]:
     from src.research.forward.attestation_ledger import AttestationLedger
     led = AttestationLedger(commit_path=COMMIT_LEDGER, reveal_path=REVEAL_LEDGER)
@@ -293,9 +305,21 @@ def _phase_discover(stats: dict) -> None:
                          "investigate before the universe drains.", d.get("errors", [])[:3])
             stats["errors"].append(f"discovery failed: {d.get('errors', [])[:2]}")
     except SystemExit as e:
-        stats["discovery"] = {"state": "failed", "reason": f"SystemExit {e.code} (quota cap)"}
-        logger.error("DISCOVERY stopped (SystemExit %s) — likely quota cap. Inflow at risk.", e.code)
-        stats["errors"].append(f"discovery SystemExit {e.code}")
+        code = e.code if isinstance(e.code, int) else 1
+        reason = _api_exit_reason(code)
+        stats["discovery"] = {
+            "state": "failed",
+            "reason": f"SystemExit {code}: {reason}",
+            "abort_code": code,
+        }
+        if code == 3:
+            logger.warning("DISCOVERY reached the local request cap safely; inflow may be incomplete.")
+            stats["errors"].append("discovery stopped at local request cap")
+        else:
+            stats["hard_failure"] = True
+            logger.error("DISCOVERY hard abort (SystemExit %s): %s. Inflow at risk.",
+                         code, reason)
+            stats["errors"].append(f"discovery hard abort (SystemExit {code}): {reason}")
     except Exception as e:
         stats["discovery"] = {"state": "failed", "reason": f"{type(e).__name__}: {str(e)[:120]}"}
         logger.error("DISCOVERY crashed: %s — inflow at risk.", str(e)[:200])
@@ -315,10 +339,23 @@ def _phase_fetch_odds(stats: dict) -> None:
         fetch.main()
         stats["fetch_ok"] = True
     except SystemExit as e:
-        # client hit the cap or an abort code — clean stop, not a crash
+        code = e.code if isinstance(e.code, int) else 1
+        reason = _api_exit_reason(code)
         stats["fetch_ok"] = False
-        stats["errors"].append(f"fetch stopped (SystemExit {e.code}) — quota cap or API abort")
-        logger.warning("odds fetch stopped cleanly (SystemExit %s) — likely quota cap", e.code)
+        stats["fetch_abort_code"] = code
+        stats["fetch_stop_reason"] = reason
+        if code == 3:
+            # A local cap stop is an expected quota-safety outcome. The fetcher has
+            # persisted all cache/live work completed before reaching the cap.
+            logger.warning("odds fetch reached the local request cap safely (SystemExit 3)")
+        else:
+            # Missing credentials and API/network/payload failures are not quota
+            # success. Persist the run, continue isolated phases where possible, and
+            # make main() exit nonzero after diagnostics and health are refreshed.
+            stats["hard_failure"] = True
+            message = f"fetch hard abort (SystemExit {code}): {reason}"
+            stats["errors"].append(message)
+            logger.error("odds %s", message)
     stats["live_requests_after_fetch"] = api.live_requests_made()
 
 
@@ -375,7 +412,14 @@ def _phase_settle(stats: dict) -> None:
         "settled_via_kickoff_backstop": s.get("settled_via_kickoff_backstop", 0),
         "awaiting_past_expected_window": s.get("awaiting_past_expected_window", []),
         "per_cell_settled_added": s.get("per_cell_settled_added", {}),
+        "hard_abort": s.get("hard_abort", False),
+        "api_abort_code": s.get("api_abort_code"),
     }
+    if s.get("hard_abort"):
+        stats["hard_failure"] = True
+        errors = s.get("errors", [])
+        message = errors[-1] if errors else "unknown API client abort"
+        stats["errors"].append(f"settlement hard abort: {message}")
     if s.get("reveal_declined_no_commitment", 0) > 0:
         logger.warning(
             "%d finished fixture(s) had NO prior commitment and cannot be revealed "
@@ -1011,12 +1055,16 @@ def main():
     if args.health:
         emit_health_report()
         return
-    run_cycle(settle_only=args.settle_only)
+    result = run_cycle(settle_only=args.settle_only)
     # Always refresh the health snapshot after a run so it's current between weekly emits.
     try:
         emit_health_report()
     except Exception as e:
         logger.warning("health report after run failed: %s", str(e)[:120])
+    if result.get("hard_failure"):
+        logger.error("Pilot C cycle completed diagnostics with a hard phase failure; "
+                     "exiting nonzero so the scheduler/monitor cannot treat it as success.")
+        raise SystemExit(1)
 
 
 if __name__ == "__main__":

@@ -1,0 +1,52 @@
+{
+  "config_contract": "forecast-broadcast-scope/v1",
+  "horizon_hours_before_kickoff": 8,
+  "leagues": [
+    { "comp_id": "comp_3039", "label": "England Premier League" },
+    { "comp_id": "comp_8321", "label": "England Championship" },
+    { "comp_id": "comp_9777", "label": "France Ligue 2" },
+    { "comp_id": "comp_0976", "label": "Spain La Liga 2" }
+  ],
+  "markets": [
+    {
+      "market": "goals",
+      "line": 2.5,
+      "over_label": "over 2.5 goals",
+      "under_label": "under 2.5 goals"
+    },
+    {
+      "market": "corners",
+      "line": 9.5,
+      "over_label": "over 9.5 corners",
+      "under_label": "under 9.5 corners"
+    },
+    {
+      "market": "cards",
+      "line": 4.5,
+      "over_label": "over 4.5 cards",
+      "under_label": "under 4.5 cards"
+    },
+    {
+      "market": "btts",
+      "line": null,
+      "over_label": "both teams to score - yes",
+      "under_label": "both teams to score - no"
+    }
+  ],
+  "line_selection_rule": {
+    "rule": "FIXED_DECLARED_LINE",
+    "description": "The line for every market is the literal 'line' declared in this file. Lines are NEVER selected per fixture, never chosen from the model's own output, and never chosen from posted prices. Changing a line is a scope change and must be recorded in the scope change log before it takes effect."
+  },
+  "confidence_label_rule": null,
+  "quiet_hours_utc": {
+    "start_hour": 1,
+    "end_hour": 6,
+    "policy": "DELAY_NEVER_CANCEL"
+  },
+  "notes": [
+    "This file is the ONLY declaration of broadcast scope. Nothing is chosen at send time.",
+    "Every fixture whose competition appears in 'leagues' is broadcast exactly once at the horizon. The broadcaster never decides which fixtures are worth sending.",
+    "Markets are published as a probability for BOTH sides with provenance. No stake sizing, no expected value, no edge, no recommended side, no confidence label unless 'confidence_label_rule' is set here and applied identically to every fixture.",
+    "The scope version hash is the SHA-256 of this file's canonical JSON. A changed hash is refused at load time until the change is recorded with a timestamp and a reason in data/forecast_broadcast/scope_changes.jsonl."
+  ]
+}
