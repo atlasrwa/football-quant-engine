@@ -164,46 +164,53 @@ as a skill claim.
 
 | Family | cells | median ECE | flagged miscalibrated |
 |---|---:|---:|---:|
-| first-half goals | 50 | 0.0291 | 0 |
-| first-half cards | 50 | 0.0350 | 3 |
-| goals | 50 | 0.0412 | 2 |
-| cards | 75 | 0.0437 | 4 |
-| first-half corners | 50 | 0.0480 | 4 |
-| corners | 100 | 0.0510 | 9 |
-| shots on target | 100 | 0.0573 | 9 |
+| first-half goals | 50 | 0.0273 | 0 |
+| first-half cards | 50 | 0.0328 | 0 |
+| corners | 100 | 0.0394 | 0 |
+| goals | 50 | 0.0411 | 0 |
+| cards | 75 | 0.0415 | 0 |
+| first-half corners | 50 | 0.0440 | 0 |
+| shots on target | 100 | 0.0460 | 0 |
 
-Overall median ECE **0.0461**; 272 of 475 cells below 0.05. Fresh Benjamini-Hochberg family
-of **475 cells** (25 leagues × 19 lines), q = 0.05, **0 insufficient**, 31 flagged.
+Overall median ECE **0.0402** against a null floor of 0.0317, so the genuine excess over
+what perfect calibration would produce at this sample size is **+0.0081**. Fresh
+Benjamini-Hochberg family of **475 cells** (25 leagues × 19 lines), q = 0.05,
+**0 insufficient, 0 flagged** — every cell passes the calibration test.
 
-Per-league, best to worst median ECE — reported in full, never pooled-only:
+These are the figures after the two defects found by the independent audit in
+`CALIBRATION_AUDIT_AND_ROADMAP.md` were fixed. Before those fixes the median ECE was
+0.0461, the excess +0.0140, and 31 cells were flagged.
 
-| League | median ECE | max ECE | flagged | | League | median ECE | max ECE | flagged |
-|---|---:|---:|---:|---|---|---:|---:|---:|
-| Italy Serie B | 0.0317 | 0.0753 | 1 | | Sweden Allsvenskan | 0.0466 | 0.0811 | 0 |
-| Turkey Süper Lig | 0.0338 | 0.0636 | 0 | | Belgium Pro League | 0.0468 | 0.0683 | 0 |
-| Germany Bundesliga | 0.0370 | 0.0694 | 0 | | Germany 2. Bundesliga | 0.0481 | 0.0942 | 1 |
-| Switzerland Super League | 0.0403 | 0.0649 | 0 | | Scotland Premiership | 0.0492 | 0.0778 | 0 |
-| France Ligue 2 | 0.0404 | 0.0717 | 0 | | Netherlands Eredivisie | 0.0530 | 0.1051 | 3 |
-| France Ligue 1 | 0.0410 | 0.0830 | 0 | | Italy Serie A | 0.0534 | 0.0816 | 3 |
-| Brazil Serie A | 0.0420 | 0.0650 | 0 | | Poland Ekstraklasa | 0.0540 | 0.0957 | 2 |
-| Spain La Liga | 0.0421 | 0.0635 | 0 | | Portugal Liga NOS | 0.0552 | 0.0808 | 1 |
-| USA MLS | 0.0425 | 0.0752 | 0 | | Greece Super League | 0.0556 | 0.0858 | 0 |
-| Norway Eliteserien | 0.0432 | 0.0923 | 0 | | Finland Veikkausliiga | 0.0558 | 0.0962 | 0 |
-| Australia A-League | 0.0437 | 0.0868 | 0 | | Austria Bundesliga | 0.0609 | 0.0896 | 0 |
-| Denmark Superliga | 0.0455 | 0.0801 | 0 | | England Premier League | 0.0656 | 0.0982 | 11 |
-| England Championship | 0.0461 | 0.0662 | 9 | | | | | |
+Per-league, best to worst median ECE — reported in full, never pooled-only. **No league
+has a flagged cell**, so the flagged column is omitted:
+
+| League | median ECE | max ECE | | League | median ECE | max ECE |
+|---|---:|---:|---|---|---:|---:|
+| Italy Serie B | 0.0247 | 0.0564 | | Sweden Allsvenskan | 0.0415 | 0.0957 |
+| Turkey Süper Lig | 0.0282 | 0.0601 | | Scotland Premiership | 0.0426 | 0.0759 |
+| Switzerland Super League | 0.0307 | 0.0747 | | Denmark Superliga | 0.0429 | 0.0766 |
+| Germany 2. Bundesliga | 0.0330 | 0.0687 | | Australia A-League | 0.0458 | 0.1039 |
+| France Ligue 1 | 0.0339 | 0.0672 | | Italy Serie A | 0.0460 | 0.0780 |
+| Spain La Liga | 0.0355 | 0.0716 | | Portugal Liga NOS | 0.0460 | 0.0806 |
+| France Ligue 2 | 0.0363 | 0.0554 | | Netherlands Eredivisie | 0.0462 | 0.0849 |
+| Germany Bundesliga | 0.0371 | 0.0592 | | Greece Super League | 0.0483 | 0.0664 |
+| Brazil Serie A | 0.0373 | 0.0601 | | Poland Ekstraklasa | 0.0486 | 0.1000 |
+| USA MLS | 0.0389 | 0.0674 | | England Premier League | 0.0499 | 0.0846 |
+| Norway Eliteserien | 0.0397 | 0.0620 | | Austria Bundesliga | 0.0509 | 0.0830 |
+| Belgium Pro League | 0.0398 | 0.0559 | | Finland Veikkausliiga | 0.0574 | 0.0936 |
+| England Championship | 0.0411 | 0.0629 | | | | |
 
 **The four leagues that could not fit independently are all scored under pooling** — Austria,
-Denmark, Finland and Australia sit at median ECE 0.061, 0.046, 0.056 and 0.044, none flagged.
+Denmark, Finland and Australia sit at median ECE 0.051, 0.043, 0.057 and 0.046, none flagged.
 That is the pooling working as intended: a league too thin to stand alone borrows strength
-and still produces usable probabilities.
+and still produces usable probabilities, and lands in the same range as leagues with three
+times the history.
 
-**20 of 31 flags fall in the Premier League and Championship**, which are also the two
-leagues with the most scored fixtures. More predictions means more power to detect a given
-miscalibration, so a flag concentration in the largest cells is what a correctly-powered test
-looks like, not evidence those two leagues are uniquely broken. Shots on target and corners
-carry 18 of 31 flags and also have the two worst median ECEs — those are the families where
-calibration work remains.
+**No cell in any league or family is flagged.** Before the two audit fixes, 31 were, with 20
+of those concentrated in the Premier League and Championship — the two leagues with the most
+scored fixtures and therefore the most power to detect a given miscalibration. That
+concentration was a property of the test's power, not of those leagues being uniquely broken,
+and it disappeared once the underlying defects were fixed rather than the threshold moved.
 
 ### The honest caveat: climatology is better calibrated
 
@@ -223,16 +230,27 @@ Pooled across leagues, per line, model against league climatology:
 | first-half corners | 3.5 / 4.5 | 0.0333 / 0.0436 | 0.0133 / 0.0183 | −0.0012 / −0.0014 |
 | first-half cards | 0.5 / 1.5 | 0.0367 / 0.0223 | 0.0177 / 0.0274 | −0.0001 / +0.0013 |
 
-**The model is not better calibrated than a constant league base rate on 17 of 19 lines**,
-and ΔBrier is mixed — positive for cards, most shots-on-target lines, goals 2.5 and the
-first-half goals lines; negative for all four corners lines and both first-half corners lines.
+**ΔBrier against climatology is positive on 17 of 19 lines** (only first-half corners is
+negative), but **the model is still not better on raw ECE on 15 of 19 lines**.
 
-Part of this is structural: a constant base-rate predictor is trivially well-calibrated, so
-beating it on ECE is hard by construction, and the same caveat was the one gate the earlier
-league-count work failed. But it should not be waved away on that basis. A conditional model
-that is sharper on some families and no better calibrated than climatology on nearly all of
-them has real calibration work outstanding — most obviously on corners, where it is worse on
-both ECE and Brier at every line.
+That raw-ECE comparison is not a fair one, and the audit is explicit about why: at 12,700
+pooled predictions the two arms occupy different numbers of reliability bins, and ECE is
+biased upward for the sharper forecaster. Compared against each arm's own null floor —
+the ECE a perfectly calibrated forecaster with that spread and sample size would produce
+— the model is ahead of or level with climatology on 4 of 7 families. It remains behind on
+goals, corners and shots on target.
+
+My first explanation for this was that a constant base-rate predictor is trivially
+well-calibrated, so beating it on ECE is hard by construction. **That explanation was
+mostly wrong, and testing it found two real bugs** — a Jensen inflation in the uncertainty
+mixture and an over-extended conditional signal. Both are now fixed, which took flagged
+cells from 31 to 0 and flipped ΔBrier from mixed to positive on 17 of 19 lines. The full
+diagnosis is in `CALIBRATION_AUDIT_AND_ROADMAP.md`.
+
+What remains is genuine: raw ECE still trails climatology on most lines, and the largest
+unfixed defect is the dependence between the two sides — cards residuals correlate +0.18
+and corners −0.21, so the convolution understates total variance for cards by 10% and
+overstates it for corners by 20%.
 
 What this pass does establish is coherence, per-league coverage including the previously
 unfittable leagues, and informative estimates for thin teams. It does not establish that the
@@ -499,14 +517,18 @@ informative estimate with wide uncertainty instead of an abstention or a coin fl
 width reaches the published probability. BTTS cannot contradict the goals lines. Provenance
 now makes the evidence behind a forecast visible in the message itself.
 
-**Not established.** That the conditional model is better calibrated than a league base rate —
-it is not, on 17 of 19 lines. That it beats climatology on Brier — mixed, and negative on all
-four corners lines. Any skill claim whatsoever. Whether pooled or within-league is the right
-frame; that question remains open.
+**Not established.** That the conditional model is better calibrated than a league base rate
+on raw ECE — it is not, on 15 of 19 lines, though the fair per-cell comparison against each
+arm's own null floor has it ahead or level on 4 of 7 families. Any skill claim whatsoever.
+Whether pooled or within-league is the right frame; that question remains open. And nothing
+about performance against a price: this engine has never been compared to one.
 
-The clearest outstanding work is calibration on corners and shots on target, which carry the
-worst median ECE and 18 of 31 miscalibration flags. A post-hoc calibration map applied to the
-count distribution's mean would preserve monotonicity, and is the natural next step.
+The clearest outstanding work is the dependence structure between the two sides. Cards
+residuals correlate +0.18 and corners −0.21, so the independent convolution understates total
+variance by 10% for cards and overstates it by 20% for corners. That misspecification is
+concentrated in the tails. A fitted copula on the two side distributions would address both
+signs and would keep every line monotone, since the total remains a single PMF.
+`CALIBRATION_AUDIT_AND_ROADMAP.md` ranks the rest.
 
 Nothing here is promoted. Nothing published before the epoch marker counts. The 30-day window
 has not opened, and no verdict is available until it closes.

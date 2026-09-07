@@ -43,7 +43,7 @@ and this module never touches them.
 from __future__ import annotations
 
 import math
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, replace
 from typing import Mapping, Optional, Sequence
 
 import numpy as np
@@ -162,13 +162,25 @@ def _gauss_hermite_mixture(
     *,
     nodes: int = 5,
 ) -> UncertainSideDistribution:
-    """Mix a side distribution over a normal uncertainty on ``log mu``."""
-    log_mean = min(_LOG_MEAN_CEILING, max(_LOG_MEAN_FLOOR, log_mean))
+    """Mix a side distribution over a normal uncertainty on ``log mu``.
+
+    **Mean-preserving.** Mixing over ``log mu`` without correction inflates the
+    mean by ``exp(variance / 2)`` — Jensen's inequality, since ``exp`` is convex.
+    At the variance cap that is a 13% inflation of every expected count, which
+    biases every ``P(over)`` upward, and it biases them *most* for the thin teams
+    the widening exists to serve. The audit in ``scripts/audit_calibration.py``
+    caught this as a systematic over-bias whose size tracked posterior variance
+    across families (cards +0.036, corners −0.001, in the same order as their
+    shrinkage variances). Subtracting ``variance / 2`` from the location makes the
+    mixture widen the distribution while leaving its mean where the fit put it.
+    """
     variance = max(0.0, float(log_mean_variance))
+    # Mean-preserving location shift, applied before clipping.
+    centred = min(_LOG_MEAN_CEILING, max(_LOG_MEAN_FLOOR, log_mean - variance / 2.0))
     if variance <= 1e-12:
         return UncertainSideDistribution(
             components=(
-                (1.0, SideCountDistribution(math.exp(log_mean), distribution, dispersion)),
+                (1.0, SideCountDistribution(math.exp(centred), distribution, dispersion)),
             ),
             log_mean_variance=0.0,
         )
@@ -177,7 +189,9 @@ def _gauss_hermite_mixture(
     sigma = math.sqrt(variance)
     components: list[tuple[float, SideCountDistribution]] = []
     for node, weight in zip(raw_nodes, weights):
-        shifted = min(_LOG_MEAN_CEILING, max(_LOG_MEAN_FLOOR, log_mean + sigma * float(node)))
+        shifted = min(
+            _LOG_MEAN_CEILING, max(_LOG_MEAN_FLOOR, centred + sigma * float(node))
+        )
         components.append(
             (
                 float(weight),
@@ -440,7 +454,20 @@ class HierarchicalConfig:
     #: season of its own mostly trusts itself and a thinner one borrows.
     variance_pooling_constant: float = 20.0
     min_global_observations: int = 40
-    #: Quadrature nodes for the uncertainty mixture.
+    #: Fit a scalar shrinkage on the fitted log-mean deviation, estimated on a
+    #: held-out tail of the training fold. This is the direct remedy for a
+    #: reliability slope below 1: the audit measured an in-sample slope of 1.008
+    #: against 0.754 out of sample, meaning the fitted spread in ``log mu`` is
+    #: about a quarter too wide for the relationship that actually holds on unseen
+    #: fixtures. Because it is one scalar applied to the mean *before* the
+    #: distribution is built, every line stays coherent.
+    calibrate_signal_scale: bool = True
+    #: Chronological tail of the training fold reserved for estimating that scalar.
+    signal_scale_holdout: float = 0.25
+    #: Bounds on the scalar. Above 1 is permitted so the estimate can say the
+    #: signal was under-extended rather than being forced to shrink.
+    signal_scale_bounds: tuple[float, float] = (0.2, 1.3)
+    min_signal_scale_rows: int = 400
     uncertainty_nodes: int = 5
     #: Cap on the modelled uncertainty in log mu, so a brand-new team widens
     #: toward the league rate rather than toward a uniform distribution.
@@ -479,6 +506,11 @@ class FittedGlobal:
     n_observations: int
     marginal_variance_mean_ratio: float
     residual_variance_mean_ratio: float
+    #: Covariance of ``(intercept, standardised slopes)`` from the inverse observed
+    #: information. Used to propagate estimation uncertainty into the predictive
+    #: distribution, so an unusual feature row widens rather than being asserted
+    #: with the same certainty as a typical one.
+    coefficient_covariance: tuple[tuple[float, ...], ...] = ()
 
     def to_dict(self) -> dict[str, object]:
         return {
@@ -489,6 +521,7 @@ class FittedGlobal:
             "n_observations": self.n_observations,
             "marginal_variance_mean_ratio": round(self.marginal_variance_mean_ratio, 4),
             "residual_variance_mean_ratio": round(self.residual_variance_mean_ratio, 4),
+            "coefficient_uncertainty_propagated": bool(self.coefficient_covariance),
         }
 
 
@@ -521,6 +554,10 @@ class HierarchicalCountModel:
         self.concede_effects: dict[tuple[str, str], ShrunkEffect] = {}
         self.league_slopes: dict[tuple[str, str], ShrunkEffect] = {}
         self.league_dispersion: dict[str, float] = {}
+        #: Scalar shrinkage on the fitted log-mean deviation, estimated out of
+        #: sample. 1.0 means no shrinkage was needed.
+        self.signal_scale = 1.0
+        self.signal_scale_diagnostics: dict[str, object] = {}
         #: Prior-season posteriors, keyed (league, team) -> effect value, keyed by
         #: the season they were estimated in.
         self._season_order: dict[str, list[str]] = {}
@@ -590,6 +627,9 @@ class HierarchicalCountModel:
             y, np.exp(final_log_mu)
         )
         marginal_ratio = float(np.var(y, ddof=1) / np.mean(y)) if np.mean(y) > 0 else 0.0
+        covariance = self._coefficient_covariance(
+            x, np.exp(final_log_mu), distribution, dispersion
+        )
 
         self.global_layer = FittedGlobal(
             intercept=float(intercept),
@@ -607,8 +647,145 @@ class HierarchicalCountModel:
             n_observations=len(labelled),
             marginal_variance_mean_ratio=marginal_ratio,
             residual_variance_mean_ratio=residual_ratio,
+            coefficient_covariance=covariance,
         )
         self._fit_league_dispersion(labelled, y, np.exp(final_log_mu))
+        if self.config.calibrate_signal_scale:
+            self._fit_signal_scale(labelled)
+
+    def _fit_signal_scale(self, labelled: Sequence[SideRow]) -> None:
+        """Estimate how far the fitted signal over-extends, out of sample.
+
+        A probe model is fitted on the earlier part of the training fold and scored
+        on the later part, so the scale is estimated on rows the probe never saw.
+        The scale that maximises the held-out count likelihood is then applied to
+        the full model. This is deliberately *not* estimated on the rows the full
+        model was fitted on: in sample the slope is 1.008 by construction, which is
+        exactly why the defect was invisible until it was measured out of sample.
+        """
+        ordered = sorted(labelled, key=lambda row: (row.kickoff_unix, row.fixture_id))
+        split = int(len(ordered) * (1.0 - self.config.signal_scale_holdout))
+        train, holdout = ordered[:split], ordered[split:]
+        if (
+            len(train) < self.config.min_signal_scale_rows
+            or len(holdout) < self.config.min_signal_scale_rows // 2
+        ):
+            self.signal_scale_diagnostics = {
+                "status": "skipped",
+                "reason": "insufficient rows to estimate a held-out scale",
+            }
+            return
+
+        probe_config = replace(self.config, calibrate_signal_scale=False)
+        probe = HierarchicalCountModel(self.family, probe_config)
+        try:
+            probe.fit(train)
+        except (ValueError, RuntimeError) as exc:
+            self.signal_scale_diagnostics = {
+                "status": "skipped",
+                "reason": f"probe fit failed: {type(exc).__name__}",
+            }
+            return
+
+        baselines: list[float] = []
+        deviations: list[float] = []
+        counts: list[float] = []
+        for row in holdout:
+            try:
+                terms = probe._side_terms(row)
+            except (NotFittedError, KeyError):
+                continue
+            league = terms["league_effect"]
+            baseline = probe.global_layer.intercept + (
+                league.posterior if league else 0.0
+            )
+            baselines.append(baseline)
+            deviations.append(float(terms["log_mu"]) - baseline)
+            counts.append(float(row.count))
+        if len(counts) < self.config.min_signal_scale_rows // 2:
+            self.signal_scale_diagnostics = {
+                "status": "skipped",
+                "reason": "too few scorable holdout rows",
+            }
+            return
+
+        base = np.asarray(baselines, dtype=float)
+        deviation = np.asarray(deviations, dtype=float)
+        observed = np.asarray(counts, dtype=float)
+        distribution = probe.global_layer.distribution
+        dispersion = probe.global_layer.dispersion
+
+        def negative_log_likelihood(scale: float) -> float:
+            log_mu = np.clip(
+                base + scale * deviation, _LOG_MEAN_FLOOR, _LOG_MEAN_CEILING
+            )
+            mu = np.exp(log_mu)
+            if distribution == NEGATIVE_BINOMIAL and dispersion > 0:
+                shape = 1.0 / dispersion
+                return -float(
+                    np.sum(
+                        gammaln(observed + shape)
+                        - gammaln(shape)
+                        - gammaln(observed + 1.0)
+                        + shape * np.log(shape / (shape + mu))
+                        + observed * np.log(np.clip(mu / (shape + mu), 1e-12, 1.0))
+                    )
+                )
+            return -float(np.sum(observed * log_mu - mu - gammaln(observed + 1.0)))
+
+        low, high = self.config.signal_scale_bounds
+        grid = np.linspace(low, high, 45)
+        losses = [negative_log_likelihood(float(value)) for value in grid]
+        best = float(grid[int(np.argmin(losses))])
+        self.signal_scale = best
+        self.signal_scale_diagnostics = {
+            "status": "fitted",
+            "scale": round(best, 4),
+            "n_holdout_rows": len(counts),
+            "log_likelihood_gain_vs_unshrunk": round(
+                negative_log_likelihood(1.0) - min(losses), 4
+            ),
+            "note": (
+                "scalar shrinkage of the fitted log-mean deviation, estimated on a "
+                "held-out tail of the training fold; applied before any line is "
+                "read so cross-line monotonicity is preserved"
+            ),
+        }
+
+    def _coefficient_covariance(
+        self,
+        x: np.ndarray,
+        mu: np.ndarray,
+        distribution: str,
+        dispersion: float,
+    ) -> tuple[tuple[float, ...], ...]:
+        """Inverse observed information for ``(intercept, standardised slopes)``.
+
+        Without this the predictive distribution treats the fitted coefficients as
+        exact, which makes the model overconfident: it spreads probabilities
+        further from the base rate than the evidence for its slopes supports. The
+        audit measured that directly as a reliability slope well below 1 across six
+        of seven families. The GLM weight is ``mu`` for Poisson and
+        ``mu / (1 + alpha mu)`` for NB2; the ridge penalty is added to the
+        information because it was part of the objective that produced these
+        estimates.
+        """
+        weight = mu / (1.0 + dispersion * mu) if (
+            distribution == NEGATIVE_BINOMIAL and dispersion > 0
+        ) else mu
+        design = np.column_stack([np.ones(len(x)), x])
+        information = design.T @ (design * weight[:, None])
+        # The ridge penalised the slopes but not the intercept.
+        penalty = np.eye(information.shape[0]) * (2.0 * self.config.ridge)
+        penalty[0, 0] = 0.0
+        information = information + penalty
+        try:
+            covariance = np.linalg.inv(information)
+        except np.linalg.LinAlgError:
+            covariance = np.linalg.pinv(information)
+        if not np.all(np.isfinite(covariance)):
+            return ()
+        return tuple(tuple(float(value) for value in row) for row in covariance)
 
     # ── global layer ──────────────────────────────────────────────────────
     def _fit_global_slopes(
@@ -1004,20 +1181,58 @@ class HierarchicalCountModel:
         concede = self.concede_effects.get((row.league, row.opposing_team)) or _ZERO_EFFECT
         log_mu += (league.posterior if league else 0.0) + attack.posterior + concede.posterior
 
-        variance = min(
-            self.config.max_log_mean_variance,
+        # Predictive uncertainty in log mu has two sources, and both belong here:
+        # the empirical-Bayes posterior variance of the random effects (how little
+        # we know about this league and these teams) and the estimation variance of
+        # the global coefficients (how little we know about the slopes, which is
+        # larger for an unusual feature row than a typical one).
+        random_effect_variance = (
             (league.posterior_variance if league else 0.0)
             + attack.posterior_variance
-            + concede.posterior_variance,
+            + concede.posterior_variance
         )
+        coefficient_variance = self._coefficient_variance(row, layer)
+        variance = min(
+            self.config.max_log_mean_variance,
+            random_effect_variance + coefficient_variance,
+        )
+        # Apply the out-of-sample signal scale to the deviation from the
+        # league-typical mean, never to the baseline itself. Shrinking the baseline
+        # would drag every league toward a global average that no league occupies.
+        baseline = layer.intercept + (league.posterior if league else 0.0)
+        scaled = baseline + self.signal_scale * (log_mu - baseline)
         return {
-            "log_mu": min(_LOG_MEAN_CEILING, max(_LOG_MEAN_FLOOR, log_mu)),
+            "log_mu": min(_LOG_MEAN_CEILING, max(_LOG_MEAN_FLOOR, scaled)),
+            "log_mu_unscaled": min(_LOG_MEAN_CEILING, max(_LOG_MEAN_FLOOR, log_mu)),
             "log_mean_variance": variance,
-            "feature_contributions": contributions,
+            "random_effect_variance": random_effect_variance,
+            "coefficient_variance": coefficient_variance,
+            "signal_scale": self.signal_scale,
+            "feature_contributions": {
+                name: self.signal_scale * value
+                for name, value in contributions.items()
+            },
             "league_effect": league,
             "attack_effect": attack if attack is not _ZERO_EFFECT else None,
             "concede_effect": concede if concede is not _ZERO_EFFECT else None,
         }
+
+    def _coefficient_variance(self, row: SideRow, layer: FittedGlobal) -> float:
+        """``x' Sigma x`` for the standardised design row, intercept included."""
+        if not layer.coefficient_covariance:
+            return 0.0
+        design = [1.0]
+        for name in self.feature_names:
+            raw_value = float(row.features.get(name, layer.feature_means[name]))
+            design.append(
+                (raw_value - layer.feature_means[name]) / layer.feature_scales[name]
+            )
+        vector = np.asarray(design, dtype=float)
+        covariance = np.asarray(layer.coefficient_covariance, dtype=float)
+        if covariance.shape[0] != vector.shape[0]:
+            return 0.0
+        value = float(vector @ covariance @ vector)
+        return max(0.0, value) if math.isfinite(value) else 0.0
 
     def predict_side(self, row: SideRow) -> UncertainSideDistribution:
         terms = self._side_terms(row)
@@ -1133,6 +1348,8 @@ class HierarchicalCountModel:
                 round(float(np.median(attack_weights)), 4) if attack_weights else None
             ),
             "league_slope_shrinkage_cap": self.config.slope_shrinkage_cap,
+            "signal_scale": round(self.signal_scale, 4),
+            "signal_scale_diagnostics": self.signal_scale_diagnostics,
             "prior_season_half_life_matches": self.config.prior_season_half_life_matches,
             "league_residual_dispersion": {
                 league: round(value, 4)

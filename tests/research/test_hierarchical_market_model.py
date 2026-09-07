@@ -458,3 +458,245 @@ def test_fit_report_exposes_shrinkage_and_dispersion() -> None:
         assert key in report
     assert report["n_team_attack_states"] > 0
     assert report["n_team_concede_states"] > 0
+
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Calibration defects found by the independent audit
+# ─────────────────────────────────────────────────────────────────────────────
+def test_the_uncertainty_mixture_is_mean_preserving() -> None:
+    """Widening must not also inflate the mean.
+
+    Mixing over ``log mu`` without correction multiplies the mean by
+    ``exp(variance / 2)`` — Jensen's inequality. At the variance cap that is a 13%
+    inflation of every expected count, which pushes every ``P(over)`` upward and
+    does it hardest for the thin teams the widening exists to serve. The audit
+    caught it as a systematic over-bias whose size tracked posterior variance
+    across families.
+    """
+    target = math.log(5.0)
+    for variance in (0.0, 0.01, 0.05, 0.10, 0.25):
+        mixture = _gauss_hermite_mixture(target, variance, POISSON, 0.0)
+        assert mixture.mean == pytest.approx(5.0, rel=1e-6), (
+            f"variance {variance} shifted the mean to {mixture.mean}"
+        )
+
+
+def test_widening_still_widens_after_the_mean_correction() -> None:
+    """The fix must not have removed the widening it was correcting."""
+    narrow = _gauss_hermite_mixture(math.log(5.0), 0.0, POISSON, 0.0)
+    wide = _gauss_hermite_mixture(math.log(5.0), 0.25, POISSON, 0.0)
+    narrow_match = MatchCountDistribution(home=narrow, away=narrow)
+    wide_match = MatchCountDistribution(home=wide, away=wide)
+    narrow_low, narrow_high = narrow_match.total_interval(0.80)
+    wide_low, wide_high = wide_match.total_interval(0.80)
+    assert (wide_high - wide_low) >= (narrow_high - narrow_low)
+    # And an extreme probability is pulled toward the base rate. Checked at a far
+    # line, not a central one: near 0.5 a symmetric widening of a right-skewed
+    # count distribution can move a probability either way, so a central line
+    # tests nothing. The tails are where underconfidence has to show up.
+    for far_line in (2.5, 3.5, 20.5, 24.5):
+        narrow_p = narrow_match.p_over(far_line)
+        wide_p = wide_match.p_over(far_line)
+        assert abs(wide_p - 0.5) <= abs(narrow_p - 0.5) + 1e-9, (
+            f"line {far_line}: widening moved P(over) from {narrow_p} to {wide_p}, "
+            "away from the base rate"
+        )
+
+
+def test_coefficient_uncertainty_is_propagated_into_the_prediction() -> None:
+    """An unusual feature row must carry more uncertainty than a typical one."""
+    family = family_by_name("corners")
+    model = _fit(family)
+    layer = model.global_layer
+    assert layer.coefficient_covariance, "coefficient covariance was not estimated"
+
+    typical = _row(model, "league-0", "t0-0", "t0-1", is_home=True)
+    unusual_features = dict(layer.feature_means)
+    for name in family.feature_names:
+        if name.startswith(("own_", "opp_")):
+            unusual_features[name] = (
+                layer.feature_means[name] + 6.0 * layer.feature_scales[name]
+            )
+    unusual = SideRow(
+        fixture_id="f",
+        league="league-0",
+        season=SEASON_LATE,
+        kickoff_unix=1_700_000_000,
+        counting_team="t0-0",
+        opposing_team="t0-1",
+        is_home=True,
+        features=unusual_features,
+    )
+    assert model._coefficient_variance(unusual, layer) > model._coefficient_variance(
+        typical, layer
+    )
+
+
+def test_signal_scale_is_estimated_out_of_sample_and_shrinks() -> None:
+    """The remedy for a reliability slope below 1, measured not assumed.
+
+    The audit found an in-sample slope of 1.008 against 0.754 out of sample: the
+    fitted spread in ``log mu`` is about a quarter too wide for the relationship
+    that holds on unseen fixtures. This scalar is estimated on a held-out tail of
+    the training fold, so it can see that gap.
+    """
+    family = family_by_name("corners")
+    # The synthetic corpus is small, so the holdout floors are lowered rather than
+    # the corpus inflated; the mechanism under test is the out-of-sample estimate,
+    # not the sample size at which it becomes worthwhile.
+    config = HierarchicalConfig(
+        min_global_observations=40, min_signal_scale_rows=150
+    )
+    model = HierarchicalCountModel(family, config)
+    model.fit(_synthetic_rows(family))
+    diagnostics = model.signal_scale_diagnostics
+    assert diagnostics["status"] == "fitted"
+    low, high = model.config.signal_scale_bounds
+    assert low <= model.signal_scale <= high
+    assert diagnostics["n_holdout_rows"] > 0
+    assert model.fit_report()["signal_scale"] == pytest.approx(
+        model.signal_scale, abs=1e-4
+    )
+
+
+def test_signal_scale_is_skipped_rather_than_guessed_when_data_is_thin() -> None:
+    """No held-out rows means no estimate, not a fabricated one."""
+    family = family_by_name("corners")
+    config = HierarchicalConfig(
+        min_global_observations=40, min_signal_scale_rows=100_000
+    )
+    model = HierarchicalCountModel(family, config)
+    model.fit(_synthetic_rows(family))
+    assert model.signal_scale == 1.0
+    assert model.signal_scale_diagnostics["status"] == "skipped"
+    assert "insufficient" in model.signal_scale_diagnostics["reason"]
+
+
+def test_signal_scale_shrinks_the_deviation_not_the_league_baseline() -> None:
+    """Shrinking the baseline would drag every league to an average none occupies."""
+    family = family_by_name("corners")
+    model = _fit(family)
+    model.signal_scale = 0.5
+    row = _row(model, "league-0", "t0-0", "t0-1", is_home=True)
+    terms = model._side_terms(row)
+    layer = model.global_layer
+    league = model.league_effects.get("league-0")
+    baseline = layer.intercept + (league.posterior if league else 0.0)
+    unscaled = float(terms["log_mu_unscaled"])
+    expected = baseline + 0.5 * (unscaled - baseline)
+    assert float(terms["log_mu"]) == pytest.approx(
+        min(3.5, max(-4.0, expected)), abs=1e-9
+    )
+
+
+def test_signal_scale_preserves_monotonicity() -> None:
+    """A scalar on the mean cannot reorder the ladder, at any scale."""
+    family = family_by_name("corners")
+    model = _fit(family)
+    for scale in (0.2, 0.5, 0.75, 1.0, 1.3):
+        model.signal_scale = scale
+        probabilities = model.line_probabilities(
+            _row(model, "league-0", "t0-0", "t0-1", is_home=True),
+            _row(model, "league-0", "t0-1", "t0-0", is_home=False),
+        )
+        ordered = [probabilities[line] for line in family.lines]
+        assert all(
+            later <= earlier + 1e-12
+            for earlier, later in zip(ordered, ordered[1:])
+        ), f"scale {scale} broke the ladder"
+
+
+def test_signal_scale_can_be_disabled_for_the_probe_fit() -> None:
+    """The probe must not recurse into fitting its own probe."""
+    family = family_by_name("corners")
+    config = HierarchicalConfig(
+        min_global_observations=40, calibrate_signal_scale=False
+    )
+    model = HierarchicalCountModel(family, config)
+    model.fit(_synthetic_rows(family))
+    assert model.signal_scale == 1.0
+    assert model.signal_scale_diagnostics == {}
+
+
+def test_attribution_contributions_reflect_the_applied_scale() -> None:
+    """Explanations must describe the number actually published."""
+    family = family_by_name("corners")
+    model = _fit(family)
+    row = _row(model, "league-0", "t0-0", "t0-1", is_home=True)
+    model.signal_scale = 1.0
+    unscaled = model._side_terms(row)["feature_contributions"]
+    model.signal_scale = 0.5
+    scaled = model._side_terms(row)["feature_contributions"]
+    for name, value in unscaled.items():
+        assert scaled[name] == pytest.approx(0.5 * value, abs=1e-12)
+
+
+
+@pytest.mark.parametrize(
+    ("full_name", "half_name"),
+    [
+        ("goals", "first_half_goals"),
+        ("corners", "first_half_corners"),
+        ("cards", "first_half_cards"),
+    ],
+)
+def test_a_half_cannot_exceed_the_whole(full_name: str, half_name: str) -> None:
+    """A first-half count must not be forecast above the full-match count.
+
+    The two are separate fits with nothing structurally tying them together, so this
+    invariant currently holds by accident rather than by construction: the half
+    families are fitted on genuinely smaller counts and land below the full-match
+    means on their own. Measured on the real corpus it holds in 635 of 635 fixtures
+    for goals and corners. It is guarded anyway, because "true by accident" fails
+    silently the first time a half family's league intercept drifts, and a message
+    stating a higher chance of two first-half goals than of two goals is exactly the
+    class of incoherence this architecture exists to remove.
+    """
+    full_family = family_by_name(full_name)
+    half_family = family_by_name(half_name)
+    rows_full = _synthetic_rows(full_family, seed=5)
+    # The half process is the same fixtures with systematically smaller counts.
+    rows_half = [
+        SideRow(
+            fixture_id=row.fixture_id,
+            league=row.league,
+            season=row.season,
+            kickoff_unix=row.kickoff_unix,
+            counting_team=row.counting_team,
+            opposing_team=row.opposing_team,
+            is_home=row.is_home,
+            features={
+                name: row.features.get(name, 0.0) for name in half_family.feature_names
+            },
+            count=float(int((row.count or 0.0) * 0.45)),
+        )
+        for row in rows_full
+    ]
+    config = HierarchicalConfig(min_global_observations=40)
+    model_full = HierarchicalCountModel(full_family, config)
+    model_full.fit(rows_full)
+    model_half = HierarchicalCountModel(half_family, config)
+    model_half.fit(rows_half)
+
+    league = "league-0"
+    teams = sorted(key[1] for key in model_full.attack_effects if key[0] == league)
+    checked = 0
+    for index in range(min(len(teams) - 1, 6)):
+        home, away = teams[index], teams[index + 1]
+        full_distribution = model_full.predict_match(
+            _row(model_full, league, home, away, is_home=True),
+            _row(model_full, league, away, home, is_home=False),
+        )
+        half_distribution = model_half.predict_match(
+            _row(model_half, league, home, away, is_home=True),
+            _row(model_half, league, away, home, is_home=False),
+        )
+        assert half_distribution.expected_total <= full_distribution.expected_total + 1e-9
+        for line in half_family.lines:
+            if line in full_family.lines:
+                assert half_distribution.p_over(line) <= full_distribution.p_over(
+                    line
+                ) + 1e-9
+        checked += 1
+    assert checked > 0
