@@ -14,10 +14,10 @@ Market status (corners & cards under re-validation — see audit note below)
   were inflated by SAME-MATCH FEATURE LEAKAGE and the specific BSS/ECE numbers have
   been withdrawn (see the audit note below). No demonstrated-skill claim is made
   until a leak-free rebuild completes.
-* **Cards** — status PROVISIONAL (under re-validation), for the same reason —
-  **except the Championship**, where disciplinary persistence is confirmed ABSENT
-  across three seasons (yellow-rate -> cards association -0.044 / +0.033 / +0.012,
-  all p >= 0.37); cards there is EXCLUDED regardless.
+* **Cards** — leak-free evidence is limited to one EPL 2023/24 sample, where
+  the model beat climatology; market-relative performance is unknown because cards
+  closing prices are unavailable. This is not a general skill claim, and cards
+  remains PROVISIONAL everywhere except the league-specific exclusions/results below.
 * **Goals, BTTS** — roughly at par with the naive base rate. No demonstrated skill
   over base rate. Shown only with an explicit label; never as a prediction worth
   acting on. (Corroborated externally by a plain point-in-time Dixon-Coles, which
@@ -313,13 +313,11 @@ def market_status(market: str, league_label: Optional[str] = None) -> MarketScop
             league_label=league_label,
             status=MarketStatus.PROVISIONAL,
             reason=(
-                "Cards is UNDER RE-VALIDATION. Its prior 'validated skill' figures "
-                "were withdrawn after an internal audit found the original result was "
-                "inflated by same-match feature leakage (the model read the predicted "
-                "match's own final foul/attack/possession counts). A leak-free, "
-                "strictly-prior rebuild is in progress; no demonstrated-skill claim is "
-                "made until it completes. The probability may be shown only with the "
-                "under-re-validation label, never as validated skill."
+                "Cards is UNDER RE-VALIDATION. The supported evidence is limited: "
+                "a leak-free EPL 2023/24 run beat climatology, but market-relative "
+                "performance is unknown because cards closing prices are unavailable. "
+                "This is not a general demonstrated-skill claim; the probability may "
+                "be shown only with the under-re-validation label."
             ),
         )
 
@@ -631,13 +629,12 @@ HONEST_FRAMING: tuple[str, ...] = (
     "This model has NOT been shown to beat bookmaker prices. That was tested "
     "extensively and the finding is documented (edge ceiling measured directly; "
     "see the failure ledger).",
-    "The corners and cards markets are currently UNDER RE-VALIDATION: their prior "
-    "'validated skill' figures were withdrawn after an internal audit found the "
-    "original result was inflated by same-match feature leakage. No demonstrated-"
-    "skill claim is made for corners or cards until a leak-free rebuild completes; "
-    "any probability shown for them carries the 'under re-validation' label. Cards "
-    "in the Championship remains excluded. Goals and BTTS show no demonstrated skill "
-    "over the base rate and are labelled as such.",
+    "Cards has only a limited leak-free finding: it beat climatology in EPL "
+    "2023/24, while market-relative performance is unknown because cards closing "
+    "prices are unavailable. This is not a general skill claim. Corners remains "
+    "under re-validation after its prior figures were withdrawn for same-match "
+    "feature leakage; cards in the Championship remains excluded. Goals and BTTS "
+    "show no demonstrated skill over the base rate and are labelled as such.",
     "Directional calls (which side produces more) are a SEPARATE, mostly "
     "UNVALIDATED claim: tested out-of-sample against an always-pick-the-favoured-"
     "side baseline, they beat it in only one market/league (shots on target in "

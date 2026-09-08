@@ -24,6 +24,7 @@ fixture_research_{commitments,reveals}.jsonl when --commit is requested.
 
 Usage:
   python scripts/fixture_ev_engine.py --fixture-id mt_466259566
+  python scripts/fixture_ev_engine.py --home Flamengo --away Mirassol --date 2026-09-02 --competition brazil-serie-a
   python scripts/fixture_ev_engine.py --fixture-id mt_466259566 --commit
   python scripts/fixture_ev_engine.py --fixture-id mt_466259566 --json
 """
@@ -35,9 +36,11 @@ import hashlib
 import json
 import math
 import os
+import re
 import shutil
 import sys
 import time
+import unicodedata
 from collections import defaultdict
 from functools import lru_cache
 from datetime import datetime, timezone
@@ -62,6 +65,7 @@ from sklearn.linear_model import LogisticRegression
 import pilotC_forward_predict as fp
 import pilotC_stat_mixer as mix
 import manual_predict as manual
+from src.research.footystats.client import FootyStatsResearchClient
 from src.research.forward.attestation_ledger import AttestationLedger, LedgerTamperError
 
 ROOT = Path("/home/ubuntu")
@@ -75,6 +79,7 @@ RESEARCH_ROOT = ROOT / "data/fixture_research"
 RESEARCH_COMMIT_LEDGER = ROOT / "data/forward/fixture_research_commitments.jsonl"
 RESEARCH_REVEAL_LEDGER = ROOT / "data/forward/fixture_research_reveals.jsonl"
 RESEARCH_MODEL_CACHE = RESEARCH_ROOT / "model_cache"
+FOOTYSTATS_API_CACHE = ROOT / ".cache/footystats_research"
 PUBLIC_RECEIPT_ROOT = ROOT / "data/attestations/fixture_research"
 
 CELLS = [("goals", 1.5), ("goals", 2.5), ("goals", 3.5),
@@ -86,6 +91,8 @@ BOOKS = ["betfair-exchange", "pinnacle", "bet365"]
 # conservative: most efficient-market fixtures should produce NO OPPORTUNITY.
 HISTORY_SEASONS = 2
 EXPECTED_EPL_SEASON_MATCHES = 380
+MAX_RESOLVE_REQUESTS = int(os.environ.get("FIXTURE_EV_RESOLVE_CAP", "1"))
+MAX_ODDS_ASSOCIATION_REQUESTS = int(os.environ.get("FIXTURE_EV_ODDS_ASSOCIATION_CAP", "8"))
 MAX_HISTORY_REQUESTS = int(os.environ.get("FIXTURE_EV_HISTORY_CAP", "80"))
 MAX_ODDS_REQUESTS = int(os.environ.get("FIXTURE_EV_ODDS_CAP", "3"))
 ODDS_FRESH_MINUTES = int(os.environ.get("FIXTURE_EV_ODDS_FRESH_MINUTES", "30"))
@@ -108,6 +115,63 @@ CAVEAT = ("A single fixture demonstrates nothing about edge. A CANDIDATE means t
 KNOWN_EPL_SEASONS = {
     "12325": {"label": "2024/25", "thestats_id": "sn_3057848"},
     "15050": {"label": "2025/26", "thestats_id": "sn_6125938"},
+}
+
+# Reviewed fixture-research competition profiles. These profiles affect only this
+# on-demand engine; they do not expand Pilot C's preregistered league coverage.
+COMPETITION_PROFILES = {
+    "comp_3039": {
+        "name": "England Premier League",
+        "country": "England",
+        "footystats_seasons": KNOWN_EPL_SEASONS,
+        "expected_matches": 380,
+        "crosswalk_section": "England Premier League",
+        "pilotc_covered": True,
+    },
+    "comp_4795": {
+        "name": "Brasileirão Série A",
+        "country": "Brazil",
+        "footystats_seasons": {
+            "11321": {"label": "2024"},
+            "14231": {"label": "2025"},
+        },
+        "expected_matches": 380,
+        "crosswalk_section": None,
+        "pilotc_covered": False,
+    },
+    # The fixture universe identifies these Pilot C leagues by TheStatsAPI
+    # competition IDs. Their FootyStats names let resolve_fixture_request verify
+    # the exact eligible fixture before history or odds are evaluated.
+    "comp_8321": {
+        "name": "England Championship",
+        "country": "England",
+        "footystats_seasons": {},
+        "expected_matches": 0,
+        "crosswalk_section": None,
+        "pilotc_covered": True,
+    },
+    "comp_9777": {
+        "name": "France Ligue 2",
+        "country": "France",
+        "footystats_seasons": {},
+        "expected_matches": 0,
+        "crosswalk_section": None,
+        "pilotc_covered": True,
+    },
+}
+# Legacy provider IDs remain compatibility hints only. Runtime eligibility is
+# determined from FootyStats /league-list and /league-matches, never this map.
+COMPETITION_ALIASES = {
+    "epl": "England Premier League",
+    "england-premier-league": "England Premier League",
+    "brazil-serie-a": "Brasileirão Série A",
+    "brasileirao": "Brasileirão Série A",
+    "brasileirão": "Brasileirão Série A",
+    "comp_3039": "England Premier League",
+    "comp_4795": "Brasileirão Série A",
+}
+PILOTC_FOOTYSTATS_COMPETITIONS = {
+    "England Championship", "England Premier League", "France Ligue 2", "Spain La Liga 2",
 }
 
 # Evidence summaries. These are descriptive inputs, not adaptively selected model
@@ -184,29 +248,537 @@ def ensure_pre_kickoff(kickoff_unix: float, phase: str) -> None:
         raise ValueError(f"fixture crossed kickoff during {phase}; refusing to use/publish prices that cannot be proven pre-kickoff")
 
 
-def resolve_fixture(fixture_id: str) -> dict:
-    if not FIXTURE_LIST.exists():
-        raise RuntimeError(f"fixture universe missing: {FIXTURE_LIST}")
-    row = json.loads(FIXTURE_LIST.read_text()).get("meta", {}).get(fixture_id)
-    if not row:
-        raise ValueError(f"fixture {fixture_id} is not in {FIXTURE_LIST}")
-    out = dict(row)
-    out["fixture_id"] = fixture_id
-    out["kickoff_unix"] = float(out.get("ts") or 0)
-    out["kickoff_iso"] = datetime.fromtimestamp(out["kickoff_unix"], timezone.utc).isoformat()
-    return out
+def _slug(value: str) -> str:
+    """Normalize provider/user league labels without inventing provider IDs."""
+    text = unicodedata.normalize("NFKD", str(value or ""))
+    text = "".join(ch for ch in text if not unicodedata.combining(ch)).casefold()
+    return re.sub(r"[^a-z0-9]+", "-", text).strip("-")
 
 
-def validated_crosswalk(home: str, away: str) -> dict:
-    data = json.loads(CROSSWALK.read_text())
-    rows = data.get("leagues", {}).get("England Premier League", [])
-    by_name = {r["footystats_name"]: r for r in rows}
+def _footystats_client(cached: bool = True) -> FootyStatsResearchClient:
+    return FootyStatsResearchClient(cache_dir=FOOTYSTATS_API_CACHE if cached else None)
+
+
+def _matching_footystats_leagues(value: str, leagues: list[dict]) -> list[dict]:
+    key = _slug(value)
+    compatibility_name = COMPETITION_ALIASES.get(str(value or "").strip().casefold())
+    if compatibility_name:
+        key = _slug(compatibility_name)
+    matches = []
+    for league in leagues:
+        name = str(league.get("name") or "").strip()
+        country = str(league.get("country") or "").strip()
+        if not name or not isinstance(league.get("season"), list):
+            continue
+        full = _slug(name)
+        aliases = {full}
+        country_slug = _slug(country)
+        if country_slug and full.startswith(country_slug + "-"):
+            aliases.add(full[len(country_slug) + 1:])
+        if key in aliases:
+            matches.append(league)
+    unique = {}
+    for league in matches:
+        unique[(str(league.get("country")), str(league.get("name")))] = league
+    return list(unique.values())
+
+
+def resolve_footystats_competition(value: str) -> dict:
+    """Resolve a league against FootyStats' subscribed /league-list endpoint."""
+    if not str(value or "").strip():
+        raise ValueError("competition is required")
+    try:
+        leagues = _footystats_client(cached=True).fetch_league_list()
+    except Exception as exc:
+        raise ValueError(f"FootyStats league-list endpoint failed: {exc}") from exc
+    matches = _matching_footystats_leagues(value, leagues)
+    source = "footystats_league_list_cache"
+    if not matches and os.environ.get("FOOTYSTATS_API_KEY") not in (None, "", "example"):
+        try:
+            leagues = _footystats_client(cached=False).fetch_league_list()
+            matches = _matching_footystats_leagues(value, leagues)
+            source = "footystats_league_list_live"
+        except Exception as exc:
+            raise ValueError(f"FootyStats could not verify competition {value!r}: {exc}") from exc
+    if not matches:
+        raise ValueError(f"FootyStats does not support or expose competition {value!r} on /league-list")
+    if len(matches) > 1:
+        candidates = ", ".join(sorted(f"{m.get('country')} {m.get('name')}" for m in matches))
+        raise ValueError(f"ambiguous FootyStats competition {value!r}; use a country-qualified name: {candidates}")
+    league = matches[0]
+    seasons = [dict(s) for s in league.get("season", []) if s.get("id") is not None]
+    if not seasons:
+        raise ValueError(f"FootyStats exposes {league.get('name')!r} but returned no seasons")
+    return {"name": str(league["name"]), "country": str(league.get("country") or ""),
+            "seasons": seasons, "resolution_source": source}
+
+
+def _season_sort_key(season: dict) -> tuple[int, int]:
+    raw = re.sub(r"\D", "", str(season.get("year") or ""))
+    try:
+        year_key = int(raw)
+    except ValueError:
+        year_key = 0
+    return year_key, int(season.get("id") or 0)
+
+
+def _candidate_fixture_seasons(seasons: list[dict], day) -> list[dict]:
+    year = str(day.year)
+    matching = [s for s in seasons if year in re.sub(r"\D", "", str(s.get("year") or ""))]
+    return sorted(matching or seasons, key=_season_sort_key, reverse=True)
+
+
+def _footystats_match_to_fixture(row: dict, league: dict, season: dict,
+                                  source: str, *, require_history: bool = True) -> dict:
+    required = ("id", "date_unix", "competition_id", "homeID", "awayID",
+                "home_name", "away_name")
+    missing = [field for field in required if row.get(field) in (None, "")]
+    if missing:
+        raise ValueError(f"FootyStats fixture payload lacks: {', '.join(missing)}")
+    kickoff = float(row["date_unix"])
+    target_key = _season_sort_key(season)
+    prior = sorted((dict(s) for s in league["seasons"]
+                    if _season_sort_key(s) < target_key), key=_season_sort_key, reverse=True)
+    history_eligible = len(prior) >= HISTORY_SEASONS
+    if require_history and not history_eligible:
+        raise ValueError(f"FootyStats has fewer than {HISTORY_SEASONS} prior seasons for {league['name']}")
+    fs_id = str(row["id"])
+    return {
+        "fixture_id": f"fs_{fs_id}", "footystats_fixture_id": fs_id,
+        "ts": kickoff, "kickoff_unix": kickoff,
+        "kickoff_iso": datetime.fromtimestamp(kickoff, timezone.utc).isoformat(),
+        "comp": f"footystats:{season['id']}",
+        "competition_id": f"footystats:{season['id']}",
+        "competition_name": league["name"], "season_id": season["id"],
+        "status": row.get("status"), "home": str(row["home_name"]),
+        "away": str(row["away_name"]), "home_team_id": row["homeID"],
+        "away_team_id": row["awayID"], "resolution_source": source,
+        "history_eligible": history_eligible,
+        "footystats_competition": {
+            "name": league["name"], "country": league["country"],
+            "fixture_season": dict(season), "history_seasons": prior[:HISTORY_SEASONS],
+            "league_resolution_source": league["resolution_source"],
+        },
+    }
+
+
+def discover_footystats_fixtures_for_day(day, *, fresh: bool = True,
+                                         request_cap: int = 300) -> dict:
+    """Discover every account-accessible FootyStats fixture for a UTC date.
+
+    ``fixtures`` is the complete normalized FootyStats day slate, including
+    fixtures that cannot be modeled or priced. ``analysis_fixtures`` is the
+    fail-closed subset with two prior FootyStats seasons and one independently
+    verified, odds-capable TheStatsAPI identity. Endpoint and fixture failures
+    are recorded so partial discovery is never presented as full coverage.
+    """
+    client = _footystats_client(cached=not fresh)
+    manifest = {"day": day.isoformat(), "fresh": fresh, "complete": True,
+                "league_count": 0, "season_count": 0, "live_requests": 0,
+                "fixtures": [], "analysis_fixtures": [], "skipped": [],
+                "failures": []}
+    try:
+        rows = client.fetch_league_list()
+    except Exception as exc:
+        manifest.update({"complete": False,
+                         "failures": [{"scope": "league-list",
+                                       "reason": f"{type(exc).__name__}: {exc}"}]})
+        manifest["live_requests"] = client.request_count
+        return manifest
+
+    for raw_league in rows:
+        if client.request_count >= request_cap:
+            manifest["complete"] = False
+            manifest["failures"].append({"scope": "discovery",
+                                         "reason": f"FootyStats live-request cap {request_cap} reached"})
+            break
+        league_name = str(raw_league.get("name") or "").strip()
+        seasons = [dict(s) for s in raw_league.get("season", []) if s.get("id") is not None]
+        if not league_name or not seasons:
+            manifest["skipped"].append({"scope": "league", "league": league_name or "n/a",
+                                        "reason": "missing league name or seasons"})
+            continue
+        manifest["league_count"] += 1
+        league = {"name": league_name, "country": str(raw_league.get("country") or ""),
+                  "seasons": seasons, "resolution_source": "footystats_account_league_list"}
+        date_seasons = [season for season in seasons
+                        if str(day.year) in re.sub(r"\D", "", str(season.get("year") or ""))]
+        if not date_seasons:
+            manifest["skipped"].append({"scope": "league", "league": league_name,
+                                        "reason": f"no FootyStats season includes {day.year}"})
+            continue
+        for season in sorted(date_seasons, key=_season_sort_key, reverse=True):
+            if client.request_count >= request_cap:
+                manifest["complete"] = False
+                manifest["failures"].append({"scope": "discovery",
+                                             "reason": f"FootyStats live-request cap {request_cap} reached"})
+                break
+            manifest["season_count"] += 1
+            try:
+                matches = client.fetch_season_matches(int(season["id"]))
+            except Exception as exc:
+                manifest["complete"] = False
+                manifest["failures"].append({"scope": "season", "league": league_name,
+                                             "season_id": season["id"],
+                                             "reason": f"{type(exc).__name__}: {exc}"})
+                continue
+            for row in matches:
+                kickoff = numeric(row.get("date_unix"))
+                if kickoff is None or datetime.fromtimestamp(kickoff, timezone.utc).date() != day:
+                    continue
+                try:
+                    fixture = _footystats_match_to_fixture(
+                        row, league, season, "footystats_account_date_discovery",
+                        require_history=False)
+                    manifest["fixtures"].append(fixture)
+                    if not fixture["history_eligible"]:
+                        manifest["skipped"].append({
+                            "scope": "analysis", "fixture_id": fixture["fixture_id"],
+                            "league": league_name,
+                            "reason": f"fewer than {HISTORY_SEASONS} prior FootyStats seasons",
+                        })
+                        continue
+                    odds_resolution = resolve_thestats_odds_fixture(fixture)
+                    fixture["odds_resolution"] = odds_resolution
+                    if not odds_resolution.get("matched"):
+                        manifest["skipped"].append({
+                            "scope": "analysis", "fixture_id": fixture["fixture_id"],
+                            "league": league_name,
+                            "reason": f"no verified executable odds: {odds_resolution.get('reason', 'unmatched')}",
+                        })
+                        continue
+                    for key in ("thestats_fixture_id", "thestats_competition_id",
+                                "thestats_season_id", "thestats_home_team_id",
+                                "thestats_away_team_id"):
+                        fixture[key] = odds_resolution[key]
+                    manifest["analysis_fixtures"].append(fixture)
+                except Exception as exc:
+                    manifest["skipped"].append({"scope": "fixture", "league": league_name,
+                                                "fixture_id": row.get("id"),
+                                                "reason": f"{type(exc).__name__}: {exc}"})
+        if not manifest["complete"]:
+            break
+    manifest["fixtures"].sort(key=lambda fixture: fixture["kickoff_unix"])
+    manifest["analysis_fixtures"].sort(key=lambda fixture: fixture["kickoff_unix"])
+    manifest["live_requests"] = client.request_count
+    manifest["fixture_count"] = len(manifest["fixtures"])
+    manifest["analysis_fixture_count"] = len(manifest["analysis_fixtures"])
+    return manifest
+
+
+def _competition_id(value: str) -> str:
+    """Compatibility helper returning the FootyStats canonical league name."""
+    return resolve_footystats_competition(value)["name"]
+
+
+def _api_match_to_fixture(row: dict, source: str) -> dict:
+    """Normalize a TheStatsAPI match object to the engine's fixture contract."""
+    if not isinstance(row, dict) or not row.get("id") or not row.get("utc_date"):
+        raise ValueError("provider match payload lacks id or utc_date")
+    dt = datetime.fromisoformat(str(row["utc_date"]).replace("Z", "+00:00"))
+    home = row.get("home_team") or {}; away = row.get("away_team") or {}
+    if not home.get("name") or not away.get("name"):
+        raise ValueError("provider match payload lacks home/away team names")
+    comp = str(row.get("competition_id") or "")
+    legacy_profile = COMPETITION_PROFILES.get(comp, {})
+    return {
+        "fixture_id": str(row["id"]),
+        "thestats_fixture_id": str(row["id"]),
+        "ts": dt.timestamp(),
+        "kickoff_unix": dt.timestamp(),
+        "kickoff_iso": dt.astimezone(timezone.utc).isoformat(),
+        "comp": comp,
+        "competition_id": comp,
+        "competition_name": row.get("competition_name") or legacy_profile.get("name") or comp,
+        "season_id": row.get("season_id"),
+        "status": row.get("status"),
+        "home": str(home["name"]),
+        "away": str(away["name"]),
+        "home_team_id": home.get("id"),
+        "away_team_id": away.get("id"),
+        "resolution_source": source,
+    }
+
+
+def _set_stage_request_cap(api, allowance: int) -> int:
+    """Set a stage ceiling without ever raising the process/run budget."""
+    before = api.live_requests_made()
+    configured = int(getattr(api, "CONFIGURED_MAX_LIVE_REQUESTS", api.MAX_LIVE_REQUESTS))
+    run_cap = int(getattr(api, "RUN_MAX_LIVE_REQUESTS", configured))
+    api.MAX_LIVE_REQUESTS = min(configured, run_cap, before + max(0, int(allowance)))
+    return before
+
+
+def _resolver_api():
+    import thestatsapi_client as api
+    # The resolver receives at most its explicit one-call allowance; cache hits
+    # consume zero, and the immutable process ceiling is never raised.
+    _set_stage_request_cap(api, MAX_RESOLVE_REQUESTS)
+    return api
+
+
+def _provider_rows(payload) -> list[dict]:
+    if isinstance(payload, dict):
+        rows = payload.get("data", [])
+    else:
+        rows = payload or []
+    return rows if isinstance(rows, list) else []
+
+
+def _provider_total_pages(payload, current: int) -> int:
+    if not isinstance(payload, dict):
+        return current
+    meta = payload.get("meta") or payload.get("metadata") or {}
+    try:
+        return max(current, int(meta.get("total_pages") or meta.get("last_page") or current))
+    except (TypeError, ValueError):
+        return current
+
+
+def resolve_thestats_odds_fixture(fixture: dict) -> dict:
+    """Associate a FootyStats fixture with one odds-capable TheStatsAPI match.
+
+    The association is fail-closed: country/competition, season years, ordered teams,
+    provider team IDs, kickoff minute, and the match-level odds flag must all agree.
+    Failure leaves probability analysis available but never guesses an odds identity.
+    """
+    import thestatsapi_client as api
+    before = _set_stage_request_cap(api, MAX_ODDS_ASSOCIATION_REQUESTS)
+    context = fixture.get("footystats_competition") or {}
+    country = str(context.get("country") or "").strip()
+    fs_name = str(context.get("name") or "").strip()
+    short_name = fs_name
+    if country and _slug(fs_name).startswith(_slug(country) + "-"):
+        short_name = fs_name[len(country):].strip()
+    try:
+        competitions = []
+        page = 1
+        total_pages = 1
+        while page <= total_pages:
+            payload, _ = api.get_json(
+                "/football/competitions", params={"per_page": 100, "page": page},
+                cache_key=f"competitions_list_p{page}", allow_status=(200,))
+            competitions.extend(_provider_rows(payload))
+            total_pages = _provider_total_pages(payload, page)
+            page += 1
+        comp_matches = [c for c in competitions
+                        if _slug(c.get("name")) == _slug(short_name)
+                        and _slug(c.get("country") or c.get("country_name")) == _slug(country)
+                        and c.get("odds_available") is True]
+        if len(comp_matches) != 1:
+            return {"matched": False, "reason": "no unique odds-capable TheStatsAPI competition",
+                    "live_requests": api.live_requests_made() - before}
+        comp = comp_matches[0]
+
+        seasons_payload, _ = api.get_json(
+            f"/football/competitions/{comp['id']}/seasons",
+            cache_key=f"seasons_{comp['id']}", allow_status=(200,))
+        seasons = _provider_rows(seasons_payload)
+        fs_season = context.get("fixture_season") or {}
+        year_digits = re.sub(r"\D", "", str(fs_season.get("year") or ""))
+        start_year = int(year_digits[:4]) if len(year_digits) >= 4 else None
+        end_year = int(year_digits[4:8]) if len(year_digits) >= 8 else start_year
+        season_matches = [s for s in seasons
+                          if (start_year is None or int(s.get("start_year") or 0) == start_year)
+                          and (end_year is None or int(s.get("end_year") or 0) == end_year)]
+        if len(season_matches) != 1:
+            return {"matched": False, "reason": "no unique TheStatsAPI season matching FootyStats years",
+                    "thestats_competition_id": comp["id"],
+                    "live_requests": api.live_requests_made() - before}
+        season = season_matches[0]
+
+        all_matches = []
+        page = 1
+        total_pages = 1
+        asof = datetime.now(timezone.utc).strftime("%Y%m%d")
+        while page <= total_pages:
+            payload, _ = api.get_json(
+                "/football/matches",
+                params={"competition_id": comp["id"], "season_id": season["id"],
+                        "per_page": 100, "page": page},
+                cache_key=(f"fixture_odds_matches_{comp['id']}_{season['id']}"
+                           f"_p{page}_asof_{asof}"), allow_status=(200,))
+            all_matches.extend(_provider_rows(payload))
+            total_pages = _provider_total_pages(payload, page)
+            page += 1
+
+        candidates = []
+        for row in all_matches:
+            if row.get("competition_id") != comp["id"] or row.get("season_id") != season["id"]:
+                continue
+            home = row.get("home_team") or {}; away = row.get("away_team") or {}
+            if not home.get("id") or not away.get("id"):
+                continue
+            if (canonical_team_name(home.get("name")) != canonical_team_name(fixture["home"]) or
+                    canonical_team_name(away.get("name")) != canonical_team_name(fixture["away"])):
+                continue
+            try:
+                kickoff = datetime.fromisoformat(str(row.get("utc_date") or "").replace("Z", "+00:00")).timestamp()
+            except (TypeError, ValueError):
+                continue
+            if abs(kickoff - float(fixture["kickoff_unix"])) > 60:
+                continue
+            if row.get("odds_available") is not True:
+                continue
+            if str(row.get("status") or "").casefold() in {"cancelled", "canceled", "postponed"}:
+                continue
+            candidates.append(row)
+        if len(candidates) != 1:
+            return {"matched": False,
+                    "reason": f"expected one verified odds fixture, found {len(candidates)}",
+                    "thestats_competition_id": comp["id"],
+                    "thestats_season_id": season["id"],
+                    "live_requests": api.live_requests_made() - before}
+        row = candidates[0]
+        return {"matched": True, "thestats_fixture_id": str(row["id"]),
+                "thestats_competition_id": comp["id"], "thestats_season_id": season["id"],
+                "thestats_home_team_id": row["home_team"]["id"],
+                "thestats_away_team_id": row["away_team"]["id"],
+                "kickoff_delta_seconds": 0,
+                "source": "thestats_competition_season_match_endpoints",
+                "live_requests": api.live_requests_made() - before}
+    except SystemExit as exc:
+        return {"matched": False, "reason": f"TheStatsAPI resolver aborted ({exc.code})",
+                "live_requests": api.live_requests_made() - before}
+    except Exception as exc:
+        return {"matched": False, "reason": f"TheStatsAPI resolver failed: {exc}",
+                "live_requests": api.live_requests_made() - before}
+
+
+def resolve_fixture(fixture_id: str, allow_live: bool = True) -> dict:
+    """Resolve a provider fixture ID cache-first, then with one bounded API call."""
+    row = None
+    if FIXTURE_LIST.exists():
+        row = json.loads(FIXTURE_LIST.read_text()).get("meta", {}).get(fixture_id)
+    if row:
+        out = dict(row)
+        out["fixture_id"] = fixture_id
+        out["competition_id"] = out.get("comp")
+        out["kickoff_unix"] = float(out.get("ts") or 0)
+        out["kickoff_iso"] = datetime.fromtimestamp(out["kickoff_unix"], timezone.utc).isoformat()
+        out["resolution_source"] = "pilotC_fixture_cache"
+        return out
+    if not allow_live:
+        raise ValueError(f"fixture {fixture_id} is not in the local fixture universe")
+    api = _resolver_api()
+    payload, meta = api.get_json(
+        f"/football/matches/{fixture_id}",
+        cache_key=f"fixture_request_match_{fixture_id}", allow_status=(200,))
+    data = (payload or {}).get("data")
+    return _api_match_to_fixture(data, "provider_cache" if meta.get("from_cache") else "provider_live")
+
+
+def resolve_fixture_request(home: str, away: str, date: str, competition: str) -> dict:
+    """Resolve an exact fixture through FootyStats-supported league endpoints."""
+    try:
+        day = datetime.strptime(date, "%Y-%m-%d").date()
+    except ValueError as exc:
+        raise ValueError("fixture date must use YYYY-MM-DD") from exc
+    wanted_home = canonical_team_name(home); wanted_away = canonical_team_name(away)
+    if not wanted_home or not wanted_away:
+        raise ValueError("home and away team names are required")
+
+    league = resolve_footystats_competition(competition)
+    candidate_seasons = _candidate_fixture_seasons(league["seasons"], day)
+
+    def find_matches(client: FootyStatsResearchClient) -> list[tuple[dict, dict]]:
+        found = []
+        for season in candidate_seasons:
+            rows = client.fetch_season_matches(int(season["id"]))
+            for row in rows:
+                ts = numeric(row.get("date_unix"))
+                if ts is None or datetime.fromtimestamp(ts, timezone.utc).date() != day:
+                    continue
+                if str(row.get("competition_id")) != str(season["id"]):
+                    continue
+                if (canonical_team_name(row.get("home_name")) == wanted_home and
+                        canonical_team_name(row.get("away_name")) == wanted_away):
+                    found.append((row, season))
+        return found
+
+    cached_client = _footystats_client(cached=True)
+    try:
+        matches = find_matches(cached_client)
+    except Exception as exc:
+        raise ValueError(f"FootyStats league-matches endpoint failed for {league['name']}: {exc}") from exc
+    source = "footystats_league_matches_cache" if cached_client.request_count == 0 else "footystats_league_matches_live_cached"
+
+    # Active schedules can change after a cache entry was created. One uncached retry
+    # makes the endpoint, rather than stale local metadata, the final support boundary.
+    if not matches and os.environ.get("FOOTYSTATS_API_KEY") not in (None, "", "example"):
+        try:
+            matches = find_matches(_footystats_client(cached=False))
+            source = "footystats_league_matches_live_refresh"
+        except Exception as exc:
+            raise ValueError(f"FootyStats could not refresh {league['name']} fixtures: {exc}") from exc
+    if not matches:
+        raise ValueError(f"FootyStats returned no exact {home} vs {away} fixture in {league['name']} on {day.isoformat()}")
+    if len(matches) > 1:
+        raise ValueError(f"FootyStats returned multiple exact fixtures in {league['name']} on {day.isoformat()}")
+
+    row, season = matches[0]
+    fixture = _footystats_match_to_fixture(row, league, season, source)
+
+    # FootyStats remains authoritative for eligibility and history. TheStatsAPI is
+    # discovered independently and attached only after strict cross-provider checks.
+    odds_resolution = resolve_thestats_odds_fixture(fixture)
+    fixture["odds_resolution"] = odds_resolution
+    if odds_resolution.get("matched"):
+        for key in ("thestats_fixture_id", "thestats_competition_id", "thestats_season_id",
+                    "thestats_home_team_id", "thestats_away_team_id"):
+            fixture[key] = odds_resolution[key]
+    return fixture
+
+
+def validated_crosswalk(home: str, away: str, fixture: dict | None = None) -> dict:
+    """Validate provider-to-corpus team identity for the fixture competition."""
+    fs_context = (fixture or {}).get("footystats_competition")
+    if fs_context:
+        ids = {home: (fixture or {}).get("home_team_id"),
+               away: (fixture or {}).get("away_team_id")}
+        out = {}
+        for team in (home, away):
+            if ids[team] in (None, ""):
+                raise ValueError(f"FootyStats fixture lacks a team ID for {team!r}")
+            out[team] = {"footystats_name": team, "footystats_id": ids[team],
+                         "confidence": 1.0, "status": "exact_footystats_fixture_identity"}
+        return out
+
+    comp = str((fixture or {}).get("competition_id") or (fixture or {}).get("comp") or "comp_3039")
+    profile = COMPETITION_PROFILES.get(comp)
+    if not profile:
+        raise ValueError(f"fixture competition {comp!r} is not configured")
+    section = profile.get("crosswalk_section")
+    if section:
+        data = json.loads(CROSSWALK.read_text())
+        rows = data.get("leagues", {}).get(section, [])
+        by_name = {r["footystats_name"]: r for r in rows}
+        out = {}
+        for team in (home, away):
+            row = by_name.get(team)
+            if not row or float(row.get("confidence", 0)) < 0.95:
+                raise ValueError(f"no validated high-confidence crosswalk for {team!r}")
+            out[team] = row
+        return out
+
+    # Brazil uses exact provider names confirmed against the two reviewed complete
+    # FootyStats seasons. No fuzzy alias or guessed provider ID is admitted.
+    corpus_names = {}
+    for sid in profile["footystats_seasons"]:
+        for row in _load_season_pages(sid):
+            for name in (row.get("home_name"), row.get("away_name")):
+                if name:
+                    corpus_names[str(name).strip().casefold()] = str(name).strip()
+    ids = {home: (fixture or {}).get("home_team_id"),
+           away: (fixture or {}).get("away_team_id")}
     out = {}
     for team in (home, away):
-        row = by_name.get(team)
-        if not row or float(row.get("confidence", 0)) < 0.95:
-            raise ValueError(f"no validated high-confidence crosswalk for {team!r}")
-        out[team] = row
+        canonical = corpus_names.get(team.strip().casefold())
+        if not canonical or not ids.get(team):
+            raise ValueError(f"no validated exact provider/corpus mapping for {team!r}")
+        out[team] = {"footystats_name": canonical, "thestats_id": ids[team],
+                     "thestats_name": team, "confidence": 1.0,
+                     "status": "exact_provider_corpus_match"}
     return out
 
 
@@ -223,32 +795,94 @@ def _load_season_pages(season_id: str) -> list[dict]:
     return rows
 
 
-def load_two_season_history(home: str, away: str, cutoff: float) -> tuple[list[dict], dict]:
-    """Load complete local FootyStats history strictly before cutoff.
+def load_two_season_history(home: str, away: str, cutoff: float,
+                            competition_id: str = "comp_3039",
+                            fixture: dict | None = None) -> tuple[list[dict], dict]:
+    """Load two complete provider seasons strictly before the fixture cutoff."""
+    fs_context = (fixture or {}).get("footystats_competition")
+    if fs_context:
+        seasons = fs_context.get("history_seasons", [])
+        if len(seasons) < HISTORY_SEASONS:
+            raise ValueError(f"FootyStats returned fewer than {HISTORY_SEASONS} prior seasons")
+        all_rows = []
+        season_counts = {}
+        season_sources = {}
+        for season in seasons[:HISTORY_SEASONS]:
+            sid = str(season["id"])
+            rows = _load_season_pages(sid)
+            source = "canonical_corpus_cache"
+            if not rows:
+                try:
+                    client = _footystats_client(cached=True)
+                    rows = client.fetch_season_matches(int(sid))
+                    source = ("footystats_api_cache" if client.request_count == 0
+                              else "footystats_api_live_cached")
+                except Exception as exc:
+                    raise ValueError(f"FootyStats could not supply history season {sid}: {exc}") from exc
+            complete = [m for m in rows if str(m.get("status") or "").casefold() == "complete"]
+            if not complete:
+                raise ValueError(f"FootyStats history season {sid} returned no completed matches")
+            all_rows.extend(complete)
+            season_counts[sid] = len(complete)
+            season_sources[sid] = source
 
-    If either team's required two-season history is absent, hydrate missing history via
-    TheStatsAPI (bounded, cache-first), adapt supported fields, and merge it. The
-    current target match is never requested or consumed.
-    """
+        target_ids = {str((fixture or {}).get("home_team_id")),
+                      str((fixture or {}).get("away_team_id"))}
+        seen = set(); selected = []
+        for m in all_rows:
+            d = numeric(m.get("date_unix"))
+            if d is None or not d < cutoff:
+                continue
+            row_ids = {str(m.get("homeID")), str(m.get("awayID"))}
+            names_match = (canonical_team_name(home) in
+                           {canonical_team_name(m.get("home_name")), canonical_team_name(m.get("away_name"))} or
+                           canonical_team_name(away) in
+                           {canonical_team_name(m.get("home_name")), canonical_team_name(m.get("away_name"))})
+            if target_ids.isdisjoint(row_ids) and not names_match:
+                continue
+            key = fixture_identity(m)
+            if key in seen:
+                continue
+            seen.add(key); selected.append(m)
+        selected.sort(key=lambda x: x["date_unix"])
+        return selected, {
+            "competition_id": competition_id,
+            "footystats_competition": fs_context["name"],
+            "history_seasons": [dict(s) for s in seasons[:HISTORY_SEASONS]],
+            "season_page_counts": season_counts, "season_sources": season_sources,
+            "fallback": {"used": False, "live_requests": 0, "missing_seasons": [],
+                         "note": "FootyStats is authoritative for dynamic league history"},
+            "strict_cutoff_unix": cutoff,
+            "latest_history_unix": max((m["date_unix"] for m in selected), default=None),
+        }
+
+    # Legacy path retained for direct TheStatsAPI fixtures while they are attached to
+    # a FootyStats context by build_report.
+    profile = COMPETITION_PROFILES.get(competition_id)
+    if not profile:
+        raise ValueError(f"fixture competition {competition_id!r} is not configured")
+    seasons = profile["footystats_seasons"]
+    expected_matches = int(profile["expected_matches"])
     all_rows = []
     season_counts = {}
     missing_seasons = []
-    for sid, meta in KNOWN_EPL_SEASONS.items():
+    for sid, meta in seasons.items():
         rows = _load_season_pages(sid)
         season_counts[sid] = len(rows)
-        # A single non-empty page is not a complete season. EPL has 380 fixtures;
-        # anything below that triggers the cache-first TheStatsAPI completion path.
-        if len(rows) < EXPECTED_EPL_SEASON_MATCHES:
+        if len(rows) < expected_matches:
             missing_seasons.append((sid, {**meta, "cached_match_count": len(rows),
-                                          "expected_match_count": EXPECTED_EPL_SEASON_MATCHES}))
+                                          "expected_match_count": expected_matches}))
         all_rows.extend(rows)
 
     fallback = {"used": False, "live_requests": 0, "missing_seasons": [s for s, _ in missing_seasons],
                 "note": None}
-    if missing_seasons:
+    if missing_seasons and all(meta.get("thestats_id") for _, meta in missing_seasons):
         hydrated, info = hydrate_history_from_thestats(home, away, cutoff, missing_seasons)
         all_rows.extend(hydrated)
         fallback.update(info)
+    elif missing_seasons:
+        fallback["note"] = ("reviewed local season is incomplete and no verified provider "
+                            "season mapping exists; no history was fabricated")
 
     # Strict information cutoff and target-team filter. Deduplicate provider overlap by
     # stable provider id when possible, otherwise identity/date/score tuple.
@@ -265,7 +899,8 @@ def load_two_season_history(home: str, away: str, cutoff: float) -> tuple[list[d
             continue
         seen.add(key); selected.append(m)
     selected.sort(key=lambda x: x["date_unix"])
-    return selected, {"season_page_counts": season_counts, "fallback": fallback,
+    return selected, {"competition_id": competition_id,
+                      "season_page_counts": season_counts, "fallback": fallback,
                       "strict_cutoff_unix": cutoff, "latest_history_unix":
                       max((m["date_unix"] for m in selected), default=None)}
 
@@ -333,10 +968,10 @@ def hydrate_history_from_thestats(home: str, away: str, cutoff: float,
     checked before spending quota. This function is normally zero-call for EPL targets.
     """
     import thestatsapi_client as api
-    before = api.live_requests_made()
     # Per-stage ceiling: earlier fixture/history calls cannot consume the odds budget,
-    # and this stage cannot spend more than MAX_HISTORY_REQUESTS from its own start.
-    api.MAX_LIVE_REQUESTS = before + MAX_HISTORY_REQUESTS
+    # and this stage cannot spend more than MAX_HISTORY_REQUESTS from its own start or
+    # exceed the immutable process-level request ceiling.
+    before = _set_stage_request_cap(api, MAX_HISTORY_REQUESTS)
     errors = []; all_fixtures = {}
     cross = validated_crosswalk(home, away)
     home_id, away_id = cross[home]["thestats_id"], cross[away]["thestats_id"]
@@ -504,9 +1139,9 @@ def capture_odds(fixture_id: str, request_dir: Path, refresh: bool = False,
     request_dir.mkdir(parents=True, exist_ok=True)
     if kickoff_unix is not None:
         ensure_pre_kickoff(kickoff_unix, "odds capture start")
-    now = time.time(); live_before = api.live_requests_made()
-    # Independent per-stage ceiling; history hydration cannot consume this allowance.
-    api.MAX_LIVE_REQUESTS = live_before + MAX_ODDS_REQUESTS
+    now = time.time()
+    # Independent per-stage allowance that cannot exceed the process-level ceiling.
+    live_before = _set_stage_request_cap(api, MAX_ODDS_REQUESTS)
     raw = {}; sources = []
     bucket = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%S%fZ") + f"-{time.time_ns()}"
     for book in BOOKS:
@@ -829,13 +1464,34 @@ def write_public_receipt(report: dict) -> Path:
 
 
 def build_report(fixture_id: str, requested_by: str, refresh_odds: bool = False,
-                 commit: bool = False) -> dict:
-    fixture = resolve_fixture(fixture_id)
+                 commit: bool = False, resolved_fixture: dict | None = None) -> dict:
+    fixture = dict(resolved_fixture) if resolved_fixture is not None else resolve_fixture(fixture_id)
+    fixture_id = fixture["fixture_id"]
     if time.time() >= fixture["kickoff_unix"]:
         raise ValueError("fixture already kicked off; this engine refuses retrospective candidate generation because current prices cannot prove a pre-kickoff information set")
-    cross = validated_crosswalk(fixture["home"], fixture["away"])
+
+    # Direct TheStatsAPI IDs are accepted only after the corresponding FootyStats
+    # fixture is verified. This makes FootyStats endpoint coverage the eligibility gate.
+    if not fixture.get("footystats_competition"):
+        original = dict(fixture)
+        legacy = COMPETITION_PROFILES.get(str(original.get("competition_id") or original.get("comp") or ""), {})
+        competition_hint = legacy.get("name") or original.get("competition_name")
+        day = datetime.fromtimestamp(float(original["kickoff_unix"]), timezone.utc).date().isoformat()
+        fixture = resolve_fixture_request(original["home"], original["away"], day, competition_hint)
+        fixture["fixture_id"] = str(original["fixture_id"])
+        fixture["thestats_fixture_id"] = str(original["fixture_id"])
+        fixture["thestats_competition_id"] = original.get("competition_id") or original.get("comp")
+        fixture["resolution_source"] += "+thestats_fixture_verified"
+        fixture_id = fixture["fixture_id"]
+
+    fs_context = fixture["footystats_competition"]
+    comp = str(fixture.get("competition_id") or fixture.get("comp") or "")
+    profile = {"name": fs_context["name"], "country": fs_context.get("country"),
+               "pilotc_covered": fs_context["name"] in PILOTC_FOOTYSTATS_COMPETITIONS}
+    cross = validated_crosswalk(fixture["home"], fixture["away"], fixture)
     history, history_meta = load_two_season_history(fixture["home"], fixture["away"],
-                                                     fixture["kickoff_unix"])
+                                                     fixture["kickoff_unix"], comp,
+                                                     fixture=fixture)
     counts = {t: len(_team_rows(history, t)) for t in (fixture["home"], fixture["away"])}
     supported_counts = supported_context_counts(history, (fixture["home"], fixture["away"]))
     if any(n < MIN_HISTORY_MATCHES for n in counts.values()):
@@ -847,8 +1503,16 @@ def build_report(fixture_id: str, requested_by: str, refresh_odds: bool = False,
                   f"-{time.time_ns()}")
     request_dir = RESEARCH_ROOT / fixture_id / request_id
     source_dir = request_dir / "sources"
-    raw_odds, quota = capture_odds(fixture_id, source_dir, refresh=refresh_odds,
-                                    kickoff_unix=fixture["kickoff_unix"])
+    odds_fixture_id = fixture.get("thestats_fixture_id")
+    if odds_fixture_id:
+        raw_odds, quota = capture_odds(str(odds_fixture_id), source_dir,
+                                        refresh=refresh_odds,
+                                        kickoff_unix=fixture["kickoff_unix"])
+    else:
+        raw_odds = {}
+        quota = {"live_requests": 0, "monthly_remaining": None,
+                 "monthly_limit": None, "monthly_reset": None, "sources": [],
+                 "note": "No independently verified TheStatsAPI fixture ID; league analysis continues without executable odds."}
     books = parse_books(raw_odds)
     full_ms = mix.load_corpus(); full_hist = mix.build_histories(full_ms)
     local_diagnostics = local_walk_forward_diagnostics(full_ms, full_hist,
@@ -858,15 +1522,29 @@ def build_report(fixture_id: str, requested_by: str, refresh_odds: bool = False,
     report = {
         "request_id": request_id, "generated_at": now_iso(), "requested_by": requested_by,
         "fixture": fixture, "crosswalk": cross,
+        "inference_domain": {
+            "competition_profile": profile["name"],
+            "pilotc_preregistered_coverage": bool(profile["pilotc_covered"]),
+            "classification": ("pilotc-covered" if profile["pilotc_covered"]
+                               else "fixture-research-out-of-pilotc-domain"),
+            "note": ("This result remains outside the Pilot C preregistered sample and "
+                     "can only use the structurally separate fixture-research path."
+                     if not profile["pilotc_covered"] else
+                     "Fixture is within a Pilot C covered competition."),
+        },
         "information_cutoff": {"rule": "strict date_unix < fixture kickoff",
                                "cutoff_unix": fixture["kickoff_unix"],
                                "target_match_stats_consumed": False},
-        "request_plan": {"history_source": "FootyStats immutable two-season cache",
+        "request_plan": {"history_source": "FootyStats endpoint-backed two-season history",
+                         "footystats_competition": fs_context,
                          "history_fallback": history_meta["fallback"],
                          "heatmaps": {"available": False,
                                       "reason": "TheStatsAPI heatmap/positions/touchmap probes returned no usable endpoint; not imputed."},
                          "odds_live_request_cap": MAX_ODDS_REQUESTS,
-                         "history_live_request_cap": MAX_HISTORY_REQUESTS},
+                         "odds_association_live_request_cap": MAX_ODDS_ASSOCIATION_REQUESTS,
+                         "odds_resolution": fixture.get("odds_resolution"),
+                         "history_live_request_cap": MAX_HISTORY_REQUESTS,
+                         "resolver_live_request_cap": MAX_RESOLVE_REQUESTS},
         "evidence": {"history_counts": counts, "supported_history_counts": supported_counts,
                      "history_meta": history_meta,
                      "teams": {t: summarize_team(history, t) for t in counts},
@@ -908,7 +1586,8 @@ def render(report: dict) -> str:
     counts = report["evidence"]["history_counts"]
     lines.append(f"Evidence: {counts[f['home']]} {f['home']} matches; {counts[f['away']]} {f['away']} matches; strict pre-kickoff cutoff")
     q = report["quota"]
-    lines.append(f"Sources: FootyStats 2-season cache + TheStatsAPI odds | live requests={q['live_requests']} | monthly={q['monthly_remaining']}/{q['monthly_limit']}")
+    odds_note = "TheStatsAPI odds" if f.get("thestats_fixture_id") else "no verified odds fixture"
+    lines.append(f"Sources: FootyStats endpoint-backed history + {odds_note} | live odds requests={q['live_requests']} | monthly={q['monthly_remaining']}/{q['monthly_limit']}")
     lines.append("Heatmaps: UNAVAILABLE (provider routes returned no usable payload; not imputed)")
     lines.append("")
     lines.append(f"{'market':8s} {'line':>5s} {'p_over':>7s} {'unc_pp':>7s} {'support':>7s} {'book':17s} {'side':9s} {'fair_p':>7s} {'odds':>6s} {'edge':>7s} {'EV%':>7s} {'adj_edge':>9s}  decision")
@@ -933,13 +1612,28 @@ def render(report: dict) -> str:
 
 def main():
     ap = argparse.ArgumentParser(description="On-demand two-season fixture research + conservative EV engine")
-    ap.add_argument("--fixture-id", required=True)
+    selector = ap.add_mutually_exclusive_group(required=True)
+    selector.add_argument("--fixture-id", help="TheStatsAPI fixture ID; league support is verified through FootyStats")
+    selector.add_argument("--home", help="exact FootyStats home-team name; requires --away, --date and --competition")
+    ap.add_argument("--away", help="exact FootyStats away-team name")
+    ap.add_argument("--date", help="fixture UTC date, YYYY-MM-DD")
+    ap.add_argument("--competition", help="FootyStats league name or unambiguous slug")
     ap.add_argument("--requested-by", default="unspecified")
     ap.add_argument("--refresh-odds", action="store_true", help="force new versioned odds snapshots (max 3 calls)")
     ap.add_argument("--commit", action="store_true", help="attest the report in the separate fixture-research ledger")
     ap.add_argument("--json", action="store_true")
     args = ap.parse_args()
-    report = build_report(args.fixture_id, args.requested_by, args.refresh_odds, args.commit)
+    if args.home:
+        missing = [name for name in ("away", "date", "competition") if not getattr(args, name)]
+        if missing:
+            ap.error("--home requires " + ", ".join(f"--{name}" for name in missing))
+        fixture = resolve_fixture_request(args.home, args.away, args.date, args.competition)
+    else:
+        if any((args.away, args.date, args.competition)):
+            ap.error("--away, --date and --competition are only valid with --home")
+        fixture = resolve_fixture(args.fixture_id)
+    report = build_report(fixture["fixture_id"], args.requested_by, args.refresh_odds,
+                          args.commit, resolved_fixture=fixture)
     print(json.dumps(report, indent=2, default=str) if args.json else render(report))
 
 

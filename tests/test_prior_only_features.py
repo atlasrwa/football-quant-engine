@@ -177,3 +177,58 @@ def test_rich_guard_catches_raw_bare_field_key():
         f["tackles"] = 10.0  # a bare rich field name = same-match value, forbidden as a feature
     with pytest.raises(AssertionError, match="raw same-match keys"):
         assert_no_same_match_leakage_rich(sorted(ms, key=lambda m: m["date_unix"]), bad, fields=RICH_TEST_FIELDS)
+
+
+
+def test_rich_builder_batches_simultaneous_kickoffs_before_history_update():
+    matches = _synth_rich_matches(n=3)
+    kickoff = matches[0]["date_unix"]
+    matches[1]["date_unix"] = kickoff
+    matches[2]["date_unix"] = kickoff + 86400
+    features = build_rich_prior_only_features(
+        matches, target_field="total_corners", fields=["tackles"]
+    )
+    # Neither simultaneous fixture may see the other's realized values or update the
+    # running global fallback. Both therefore retain the empty-history neutral prior.
+    assert features[0]["tackles_home"] == 0.0
+    assert features[1]["tackles_home"] == 0.0
+    assert features[0]["prior_n_tackles_home"] == 0
+    assert features[1]["prior_n_tackles_home"] == 0
+    assert_no_same_match_leakage_rich(matches, features, fields=["tackles"])
+
+
+def test_rich_builder_support_counts_are_strictly_prior():
+    matches = _synth_rich_matches(n=2)
+    # Force the same home team into the next chronological fixture.
+    matches[1]["home_id"] = matches[0]["home_id"]
+    matches[1]["date_unix"] = matches[0]["date_unix"] + 86400
+    features = build_rich_prior_only_features(
+        matches, target_field="total_corners", fields=["tackles"]
+    )
+    assert features[0]["prior_n_tackles_home"] == 0
+    assert features[1]["prior_n_tackles_home"] == 1
+    assert_no_same_match_leakage_rich(matches, features, fields=["tackles"])
+
+
+
+def test_standard_builder_batches_simultaneous_kickoffs_before_history_update():
+    """A same-timestamp fixture may not expose its completed numeric fields to another.
+
+    This is the regression guard for the original within-row leakage class in the
+    standard FootyStats path used by the benchmark and robustness runners.
+    """
+    matches = _synth_matches(n=3)
+    kickoff = matches[0]["date_unix"]
+    matches[1]["date_unix"] = kickoff
+    matches[2]["date_unix"] = kickoff + 86400
+    features = build_prior_only_features(matches, target_field="total_corners")
+
+    # No prior kickoff group exists for either simultaneous fixture.
+    assert features[0]["shots_home"] == 0.0
+    assert features[1]["shots_home"] == 0.0
+    assert_no_same_match_leakage(matches, features)
+
+    leaked = [dict(feature) for feature in features]
+    leaked[1]["shots_home"] = float(matches[0]["team_a_shots"])
+    with pytest.raises(AssertionError, match="SAME-MATCH LEAKAGE"):
+        assert_no_same_match_leakage(matches, leaked)

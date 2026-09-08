@@ -41,11 +41,17 @@ def build_corpus(
     away: str = "Norwich",
     schedule_fixture: bool = True,
     seed: int = 3,
-) -> list[tuple[ResearchMatch, str]]:
-    """A completed history over a small team pool + one scheduled future fixture."""
+    source: str = "rich",
+) -> list[tuple[ResearchMatch, str, str]]:
+    """A completed history over a small team pool + one scheduled future fixture.
+
+    Each entry is a ``(match, league_label, source)`` triple, matching the CLI's
+    merged-corpus shape. ``source`` defaults to ``"rich"`` so the full-profile
+    path is exercised unless a test explicitly requests ``"broad"``.
+    """
     rng = random.Random(seed)
     teams = [home, away, "Watford", "Hull", "Stoke", "Luton"]
-    corpus: list[tuple[ResearchMatch, str]] = []
+    corpus: list[tuple[ResearchMatch, str, str]] = []
     d = 1_600_000_000
     for i in range(n_history):
         h = rng.choice(teams)
@@ -78,6 +84,7 @@ def build_corpus(
                     dangerous_attacks_away=rng.randint(20, 70),
                 ),
                 league_label,
+                source,
             )
         )
     if schedule_fixture:
@@ -94,6 +101,7 @@ def build_corpus(
                     away_goals=None,
                 ),
                 league_label,
+                source,
             )
         )
     return corpus

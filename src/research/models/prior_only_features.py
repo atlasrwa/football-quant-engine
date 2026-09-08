@@ -145,41 +145,54 @@ def build_prior_only_features(
     running_n: dict[str, int] = defaultdict(int)
 
     out: list[dict] = []
-    for m in ms:
-        hid, aid = m.get("homeID"), m.get("awayID")
-        feat: dict = {"home_team_id": hid, "away_team_id": aid,
-                      "date_unix": m.get("date_unix", 0)}
+    cursor = 0
+    while cursor < len(ms):
+        # Every fixture at a shared timestamp is constructed before any of that
+        # kickoff group's outcomes enter history. Sequentially processing a group
+        # would let a later-listed simultaneous fixture see an earlier-listed one.
+        date = ms[cursor].get("date_unix", 0)
+        end = cursor + 1
+        while end < len(ms) and ms[end].get("date_unix", 0) == date:
+            end += 1
+        batch = ms[cursor:end]
 
-        for fname, (stat, side) in _FEATURE_SOURCE.items():
-            tid = hid if side == "home" else aid
-            prior_vals = hist[tid][stat][-window:]
-            if len(prior_vals) >= min_prior:
-                feat[fname] = float(np.mean(prior_vals))
+        for m in batch:
+            hid, aid = m.get("homeID"), m.get("awayID")
+            feat: dict = {"home_team_id": hid, "away_team_id": aid,
+                          "date_unix": date}
+
+            for fname, (stat, side) in _FEATURE_SOURCE.items():
+                tid = hid if side == "home" else aid
+                prior_vals = hist[tid][stat][-window:]
+                if len(prior_vals) >= min_prior:
+                    feat[fname] = float(np.mean(prior_vals))
+                else:
+                    # Neutral prior = global mean of past kickoff groups only.
+                    gm = (running_sum[stat] / running_n[stat]) if running_n[stat] > 0 else 0.0
+                    feat[fname] = float(gm)
+
+            # Target/outcome (label), carried but never a feature.
+            if target_field == "total_corners":
+                feat["total_corners"] = _num(m.get("totalCornerCount"))
+            elif target_field == "total_cards":
+                ya = _num(m.get("team_a_yellow_cards")); yb = _num(m.get("team_b_yellow_cards"))
+                ra = _num(m.get("team_a_red_cards")) or 0.0; rb = _num(m.get("team_b_red_cards")) or 0.0
+                feat["total_cards"] = (ya + yb + ra + rb) if (ya is not None and yb is not None) else None
             else:
-                # neutral prior = global mean of PAST matches (never this fixture)
-                gm = (running_sum[stat] / running_n[stat]) if running_n[stat] > 0 else 0.0
-                feat[fname] = float(gm)
+                raise ValueError(f"unsupported target_field: {target_field!r}")
+            out.append(feat)
 
-        # target/outcome (label), carried but never a feature
-        if target_field == "total_corners":
-            tc = _num(m.get("totalCornerCount"))
-            feat["total_corners"] = tc
-        elif target_field == "total_cards":
-            ya = _num(m.get("team_a_yellow_cards")); yb = _num(m.get("team_b_yellow_cards"))
-            ra = _num(m.get("team_a_red_cards")) or 0.0; rb = _num(m.get("team_b_red_cards")) or 0.0
-            feat["total_cards"] = (ya + yb + ra + rb) if (ya is not None and yb is not None) else None
-
-        out.append(feat)
-
-        # AFTER emitting the row, fold THIS match into history (so it is only ever
-        # available to LATER fixtures — strictly-prior guarantee).
-        for stat in _RAW_KEYS:
-            hv = _team_own_stat(m, hid, stat)
-            av = _team_own_stat(m, aid, stat)
-            if hv is not None:
-                hist[hid][stat].append(hv); running_sum[stat] += hv; running_n[stat] += 1
-            if av is not None:
-                hist[aid][stat].append(av); running_sum[stat] += av; running_n[stat] += 1
+        # Fold the whole kickoff group only after emitting all of its rows.
+        for m in batch:
+            hid, aid = m.get("homeID"), m.get("awayID")
+            for stat in _RAW_KEYS:
+                hv = _team_own_stat(m, hid, stat)
+                av = _team_own_stat(m, aid, stat)
+                if hv is not None:
+                    hist[hid][stat].append(hv); running_sum[stat] += hv; running_n[stat] += 1
+                if av is not None:
+                    hist[aid][stat].append(av); running_sum[stat] += av; running_n[stat] += 1
+        cursor = end
 
     return out
 
@@ -226,32 +239,46 @@ def assert_no_same_match_leakage(
     running_n: dict[str, int] = defaultdict(int)
     leaks: list[str] = []
 
-    for i, m in enumerate(ms):
-        hid, aid = m.get("homeID"), m.get("awayID")
-        for fname, (stat, side) in _FEATURE_SOURCE.items():
-            if fname not in features[i]:
-                continue
-            tid = hid if side == "home" else aid
-            prior_vals = hist[tid][stat][-window:]
-            if len(prior_vals) >= min_prior:
-                expected = float(np.mean(prior_vals))
-            else:
-                expected = (running_sum[stat] / running_n[stat]) if running_n[stat] > 0 else 0.0
-            got = features[i].get(fname)
-            if got is None or abs(float(got) - expected) > tolerance:
-                leaks.append(f"match#{i} {fname}: builder={got} vs strictly-prior={expected}")
-                if len(leaks) >= 5:
-                    break
-        if len(leaks) >= 5:
-            break
-        # fold current match into history AFTER checking (strictly-prior)
-        for stat in _RAW_KEYS:
-            hv = _team_own_stat(m, hid, stat)
-            av = _team_own_stat(m, aid, stat)
-            if hv is not None:
-                hist[hid][stat].append(hv); running_sum[stat] += hv; running_n[stat] += 1
-            if av is not None:
-                hist[aid][stat].append(av); running_sum[stat] += av; running_n[stat] += 1
+    cursor = 0
+    while cursor < len(ms) and len(leaks) < 5:
+        date = ms[cursor].get("date_unix", 0)
+        end = cursor + 1
+        while end < len(ms) and ms[end].get("date_unix", 0) == date:
+            end += 1
+        batch = ms[cursor:end]
+
+        # Check all simultaneous fixtures against the identical pre-kickoff state.
+        for offset, m in enumerate(batch):
+            i = cursor + offset
+            hid, aid = m.get("homeID"), m.get("awayID")
+            for fname, (stat, side) in _FEATURE_SOURCE.items():
+                if fname not in features[i]:
+                    continue
+                tid = hid if side == "home" else aid
+                prior_vals = hist[tid][stat][-window:]
+                if len(prior_vals) >= min_prior:
+                    expected = float(np.mean(prior_vals))
+                else:
+                    expected = (running_sum[stat] / running_n[stat]) if running_n[stat] > 0 else 0.0
+                got = features[i].get(fname)
+                if got is None or abs(float(got) - expected) > tolerance:
+                    leaks.append(f"match#{i} {fname}: builder={got} vs strictly-prior={expected}")
+                    if len(leaks) >= 5:
+                        break
+            if len(leaks) >= 5:
+                break
+
+        # Fold the whole kickoff group only after all rows have been checked.
+        for m in batch:
+            hid, aid = m.get("homeID"), m.get("awayID")
+            for stat in _RAW_KEYS:
+                hv = _team_own_stat(m, hid, stat)
+                av = _team_own_stat(m, aid, stat)
+                if hv is not None:
+                    hist[hid][stat].append(hv); running_sum[stat] += hv; running_n[stat] += 1
+                if av is not None:
+                    hist[aid][stat].append(av); running_sum[stat] += av; running_n[stat] += 1
+        cursor = end
 
     if leaks:
         raise AssertionError(
@@ -342,14 +369,11 @@ def build_rich_prior_only_features(
 ) -> list[dict]:
     """Leak-free prior-only features for the TheStatsAPI rich corpus.
 
-    For each match and each ``field`` in ``fields`` (already filtered to those the
-    caller deemed BUILDABLE for this league — unbuildable fields are simply not
-    passed, never zero-filled), emit ``<field>_home`` and ``<field>_away`` as the
-    rolling mean of that team's OWN prior values (strictly before the fixture). When
-    a team has < ``min_prior`` prior populated values for a field, the neutral prior
-    is the running global mean of that field over PAST matches (never the fixture).
-
-    ``fields`` may mix rich (_rich tuple) and baseline-flat stats; both are handled.
+    Features and their support counts are emitted from history strictly before the
+    fixture. Matches sharing a kickoff timestamp are emitted as one batch before any
+    of their outcomes enter history, so simultaneous fixtures cannot contaminate one
+    another. ``prior_n_<field>_<side>`` keys are bookkeeping only; callers choose the
+    model feature list explicitly.
     """
     ms = sorted(matches, key=lambda m: m.get("date_unix", 0))
     hist: dict[object, dict[str, list[float]]] = defaultdict(lambda: defaultdict(list))
@@ -357,29 +381,52 @@ def build_rich_prior_only_features(
     running_n: dict[str, int] = defaultdict(int)
 
     out: list[dict] = []
-    for m in ms:
-        hid, aid = m.get("home_id"), m.get("away_id")
-        feat: dict = {"home_team_id": hid, "away_team_id": aid,
-                      "date_unix": m.get("date_unix", 0)}
-        for field in fields:
-            for side, tid in (("home", hid), ("away", aid)):
-                prior = hist[tid][field][-window:]
-                if len(prior) >= min_prior:
-                    feat[f"{field}_{side}"] = float(np.mean(prior))
-                else:
-                    gm = (running_sum[field] / running_n[field]) if running_n[field] > 0 else 0.0
-                    feat[f"{field}_{side}"] = float(gm)
-        tv = _rich_target_value(m, target_field)
-        feat[target_field] = tv
-        out.append(feat)
-        # fold current match into history AFTER emitting (strictly-prior)
-        for field in fields:
-            hv = _rich_own_value(m, hid, field)
-            av = _rich_own_value(m, aid, field)
-            if hv is not None:
-                hist[hid][field].append(hv); running_sum[field] += hv; running_n[field] += 1
-            if av is not None:
-                hist[aid][field].append(av); running_sum[field] += av; running_n[field] += 1
+    cursor = 0
+    while cursor < len(ms):
+        date = ms[cursor].get("date_unix", 0)
+        end = cursor + 1
+        while end < len(ms) and ms[end].get("date_unix", 0) == date:
+            end += 1
+        batch = ms[cursor:end]
+
+        for m in batch:
+            hid, aid = m.get("home_id"), m.get("away_id")
+            feat: dict = {
+                "home_team_id": hid,
+                "away_team_id": aid,
+                "date_unix": date,
+                "match_id": m.get("match_id", m.get("id")),
+            }
+            for field in fields:
+                for side, tid in (("home", hid), ("away", aid)):
+                    prior = hist[tid][field][-window:]
+                    feat[f"prior_n_{field}_{side}"] = len(prior)
+                    if len(prior) >= min_prior:
+                        feat[f"{field}_{side}"] = float(np.mean(prior))
+                    else:
+                        global_mean = (
+                            running_sum[field] / running_n[field]
+                            if running_n[field] > 0 else 0.0
+                        )
+                        feat[f"{field}_{side}"] = float(global_mean)
+            feat[target_field] = _rich_target_value(m, target_field)
+            out.append(feat)
+
+        # Fold the whole kickoff group only after every row in it has been emitted.
+        for m in batch:
+            hid, aid = m.get("home_id"), m.get("away_id")
+            for field in fields:
+                hv = _rich_own_value(m, hid, field)
+                av = _rich_own_value(m, aid, field)
+                if hv is not None:
+                    hist[hid][field].append(hv)
+                    running_sum[field] += hv
+                    running_n[field] += 1
+                if av is not None:
+                    hist[aid][field].append(av)
+                    running_sum[field] += av
+                    running_n[field] += 1
+        cursor = end
     return out
 
 
@@ -392,61 +439,155 @@ def assert_no_same_match_leakage_rich(
     min_prior: int = MIN_PRIOR,
     tolerance: float = 1e-9,
 ) -> None:
-    """STRUCTURAL anti-leakage guard for the RICH-corpus builder.
-
-    Same guarantee as :func:`assert_no_same_match_leakage`: (1) no feature key may be
-    a raw same-match stat key (``team_a_*``/``team_b_*`` or a bare rich field name),
-    and (2) every ``<field>_<side>`` feature must equal an INDEPENDENT strictly-prior
-    recomputation (history that excludes the current match), proving no feature can
-    carry the predicted match's own realized value.
-    """
+    """Independently verify rich features use only earlier kickoff groups."""
     ms = sorted(matches, key=lambda m: m.get("date_unix", 0))
     if len(ms) != len(features):
         raise AssertionError("matches and features length mismatch")
 
-    # 1) no raw same-match key may appear as a feature key
     raw_flat = {k for pair in _RICH_BASELINE_FLAT.values() for k in pair}
-    raw_bare = set(_RICH_TUPLE_FIELDS)  # a bare field name would be the same-match value
-    for f in features:
-        offending = (raw_flat | raw_bare) & set(f.keys())
+    raw_bare = set(_RICH_TUPLE_FIELDS)
+    for feature in features:
+        offending = (raw_flat | raw_bare) & set(feature)
         if offending:
             raise AssertionError(
                 f"rich feature dict contains raw same-match keys: {sorted(offending)}")
 
-    # 2) recompute strictly-prior and compare
     hist: dict[object, dict[str, list[float]]] = defaultdict(lambda: defaultdict(list))
     running_sum: dict[str, float] = defaultdict(float)
     running_n: dict[str, int] = defaultdict(int)
     leaks: list[str] = []
-    for i, m in enumerate(ms):
-        hid, aid = m.get("home_id"), m.get("away_id")
-        for field in fields:
-            for side, tid in (("home", hid), ("away", aid)):
-                key = f"{field}_{side}"
-                if key not in features[i]:
-                    continue
-                prior = hist[tid][field][-window:]
-                if len(prior) >= min_prior:
-                    expected = float(np.mean(prior))
-                else:
-                    expected = (running_sum[field] / running_n[field]) if running_n[field] > 0 else 0.0
-                got = features[i].get(key)
-                if got is None or abs(float(got) - expected) > tolerance:
-                    leaks.append(f"match#{i} {key}: builder={got} vs strictly-prior={expected}")
+    cursor = 0
+    while cursor < len(ms) and len(leaks) < 5:
+        date = ms[cursor].get("date_unix", 0)
+        end = cursor + 1
+        while end < len(ms) and ms[end].get("date_unix", 0) == date:
+            end += 1
+        batch = ms[cursor:end]
+
+        for offset, m in enumerate(batch):
+            index = cursor + offset
+            hid, aid = m.get("home_id"), m.get("away_id")
+            for field in fields:
+                for side, tid in (("home", hid), ("away", aid)):
+                    key = f"{field}_{side}"
+                    if key not in features[index]:
+                        continue
+                    prior = hist[tid][field][-window:]
+                    expected = (
+                        float(np.mean(prior)) if len(prior) >= min_prior
+                        else (running_sum[field] / running_n[field] if running_n[field] else 0.0)
+                    )
+                    got = features[index].get(key)
+                    support_key = f"prior_n_{field}_{side}"
+                    got_support = features[index].get(support_key)
+                    if got is None or abs(float(got) - expected) > tolerance:
+                        leaks.append(
+                            f"match#{index} {key}: builder={got} vs strictly-prior={expected}"
+                        )
+                    elif got_support is not None and int(got_support) != len(prior):
+                        leaks.append(
+                            f"match#{index} {support_key}: builder={got_support} "
+                            f"vs strictly-prior={len(prior)}"
+                        )
                     if len(leaks) >= 5:
                         break
+                if len(leaks) >= 5:
+                    break
             if len(leaks) >= 5:
                 break
-        if len(leaks) >= 5:
-            break
-        for field in fields:
-            hv = _rich_own_value(m, hid, field)
-            av = _rich_own_value(m, aid, field)
-            if hv is not None:
-                hist[hid][field].append(hv); running_sum[field] += hv; running_n[field] += 1
-            if av is not None:
-                hist[aid][field].append(av); running_sum[field] += av; running_n[field] += 1
+
+        for m in batch:
+            hid, aid = m.get("home_id"), m.get("away_id")
+            for field in fields:
+                hv = _rich_own_value(m, hid, field)
+                av = _rich_own_value(m, aid, field)
+                if hv is not None:
+                    hist[hid][field].append(hv)
+                    running_sum[field] += hv
+                    running_n[field] += 1
+                if av is not None:
+                    hist[aid][field].append(av)
+                    running_sum[field] += av
+                    running_n[field] += 1
+        cursor = end
+
     if leaks:
         raise AssertionError(
             "SAME-MATCH LEAKAGE DETECTED (rich) — features do not match strictly-prior "
             "recomputation:\n  " + "\n  ".join(leaks))
+
+
+
+# ═════════════════════════════════════════════════════════════════════════════
+# MARKET ODDS JOIN (for the market-relative / residual-vs-market path)
+# ═════════════════════════════════════════════════════════════════════════════
+#
+# The market-relative model needs each leak-free feature row to also carry the
+# fixture's PRE-MATCH two-way O/U odds so it can de-vig them into a market prior.
+# Bookmaker odds are known before kickoff, so attaching them is NOT same-match
+# outcome leakage (unlike the realized stats the earlier bug fed in). We read ONLY
+# the pre-match odds fields the FootyStats corpus dict already exposes, and we never
+# read the realized count. Cards odds are absent from the FootyStats corpus, so cards
+# is out of scope for the FootyStats market-relative path (documented, not faked).
+
+#: market key -> (over_odds_field, under_odds_field, line) in the FootyStats corpus dict.
+_MARKET_ODDS_KEYS: dict[str, tuple[str, str, float]] = {
+    "total_goals": ("odds_ft_over25", "odds_ft_under25", 2.5),
+    "total_corners": ("odds_corners_over_95", "odds_corners_under_95", 9.5),
+}
+
+
+def market_line_for(market: str) -> Optional[float]:
+    """Return the canonical line available in the corpus for ``market``."""
+    keys = _MARKET_ODDS_KEYS.get(market)
+    return None if keys is None else keys[2]
+
+
+def market_odds_for(match: dict, market: str) -> tuple[Optional[float], Optional[float]]:
+    """Return (over_odds, under_odds) for ``market`` from a FootyStats corpus dict.
+
+    Values <= 1.0 (including the corpus 0/-1 sentinels) are treated as 'no market'
+    and returned as None so the caller abstains rather than de-vigging garbage.
+    ``market`` is the model target field ('total_goals' or 'total_corners').
+    """
+    keys = _MARKET_ODDS_KEYS.get(market)
+    if keys is None:
+        return None, None
+    over_key, under_key, _ = keys
+    over = _num(match.get(over_key))
+    under = _num(match.get(under_key))
+    if over is not None and (not np.isfinite(over) or over <= 1.0):
+        over = None
+    if under is not None and (not np.isfinite(under) or under <= 1.0):
+        under = None
+    return over, under
+
+
+def attach_market_odds(
+    matches: Sequence[dict],
+    features: Sequence[dict],
+    *,
+    market: str,
+) -> None:
+    """Attach pre-match two-way odds and their canonical market metadata in place.
+
+    ``features`` must be the output of :func:`build_prior_only_features` for the same
+    ``matches`` (same order after the builder's internal date sort). Existing cached
+    market lambdas are invalidated so reattaching changed odds cannot reuse stale data.
+    """
+    line = market_line_for(market)
+    if line is None:
+        raise ValueError(f"unsupported market for corpus odds: {market}")
+
+    sorted_matches = sorted(matches, key=lambda match: match.get("date_unix", 0))
+    if len(sorted_matches) != len(features):
+        raise AssertionError("matches and features length mismatch")
+    for match, feature in zip(sorted_matches, features):
+        over, under = market_odds_for(match, market)
+        for key in tuple(feature):
+            if key.startswith("_mkt_lambda_"):
+                feature.pop(key)
+        feature["market_target"] = market
+        feature["market_line"] = line
+        feature["market_over_odds"] = over
+        feature["market_under_odds"] = under

@@ -22,9 +22,73 @@ import time
 from pathlib import Path
 from typing import Any, Optional
 
+import re
+
 import httpx
 
 logger = logging.getLogger(__name__)
+
+# --------------------------------------------------------------------------- #
+# API-key redaction for logs
+# --------------------------------------------------------------------------- #
+# The FootyStats API authenticates via a ``key=<API_KEY>`` query parameter, so
+# any log record that includes a request URL (notably httpx/httpcore INFO logs)
+# would otherwise echo the real key. This filter scrubs the value of any
+# ``key=...`` query param from every log record's message and args, wherever it
+# is attached. It is installed on the httpx/httpcore loggers and this module's
+# logger at import time so the key can never reach a handler in cleartext.
+_KEY_QUERY_RE = re.compile(r"(key=)[^&\s\"']+")
+_REDACTED = r"\1<redacted>"
+
+
+class _RedactApiKeyFilter(logging.Filter):
+    """Logging filter that redacts ``key=<value>`` query params from records."""
+
+    def filter(self, record: logging.LogRecord) -> bool:  # noqa: A003
+        try:
+            if isinstance(record.msg, str) and "key=" in record.msg:
+                record.msg = _KEY_QUERY_RE.sub(_REDACTED, record.msg)
+            if record.args:
+                if isinstance(record.args, dict):
+                    record.args = {
+                        k: (_KEY_QUERY_RE.sub(_REDACTED, v) if isinstance(v, str) else v)
+                        for k, v in record.args.items()
+                    }
+                else:
+                    record.args = tuple(
+                        _KEY_QUERY_RE.sub(_REDACTED, a) if isinstance(a, str) else a
+                        for a in record.args
+                    )
+        except Exception:  # pragma: no cover - never let logging break a request
+            return True
+        return True
+
+
+_REDACT_FILTER = _RedactApiKeyFilter()
+
+# Install on the loggers most likely to render a full request URL. A Filter on a
+# logger only runs for records logged *at or below* that logger, so we attach it
+# both to the named httpx/httpcore loggers (where the request line originates)
+# and to any handlers on the root logger (which sees records that propagate up),
+# giving defense-in-depth regardless of the host application's logging config.
+for _name in (__name__, "httpx", "httpcore", "httpcore.http11", "httpcore.connection"):
+    logging.getLogger(_name).addFilter(_REDACT_FILTER)
+
+
+def _install_root_handler_redaction() -> None:
+    """Attach the redaction filter to existing root handlers (idempotent).
+
+    Handlers run their own filters on every record they emit, including records
+    that propagate up from child loggers, so this catches the case where httpx
+    logs on a differently-named logger than the ones enumerated above.
+    """
+    for _handler in logging.getLogger().handlers:
+        if _REDACT_FILTER not in _handler.filters:
+            _handler.addFilter(_REDACT_FILTER)
+
+
+_install_root_handler_redaction()
+
 
 _BASE_URL = "https://api.football-data-api.com"
 _DEFAULT_RATE_LIMIT = 2.0  # seconds between requests (conservative)
@@ -77,6 +141,10 @@ class FootyStatsResearchClient:
         self._last_request_time: float = 0.0
         self._request_count: int = 0
         self._cache_dir = cache_dir
+
+        # Re-scan root handlers so redaction covers handlers added after import
+        # (callers commonly configure logging before constructing a client).
+        _install_root_handler_redaction()
 
         if self._cache_dir:
             self._cache_dir.mkdir(parents=True, exist_ok=True)
