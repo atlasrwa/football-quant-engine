@@ -6,6 +6,9 @@ Subcommands:
   backtest      — Run walk-forward backtest on computed features.
   run           — Execute the full pipeline (ingest → features → backtest).
   daily-signals — Fetch upcoming fixtures for today and generate live signals.
+  corpus-ingest — On-demand fetch of a whole season into the discovery corpus.
+  corpus-ingest-rich — On-demand fetch of a Rich (TheStatsAPI) league-season
+                  into the rich corpus (any competition the API covers).
 """
 
 from __future__ import annotations
@@ -263,20 +266,26 @@ def cmd_daily_signals(args: argparse.Namespace) -> None:
         print("Could not compute features for upcoming matches.")
         return
 
-    # Generate signals
+    # Generate signals. Preserve fixture names and the market line so downstream
+    # delivery can present an actionable bettor-facing message without a second lookup.
     signal_gen = SignalGenerator(config=config)
+    upcoming_by_id = {match.id: match for match in upcoming}
     signals = []
 
     for feat in upcoming_features:
         result = signal_gen.generate(feat)
         if result is not None:
             prediction, condition_strength = result
+            match = upcoming_by_id[feat.match_id]
             signal_record = {
                 "match_id": feat.match_id,
+                "home_team": match.home_team,
+                "away_team": match.away_team,
                 "date_unix": feat.date_unix,
                 "generated_at": datetime.now(timezone.utc).isoformat(),
                 "league_id": args.league_id,
                 "season": args.season,
+                "market_line": feat.over_under_line,
                 "prediction": prediction,
                 "condition_strength": round(condition_strength, 4),
                 "home_xg_eff": round(feat.home_xg_eff_delta_rolling, 4),
@@ -309,6 +318,87 @@ def cmd_daily_signals(args: argparse.Namespace) -> None:
     for s in signals:
         print(f"    Match {s['match_id']}: {s['prediction']} (strength={s['condition_strength']:.3f})")
     print(f"\n  Appended to: {output_path}")
+
+
+def cmd_corpus_ingest(args: argparse.Namespace) -> None:
+    """On-demand ingest of a whole season into the discovery corpus (Option A).
+
+    Fetches the full season via the same research client and cache-key format
+    the corpus uses, so it's immediately reusable by the discovery loaders.
+    Cache-first unless --force-refetch is passed.
+    """
+    _setup_logging(args.verbose)
+
+    from src.discovery.corpus import ingest_on_demand_season
+
+    print(f"On-demand corpus ingest: season_id={args.season_id} "
+          f"(force_refetch={args.force_refetch})...")
+
+    summary = ingest_on_demand_season(
+        args.season_id,
+        force_refetch=args.force_refetch,
+        update_manifest=not args.no_manifest,
+    )
+
+    source = "cache" if summary["from_cache"] else "API"
+    league = summary["league"] or "(unregistered — not in CORPUS_SEASONS)"
+    print(f"  Source:        {source} ({summary['api_requests']} API requests)")
+    print(f"  League:        {league}")
+    print(f"  Matches:       {summary['total_matches']} total, "
+          f"{summary['completed_matches']} completed")
+    if not summary["registered"]:
+        print("  Note: this season_id is not in CORPUS_SEASONS, so the standard "
+              "discovery/held-out loaders will not include it until it is "
+              "registered there. The data is cached and reusable directly.")
+
+
+def cmd_corpus_ingest_rich(args: argparse.Namespace) -> None:
+    """On-demand ingest of a whole Rich (TheStatsAPI) league-season.
+
+    Fetches fixtures + per-match stats via the cache-first, quota-capped
+    TheStatsAPI client, adapts them into the corpus cache in the exact key
+    format RichCorpusLoader reads, and registers the league so the loader picks
+    it up. Any competition the API covers is supported. Cache-first unless
+    --force-refetch is passed; a live fetch requires THESTATS_API_KEY in the env.
+    """
+    _setup_logging(args.verbose)
+
+    from src.discovery.corpus import ingest_on_demand_rich_season
+
+    print(f"On-demand RICH corpus ingest: comp_id={args.comp_id} "
+          f"season_id={args.season_id} tag={args.tag} "
+          f"(force_refetch={args.force_refetch})...")
+
+    summary = ingest_on_demand_rich_season(
+        args.comp_id,
+        args.season_id,
+        args.tag,
+        display=args.display,
+        force_refetch=args.force_refetch,
+        stats_limit=args.stats_limit,
+        update_manifest=not args.no_manifest,
+    )
+
+    source = "cache (0 live requests)" if summary["from_cache"] else "API"
+    print(f"  Source:        {source} ({summary['api_requests']} live API requests)")
+    print(f"  League:        {summary['display']} (tag={summary['tag']}, "
+          f"comp={summary['comp_id']})")
+    print(f"  Fixtures:      {summary['total_fixtures']}")
+    print(f"  Adapted:       {summary['adapted_matches']} matches "
+          f"(stats live={summary['stats_live_fetched']}, "
+          f"cached={summary['stats_from_cache']})")
+    print(f"  Fixture file:  {summary['fixture_file']}")
+    bf = summary.get("buildable_fields", {})
+    if bf.get("n"):
+        core = bf.get("core", {})
+        # Show a couple of headline coverage fractions so gaps are visible.
+        sot = core.get("team_a_shotsOnTarget")
+        xg = core.get("team_a_xg")
+        print(f"  Coverage:      n={bf['n']}  "
+              f"shots_on_target={sot}  xg={xg}  "
+              f"(full per-field map in _on_demand_manifest.json)")
+    print("  Registered in the on-demand league registry — RichCorpusLoader "
+          "will now include this season.")
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -375,6 +465,71 @@ def build_parser() -> argparse.ArgumentParser:
         help="Output directory for live_signals.jsonl (default: data/results/).",
     )
 
+    # corpus-ingest (on-demand whole-season fetch into the discovery corpus)
+    p_corpus = subparsers.add_parser(
+        "corpus-ingest",
+        help="On-demand fetch of a whole season into the discovery corpus (Option A).",
+    )
+    p_corpus.add_argument(
+        "-v", "--verbose", action="count", default=0,
+        help="Increase verbosity (-v for INFO, -vv for DEBUG).",
+    )
+    p_corpus.add_argument(
+        "--season-id", type=int, required=True, dest="season_id",
+        help="FootyStats season/competition ID to fetch and cache.",
+    )
+    p_corpus.add_argument(
+        "--force-refetch", action="store_true", dest="force_refetch",
+        help="Bypass cache and re-fetch (e.g. to pick up newly completed matches).",
+    )
+    p_corpus.add_argument(
+        "--no-manifest", action="store_true", dest="no_manifest",
+        help="Do not record this ingest in the corpus manifest audit trail.",
+    )
+
+    # corpus-ingest-rich (on-demand whole-season fetch into the RICH corpus)
+    p_corpus_rich = subparsers.add_parser(
+        "corpus-ingest-rich",
+        help="On-demand fetch of a whole Rich (TheStatsAPI) league-season into "
+             "the rich corpus (fixtures + per-match stats, adapted and saved so "
+             "RichCorpusLoader picks it up). Supports any competition the API covers.",
+    )
+    p_corpus_rich.add_argument(
+        "-v", "--verbose", action="count", default=0,
+        help="Increase verbosity (-v for INFO, -vv for DEBUG).",
+    )
+    p_corpus_rich.add_argument(
+        "--comp-id", type=str, required=True, dest="comp_id",
+        help="TheStatsAPI competition id (e.g. comp_9777).",
+    )
+    p_corpus_rich.add_argument(
+        "--season-id", type=str, required=True, dest="season_id",
+        help="TheStatsAPI season id (e.g. sn_3057202).",
+    )
+    p_corpus_rich.add_argument(
+        "--tag", type=str, required=True, dest="tag",
+        help="Short league tag namespacing the cache files (e.g. ligue2). "
+             "Reuse an existing tag to top up a known league, or pick a new one "
+             "for a brand-new competition.",
+    )
+    p_corpus_rich.add_argument(
+        "--display", type=str, default=None, dest="display",
+        help="Human-readable league label (defaults to the tag).",
+    )
+    p_corpus_rich.add_argument(
+        "--stats-limit", type=int, default=None, dest="stats_limit",
+        help="Optional cap on how many matches' /stats to fetch (bounded probe).",
+    )
+    p_corpus_rich.add_argument(
+        "--force-refetch", action="store_true", dest="force_refetch",
+        help="Clear this season's cached files and re-fetch (e.g. to pick up "
+             "newly-finished matches).",
+    )
+    p_corpus_rich.add_argument(
+        "--no-manifest", action="store_true", dest="no_manifest",
+        help="Do not record this ingest in the rich on-demand manifest.",
+    )
+
     return parser
 
 
@@ -405,6 +560,10 @@ def main(argv: Optional[List[str]] = None) -> int:
             cmd_run(args)
         elif args.command == "daily-signals":
             cmd_daily_signals(args)
+        elif args.command == "corpus-ingest":
+            cmd_corpus_ingest(args)
+        elif args.command == "corpus-ingest-rich":
+            cmd_corpus_ingest_rich(args)
         else:
             parser.print_help()
             return 1

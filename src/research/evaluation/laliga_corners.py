@@ -1,4 +1,21 @@
-"""Predeclared La Liga corners confirmation protocol.
+""".. INVALIDATED INPUTS (do not rely on this protocol's corners results yet) ..
+
+    STATUS: RESTS ON INVALIDATED INPUTS. This protocol was built on top of the
+    corners robustness artifact (run_robustness_check.py / robustness_results.json),
+    which a forensic audit found to be contaminated by a same-match statistics leak
+    (the predicted match's own realized shots/attacks/possession were fed into the
+    corners/cards features) AND mislabeled by season (EPL benchmark ran season 4759 =
+    2020/21 while labeling it 2023/24). See scripts/rebuild_prior_only_9660.py and
+    data/results/prior_only_9660_scores.json.
+
+    On the rebuilt LEAK-FREE EPL 2023/24 re-run, the corners edge collapsed from
+    +6.8% vs naive to -0.04% (i.e. gone). Corners therefore has NO demonstrated
+    leak-free edge at this time, and this La Liga corners protocol must NOT be
+    extended, refined, or treated as validated until a clean corners number is
+    established on prior-only features for La Liga specifically. This notice is a
+    marker only; the protocol logic below is intentionally left unchanged.
+
+Predeclared La Liga corners confirmation protocol.
 
 This protocol is intentionally narrower than the broad league x market report.
 It defines one correlated family: a hierarchical count model for Spain La Liga

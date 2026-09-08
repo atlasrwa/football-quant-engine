@@ -15,12 +15,15 @@ carrying:
 
 Crucially, each market is labelled by its validated status:
 
-* corners, cards -> validated skill (except cards in the Championship);
+* corners, cards -> under re-validation; cards has a limited leak-free EPL 2023/24
+  finding against climatology, but its market-relative performance is unknown;
 * goals, BTTS    -> at par with naive, shown but explicitly marked
   "no demonstrated skill over base rate".
 
 The calibrated-probability claim and the directional-call claim are INDEPENDENT.
-Corners/cards probabilities are validated; directional calls for those same
+Corners and cards are under re-validation; the only cards finding is leak-free,
+beats climatology on EPL 2023/24, and has unknown market-relative performance
+because cards closing prices are unavailable. Directional calls for those same
 markets are NOT (they do not beat the home-advantage baseline) and are therefore
 suppressed. The directional gate is data-driven, resolved via
 :func:`src.research.prediction_engine.scope.directional_status`.
@@ -139,17 +142,31 @@ class MarketReadout:
                 "    driving features: " + ", ".join(self.driving_features[:6])
             )
         if self.scope.status is MarketStatus.PROVISIONAL:
-            lines.append(
-                "    NOTE: UNDER RE-VALIDATION — the prior 'validated skill' figure for "
-                "this market was withdrawn after an internal audit found same-match "
-                "feature leakage. Shown for completeness, not as demonstrated skill, "
-                "pending a leak-free rebuild."
-            )
+            if self.market == "cards":
+                lines.append(
+                    "    NOTE: leak-free, beats climatology on EPL 2023/24; market-relative "
+                    "performance unknown because cards closing-line prices are unavailable. "
+                    "Shown for completeness, not as a general skill claim."
+                )
+            else:
+                lines.append(
+                    "    NOTE: UNDER RE-VALIDATION — the prior 'validated skill' figure for "
+                    "this market was withdrawn after an internal audit found same-match "
+                    "feature leakage. Shown for completeness, not as demonstrated skill, "
+                    "pending a leak-free rebuild."
+                )
         if self.scope.status is MarketStatus.NO_DEMONSTRATED_SKILL:
-            lines.append(
-                "    NOTE: no demonstrated skill over base rate in this league — "
-                "shown for completeness, not as a prediction worth acting on."
-            )
+            if self.market == "cards":
+                lines.append(
+                    "    NOTE: leak-free, beats climatology on EPL 2023/24, market-relative "
+                    "performance unknown. This single sample does not demonstrate general "
+                    "within-league or market-relative skill."
+                )
+            else:
+                lines.append(
+                    "    NOTE: no demonstrated skill over base rate in this league — "
+                    "shown for completeness, not as a prediction worth acting on."
+                )
         return lines
 
 

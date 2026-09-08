@@ -19,7 +19,12 @@ from hypothesis import given, settings
 from src.research.asymmetric.live_fetch import CappedLiveFetcher
 from tests.asymmetric.strategies import fetch_cost_sequences
 
-_EPS = 1e-9
+# Must match the admission tolerance used by CappedLiveFetcher.would_admit
+# (spent + cost <= cap + 1e-12). A fetch is refused exactly when it does not
+# fit within that tolerance, so the refusal-justification assertion below must
+# use the same epsilon; a looser value (e.g. 1e-9) spuriously fails for costs
+# in the (cap + 1e-12, cap + 1e-9] window that are legitimately refused.
+_EPS = 1e-12
 
 
 @settings(max_examples=200, deadline=None)

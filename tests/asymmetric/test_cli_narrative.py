@@ -56,6 +56,7 @@ def test_coverage_branch_zero_matches() -> None:
                 home_goals=None, away_goals=None,
             ),
             "Championship",
+            "rich",
         )
     ]
     out = _MOD.analyze("Ghost", "Phantom", "2026-09-05", corpus=corpus)
@@ -63,11 +64,11 @@ def test_coverage_branch_zero_matches() -> None:
     assert "PER-SIDE PREDICTIONS" not in out
 
 
-def _corpus_with_exact_history(n_before: int) -> list[tuple[ResearchMatch, str]]:
+def _corpus_with_exact_history(n_before: int) -> list[tuple[ResearchMatch, str, str]]:
     """Build a corpus where 'Home' has exactly ``n_before`` completed matches
     strictly before the fixture, plus the scheduled fixture."""
     fut = fixture_unix()
-    corpus: list[tuple[ResearchMatch, str]] = []
+    corpus: list[tuple[ResearchMatch, str, str]] = []
     d = fut - 86_400 * (n_before + 5)
     for i in range(n_before):
         d += 86_400
@@ -85,6 +86,7 @@ def _corpus_with_exact_history(n_before: int) -> list[tuple[ResearchMatch, str]]
                     dangerous_attacks_home=40, dangerous_attacks_away=30,
                 ),
                 "Championship",
+                "rich",
             )
         )
     # Away needs history too so its profile is non-empty; reuse Home's opponents.
@@ -105,6 +107,7 @@ def _corpus_with_exact_history(n_before: int) -> list[tuple[ResearchMatch, str]]
                     dangerous_attacks_home=30, dangerous_attacks_away=40,
                 ),
                 "Championship",
+                "rich",
             )
         )
     corpus.append(
@@ -115,6 +118,7 @@ def _corpus_with_exact_history(n_before: int) -> list[tuple[ResearchMatch, str]]
                 home_goals=None, away_goals=None,
             ),
             "Championship",
+            "rich",
         )
     )
     return corpus
