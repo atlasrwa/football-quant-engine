@@ -116,6 +116,24 @@ class TestGenuineClosing:
         assert chosen.is_genuine
         assert chosen.closing_timestamp < kickoff  # the before-capture, not after
 
+    def test_unknown_kickoff_fails_closed_no_fabricated_close(self):
+        # Regression: without set_kickoff, a (possibly post-kickoff) capture
+        # must NOT be emitted as a genuine close. Fail closed.
+        prov = TheStatsAPIClosingOddsProvider()
+        prov.ingest_capture(
+            "research_odds_mt_77_bet365_20260906T235959000000Z-9.json",
+            _cma_payload("mt_77"),
+        )
+        # deliberately DO NOT call set_kickoff
+        assert prov.get_closing_odds(canonical_fixture_id("mt_77")) == []
+
+    def test_unparseable_capture_timestamp_excluded(self):
+        prov = TheStatsAPIClosingOddsProvider()
+        prov.ingest_capture("research_odds_mt_88_bet365_NO_TIMESTAMP.json",
+                            _cma_payload("mt_88"))
+        prov.set_kickoff("mt_88", parse_capture_timestamp("x_20260906T120000000000Z-0.json"))
+        assert prov.get_closing_odds(canonical_fixture_id("mt_88")) == []
+
     def test_no_prekickoff_capture_returns_empty(self):
         prov = TheStatsAPIClosingOddsProvider()
         after_fn = "research_odds_mt_1_bet365_20260906T121000000000Z-2.json"

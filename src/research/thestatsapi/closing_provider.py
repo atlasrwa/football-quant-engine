@@ -144,10 +144,19 @@ class TheStatsAPIClosingOddsProvider(ClosingOddsProvider):
         if not captures:
             return []
 
+        # FAIL CLOSED: without a known kickoff we cannot prove a capture was
+        # before the market close, so we must NOT label anything genuine. An
+        # unknown kickoff yields no closing odds rather than fabricating one
+        # from a possibly post-kickoff / in-play capture.
+        if kickoff is None:
+            return []
+
         # Select the last capture strictly before kickoff (genuine close).
+        # capture_ts is None (unparseable filename) is excluded: we never emit
+        # a "genuine" close for a capture whose observation time is unknown.
         pre_kickoff = [
             c for c in captures
-            if c.capture_ts is not None and (kickoff is None or c.capture_ts < kickoff)
+            if c.capture_ts is not None and c.capture_ts < kickoff
         ]
         if not pre_kickoff:
             # No genuine pre-kickoff capture with a real timestamp.
@@ -158,7 +167,7 @@ class TheStatsAPIClosingOddsProvider(ClosingOddsProvider):
         semantics = TimestampSemantics.LAST_BEFORE_KICKOFF
 
         obs = self._observations_from_capture(
-            chosen, match_ref, kickoff or 0.0, status, semantics,
+            chosen, match_ref, kickoff, status, semantics,
         )
         if market:
             obs = [o for o in obs if o.market == market]

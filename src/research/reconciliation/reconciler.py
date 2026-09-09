@@ -19,7 +19,7 @@ from dataclasses import dataclass, field
 from enum import Enum
 from typing import Any, Optional
 
-from src.research.observation.model import Missing, ProviderObservation
+from src.research.observation.model import MISSING, Missing, ProviderObservation
 from src.research.reconciliation.policy import ReconciliationPolicy
 
 FOOTYSTATS = "footystats"
@@ -153,7 +153,7 @@ class Reconciler:
         if obs is None or not obs.has_value:
             return ReconciledField(
                 concept=concept, policy=self._policy, outcome=SelectionOutcome.NO_VALUE,
-                value=_MISSING, source="", inputs=inputs, disagreement=disagreement,
+                value=MISSING, source="", inputs=inputs, disagreement=disagreement,
             )
         return ReconciledField(
             concept=concept, policy=self._policy, outcome=SelectionOutcome.SELECTED,
@@ -183,7 +183,7 @@ class Reconciler:
             )
         return ReconciledField(
             concept=concept, policy=self._policy, outcome=SelectionOutcome.NO_VALUE,
-            value=_MISSING, source="", inputs=inputs, disagreement=disagreement,
+            value=MISSING, source="", inputs=inputs, disagreement=disagreement,
         )
 
     def _validated_blend(self, concept, inputs, disagreement) -> ReconciledField:
@@ -211,7 +211,7 @@ class Reconciler:
         if fs_val is None or tsa_val is None:
             return ReconciledField(
                 concept=concept, policy=self._policy, outcome=SelectionOutcome.NO_VALUE,
-                value=_MISSING, source="", inputs=inputs, disagreement=disagreement,
+                value=MISSING, source="", inputs=inputs, disagreement=disagreement,
             )
 
         # Both numeric: blend ONLY if within validated tolerance.
@@ -233,9 +233,7 @@ class Reconciler:
         return ReconciledField(
             concept=concept, policy=self._policy,
             outcome=SelectionOutcome.DISAGREEMENT_UNRESOLVED,
-            value=_MISSING, source="", inputs=inputs, disagreement=diff,
+            value=MISSING, source="", inputs=inputs, disagreement=diff,
         )
 
 
-# Local import alias to avoid a hard import cycle at module top.
-from src.research.observation.model import MISSING as _MISSING  # noqa: E402

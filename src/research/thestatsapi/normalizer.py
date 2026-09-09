@@ -342,16 +342,25 @@ class TheStatsAPINormalizer:
         red_home: Optional[int],
         red_away: Optional[int],
     ) -> Optional[int]:
-        """Sum available card components; None if ALL components are missing.
+        """Compute total cards, or None if the total cannot be trusted.
 
-        NULL != ZERO: if every component is None the total is None (unknown),
-        not 0. If at least one component is present, missing components are not
-        invented — only present components are summed.
+        NULL != ZERO, and a total must not be fabricated from partial data.
+        We require BOTH sides' yellow cards to be present (mirroring
+        ``total_corners``): a total built from only one team's cards would be a
+        misleading aggregate, not a genuine match total. Red cards contribute
+        only when present -- their absence (TheStatsAPI often reports red_cards
+        as null) does not void the total and is never invented as a value.
+
+        Returns None when either yellow side is missing.
         """
-        parts = [x for x in (yellow_home, yellow_away, red_home, red_away) if x is not None]
-        if not parts:
+        if yellow_home is None or yellow_away is None:
             return None
-        return sum(parts)
+        total = yellow_home + yellow_away
+        if red_home is not None:
+            total += red_home
+        if red_away is not None:
+            total += red_away
+        return total
 
     def _track_field_availability(self, match: ResearchMatch) -> None:
         for key, val in match.to_dict().items():

@@ -103,6 +103,22 @@ class TestNormalize:
         m = n.normalize(_fixture(), _stats())  # no cards at all
         assert m.total_cards is None  # unknown, not 0
 
+    def test_total_cards_requires_both_yellow_sides(self):
+        # Regression: a total must not be fabricated from one side only.
+        n = TheStatsAPINormalizer()
+        m = n.normalize(_fixture(), _stats(yellow_cards={"all": {"home": 2}}))
+        assert m.yellow_cards_home == 2 and m.yellow_cards_away is None
+        assert m.total_cards is None  # not 2
+
+    def test_total_cards_both_yellows_present_reds_null(self):
+        n = TheStatsAPINormalizer()
+        m = n.normalize(_fixture(), _stats(
+            yellow_cards={"all": {"home": 2, "away": 1}},
+            red_cards={"all": None},
+        ))
+        # both yellows present; reds null contribute nothing (not invented)
+        assert m.total_cards == 3
+
     def test_non_finished_skipped(self):
         n = TheStatsAPINormalizer()
         assert n.normalize(_fixture(status="scheduled")) is None
