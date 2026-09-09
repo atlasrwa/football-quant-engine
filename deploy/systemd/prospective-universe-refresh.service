@@ -1,0 +1,11 @@
+[Unit]
+Description=Prospective fixture-universe refresh: discover upcoming covered-league fixtures and merge them into the shared discovered fixture universe (_pilotC_fixture_list.json) so inflow never goes silent. Fixture discovery only; reuses scripts/pilotC_fixture_discovery.py unchanged.
+Documentation=file:///home/ubuntu/scripts/prospective_universe_refresh_run.sh
+
+[Service]
+Type=oneshot
+WorkingDirectory=/home/ubuntu
+TimeoutStartSec=360
+ExecStart=/usr/bin/env bash /home/ubuntu/scripts/prospective_universe_refresh_run.sh
+StandardOutput=journal
+StandardError=journal
