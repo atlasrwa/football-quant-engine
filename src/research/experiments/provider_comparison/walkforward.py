@@ -42,6 +42,21 @@ _OVERLAP_FEATURES = (
     "fouls_home", "fouls_away",
 )
 
+# FootyStats-only extra features (no TheStatsAPI equivalent). Included ONLY in
+# the additional-feature ablation, never in the provider-quality head-to-head.
+_FS_ONLY_FEATURES = (
+    "dangerous_attacks_home", "dangerous_attacks_away",
+    "attacks_home", "attacks_away",
+)
+
+
+def _feature_fields(include_fs_only_features: bool) -> tuple[str, ...]:
+    """Model feature set. Overlap-only for provider-quality; +FS-only for the
+    additional-feature ablation so the ablation actually changes the model."""
+    if include_fs_only_features:
+        return _OVERLAP_FEATURES + _FS_ONLY_FEATURES
+    return _OVERLAP_FEATURES
+
 # Markets evaluated as count processes (champion-supported). Lines chosen at the
 # common O/U ladder points for each market.
 MARKET_SPECS = {
@@ -133,7 +148,7 @@ def run_walk_forward(
         name=market,
         target_field=spec_cfg["target_field"],
         lines=tuple(spec_cfg["lines"]),
-        feature_fields=_OVERLAP_FEATURES,
+        feature_fields=_feature_fields(include_fs_only_features),
     )
 
     result = WalkForwardResult(policy=policy, arm=arm,
