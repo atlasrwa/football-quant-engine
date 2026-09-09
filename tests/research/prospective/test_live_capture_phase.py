@@ -118,6 +118,34 @@ def test_documented_key_preferred_over_alias(monkeypatch):
     assert resolve_api_key() == "primary"
 
 
+def test_discover_upcoming_scoped_to_window_and_universe(tmp_path, monkeypatch):
+    """Discovery bounds by date_from/date_to + universe comp ids and horizon."""
+    monkeypatch.setenv("THESTATSAPI_API_KEY", "k")
+    ko_near = "2020-01-02T00:00:00Z"     # within a 48h window from 'now' below
+    ko_far = "2020-02-01T00:00:00Z"      # outside the horizon
+    seen_params = []
+
+    def transport(url, headers, params):
+        seen_params.append(params)
+        # Return one near and one far fixture regardless of query.
+        return 200, {"data": [
+            {"id": "mt_near", "utc_date": ko_near},
+            {"id": "mt_far", "utc_date": ko_far},
+        ]}
+
+    client = ProspectiveApiClient(transport=transport)
+    store = CaptureStore(path=tmp_path / "cap.jsonl")
+    now = _parse_utc("2020-01-01T00:00:00Z")
+    coll = ProspectiveCollector(client, store, clock=lambda: now)
+    fx = coll.discover_upcoming(hours=48)
+    ids = {f.fixture_id for f in fx}
+    # Only the near fixture is within the 48h horizon; far one is dropped.
+    assert ids == {"mt_near"}
+    # The query was scoped to the universe (EPL comp id) with date filters.
+    assert any(p.get("competition_id") == "comp_3039" for p in seen_params)
+    assert all("date_from" in p and "date_to" in p for p in seen_params)
+
+
 def test_rate_limit_headers_parsed():
     st = parse_rate_limit({
         "X-RateLimit-Limit": "60", "X-RateLimit-Remaining": "5", "X-RateLimit-Reset": "1700",

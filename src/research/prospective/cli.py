@@ -214,23 +214,55 @@ class ProspectiveCollector:
                 result.errors += 1
         return result
 
-    def discover_upcoming(self, *, hours: int = 30):
-        """Discover scheduled fixtures, returning UpcomingFixture list."""
-        from src.research.prospective.scheduler import UpcomingFixture
+    def discover_upcoming(self, *, hours: int = 30, competition_ids: Optional[Sequence[str]] = None):
+        """Discover scheduled fixtures within ``hours``, scoped to the universe.
 
-        payload = self.client.get(Endpoint.MATCHES, params={"status": "scheduled"})
-        matches = payload.get("data", []) if isinstance(payload, dict) else []
-        out = []
-        for m in matches:
-            mid = m.get("id")
-            ko = m.get("utc_date")
-            if not mid or ko is None:
-                continue
-            ts = _parse_utc(ko)
-            if ts is None:
-                continue
-            out.append(UpcomingFixture(fixture_id=str(mid), kickoff_ts=ts,
-                                       league=m.get("competition_id")))
+        Uses the live ``date_from``/``date_to`` filters (UTC) to bound the
+        window and iterates the initial operational universe's competition ids
+        so we find NEAR-TERM fixtures in supported leagues rather than the API's
+        unscoped first page. Falls back to an unscoped ``status=scheduled``
+        query only when no competition ids are available.
+        """
+        import datetime as _dt
+
+        from src.research.prospective.scheduler import UpcomingFixture
+        from src.research.prospective.universe import universe_competition_ids
+
+        now = self.clock()
+        horizon = now + hours * 3600
+        date_from = _dt.datetime.fromtimestamp(now, _dt.timezone.utc).date().isoformat()
+        date_to = _dt.datetime.fromtimestamp(horizon, _dt.timezone.utc).date().isoformat()
+
+        comps = list(competition_ids) if competition_ids is not None else list(universe_competition_ids())
+        queries: list[dict] = []
+        if comps:
+            for cid in comps:
+                queries.append({"status": "scheduled", "competition_id": cid,
+                                "date_from": date_from, "date_to": date_to, "per_page": 100})
+        else:
+            queries.append({"status": "scheduled", "date_from": date_from,
+                            "date_to": date_to, "per_page": 100})
+
+        out: list = []
+        seen: set = set()
+        for params in queries:
+            payload = self.client.get(Endpoint.MATCHES, params=params)
+            matches = payload.get("data", []) if isinstance(payload, dict) else []
+            for m in matches:
+                mid = m.get("id")
+                ko = m.get("utc_date")
+                if not mid or ko is None or mid in seen:
+                    continue
+                ts = _parse_utc(ko)
+                if ts is None:
+                    continue
+                # Bound to the requested horizon (defensive; API date filter is
+                # day-granular so a fixture on date_to could exceed `hours`).
+                if not (now <= ts <= horizon):
+                    continue
+                seen.add(mid)
+                out.append(UpcomingFixture(fixture_id=str(mid), kickoff_ts=ts,
+                                           league=m.get("competition_id")))
         return out
 
     def capture_due(self, *, hours: int = 30, max_requests: int = 200) -> CollectorResult:
