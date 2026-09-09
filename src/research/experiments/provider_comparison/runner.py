@@ -134,6 +134,16 @@ def _classify(market: str, arm: str, arm_metrics: dict, baseline_metrics: dict,
         return Verdict(market, comparison, "KEEP_BASELINE",
                        "This arm IS the baseline.", ev)
 
+    # Degenerate: arm produced byte-identical predictions to the baseline (e.g.
+    # PREFERRED_PROVIDER_WITH_FALLBACK when the preferred provider has complete
+    # coverage, so fallback never fires). Label this precisely rather than
+    # calling it "insufficient evidence".
+    if (diff == 0.0 and ci_low == 0.0 and ci_high == 0.0):
+        return Verdict(market, comparison, "KEEP_BASELINE",
+                       "Arm is identical to the FootyStats baseline on this set "
+                       "(no fallback fired; complete FootyStats coverage), so there "
+                       "is nothing to promote.", ev)
+
     # Guard: material calibration degradation.
     if arm_slope is not None and arm_slope < _CALIB_SLOPE_FLOOR:
         return Verdict(market, comparison, "REJECT",

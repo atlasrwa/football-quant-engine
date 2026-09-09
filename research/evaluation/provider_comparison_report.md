@@ -100,10 +100,10 @@ the model.
 | market | comparison | classification |
 |---|---|---|
 | CORNERS_TOTAL | thestatsapi_only vs footystats_only | INSUFFICIENT_EVIDENCE |
-| CORNERS_TOTAL | preferred_fallback vs footystats_only | INSUFFICIENT_EVIDENCE |
+| CORNERS_TOTAL | preferred_fallback vs footystats_only | KEEP_BASELINE (identical to baseline; FootyStats coverage complete, fallback never fires) |
 | CORNERS_TOTAL | validated_blend vs footystats_only | INSUFFICIENT_EVIDENCE |
 | CARDS_TOTAL | thestatsapi_only vs footystats_only | INSUFFICIENT_EVIDENCE |
-| CARDS_TOTAL | preferred_fallback vs footystats_only | INSUFFICIENT_EVIDENCE |
+| CARDS_TOTAL | preferred_fallback vs footystats_only | KEEP_BASELINE (identical to baseline) |
 | CARDS_TOTAL | validated_blend vs footystats_only | INSUFFICIENT_EVIDENCE |
 
 **Keep the FootyStats baseline.** No PROMOTE_CANDIDATE. TheStatsAPI remains
