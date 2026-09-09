@@ -266,6 +266,27 @@ def send_telegram(text: str) -> tuple[bool, str]:
 def run(dry_run: bool = False, resend_all: bool = False,
         limit: int | None = None) -> dict:
     load_env()
+    # DATA ACCUMULATION MODE: the live-signals tip feed is withheld from the
+    # audience while prospective evidence accumulates. The underlying signal
+    # capability is preserved; only publication is suppressed. Reversible via the
+    # DATA_ACCUMULATION_MODE env var at a future promotion decision.
+    from src.research._data_accumulation_mode import (
+        SUPPRESSED_RESEARCH_ONLY,
+        is_data_accumulation_mode,
+    )
+
+    if is_data_accumulation_mode() and not dry_run:
+        return {
+            "signals_file": str(SIGNALS_FILE),
+            "suppressed": True,
+            "reason": SUPPRESSED_RESEARCH_ONLY,
+            "note": (
+                "DATA_ACCUMULATION_MODE active: live-signal publication is "
+                "withheld. Set DATA_ACCUMULATION_MODE=0 after a promotion decision."
+            ),
+            "sent": [],
+            "errors": [],
+        }
     min_strength = float(os.environ.get("SIGNALS_MIN_STRENGTH", "0") or 0)
 
     state = load_state()

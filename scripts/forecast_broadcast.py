@@ -937,7 +937,30 @@ def run(
 
     ledger = BroadcastLedger(record_root)
     queue = PendingQueue(Path(record_root) / QUEUE_NAME)
-    transport = RecordingTransport() if dry_run else TelegramTransport()
+    # DATA ACCUMULATION MODE: still compute + commit + record forecasts, but do
+    # NOT transmit them to the public channel. Routing delivery to a recording
+    # transport preserves the append-only forecast record and the full capability
+    # while withholding external publication (SUPPRESSED_RESEARCH_ONLY). Reversible
+    # via the DATA_ACCUMULATION_MODE env var at a future promotion decision.
+    from src.research._data_accumulation_mode import (
+        SUPPRESSED_RESEARCH_ONLY,
+        is_data_accumulation_mode,
+    )
+
+    suppressed = is_data_accumulation_mode()
+    if dry_run:
+        transport = RecordingTransport()
+    elif suppressed:
+        transport = RecordingTransport(ok=True, detail=SUPPRESSED_RESEARCH_ONLY)
+        logger.warning(
+            "DATA_ACCUMULATION_MODE active: forecasts are computed and committed "
+            "to the ledger but NOT transmitted (routed to %s). Set "
+            "DATA_ACCUMULATION_MODE=0 to re-enable publication after a promotion "
+            "decision.", SUPPRESSED_RESEARCH_ONLY,
+        )
+    else:
+        transport = TelegramTransport()
+    summary["publication_suppressed"] = bool(suppressed and not dry_run)
     deliverer = ForecastDeliverer(
         ledger=ledger,
         queue=queue,

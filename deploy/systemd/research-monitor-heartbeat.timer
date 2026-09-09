@@ -1,0 +1,14 @@
+[Unit]
+Description=Daily research heartbeat (collector health + evidence progress + milestones)
+Documentation=file:///home/ubuntu/scripts/research_monitor_run.sh
+
+[Timer]
+# Once daily at 08:00 UTC (after quiet hours). Deduped per UTC day, so a
+# catch-up run after downtime does not double-send.
+OnCalendar=*-*-* 08:00:00
+Persistent=true
+AccuracySec=1min
+Unit=research-monitor@heartbeat.service
+
+[Install]
+WantedBy=timers.target
