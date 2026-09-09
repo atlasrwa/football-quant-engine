@@ -410,6 +410,8 @@ def _collector(tmp_path, monkeypatch, responses, clock_seq):
 
 def test_capture_due_restart_safe(tmp_path, monkeypatch):
     # Upcoming fixture 55m before kickoff; odds present, lineup 404.
+    from src.research.prospective.activation import ActiveCompetition
+
     ko_iso = "2020-01-01T00:00:00Z"
     ko = _parse_utc(ko_iso)
     responses = {
@@ -420,14 +422,17 @@ def test_capture_due_restart_safe(tmp_path, monkeypatch):
                                                 "under": {"last_seen": "2.00"}}}}}]}},
         "/lineups": None,
     }
+    active = [ActiveCompetition(
+        canonical_name="Test League", country="X", thestatsapi_competition_id="comp_1",
+        thestatsapi_season_id="sn_1", capture_priority=1, eligible_markets=("total_goals",))]
     now = ko - 55 * 60
     coll, store = _collector(tmp_path, monkeypatch, responses, clock_seq=[now] * 50)
-    r1 = coll.capture_due(hours=30)
+    r1 = coll.capture_due(hours=30, active_competitions=active)
     assert r1.odds_captured == 2  # over+under at LATE
+    assert r1.fixtures_due >= 1
     # Rerun at the same time: nothing new (idempotent + already-captured vintage).
-    coll2, _ = _collector(tmp_path, monkeypatch, responses, clock_seq=[now] * 50)
-    coll2.store = store  # same store file
-    r2 = ProspectiveCollector(coll2.client, store, clock=lambda: now).capture_due(hours=30)
+    r2 = ProspectiveCollector(coll.client, store, clock=lambda: now).capture_due(
+        hours=30, active_competitions=active)
     assert r2.odds_captured == 0
 
 

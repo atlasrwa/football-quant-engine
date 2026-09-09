@@ -162,3 +162,133 @@ def estimate_budget(
         monthly_limit=monthly_limit,
         sustainable=sustainable,
     )
+
+
+# ---------------------------------------------------------------------------
+# Reserve-aware allocation planner (full-universe design)
+# ---------------------------------------------------------------------------
+
+#: Per-fixture request cost model for the FULL capture lifecycle.
+#: Discovery is amortised per fixture (one competition-scoped query yields many
+#: fixtures), but polling/retries/monitoring are per-fixture and must be counted
+#: so the estimate is not the naive monthly_limit / odds_snapshots.
+@dataclass(frozen=True)
+class FixtureCostModel:
+    """Per-fixture request cost across the whole capture lifecycle."""
+
+    odds_snapshots: int = 8          # EARLY..FINAL + approach-window snapshots
+    lineup_polls: int = 4            # polling from LATE window until first seen
+    injury_snapshots: int = 2        # one per team, near lineup window
+    referee_requests: int = 1        # match context
+    discovery_amortised: float = 0.5  # shared competition-scoped discovery query
+    monitoring_amortised: float = 0.2  # quality-report / health probes
+    retry_overhead_rate: float = 0.10  # +10% for retries/backoff re-requests
+
+    def requests_per_fixture(self) -> float:
+        base = (
+            self.odds_snapshots + self.lineup_polls + self.injury_snapshots
+            + self.referee_requests + self.discovery_amortised + self.monitoring_amortised
+        )
+        return base * (1.0 + self.retry_overhead_rate)
+
+
+@dataclass(frozen=True)
+class AllocationPlan:
+    """Reserve-aware monthly allocation plan for the active universe."""
+
+    monthly_limit: Optional[int]
+    reserve_fraction: float
+    usable_monthly: Optional[int]        # limit * (1 - reserve)
+    requests_per_fixture: float
+    fixtures_per_month_capacity: Optional[int]  # usable / per-fixture
+    projected_fixtures_per_month: int    # expected active fixtures
+    projected_requests_per_month: float
+    within_usable: Optional[bool]
+    headroom_requests: Optional[float]
+
+    def to_dict(self) -> dict:
+        return {
+            "monthly_limit": self.monthly_limit,
+            "reserve_fraction": self.reserve_fraction,
+            "usable_monthly": self.usable_monthly,
+            "requests_per_fixture": round(self.requests_per_fixture, 2),
+            "fixtures_per_month_capacity": self.fixtures_per_month_capacity,
+            "projected_fixtures_per_month": self.projected_fixtures_per_month,
+            "projected_requests_per_month": round(self.projected_requests_per_month, 1),
+            "within_usable": self.within_usable,
+            "headroom_requests": (round(self.headroom_requests, 1)
+                                  if self.headroom_requests is not None else None),
+        }
+
+
+def plan_allocation(
+    *,
+    monthly_limit: Optional[int],
+    projected_fixtures_per_month: int,
+    cost_model: Optional[FixtureCostModel] = None,
+    reserve_fraction: float = 0.20,
+) -> AllocationPlan:
+    """Plan monthly allocation with a hard reserve (default 20%).
+
+    Never targets the full quota: usable = limit * (1 - reserve). Capacity and
+    headroom are computed from the FULL per-fixture cost (incl. discovery,
+    polling, retries, monitoring) — not the naive limit / odds_snapshots.
+    """
+    cm = cost_model or FixtureCostModel()
+    rpf = cm.requests_per_fixture()
+    projected_requests = rpf * projected_fixtures_per_month
+
+    if monthly_limit is None or monthly_limit == -1:
+        return AllocationPlan(
+            monthly_limit=monthly_limit, reserve_fraction=reserve_fraction,
+            usable_monthly=None, requests_per_fixture=rpf,
+            fixtures_per_month_capacity=None,
+            projected_fixtures_per_month=projected_fixtures_per_month,
+            projected_requests_per_month=projected_requests,
+            within_usable=None if monthly_limit is None else True,
+            headroom_requests=None,
+        )
+
+    usable = int(monthly_limit * (1.0 - reserve_fraction))
+    capacity = int(usable / rpf) if rpf > 0 else 0
+    headroom = usable - projected_requests
+    return AllocationPlan(
+        monthly_limit=monthly_limit, reserve_fraction=reserve_fraction,
+        usable_monthly=usable, requests_per_fixture=rpf,
+        fixtures_per_month_capacity=capacity,
+        projected_fixtures_per_month=projected_fixtures_per_month,
+        projected_requests_per_month=projected_requests,
+        within_usable=projected_requests <= usable,
+        headroom_requests=headroom,
+    )
+
+
+class QuotaGuard:
+    """Runtime guard: decides whether the collector may issue another request.
+
+    Reserve-aware: refuses new work once the live monthly remaining falls below
+    the reserve floor, and pauses on the per-minute budget. Fails safe when the
+    budget is unknown.
+    """
+
+    def __init__(self, *, monthly_limit: Optional[int], reserve_fraction: float = 0.20) -> None:
+        self.monthly_limit = monthly_limit
+        self.reserve_floor = (
+            int(monthly_limit * reserve_fraction)
+            if (monthly_limit is not None and monthly_limit != -1)
+            else 0
+        )
+
+    def may_request(self, state: Optional[RateLimitState]) -> bool:
+        """Whether another request is allowed given the latest budget state."""
+        if state is None:
+            return True  # no observation yet; the client throttle still applies
+        if state.should_pause():
+            return False
+        if (
+            self.monthly_limit not in (None, -1)
+            and state.monthly_remaining is not None
+            and state.monthly_remaining <= self.reserve_floor
+        ):
+            return False  # protect the reserve
+        return True
