@@ -33,7 +33,32 @@ LIVE_BASE_URL: Final = "https://api.thestatsapi.com/api"
 LIVE_AUTH_SCHEME: Final = "bearer_header"
 
 #: Environment variable holding the API key (never logged / committed).
+#: The documented / preferred name is ``THESTATSAPI_API_KEY``. Some deploys
+#: (cron, .env) store it under the shorter ``THESTATS_API_KEY`` — accepted as an
+#: alias so an available key is used rather than failing closed on a name gap.
 ENV_API_KEY: Final = "THESTATSAPI_API_KEY"
+ENV_API_KEY_ALIASES: Final = ("THESTATSAPI_API_KEY", "THESTATS_API_KEY")
+
+
+def resolve_api_key() -> str:
+    """Return the API key from the environment, or "" if none is set.
+
+    Checks names in ``ENV_API_KEY_ALIASES`` order (documented name first). The
+    value is returned to the caller for header construction only; it is never
+    logged, hashed, or serialized by this module.
+    """
+    import os
+
+    for name in ENV_API_KEY_ALIASES:
+        val = os.environ.get(name, "")
+        if val:
+            return val
+    return ""
+
+
+def api_key_available() -> bool:
+    """Whether a non-empty API key is available under any accepted name."""
+    return bool(resolve_api_key())
 
 #: Optional base-url override for tests / self-hosted mirrors.
 ENV_BASE_URL: Final = "THESTATSAPI_BASE_URL"
@@ -55,6 +80,7 @@ class Endpoint(str, Enum):
     MATCHES = "/football/matches"
     MATCH_DETAIL = "/football/matches/{match_id}"
     COVERAGE_LEAGUES = "/coverage/leagues"
+    COMPETITION_SEASONS = "/football/competitions/{competition_id}/seasons"
 
     # --- context ---------------------------------------------------------
     MATCH_REFEREE = "/football/matches/{match_id}/referee"
@@ -235,7 +261,7 @@ class ProspectiveClientConfig:
     @property
     def is_configured(self) -> bool:
         """Whether a non-empty API key is available for live requests."""
-        return bool(os.environ.get(ENV_API_KEY, ""))
+        return api_key_available()
 
     def resolve_base_url(self) -> str:
         """Base URL, honouring the optional override env var."""

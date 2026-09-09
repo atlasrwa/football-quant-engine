@@ -27,10 +27,15 @@ from typing import Any, Callable, Optional
 from src.research.observation.model import MISSING, ObservationKey, ProviderObservation
 from src.research.prospective.api_contract import (
     ENV_API_KEY,
+    ENV_API_KEY_ALIASES,
     Endpoint,
     ProspectiveClientConfig,
     endpoint_path,
 )
+from src.research.prospective.quota import parse_rate_limit
+
+#: Accepted key env-var names (documented name first), for clear error text.
+_KEY_NAMES = ENV_API_KEY_ALIASES
 
 logger = logging.getLogger(__name__)
 
@@ -76,22 +81,25 @@ class ProspectiveApiClient:
     """
 
     config: ProspectiveClientConfig = field(default_factory=ProspectiveClientConfig)
-    #: Optional injected transport for tests: (url, headers, params) -> (status, json).
-    transport: Optional[Callable[[str, dict, dict], tuple[int, Any]]] = None
+    #: Optional injected transport for tests: (url, headers, params) -> (status, json)
+    #: or (status, json, response_headers).
+    transport: Optional[Callable[[str, dict, dict], tuple]] = None
     _last_request: float = 0.0
+    #: Parsed rate-limit / quota budgets from the most recent response (or None).
+    last_rate_limit: Optional[Any] = None
 
     @property
     def is_configured(self) -> bool:
         return self.config.is_configured
 
     def _auth_header(self) -> dict[str, str]:
-        import os
+        from src.research.prospective.api_contract import resolve_api_key
 
-        key = os.environ.get(ENV_API_KEY, "")
+        key = resolve_api_key()
         if not key:
             raise ProspectiveConfigError(
-                f"{ENV_API_KEY} is not set; refusing to send a request with an "
-                "empty credential. Prospective capture fails closed."
+                f"No API key set (checked {', '.join(_KEY_NAMES)}); refusing to "
+                "send a request with an empty credential. Fails closed."
             )
         # Header value is constructed locally and never logged.
         return {"Authorization": f"Bearer {key}"}
@@ -112,15 +120,21 @@ class ProspectiveApiClient:
         """
         if not self.is_configured:
             raise ProspectiveConfigError(
-                f"{ENV_API_KEY} is not set; cannot capture {endpoint.name}. "
-                "Fails closed."
+                f"No API key set (checked {', '.join(_KEY_NAMES)}); cannot "
+                f"capture {endpoint.name}. Fails closed."
             )
         headers = self._auth_header()
         url = f"{self.config.resolve_base_url()}{endpoint_path(endpoint, **path)}"
         query = dict(params or {})
 
         if self.transport is not None:
-            status, body = self.transport(url, headers, query)
+            result = self.transport(url, headers, query)
+            # Transport may return (status, body) or (status, body, headers).
+            if len(result) == 3:
+                status, body, resp_headers = result
+                self.last_rate_limit = parse_rate_limit(resp_headers or {})
+            else:
+                status, body = result
             if status == 404:
                 return None
             if status >= 400:
@@ -138,6 +152,7 @@ class ProspectiveApiClient:
             try:
                 with httpx.Client(timeout=self.config.timeout_seconds) as client:
                     resp = client.get(url, headers=headers, params=query)
+                    self.last_rate_limit = parse_rate_limit(dict(resp.headers))
             except Exception as exc:
                 last = exc
                 time.sleep(2 ** (attempt - 1))

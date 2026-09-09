@@ -27,7 +27,7 @@ from __future__ import annotations
 
 import argparse
 import sys
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Optional, Sequence
 
@@ -39,30 +39,169 @@ from src.research.prospective.capture import (
     now_ts,
     payload_hash,
 )
-from src.research.prospective.odds_capture import OddsSemantics, extract_prices
+from src.research.prospective.odds_capture import OVER_UNDER_MARKET_KEYS, OddsSemantics, extract_prices
 from src.research.prospective.storage import CaptureStore
 
 #: Default capture root (git-ignored; research-critical raw data).
 DEFAULT_CAPTURE_ROOT = Path("data/prospective")
 
 
+def _parse_utc(value: str) -> Optional[float]:
+    """Parse an ISO-8601 UTC timestamp (e.g. '2026-01-15T15:00:00.000Z') to unix.
+
+    Everything is treated as UTC. Returns None on unparseable input (fails
+    neutrally rather than fabricating a time).
+    """
+    import datetime as _dt
+
+    if not isinstance(value, str):
+        return None
+    v = value.strip().replace("Z", "+00:00")
+    try:
+        dt = _dt.datetime.fromisoformat(v)
+    except ValueError:
+        return None
+    if dt.tzinfo is None:
+        dt = dt.replace(tzinfo=_dt.timezone.utc)
+    return dt.timestamp()
+
+
+#: Coverage-matrix artifact produced by scripts/prospective_coverage_scan.py.
+COVERAGE_MATRIX_PATH = Path("research/evaluation/prospective_coverage_matrix.json")
+
+
+def load_active_universe(*, include_partial: bool = True, path: Path = COVERAGE_MATRIX_PATH):
+    """Load the ACTIVE competition universe from the coverage-matrix artifact.
+
+    Reconstructs :class:`ActiveCompetition`-like entries from the persisted
+    matrix so the collector's universe is data-driven, not hard-coded. Falls
+    back to an empty universe if the artifact is missing (fail closed — the
+    operator must run the coverage scan first).
+    """
+    import json
+
+    from src.research.prospective.activation import ActiveCompetition
+
+    if not Path(path).exists():
+        return []
+    data = json.loads(Path(path).read_text())
+    allowed = {"CAPTURE_READY"}
+    if include_partial:
+        allowed.add("CAPTURE_PARTIAL")
+    out = []
+    for r in data.get("rows", []):
+        if r.get("identity_status") != "VERIFIED":
+            continue
+        if r.get("capture_classification") not in allowed:
+            continue
+        cid = r.get("thestatsapi_competition_id")
+        if not cid:
+            continue
+        markets = tuple(
+            m for m, s in sorted((r.get("market_eligibility") or {}).items())
+            if s in ("READY", "PARTIAL")
+        )
+        if not markets:
+            continue
+        out.append(ActiveCompetition(
+            canonical_name=r.get("canonical_name", ""),
+            country=r.get("country"),
+            thestatsapi_competition_id=cid,
+            thestatsapi_season_id=r.get("thestatsapi_season_id"),
+            capture_priority=r.get("capture_priority", 3),
+            eligible_markets=markets,
+        ))
+    out.sort(key=lambda a: (a.capture_priority, a.canonical_name))
+    return out
+
+
+def universe_report(*, path: Path = COVERAGE_MATRIX_PATH) -> dict:
+    """Summarise the data-driven universe from the persisted coverage matrix.
+
+    Reads the committed coverage-matrix artifact (no network) and returns the
+    step-30 universe counts so the quality report is self-describing:
+    competitions_expected / mapped / verified / capture_ready, plus the full
+    identity + classification funnel. Returns an explicit ``artifact_present:
+    false`` block when the scan has not been run yet (never fabricates counts).
+    """
+    import json
+
+    p = Path(path)
+    if not p.exists():
+        return {"artifact_present": False}
+    data = json.loads(p.read_text())
+    rows = data.get("rows", [])
+
+    def n_ident(status: str) -> int:
+        return sum(1 for r in rows if r.get("identity_status") == status)
+
+    def n_class(klass: str) -> int:
+        return sum(1 for r in rows if r.get("capture_classification") == klass)
+
+    # "Mapped" = has any TheStatsAPI competition id OR a resolved identity;
+    # here we treat every row that carries a thestatsapi_competition_id as
+    # mapped, plus VERIFIED rows (which always carry one). UNKNOWN stays out.
+    mapped = sum(1 for r in rows if r.get("thestatsapi_competition_id"))
+    return {
+        "artifact_present": True,
+        "artifact_path": str(p),
+        "competitions_expected": len(rows),
+        "competitions_mapped": mapped,
+        "competitions_verified": n_ident("VERIFIED"),
+        "competitions_ambiguous": n_ident("AMBIGUOUS"),
+        "competitions_unresolved": n_ident("UNRESOLVED"),
+        "competitions_api_unsupported": n_ident("API_UNSUPPORTED"),
+        "competitions_capture_ready": n_class("CAPTURE_READY"),
+        "competitions_capture_partial": n_class("CAPTURE_PARTIAL"),
+        "competitions_market_insufficient": n_class("MARKET_COVERAGE_INSUFFICIENT"),
+    }
+
+
 @dataclass
 class CollectorResult:
-    """Outcome of a collector run (for reporting / testing)."""
+    """Outcome of a collector run (for reporting / testing).
+
+    Metrics are semantically explicit and separated: discovery is NOT the same
+    as due. ``fixtures_seen`` is retained for backward compat (== fixtures we
+    attempted a due capture on).
+    """
 
     fixtures_seen: int = 0
     odds_captured: int = 0
     lineups_captured: int = 0
     unavailable: int = 0
     errors: int = 0
+    # --- explicit funnel counts ---
+    competitions_active: int = 0
+    fixtures_discovered: int = 0
+    fixtures_inside_horizon: int = 0
+    fixtures_due: int = 0
+    early_due: int = 0
+    mid_due: int = 0
+    late_due: int = 0
+    final_due: int = 0
+    quota_limited: bool = False
+    health: str = "HEALTHY"
+    per_competition: dict = field(default_factory=dict)
 
     def to_dict(self) -> dict:
         return {
-            "fixtures_seen": self.fixtures_seen,
+            "health": self.health,
+            "competitions_active": self.competitions_active,
+            "fixtures_discovered": self.fixtures_discovered,
+            "fixtures_inside_horizon": self.fixtures_inside_horizon,
+            "fixtures_due": self.fixtures_due,
+            "due_by_vintage": {
+                "EARLY": self.early_due, "MID": self.mid_due,
+                "LATE": self.late_due, "FINAL": self.final_due,
+            },
             "odds_captured": self.odds_captured,
             "lineups_captured": self.lineups_captured,
             "unavailable": self.unavailable,
+            "quota_limited": self.quota_limited,
             "errors": self.errors,
+            "fixtures_seen": self.fixtures_seen,
+            "per_competition": self.per_competition,
         }
 
 
@@ -82,19 +221,31 @@ class ProspectiveCollector:
         self.provider = provider
         self.clock = clock
 
-    def capture_odds(self, match_id: str, *, kickoff_ts: Optional[float] = None) -> int:
-        """Capture the current odds snapshot for one fixture. Returns #appended."""
+    def capture_odds(
+        self,
+        match_id: str,
+        *,
+        kickoff_ts: Optional[float] = None,
+        markets: Optional[set] = None,
+    ) -> int:
+        """Capture the current odds snapshot for one fixture. Returns #appended.
+
+        ``markets`` optionally restricts extraction to a league's eligible
+        markets so we never normalize markets a competition does not price.
+        """
         payload = self.client.get(Endpoint.MATCH_ODDS, match_id=match_id)
         if payload is None:
             return 0
         observed = self.clock()
         ph = payload_hash(payload)
+        market_keys = tuple(markets) if markets else OVER_UNDER_MARKET_KEYS
         prices = extract_prices(
             payload,
             payload_hash=ph,
             field="last_seen",
             semantics=OddsSemantics.PROSPECTIVE_SNAPSHOT,
             observed_at=observed,
+            markets=market_keys,
         )
         appended = 0
         for price in prices:
@@ -102,7 +253,9 @@ class ProspectiveCollector:
                 provider=self.provider,
                 provider_entity_id=match_id,
                 canonical_entity_id=match_id,
-                concept=price.concept,
+                # Concept carries the bookmaker so per-book coverage and
+                # same-book movement can be reconstructed from the store.
+                concept=f"{price.concept}:{price.bookmaker}",
                 value=price.decimal_odds,
                 observed_at=observed,
                 retrieved_at=observed,
@@ -113,6 +266,40 @@ class ProspectiveCollector:
             if self.store.append(rec):
                 appended += 1
         return appended
+
+    def capture_referee(self, match_id: str, *, kickoff_ts: Optional[float] = None) -> int:
+        """Capture referee identity/context for one fixture. Returns #appended."""
+        payload = self.client.get(Endpoint.MATCH_REFEREE, match_id=match_id)
+        if payload is None:
+            return 0
+        observed = self.clock()
+        rec = CaptureRecord(
+            provider=self.provider, provider_entity_id=match_id,
+            canonical_entity_id=match_id, concept="referee",
+            value=payload.get("data", payload), observed_at=observed,
+            retrieved_at=observed, raw_payload_hash=payload_hash(payload),
+            raw_status="PROSPECTIVE_SNAPSHOT", event_time=kickoff_ts,
+        )
+        return 1 if self.store.append(rec) else 0
+
+    def capture_injuries(self, team_id: str, *, kickoff_ts: Optional[float] = None) -> int:
+        """Capture a team's injuries/suspensions snapshot. Returns #appended.
+
+        Stored as observed with OUR retrieval time; absence is never inferred
+        as injury (that inference does not exist anywhere in this pipeline).
+        """
+        payload = self.client.get(Endpoint.TEAM_INJURIES, team_id=team_id)
+        if payload is None:
+            return 0
+        observed = self.clock()
+        rec = CaptureRecord(
+            provider=self.provider, provider_entity_id=team_id,
+            canonical_entity_id=team_id, concept="availability:injuries_suspensions",
+            value=payload.get("data", payload), observed_at=observed,
+            retrieved_at=observed, raw_payload_hash=payload_hash(payload),
+            raw_status="PROSPECTIVE_SNAPSHOT", event_time=kickoff_ts,
+        )
+        return 1 if self.store.append(rec) else 0
 
     def capture_lineup(self, match_id: str, *, kickoff_ts: Optional[float] = None) -> int:
         """Capture the lineup for one fixture if announced. Returns #appended."""
@@ -158,6 +345,162 @@ class ProspectiveCollector:
                 result.errors += 1
         return result
 
+    def discover_upcoming(self, *, hours: int = 30, competition_ids: Optional[Sequence[str]] = None):
+        """Discover scheduled fixtures within ``hours``, scoped to the universe.
+
+        Uses the live ``date_from``/``date_to`` filters (UTC) to bound the
+        window and iterates the initial operational universe's competition ids
+        so we find NEAR-TERM fixtures in supported leagues rather than the API's
+        unscoped first page. Falls back to an unscoped ``status=scheduled``
+        query only when no competition ids are available.
+        """
+        import datetime as _dt
+
+        from src.research.prospective.scheduler import UpcomingFixture
+        from src.research.prospective.universe import universe_competition_ids
+
+        now = self.clock()
+        horizon = now + hours * 3600
+        date_from = _dt.datetime.fromtimestamp(now, _dt.timezone.utc).date().isoformat()
+        date_to = _dt.datetime.fromtimestamp(horizon, _dt.timezone.utc).date().isoformat()
+
+        comps = list(competition_ids) if competition_ids is not None else list(universe_competition_ids())
+        queries: list[dict] = []
+        if comps:
+            for cid in comps:
+                queries.append({"status": "scheduled", "competition_id": cid,
+                                "date_from": date_from, "date_to": date_to, "per_page": 100})
+        else:
+            queries.append({"status": "scheduled", "date_from": date_from,
+                            "date_to": date_to, "per_page": 100})
+
+        out: list = []
+        seen: set = set()
+        for params in queries:
+            payload = self.client.get(Endpoint.MATCHES, params=params)
+            matches = payload.get("data", []) if isinstance(payload, dict) else []
+            for m in matches:
+                mid = m.get("id")
+                ko = m.get("utc_date")
+                if not mid or ko is None or mid in seen:
+                    continue
+                ts = _parse_utc(ko)
+                if ts is None:
+                    continue
+                # Bound to the requested horizon (defensive; API date filter is
+                # day-granular so a fixture on date_to could exceed `hours`).
+                if not (now <= ts <= horizon):
+                    continue
+                seen.add(mid)
+                out.append(UpcomingFixture(fixture_id=str(mid), kickoff_ts=ts,
+                                           league=m.get("competition_id")))
+        return out
+
+    def capture_due(
+        self,
+        *,
+        hours: int = 30,
+        max_requests: int = 400,
+        active_competitions: Optional[Sequence] = None,
+        include_partial: bool = True,
+    ) -> CollectorResult:
+        """Discover upcoming fixtures across the ACTIVE universe and capture due work.
+
+        Restart-safe: due work is computed from the persisted store + now, so a
+        rerun after a crash resumes correctly and never rewrites observations.
+        Metrics separate discovered / inside-horizon / due. A reserve-aware
+        quota guard stops issuing work when the monthly reserve is threatened.
+        Only markets a competition is eligible for are captured.
+        """
+        from src.research.prospective.scheduler import (
+            CaptureKind,
+            CaptureScheduler,
+            UpcomingFixture,
+        )
+        from src.research.prospective.quota import QuotaGuard
+
+        result = CollectorResult()
+        active = (
+            list(active_competitions)
+            if active_competitions is not None
+            else load_active_universe(include_partial=include_partial)
+        )
+        result.competitions_active = len(active)
+        if not active:
+            result.health = "NO_UPCOMING_FIXTURES"
+            return result
+
+        sched = CaptureScheduler(self.store)
+        now = self.clock()
+        guard = QuotaGuard(
+            monthly_limit=(getattr(self.client, "last_rate_limit", None).monthly_limit
+                           if getattr(self.client, "last_rate_limit", None) else None)
+        )
+        requests = 0
+        due_all: list = []
+
+        for comp in active:
+            cid = comp.thestatsapi_competition_id if hasattr(comp, "thestatsapi_competition_id") else comp["thestatsapi_competition_id"]
+            eligible = set(comp.eligible_markets if hasattr(comp, "eligible_markets") else comp.get("eligible_markets", []))
+            fixtures = self.discover_upcoming(hours=hours, competition_ids=[cid])
+            # Discovery already bounds to [now, horizon]; count them.
+            result.fixtures_discovered += len(fixtures)
+            result.fixtures_inside_horizon += len(fixtures)
+            comp_due = sched.due_captures(fixtures, now=now)
+            due_all.extend((comp, d) for d in comp_due)
+            if fixtures or comp_due:
+                cname = comp.canonical_name if hasattr(comp, "canonical_name") else comp.get("canonical_name")
+                result.per_competition[cname] = {
+                    "discovered": len(fixtures), "due": len(comp_due),
+                }
+
+        result.fixtures_due = len(due_all)
+        for _, d in due_all:
+            v = d.vintage.value
+            if v == "EARLY":
+                result.early_due += 1
+            elif v == "MID":
+                result.mid_due += 1
+            elif v == "LATE":
+                result.late_due += 1
+            elif v == "FINAL":
+                result.final_due += 1
+
+        for comp, d in due_all:
+            if requests >= max_requests:
+                break
+            rl = getattr(self.client, "last_rate_limit", None)
+            if rl is not None and not guard.may_request(rl):
+                result.quota_limited = True
+                break
+            eligible = set(comp.eligible_markets if hasattr(comp, "eligible_markets")
+                           else comp.get("eligible_markets", []))
+            result.fixtures_seen += 1
+            try:
+                if d.kind == CaptureKind.ODDS:
+                    result.odds_captured += self.capture_odds(
+                        d.fixture_id, kickoff_ts=d.kickoff_ts, markets=eligible or None)
+                elif d.kind == CaptureKind.LINEUP:
+                    lc = self.capture_lineup(d.fixture_id, kickoff_ts=d.kickoff_ts)
+                    result.lineups_captured += lc
+                    if lc == 0:
+                        result.unavailable += 1
+                requests += 1
+            except Exception:  # noqa: BLE001
+                result.errors += 1
+
+        # Health: fixtures discovered but nothing due yet is a normal waiting
+        # state, not an error / empty universe.
+        if result.fixtures_discovered > 0 and result.fixtures_due == 0:
+            result.health = "HEALTHY_WAITING_FOR_VINTAGE"
+        elif result.fixtures_discovered == 0:
+            result.health = "HEALTHY_WAITING_FOR_VINTAGE"  # active universe, off-matchday
+        elif result.quota_limited:
+            result.health = "QUOTA_LIMITED"
+        else:
+            result.health = "HEALTHY"
+        return result
+
 
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(prog="prospective-collector", description=__doc__)
@@ -172,22 +515,49 @@ def build_parser() -> argparse.ArgumentParser:
 
     p_line = sub.add_parser("capture-lineups", help="Capture lineup for one fixture")
     p_line.add_argument("--match", required=True)
+
+    p_due = sub.add_parser("capture-due", help="Discover + capture only due work (restart-safe)")
+    p_due.add_argument("--hours", type=int, default=30)
+    p_due.add_argument("--max-requests", type=int, default=200)
+
+    p_q = sub.add_parser("quality-report", help="Emit JSON quality report from persisted captures")
     return parser
 
 
 def main(argv: Optional[Sequence[str]] = None) -> int:
     args = build_parser().parse_args(argv)
+    store_path = Path(args.capture_root) / "captures.jsonl.gz"
+
+    # quality-report reads persisted state only; it needs no API key.
+    if args.command == "quality-report":
+        import json as _json
+
+        from src.research.prospective.coverage_funnel import analysis_support
+        from src.research.prospective.quality import build_quality_report
+
+        store = CaptureStore(path=store_path)
+        report = build_quality_report(store, now=now_ts())
+        out = report.to_dict()
+        # Step-30: make the report self-describing about the data-driven
+        # universe and the coverage-bias funnel (UNKNOWN never coerced).
+        out["universe"] = universe_report()
+        out["analysis_support"] = analysis_support(store).to_dict()
+        print(_json.dumps(out, indent=2))
+        return 0
+
     client = ProspectiveApiClient()
     if not client.is_configured:
         # Fail closed: never attempt a request without a key.
+        from src.research.prospective.api_contract import ENV_API_KEY_ALIASES
+
         print(
-            "THESTATSAPI_API_KEY is not set; prospective capture fails closed. "
-            "No request attempted.",
+            f"No API key set (checked {', '.join(ENV_API_KEY_ALIASES)}); "
+            "prospective capture fails closed. No request attempted.",
             file=sys.stderr,
         )
         return 2
 
-    store = CaptureStore(path=Path(args.capture_root) / "captures.jsonl.gz")
+    store = CaptureStore(path=store_path)
     collector = ProspectiveCollector(client, store)
     try:
         if args.command == "capture-upcoming":
@@ -197,6 +567,9 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
             print({"odds_captured": collector.capture_odds(args.match)})
         elif args.command == "capture-lineups":
             print({"lineups_captured": collector.capture_lineup(args.match)})
+        elif args.command == "capture-due":
+            result = collector.capture_due(hours=args.hours, max_requests=args.max_requests)
+            print(result.to_dict())
     except ProspectiveConfigError as exc:
         print(str(exc), file=sys.stderr)
         return 2

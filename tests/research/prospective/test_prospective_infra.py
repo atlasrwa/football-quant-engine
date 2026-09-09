@@ -86,6 +86,7 @@ def test_endpoint_path_renders():
 
 def test_client_fails_closed_without_key(monkeypatch):
     monkeypatch.delenv("THESTATSAPI_API_KEY", raising=False)
+    monkeypatch.delenv("THESTATS_API_KEY", raising=False)
     client = ProspectiveApiClient()
     assert not client.is_configured
     with pytest.raises(ProspectiveConfigError):

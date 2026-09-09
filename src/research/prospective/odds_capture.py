@@ -229,6 +229,63 @@ def genuine_close(
     return GenuineClose(price=relabelled, kickoff_ts=kickoff_ts)
 
 
+class CloseStatus(str, Enum):
+    """Outcome of attempting to construct a genuine research close."""
+
+    GENUINE_CLOSE = "GENUINE_CLOSE"
+    NO_GENUINE_CLOSE = "NO_GENUINE_CLOSE"
+
+
+@dataclass(frozen=True)
+class CloseResult:
+    """Explicit result of a genuine-close attempt (reason on failure)."""
+
+    status: CloseStatus
+    close: Optional[GenuineClose]
+    reason: Optional[str]
+
+
+def resolve_genuine_close(
+    snapshots: Iterable[CapturedPrice],
+    *,
+    kickoff_ts: Optional[float],
+    bookmaker: str,
+    market: str,
+    selection: str,
+    line: Optional[float],
+) -> CloseResult:
+    """Resolve a genuine close for one (book, market, selection, line) key.
+
+    Returns an EXPLICIT status. A genuine close requires: a known kickoff, at
+    least one of OUR prospective snapshots for the EXACT key with
+    ``observed_at < kickoff``. Never falls back to the provider ``last_seen``.
+
+    Failure reasons are surfaced (never silently None-with-no-context):
+    - unknown kickoff              -> NO_GENUINE_CLOSE
+    - no matching-key snapshot     -> NO_GENUINE_CLOSE
+    - no pre-kickoff snapshot      -> NO_GENUINE_CLOSE
+    """
+    if kickoff_ts is None:
+        return CloseResult(CloseStatus.NO_GENUINE_CLOSE, None, "unknown_kickoff")
+
+    book = _bookmaker_slug(bookmaker)
+    keyed = [
+        s
+        for s in snapshots
+        if _bookmaker_slug(s.bookmaker) == book
+        and s.market == market
+        and s.selection == selection
+        and s.line == line
+    ]
+    if not keyed:
+        return CloseResult(CloseStatus.NO_GENUINE_CLOSE, None, "no_matching_key_snapshot")
+
+    close = genuine_close(keyed, kickoff_ts=kickoff_ts)
+    if close is None:
+        return CloseResult(CloseStatus.NO_GENUINE_CLOSE, None, "no_pre_kickoff_snapshot")
+    return CloseResult(CloseStatus.GENUINE_CLOSE, close, None)
+
+
 def select_benchmark_bookmaker(
     available: Iterable[str],
     *,
