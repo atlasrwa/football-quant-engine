@@ -94,6 +94,9 @@ class ClosingOddsObservation:
                 TimestampSemantics.LAST_BEFORE_KICKOFF,
             )
             and self.decimal_odds >= 1.0
+            # A genuine close must have a real (positive) observation time.
+            # A 0.0/unset timestamp can never be proven to precede the close.
+            and self.closing_timestamp > 0
         )
 
     def to_dict(self) -> dict[str, Any]:
