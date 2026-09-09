@@ -78,6 +78,7 @@ def test_capture_upcoming_counts(tmp_path, monkeypatch):
 
 def test_main_fails_closed_without_key(monkeypatch, capsys):
     monkeypatch.delenv("THESTATSAPI_API_KEY", raising=False)
+    monkeypatch.delenv("THESTATS_API_KEY", raising=False)
     rc = main(["capture-odds", "--match", "mt_1"])
     assert rc == 2
     err = capsys.readouterr().err

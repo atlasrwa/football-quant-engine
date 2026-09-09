@@ -309,9 +309,11 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
     client = ProspectiveApiClient()
     if not client.is_configured:
         # Fail closed: never attempt a request without a key.
+        from src.research.prospective.api_contract import ENV_API_KEY_ALIASES
+
         print(
-            "THESTATSAPI_API_KEY is not set; prospective capture fails closed. "
-            "No request attempted.",
+            f"No API key set (checked {', '.join(ENV_API_KEY_ALIASES)}); "
+            "prospective capture fails closed. No request attempted.",
             file=sys.stderr,
         )
         return 2

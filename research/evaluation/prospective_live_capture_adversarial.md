@@ -48,9 +48,11 @@ quality report / movement logic key on the bookmaker. Regression:
 `test_scheduler_skips_already_captured_vintage` and the capture-due path exercise
 the bookmaker-tagged concept.
 
-## Live-validation limitation (stated, not hidden)
+## Live-validation note (key now available)
 
-`THESTATSAPI_API_KEY` is not set in this environment, so no live requests were
-issued. Items 2/3/4 (base URL, auth, live schema) are validated against the
-verified contract and the injected-transport tests; no claim is made about live
-payload compatibility. Status: **LIVE_VALIDATION_BLOCKED_NO_API_KEY**.
+`THESTATS_API_KEY` is present in the environment (the deploy/cron name); the
+code accepts it as an alias of the documented `THESTATSAPI_API_KEY`, never
+exposing the value. Minimal read-only smoke succeeded: `/health` 200 and
+`/football/matches` 200 with the confirmed budgets (minute 120, monthly
+100,000) and no schema drift. Status: **LIVE_CAPTURE_READY**. Items 1/19 remain
+guarded (key redaction; the value is never printed/logged/committed/staged).

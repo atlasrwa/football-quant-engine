@@ -81,6 +81,7 @@ def test_client_base_url_and_bearer(monkeypatch):
 
 def test_client_fails_closed_without_key(monkeypatch):
     monkeypatch.delenv("THESTATSAPI_API_KEY", raising=False)
+    monkeypatch.delenv("THESTATS_API_KEY", raising=False)
     with pytest.raises(ProspectiveConfigError):
         ProspectiveApiClient().get(Endpoint.MATCHES)
 
@@ -96,6 +97,25 @@ def test_client_404_is_none(monkeypatch):
     monkeypatch.setenv("THESTATSAPI_API_KEY", "k")
     c = ProspectiveApiClient(transport=lambda u, h, p: (404, None))
     assert c.get(Endpoint.MATCH_LINEUPS, match_id="mt_1") is None
+
+
+def test_api_key_alias_resolved(monkeypatch):
+    """The shorter THESTATS_API_KEY name is accepted as an alias."""
+    from src.research.prospective.api_contract import api_key_available, resolve_api_key
+
+    monkeypatch.delenv("THESTATSAPI_API_KEY", raising=False)
+    monkeypatch.setenv("THESTATS_API_KEY", "alias-key")
+    assert api_key_available()
+    assert resolve_api_key() == "alias-key"
+    assert ProspectiveApiClient().is_configured
+
+
+def test_documented_key_preferred_over_alias(monkeypatch):
+    from src.research.prospective.api_contract import resolve_api_key
+
+    monkeypatch.setenv("THESTATSAPI_API_KEY", "primary")
+    monkeypatch.setenv("THESTATS_API_KEY", "alias")
+    assert resolve_api_key() == "primary"
 
 
 def test_rate_limit_headers_parsed():

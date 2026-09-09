@@ -27,10 +27,14 @@ from typing import Any, Callable, Optional
 from src.research.observation.model import MISSING, ObservationKey, ProviderObservation
 from src.research.prospective.api_contract import (
     ENV_API_KEY,
+    ENV_API_KEY_ALIASES,
     Endpoint,
     ProspectiveClientConfig,
     endpoint_path,
 )
+
+#: Accepted key env-var names (documented name first), for clear error text.
+_KEY_NAMES = ENV_API_KEY_ALIASES
 
 logger = logging.getLogger(__name__)
 
@@ -85,13 +89,13 @@ class ProspectiveApiClient:
         return self.config.is_configured
 
     def _auth_header(self) -> dict[str, str]:
-        import os
+        from src.research.prospective.api_contract import resolve_api_key
 
-        key = os.environ.get(ENV_API_KEY, "")
+        key = resolve_api_key()
         if not key:
             raise ProspectiveConfigError(
-                f"{ENV_API_KEY} is not set; refusing to send a request with an "
-                "empty credential. Prospective capture fails closed."
+                f"No API key set (checked {', '.join(_KEY_NAMES)}); refusing to "
+                "send a request with an empty credential. Fails closed."
             )
         # Header value is constructed locally and never logged.
         return {"Authorization": f"Bearer {key}"}
@@ -112,8 +116,8 @@ class ProspectiveApiClient:
         """
         if not self.is_configured:
             raise ProspectiveConfigError(
-                f"{ENV_API_KEY} is not set; cannot capture {endpoint.name}. "
-                "Fails closed."
+                f"No API key set (checked {', '.join(_KEY_NAMES)}); cannot "
+                f"capture {endpoint.name}. Fails closed."
             )
         headers = self._auth_header()
         url = f"{self.config.resolve_base_url()}{endpoint_path(endpoint, **path)}"
