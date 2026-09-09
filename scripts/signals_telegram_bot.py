@@ -266,23 +266,24 @@ def send_telegram(text: str) -> tuple[bool, str]:
 def run(dry_run: bool = False, resend_all: bool = False,
         limit: int | None = None) -> dict:
     load_env()
-    # DATA ACCUMULATION MODE: the live-signals tip feed is withheld from the
-    # audience while prospective evidence accumulates. The underlying signal
-    # capability is preserved; only publication is suppressed. Reversible via the
-    # DATA_ACCUMULATION_MODE env var at a future promotion decision.
+    # External publication requires BOTH conditions via the centralized policy:
+    # DATA_ACCUMULATION_MODE=0 AND SIGNAL_PUBLICATION_STATE=PROMOTED. A single env
+    # change cannot open the boundary. The underlying signal capability is
+    # preserved; only publication is withheld.
     from src.research._data_accumulation_mode import (
         SUPPRESSED_RESEARCH_ONLY,
-        is_data_accumulation_mode,
+        can_publish_validated_signals,
     )
 
-    if is_data_accumulation_mode() and not dry_run:
+    if not can_publish_validated_signals() and not dry_run:
         return {
             "signals_file": str(SIGNALS_FILE),
             "suppressed": True,
             "reason": SUPPRESSED_RESEARCH_ONLY,
             "note": (
-                "DATA_ACCUMULATION_MODE active: live-signal publication is "
-                "withheld. Set DATA_ACCUMULATION_MODE=0 after a promotion decision."
+                "publication policy not PROMOTED: live-signal publication is "
+                "withheld. Requires DATA_ACCUMULATION_MODE=0 AND "
+                "SIGNAL_PUBLICATION_STATE=PROMOTED."
             ),
             "sent": [],
             "errors": [],
