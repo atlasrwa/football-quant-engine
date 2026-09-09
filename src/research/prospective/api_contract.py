@@ -80,6 +80,7 @@ class Endpoint(str, Enum):
     MATCHES = "/football/matches"
     MATCH_DETAIL = "/football/matches/{match_id}"
     COVERAGE_LEAGUES = "/coverage/leagues"
+    COMPETITION_SEASONS = "/football/competitions/{competition_id}/seasons"
 
     # --- context ---------------------------------------------------------
     MATCH_REFEREE = "/football/matches/{match_id}/referee"

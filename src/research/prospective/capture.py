@@ -32,6 +32,7 @@ from src.research.prospective.api_contract import (
     ProspectiveClientConfig,
     endpoint_path,
 )
+from src.research.prospective.quota import parse_rate_limit
 
 #: Accepted key env-var names (documented name first), for clear error text.
 _KEY_NAMES = ENV_API_KEY_ALIASES
@@ -80,9 +81,12 @@ class ProspectiveApiClient:
     """
 
     config: ProspectiveClientConfig = field(default_factory=ProspectiveClientConfig)
-    #: Optional injected transport for tests: (url, headers, params) -> (status, json).
-    transport: Optional[Callable[[str, dict, dict], tuple[int, Any]]] = None
+    #: Optional injected transport for tests: (url, headers, params) -> (status, json)
+    #: or (status, json, response_headers).
+    transport: Optional[Callable[[str, dict, dict], tuple]] = None
     _last_request: float = 0.0
+    #: Parsed rate-limit / quota budgets from the most recent response (or None).
+    last_rate_limit: Optional[Any] = None
 
     @property
     def is_configured(self) -> bool:
@@ -124,7 +128,13 @@ class ProspectiveApiClient:
         query = dict(params or {})
 
         if self.transport is not None:
-            status, body = self.transport(url, headers, query)
+            result = self.transport(url, headers, query)
+            # Transport may return (status, body) or (status, body, headers).
+            if len(result) == 3:
+                status, body, resp_headers = result
+                self.last_rate_limit = parse_rate_limit(resp_headers or {})
+            else:
+                status, body = result
             if status == 404:
                 return None
             if status >= 400:
@@ -142,6 +152,7 @@ class ProspectiveApiClient:
             try:
                 with httpx.Client(timeout=self.config.timeout_seconds) as client:
                     resp = client.get(url, headers=headers, params=query)
+                    self.last_rate_limit = parse_rate_limit(dict(resp.headers))
             except Exception as exc:
                 last = exc
                 time.sleep(2 ** (attempt - 1))
