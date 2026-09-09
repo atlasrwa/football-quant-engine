@@ -208,8 +208,12 @@ def build_quality_report(
         concept = rec.concept
         if concept.startswith("odds:"):
             odds_ts.setdefault(fid, []).append(float(rec.observed_at))
-            if "pinnacle" in str(rec.value).lower() or rec.raw_status:  # coverage set below
-                pass
+            # Odds concept is "odds:market:selection:line:bookmaker".
+            book = concept.rsplit(":", 1)[-1].lower()
+            if book == "pinnacle":
+                fc.pinnacle_seen = True
+            elif book == "bet365":
+                fc.bet365_seen = True
         if concept.startswith("confirmed_lineup"):
             t = float(rec.observed_at)
             fc.lineup_first_observed_at = (
@@ -219,10 +223,6 @@ def build_quality_report(
             fc.referee_seen = True
         if concept.startswith("injury") or concept.startswith("availability"):
             fc.injury_seen = True
-        # bookmaker coverage is encoded in the concept for odds (odds:market:sel:line)
-        # so track separately via provider_entity + a bookmaker tag if present.
-        if concept.startswith("odds:") and rec.provider:
-            pass
 
     # Vintage coverage per fixture from odds observation times.
     for fid, fc in by_fixture.items():
@@ -246,6 +246,8 @@ def build_quality_report(
     lineup = pct(lambda fc: fc.lineup_first_observed_at is not None)
     referee = pct(lambda fc: fc.referee_seen)
     injury = pct(lambda fc: fc.injury_seen)
+    pinnacle = pct(lambda fc: fc.pinnacle_seen)
+    bet365 = pct(lambda fc: fc.bet365_seen)
 
     first_lineup_stks = [
         (kickoffs[fid] - fc.lineup_first_observed_at)
@@ -266,7 +268,7 @@ def build_quality_report(
         fixtures_discovered=len(by_fixture),
         fixtures_mapped=mapped,
         early_pct=early, mid_pct=mid, late_pct=late, final_pct=final,
-        pinnacle_pct=0.0, bet365_pct=0.0,  # requires per-book capture tagging (see CLI)
+        pinnacle_pct=pinnacle, bet365_pct=bet365,
         lineup_pct=lineup,
         median_first_lineup_stk=_median(first_lineup_stks),
         genuine_close_pct=0.0,
