@@ -521,6 +521,17 @@ def build_parser() -> argparse.ArgumentParser:
     p_due.add_argument("--max-requests", type=int, default=200)
 
     p_q = sub.add_parser("quality-report", help="Emit JSON quality report from persisted captures")
+
+    p_sh = sub.add_parser(
+        "scheduler-health",
+        help="Report operational scheduler health from the ops run log (no network)",
+    )
+    p_sh.add_argument(
+        "--stale-after",
+        type=int,
+        default=None,
+        help="Seconds since last run before the scheduler is STALE (default ~3 ticks).",
+    )
     return parser
 
 
@@ -545,11 +556,52 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
         print(_json.dumps(out, indent=2))
         return 0
 
+    # scheduler-health reads the operational run log only; no API key / network.
+    # A green API with a dead timer must not read as HEALTHY, so this is a
+    # deliberately independent signal from quality-report.
+    if args.command == "scheduler-health":
+        import json as _json
+
+        from src.research.prospective.ops_log import DEFAULT_OPS_LOG
+        from src.research.prospective.scheduler_health import (
+            DEFAULT_STALE_AFTER_SECONDS,
+            assess_health,
+        )
+
+        stale_after = args.stale_after if args.stale_after else DEFAULT_STALE_AFTER_SECONDS
+        health = assess_health(
+            now=now_ts(),
+            path=Path(args.capture_root) / DEFAULT_OPS_LOG.name,
+            stale_after_seconds=stale_after,
+        )
+        print(_json.dumps(health.to_dict(), indent=2))
+        # Non-zero exit when the scheduler is not healthy, so a systemd/cron
+        # watchdog or a manual check surfaces the failure via exit code too.
+        return 0 if health.health == "HEALTHY" else 1
+
     client = ProspectiveApiClient()
     if not client.is_configured:
         # Fail closed: never attempt a request without a key.
         from src.research.prospective.api_contract import ENV_API_KEY_ALIASES
 
+        # Record an operational run so scheduler-health can distinguish a dead
+        # timer (STALE) from a running-but-misconfigured one (AUTH_FAILED).
+        if args.command in ("capture-due", "capture-upcoming"):
+            from src.research.prospective.ops_log import OpsRunRecord, append_run, hostname
+
+            _t = now_ts()
+            append_run(
+                OpsRunRecord(
+                    run_started_at=_t,
+                    run_finished_at=_t,
+                    duration_seconds=0.0,
+                    exit_status="AUTH_FAILED",
+                    health_state="AUTH_FAILED",
+                    hostname=hostname(),
+                    note="no API key configured; fail closed",
+                ),
+                path=Path(args.capture_root) / "ops_runs.jsonl",
+            )
         print(
             f"No API key set (checked {', '.join(ENV_API_KEY_ALIASES)}); "
             "prospective capture fails closed. No request attempted.",
@@ -568,8 +620,48 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
         elif args.command == "capture-lineups":
             print({"lineups_captured": collector.capture_lineup(args.match)})
         elif args.command == "capture-due":
+            from src.research.prospective.ops_log import OpsRunRecord, append_run, hostname
+
+            started = now_ts()
             result = collector.capture_due(hours=args.hours, max_requests=args.max_requests)
+            finished = now_ts()
             print(result.to_dict())
+
+            # Derive an operational exit status from the run outcome. This is
+            # the run's OWN self-report; scheduler-health additionally checks
+            # freshness so a dead timer can never read HEALTHY.
+            if result.quota_limited:
+                exit_status = "QUOTA_LIMITED"
+            elif result.errors > 0:
+                exit_status = "PARTIAL_FAILURE"
+            else:
+                exit_status = "OK"
+
+            rl = getattr(client, "last_rate_limit", None)
+            quota_remaining = rl.monthly_remaining if rl is not None else None
+
+            append_run(
+                OpsRunRecord(
+                    run_started_at=started,
+                    run_finished_at=finished,
+                    duration_seconds=round(finished - started, 3),
+                    exit_status=exit_status,
+                    health_state=result.health,
+                    fixtures_discovered=result.fixtures_discovered,
+                    fixtures_inside_horizon=result.fixtures_inside_horizon,
+                    fixtures_due=result.fixtures_due,
+                    odds_captured=result.odds_captured,
+                    lineups_captured=result.lineups_captured,
+                    availability_captured=0,
+                    referees_captured=0,
+                    errors=result.errors,
+                    quota_remaining=quota_remaining,
+                    quota_limited=result.quota_limited,
+                    competitions_active=result.competitions_active,
+                    hostname=hostname(),
+                ),
+                path=Path(args.capture_root) / "ops_runs.jsonl",
+            )
     except ProspectiveConfigError as exc:
         print(str(exc), file=sys.stderr)
         return 2
