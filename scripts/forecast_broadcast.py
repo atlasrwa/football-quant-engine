@@ -937,7 +937,41 @@ def run(
 
     ledger = BroadcastLedger(record_root)
     queue = PendingQueue(Path(record_root) / QUEUE_NAME)
-    transport = RecordingTransport() if dry_run else TelegramTransport()
+    # DATA ACCUMULATION MODE: still compute + commit + record forecasts, but do
+    # NOT transmit them to the public channel. Routing delivery to a recording
+    # transport preserves the append-only forecast record and the full capability
+    # while withholding external publication (SUPPRESSED_RESEARCH_ONLY).
+    #
+    # Publication requires BOTH conditions via the centralized policy
+    # can_publish_validated_signals(): DATA_ACCUMULATION_MODE=0 AND
+    # SIGNAL_PUBLICATION_STATE=PROMOTED. A single env change cannot open the
+    # boundary. While not promoted the forecast is classified RESEARCH_FORECAST /
+    # NOT_PROMOTED / NOT_ACTIONABLE and never transmitted as a validated signal.
+    from src.research._data_accumulation_mode import (
+        RESEARCH_FORECAST_CLASSIFICATION,
+        SUPPRESSED_RESEARCH_ONLY,
+        can_publish_validated_signals,
+    )
+
+    may_publish = can_publish_validated_signals()
+    suppressed = not may_publish
+    if dry_run:
+        transport = RecordingTransport()
+    elif suppressed:
+        transport = RecordingTransport(ok=True, detail=SUPPRESSED_RESEARCH_ONLY)
+        logger.warning(
+            "publication policy not PROMOTED: forecasts are computed and committed "
+            "to the ledger but NOT transmitted (routed to %s; classified %s). "
+            "External publication requires DATA_ACCUMULATION_MODE=0 AND "
+            "SIGNAL_PUBLICATION_STATE=PROMOTED.",
+            SUPPRESSED_RESEARCH_ONLY, "/".join(RESEARCH_FORECAST_CLASSIFICATION),
+        )
+    else:
+        transport = TelegramTransport()
+    summary["publication_suppressed"] = bool(suppressed and not dry_run)
+    summary["forecast_classification"] = (
+        None if may_publish else list(RESEARCH_FORECAST_CLASSIFICATION)
+    )
     deliverer = ForecastDeliverer(
         ledger=ledger,
         queue=queue,

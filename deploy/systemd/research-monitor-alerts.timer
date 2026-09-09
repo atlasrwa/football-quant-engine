@@ -1,0 +1,17 @@
+[Unit]
+Description=Low-frequency research-monitor health check (sends a CRITICAL alert only on an operational condition; deduped)
+Documentation=file:///home/ubuntu/scripts/research_monitor_run.sh
+
+[Timer]
+# Every 30 minutes. This only SENDS when a critical operational condition is
+# present (STALE_SCHEDULER / AUTH_FAILED / SCHEMA_DRIFT / QUOTA_LIMITED) and is
+# deduplicated, so a healthy engine produces no traffic. It is not a per-capture
+# notification.
+OnCalendar=*:0/30
+OnBootSec=5min
+Persistent=false
+AccuracySec=1min
+Unit=research-monitor@alerts.service
+
+[Install]
+WantedBy=timers.target

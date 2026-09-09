@@ -1,0 +1,13 @@
+[Unit]
+Description=Research-status Telegram monitor (mode=%i): report collector health + research readiness from persisted state (no API, no betting signals)
+Documentation=file:///home/ubuntu/scripts/research_monitor_run.sh
+
+[Service]
+Type=oneshot
+WorkingDirectory=/home/ubuntu
+TimeoutStartSec=180
+# %i is the instance (heartbeat|alerts|weekly). The runner loads .env, holds a
+# per-mode flock, bounds runtime, and never prints the Telegram credentials.
+ExecStart=/usr/bin/env bash /home/ubuntu/scripts/research_monitor_run.sh %i
+StandardOutput=journal
+StandardError=journal

@@ -266,6 +266,28 @@ def send_telegram(text: str) -> tuple[bool, str]:
 def run(dry_run: bool = False, resend_all: bool = False,
         limit: int | None = None) -> dict:
     load_env()
+    # External publication requires BOTH conditions via the centralized policy:
+    # DATA_ACCUMULATION_MODE=0 AND SIGNAL_PUBLICATION_STATE=PROMOTED. A single env
+    # change cannot open the boundary. The underlying signal capability is
+    # preserved; only publication is withheld.
+    from src.research._data_accumulation_mode import (
+        SUPPRESSED_RESEARCH_ONLY,
+        can_publish_validated_signals,
+    )
+
+    if not can_publish_validated_signals() and not dry_run:
+        return {
+            "signals_file": str(SIGNALS_FILE),
+            "suppressed": True,
+            "reason": SUPPRESSED_RESEARCH_ONLY,
+            "note": (
+                "publication policy not PROMOTED: live-signal publication is "
+                "withheld. Requires DATA_ACCUMULATION_MODE=0 AND "
+                "SIGNAL_PUBLICATION_STATE=PROMOTED."
+            ),
+            "sent": [],
+            "errors": [],
+        }
     min_strength = float(os.environ.get("SIGNALS_MIN_STRENGTH", "0") or 0)
 
     state = load_state()
