@@ -182,7 +182,12 @@ def _summary(obs: list[SideObservation], *, n_boot: int, seed: int) -> dict:
     total_obs = np.array([o.home_obs + o.away_obs for o in obs], dtype=float)
     exp_total = np.array([o.home_mu + o.away_mu for o in obs], dtype=float)
     observed_var = float(np.mean((total_obs - exp_total) ** 2)) if obs else None
-    implied_var = float(np.mean([o.home_mu + o.away_mu for o in obs])) if obs else None  # Poisson-implied
+    # Reference variance if the two sides were independent Poissons with the
+    # fitted means (Var = mean). This is a LOWER BOUND on the champion's actual
+    # convolution-implied variance (which uses NB2 + uncertainty widening, so is
+    # larger); the observed/this-ratio therefore UNDERSTATES how much the champion
+    # already over-widens the total. Labelled explicitly to avoid confusion.
+    poisson_ref_var = float(np.mean([o.home_mu + o.away_mu for o in obs])) if obs else None
     return {
         "n_fixtures": len(obs),
         "raw_corr": None if raw is None else round(raw, 4),
@@ -190,9 +195,9 @@ def _summary(obs: list[SideObservation], *, n_boot: int, seed: int) -> dict:
         "residual_corr_ci95": [None if res_lo is None else round(res_lo, 4),
                                None if res_hi is None else round(res_hi, 4)],
         "observed_total_variance": None if observed_var is None else round(observed_var, 4),
-        "poisson_implied_variance": None if implied_var is None else round(implied_var, 4),
-        "variance_ratio_obs_over_implied": (
-            round(observed_var / implied_var, 4) if observed_var and implied_var else None
+        "poisson_reference_variance_lower_bound": None if poisson_ref_var is None else round(poisson_ref_var, 4),
+        "variance_ratio_obs_over_poisson_ref": (
+            round(observed_var / poisson_ref_var, 4) if observed_var and poisson_ref_var else None
         ),
     }
 

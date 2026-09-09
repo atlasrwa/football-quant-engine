@@ -76,6 +76,11 @@ class RhoState:
         ar = np.asarray(self._away_res, dtype=float)
         if hr.std() == 0 or ar.std() == 0:
             return 0.0
+        # NOTE: this is the COUNT-SPACE Pearson residual correlation. It is fed to
+        # build_joint as the LATENT (Gaussian copula) correlation, which slightly
+        # under-applies the dependence for discrete counts (see dependence.py). The
+        # error is conservative for the REJECT conclusion; a production model would
+        # need the exact count->latent inversion.
         rho = float(np.corrcoef(hr, ar)[0, 1])
         if not np.isfinite(rho):
             return 0.0

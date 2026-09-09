@@ -10,12 +10,24 @@ Construction: a GAUSSIAN COPULA over the two discrete marginals.
 - Each side's PMF defines a discrete CDF. We map count k to the latent-normal
   interval [Phi^-1(F(k-1)), Phi^-1(F(k))].
 - The joint probability of (home=i, away=j) is the bivariate-normal rectangle
-  probability over the two intervals at correlation rho.
+  probability over the two intervals at LATENT correlation ``rho``.
 - rho = 0  -> the rectangle probability factorises -> joint = outer product of
   marginals -> total PMF == the independence convolution (verified in tests).
 - rho < 0  -> negative dependence: high home corners pair with low away corners.
   This REDUCES the variance of the total (the hypothesised correction).
 - rho > 0  -> positive dependence, INCREASES total variance.
+
+IMPORTANT — ``rho`` is the LATENT (Gaussian copula) correlation, NOT the
+observed count-space Pearson correlation. For discrete count marginals the two
+differ: a latent rho of -0.21 induces a count-space correlation of roughly
+-0.20 (slightly attenuated by discretisation). The experiment estimates a
+count-space residual correlation (~-0.21) and feeds it as the latent rho, which
+therefore UNDER-applies the dependence by a small amount. This is a conservative
+approximation for the REJECT conclusion (the correctly-scaled latent rho would
+be slightly more negative, sharpening the total further and making calibration
+WORSE, not better). Any production use would need the exact count->latent
+inversion; the experiment does not, because the direction of the error only
+strengthens the REJECT.
 
 Marginals are preserved by construction because the copula only redistributes
 mass across the joint cells; summing the joint over one axis returns the other
@@ -180,6 +192,10 @@ class JointCornerDistribution:
 
     def recovered_away_marginal(self) -> np.ndarray:
         return self.joint.sum(axis=0)
+
+    # Note: the total PMF is symmetric under a home<->away swap up to ~1e-6
+    # (bivariate-normal quadrature tolerance), not exactly, which is immaterial
+    # for O/U probabilities at integer cutoffs.
 
 
 def build_joint(
