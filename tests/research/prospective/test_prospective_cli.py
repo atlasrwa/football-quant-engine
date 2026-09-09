@@ -83,3 +83,48 @@ def test_main_fails_closed_without_key(monkeypatch, capsys):
     assert rc == 2
     err = capsys.readouterr().err
     assert "fails closed" in err
+
+
+
+def test_universe_report_absent_artifact(tmp_path):
+    """Missing coverage-matrix artifact => explicit not-present, never fabricated."""
+    from src.research.prospective.cli import universe_report
+
+    rep = universe_report(path=tmp_path / "missing.json")
+    assert rep == {"artifact_present": False}
+
+
+def test_universe_report_counts_from_artifact(tmp_path):
+    """Universe counts are derived deterministically from the matrix rows.
+
+    VERIFIED rows are mapped+verified; AMBIGUOUS/UNSUPPORTED are counted but
+    never inflate mapped/verified; classification counts are exact.
+    """
+    import json
+
+    from src.research.prospective.cli import universe_report
+
+    matrix = {
+        "rows": [
+            {"identity_status": "VERIFIED", "thestatsapi_competition_id": "comp_1",
+             "capture_classification": "CAPTURE_READY"},
+            {"identity_status": "VERIFIED", "thestatsapi_competition_id": "comp_2",
+             "capture_classification": "CAPTURE_PARTIAL"},
+            {"identity_status": "AMBIGUOUS", "thestatsapi_competition_id": None,
+             "capture_classification": "IDENTITY_UNRESOLVED"},
+            {"identity_status": "API_UNSUPPORTED", "thestatsapi_competition_id": None,
+             "capture_classification": "API_UNSUPPORTED"},
+        ]
+    }
+    p = tmp_path / "matrix.json"
+    p.write_text(json.dumps(matrix))
+    rep = universe_report(path=p)
+
+    assert rep["artifact_present"] is True
+    assert rep["competitions_expected"] == 4
+    assert rep["competitions_mapped"] == 2       # only rows carrying a comp id
+    assert rep["competitions_verified"] == 2
+    assert rep["competitions_ambiguous"] == 1
+    assert rep["competitions_api_unsupported"] == 1
+    assert rep["competitions_capture_ready"] == 1
+    assert rep["competitions_capture_partial"] == 1

@@ -115,6 +115,48 @@ def load_active_universe(*, include_partial: bool = True, path: Path = COVERAGE_
     return out
 
 
+def universe_report(*, path: Path = COVERAGE_MATRIX_PATH) -> dict:
+    """Summarise the data-driven universe from the persisted coverage matrix.
+
+    Reads the committed coverage-matrix artifact (no network) and returns the
+    step-30 universe counts so the quality report is self-describing:
+    competitions_expected / mapped / verified / capture_ready, plus the full
+    identity + classification funnel. Returns an explicit ``artifact_present:
+    false`` block when the scan has not been run yet (never fabricates counts).
+    """
+    import json
+
+    p = Path(path)
+    if not p.exists():
+        return {"artifact_present": False}
+    data = json.loads(p.read_text())
+    rows = data.get("rows", [])
+
+    def n_ident(status: str) -> int:
+        return sum(1 for r in rows if r.get("identity_status") == status)
+
+    def n_class(klass: str) -> int:
+        return sum(1 for r in rows if r.get("capture_classification") == klass)
+
+    # "Mapped" = has any TheStatsAPI competition id OR a resolved identity;
+    # here we treat every row that carries a thestatsapi_competition_id as
+    # mapped, plus VERIFIED rows (which always carry one). UNKNOWN stays out.
+    mapped = sum(1 for r in rows if r.get("thestatsapi_competition_id"))
+    return {
+        "artifact_present": True,
+        "artifact_path": str(p),
+        "competitions_expected": len(rows),
+        "competitions_mapped": mapped,
+        "competitions_verified": n_ident("VERIFIED"),
+        "competitions_ambiguous": n_ident("AMBIGUOUS"),
+        "competitions_unresolved": n_ident("UNRESOLVED"),
+        "competitions_api_unsupported": n_ident("API_UNSUPPORTED"),
+        "competitions_capture_ready": n_class("CAPTURE_READY"),
+        "competitions_capture_partial": n_class("CAPTURE_PARTIAL"),
+        "competitions_market_insufficient": n_class("MARKET_COVERAGE_INSUFFICIENT"),
+    }
+
+
 @dataclass
 class CollectorResult:
     """Outcome of a collector run (for reporting / testing).
@@ -490,11 +532,17 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
     if args.command == "quality-report":
         import json as _json
 
+        from src.research.prospective.coverage_funnel import analysis_support
         from src.research.prospective.quality import build_quality_report
 
         store = CaptureStore(path=store_path)
         report = build_quality_report(store, now=now_ts())
-        print(_json.dumps(report.to_dict(), indent=2))
+        out = report.to_dict()
+        # Step-30: make the report self-describing about the data-driven
+        # universe and the coverage-bias funnel (UNKNOWN never coerced).
+        out["universe"] = universe_report()
+        out["analysis_support"] = analysis_support(store).to_dict()
+        print(_json.dumps(out, indent=2))
         return 0
 
     client = ProspectiveApiClient()
