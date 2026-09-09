@@ -137,6 +137,33 @@ class ConceptObservation:
 
 
 @dataclass(frozen=True)
+class SideStats:
+    """Per-side (home/away) raw values for one provider, for champion features.
+
+    Holds the exact per-team stats the champion's feature builder consumes
+    (shots, possession, fouls) plus the outcome components, sourced from ONE
+    provider. FootyStats-only stats (dangerous_attacks, attacks) are stored
+    separately so the provider-quality vs additional-feature distinction is
+    explicit. NULL != ZERO: any absent value is None.
+    """
+    shots_home: Optional[float] = None
+    shots_away: Optional[float] = None
+    possession_home: Optional[float] = None
+    possession_away: Optional[float] = None
+    fouls_home: Optional[float] = None
+    fouls_away: Optional[float] = None
+    # Outcome components (per side)
+    corners_home: Optional[float] = None
+    corners_away: Optional[float] = None
+    yellow_home: Optional[float] = None
+    yellow_away: Optional[float] = None
+    red_home: Optional[float] = None
+    red_away: Optional[float] = None
+    goals_home: Optional[float] = None
+    goals_away: Optional[float] = None
+
+
+@dataclass(frozen=True)
 class PairedFixture:
     """A canonically-joined FootyStats+TheStatsAPI fixture."""
     canonical_home_tm: str
@@ -148,6 +175,18 @@ class PairedFixture:
     fs_match_id: int
     tsa_match_ref: str
     concepts: dict[str, ConceptObservation]
+    # Per-side provider stats for the champion feature builder (Phase 6 bridge).
+    fs_side: Optional["SideStats"] = None
+    tsa_side: Optional["SideStats"] = None
+    # FootyStats-only extra features (no TheStatsAPI equivalent): per side.
+    fs_dangerous_attacks_home: Optional[float] = None
+    fs_dangerous_attacks_away: Optional[float] = None
+    fs_attacks_home: Optional[float] = None
+    fs_attacks_away: Optional[float] = None
+    # Realized outcome (provider-agreed ground truth; goals/corners/cards agree)
+    outcome_total_corners: Optional[float] = None
+    outcome_total_cards: Optional[float] = None
+    outcome_total_goals: Optional[float] = None
     # provenance
     fs_observed_at: Optional[int] = None   # unknown for corpus
     tsa_observed_at: Optional[int] = None  # unknown: TSA stats carry no capture time
@@ -160,6 +199,39 @@ class PairedFixture:
         if obs is None:
             return None
         return obs.footystats if provider == "footystats" else obs.thestatsapi
+
+
+def _fs_side_stats(m: dict) -> SideStats:
+    """Per-side FootyStats values for champion features + outcome components."""
+    def n(k): return _num(m.get(k))
+    poss_h = n("team_a_possession"); poss_a = n("team_b_possession")
+    if poss_h is not None and (poss_h < 0 or poss_h > 100):
+        poss_h = None
+    if poss_a is not None and (poss_a < 0 or poss_a > 100):
+        poss_a = None
+    return SideStats(
+        shots_home=n("team_a_shots"), shots_away=n("team_b_shots"),
+        possession_home=poss_h, possession_away=poss_a,
+        fouls_home=n("team_a_fouls"), fouls_away=n("team_b_fouls"),
+        corners_home=n("team_a_corners"), corners_away=n("team_b_corners"),
+        yellow_home=n("team_a_yellow_cards"), yellow_away=n("team_b_yellow_cards"),
+        red_home=n("team_a_red_cards"), red_away=n("team_b_red_cards"),
+        goals_home=n("homeGoalCount"), goals_away=n("awayGoalCount"),
+    )
+
+
+def _tsa_side_stats(sd: dict, score: dict) -> SideStats:
+    """Per-side TheStatsAPI values for champion features + outcome components."""
+    def ov(stat, side): return _num(_tsa_cell(sd, "overview", stat, side))
+    return SideStats(
+        shots_home=ov("total_shots", "home"), shots_away=ov("total_shots", "away"),
+        possession_home=ov("ball_possession", "home"), possession_away=ov("ball_possession", "away"),
+        fouls_home=ov("fouls", "home"), fouls_away=ov("fouls", "away"),
+        corners_home=ov("corner_kicks", "home"), corners_away=ov("corner_kicks", "away"),
+        yellow_home=ov("yellow_cards", "home"), yellow_away=ov("yellow_cards", "away"),
+        red_home=ov("red_cards", "home"), red_away=ov("red_cards", "away"),
+        goals_home=_num(score.get("home")), goals_away=_num(score.get("away")),
+    )
 
 
 @dataclass
@@ -287,6 +359,13 @@ def build_epl_paired_dataset(
             fs_gh, fs_ga = _num(m.get("homeGoalCount")), _num(m.get("awayGoalCount"))
             score_ok = (fs_gh == _num(score.get("home")) and fs_ga == _num(score.get("away")))
 
+            # Realized outcomes (ground truth). Goals/corners/cards agree across
+            # providers (Phase 3), so we take FootyStats realized outcome as the
+            # label; both providers' per-side stats are retained for features.
+            oc = concepts["total_corners"].footystats
+            ocards = concepts["total_cards"].footystats
+            og = concepts["total_goals"].footystats
+
             fs_seasons.add(str(m.get("season", "")))
             dates.append(fsdu)
             paired.append(PairedFixture(
@@ -299,6 +378,15 @@ def build_epl_paired_dataset(
                 fs_match_id=int(m.get("id", 0)),
                 tsa_match_ref=c["mt"],
                 concepts=concepts,
+                fs_side=_fs_side_stats(m),
+                tsa_side=_tsa_side_stats(sd, score),
+                fs_dangerous_attacks_home=_num(m.get("team_a_dangerous_attacks")),
+                fs_dangerous_attacks_away=_num(m.get("team_b_dangerous_attacks")),
+                fs_attacks_home=_num(m.get("team_a_attacks")),
+                fs_attacks_away=_num(m.get("team_b_attacks")),
+                outcome_total_corners=oc,
+                outcome_total_cards=ocards,
+                outcome_total_goals=og,
                 fs_observed_at=None,
                 tsa_observed_at=None,
                 score_agreement=bool(score_ok),
