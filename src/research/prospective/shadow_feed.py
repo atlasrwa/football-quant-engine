@@ -109,6 +109,112 @@ def _classification_ok(record: dict) -> bool:
     return REQUIRED_CLASSIFICATION.issubset(tokens)
 
 
+# ---------------------------------------------------------------------------
+# Fail-closed scientific-field validation (BLOCKER 2)
+#
+# Telegram is an observability surface: a corrupt / incomplete research record
+# must NEVER be rendered with fabricated zero values ("Market: 0.0%",
+# "Residual: +0.0 pp"). Every SCIENTIFIC field the card displays is validated
+# up front; anything missing / non-finite / out-of-range makes the record
+# non-publishable (missing truth stays missing). Presentation-only fallback
+# (a human fixture NAME degrading to the fixture id) is unaffected — that is a
+# display fallback, not a scientific-value fallback.
+# ---------------------------------------------------------------------------
+
+import math as _math
+
+#: Movement directions the evaluation card may display. Anything else fails
+#: closed (mirrors shadow_residual.MovementDirection; no new definition).
+_VALID_MOVEMENT_DIRECTIONS: frozenset[str] = frozenset(
+    {"TOWARD_MODEL", "AWAY_FROM_MODEL", "FLAT"}
+)
+
+
+def _is_finite_number(value) -> bool:
+    """True iff value is a real (non-bool) int/float that is finite (no NaN/inf)."""
+    if isinstance(value, bool):
+        return False
+    if not isinstance(value, (int, float)):
+        return False
+    return _math.isfinite(float(value))
+
+
+def _is_probability(value) -> bool:
+    """True iff value is a finite number strictly in (0, 1)."""
+    return _is_finite_number(value) and 0.0 < float(value) < 1.0
+
+
+def _nonempty_str(value) -> bool:
+    return isinstance(value, str) and value.strip() != ""
+
+
+def shadow_scientific_fields_ok(record: dict) -> bool:
+    """Validate every SCIENTIFIC field a shadow card relies on (fail closed).
+
+    Requires (all must be present, correctly typed, finite, and in-range):
+      * non-empty ``fixture_id`` / ``shadow_id`` / ``bookmaker`` / ``market`` /
+        ``selection``
+      * ``line`` finite (this pipeline only emits over/under line markets, so a
+        line is always required — no new market semantics are invented)
+      * ``p_model`` and ``p_market_devig`` finite and strictly in (0, 1)
+      * ``raw_probability_residual`` finite
+      * ``information_cutoff`` and ``kickoff_ts`` finite, with
+        ``information_cutoff < kickoff_ts`` (the frozen shadow is pre-kickoff)
+    """
+    if not isinstance(record, dict):
+        return False
+    for key in ("fixture_id", "shadow_id", "bookmaker", "market", "selection"):
+        if not _nonempty_str(record.get(key)):
+            return False
+    if not _is_finite_number(record.get("line")):
+        return False
+    if not _is_probability(record.get("p_model")):
+        return False
+    if not _is_probability(record.get("p_market_devig")):
+        return False
+    if not _is_finite_number(record.get("raw_probability_residual")):
+        return False
+    cutoff = record.get("information_cutoff")
+    kickoff = record.get("kickoff_ts")
+    if not _is_finite_number(cutoff) or not _is_finite_number(kickoff):
+        return False
+    if not (float(cutoff) < float(kickoff)):
+        return False
+    return True
+
+
+def evaluation_scientific_fields_ok(record: dict) -> bool:
+    """Validate every SCIENTIFIC field an evaluation card displays (fail closed).
+
+    Requires:
+      * non-empty ``evaluation_id`` / ``shadow_id`` / ``fixture_id`` /
+        ``bookmaker`` / ``market`` / ``selection``
+      * ``line`` finite
+      * ``p_market_earlier`` and ``later_market_devig`` finite and in (0, 1)
+      * ``delta_probability`` finite
+      * ``later_observed_at`` finite
+      * ``movement_direction`` in {TOWARD_MODEL, AWAY_FROM_MODEL, FLAT}
+    """
+    if not isinstance(record, dict):
+        return False
+    for key in ("evaluation_id", "shadow_id", "fixture_id", "bookmaker", "market", "selection"):
+        if not _nonempty_str(record.get(key)):
+            return False
+    if not _is_finite_number(record.get("line")):
+        return False
+    if not _is_probability(record.get("p_market_earlier")):
+        return False
+    if not _is_probability(record.get("later_market_devig")):
+        return False
+    if not _is_finite_number(record.get("delta_probability")):
+        return False
+    if not _is_finite_number(record.get("later_observed_at")):
+        return False
+    if record.get("movement_direction") not in _VALID_MOVEMENT_DIRECTIONS:
+        return False
+    return True
+
+
 def is_publishable_shadow(record: dict) -> bool:
     """Gate for a SHADOW_RESIDUAL candidate entering the LIVE research feed.
 
@@ -118,6 +224,8 @@ def is_publishable_shadow(record: dict) -> bool:
         published as if it were live)
       * classification contains RESEARCH_ONLY / NOT_VALIDATED / NOT_ACTIONABLE
       * a non-empty ``shadow_id`` (the dedup / delivery key)
+      * ALL scientific fields the card renders are present, finite and in-range
+        (see :func:`shadow_scientific_fields_ok`) — no zero-default rendering.
     """
     if not isinstance(record, dict):
         return False
@@ -129,16 +237,21 @@ def is_publishable_shadow(record: dict) -> bool:
         return False
     if not record.get("shadow_id"):
         return False
+    if not shadow_scientific_fields_ok(record):
+        return False
     return True
 
 
-def is_publishable_evaluation(record: dict) -> bool:
-    """Gate for a SHADOW_RESIDUAL_EVALUATION entering the LIVE research feed.
+def is_structurally_valid_evaluation(record: dict) -> bool:
+    """Structural + scientific validity of an evaluation record ITSELF.
 
-    Requires (all, fail-closed):
+    This does NOT prove the referenced parent shadow is prospective; that is
+    checked separately (see :func:`is_publishable_evaluation`). Requires:
       * ``record_type == SHADOW_RESIDUAL_EVALUATION``
       * classification contains RESEARCH_ONLY / NOT_VALIDATED / NOT_ACTIONABLE
-      * non-empty ``evaluation_id`` (dedup key) and ``shadow_id`` (audit link)
+      * non-empty ``evaluation_id`` (dedup key) and ``shadow_id`` (parent link)
+      * all displayed scientific fields valid (see
+        :func:`evaluation_scientific_fields_ok`)
     """
     if not isinstance(record, dict):
         return False
@@ -149,6 +262,40 @@ def is_publishable_evaluation(record: dict) -> bool:
     if not record.get("evaluation_id"):
         return False
     if not record.get("shadow_id"):
+        return False
+    if not evaluation_scientific_fields_ok(record):
+        return False
+    return True
+
+
+def is_publishable_evaluation(record: dict, *, shadow_lookup: dict) -> bool:
+    """Gate for a SHADOW_RESIDUAL_EVALUATION entering the LIVE research feed.
+
+    An evaluation is publishable IFF (BLOCKER 1 — parent-provenance proof):
+      1. the evaluation itself is structurally + scientifically valid
+         (:func:`is_structurally_valid_evaluation`), AND
+      2. its ``shadow_id`` resolves to a persisted PARENT shadow in
+         ``shadow_lookup``, AND
+      3. that parent passes :func:`is_publishable_shadow` (i.e. it is a
+         legitimate PROSPECTIVE_SHADOW with valid scientific fields).
+
+    Consequences (all fail closed):
+      * a RECONSTRUCTED_SHADOW parent  -> NEVER publish
+      * a missing parent               -> NEVER publish
+      * a malformed parent             -> NEVER publish
+      * a prospective, valid parent    -> eligible
+
+    Provenance is proven by PARENT LINKAGE, never inferred from the evaluation's
+    own classification (which reconstructed evaluations may also carry).
+    """
+    if not is_structurally_valid_evaluation(record):
+        return False
+    if not isinstance(shadow_lookup, dict):
+        return False
+    parent = shadow_lookup.get(record.get("shadow_id"))
+    if not isinstance(parent, dict):
+        return False
+    if not is_publishable_shadow(parent):
         return False
     return True
 
@@ -183,7 +330,7 @@ def format_t_minus(*, kickoff_ts: Optional[float], information_cutoff: float) ->
     (mission section 5). Examples: "T-58m", "T-1h 42m". If kickoff is unknown,
     or the cutoff is at/after kickoff, returns "T-?".
     """
-    if kickoff_ts is None:
+    if kickoff_ts is None or information_cutoff is None:
         return "T-?"
     delta = float(kickoff_ts) - float(information_cutoff)
     if delta <= 0:
@@ -231,6 +378,37 @@ def _short_ref(shadow_id: str) -> str:
     return str(shadow_id)[:8]
 
 
+class ShadowCardError(ValueError):
+    """Raised if a card is asked to render a missing/invalid SCIENTIFIC field.
+
+    Rendering is only ever reached for records that already passed the
+    publishable gate, so this is a defence-in-depth guarantee: a scientific
+    value is NEVER fabricated as 0.0. (Presentation-only fixture NAME fallback
+    to the fixture id is handled separately and is not a scientific value.)
+    """
+
+
+def _req_prob(record: dict, key: str) -> float:
+    v = record.get(key)
+    if not _is_probability(v):
+        raise ShadowCardError(f"missing/invalid probability field {key!r}")
+    return float(v)
+
+
+def _req_num(record: dict, key: str) -> float:
+    v = record.get(key)
+    if not _is_finite_number(v):
+        raise ShadowCardError(f"missing/invalid numeric field {key!r}")
+    return float(v)
+
+
+def _req_str(record: dict, key: str) -> str:
+    v = record.get(key)
+    if not _nonempty_str(v):
+        raise ShadowCardError(f"missing/invalid text field {key!r}")
+    return v.strip()
+
+
 # ---------------------------------------------------------------------------
 # Card rendering
 # ---------------------------------------------------------------------------
@@ -255,16 +433,20 @@ def render_shadow_card(record: dict, *, resolver: Optional[FixtureNameResolver] 
     All numbers come straight from the record; nothing is recomputed.
     """
     fixture = _fixture_label(record, resolver)
-    market_label = _line_label(record.get("market", ""), record.get("selection", ""), record.get("line"))
-    bookmaker = str(record.get("bookmaker", "")).strip() or "unknown"
+    # Scientific fields: strict access (no zero-default). Rendering is only
+    # reached for gated records, so these are guaranteed present; the strict
+    # accessors are defence in depth against a fabricated 0.0.
+    market_label = _line_label(_req_str(record, "market"), _req_str(record, "selection"),
+                               _req_num(record, "line"))
+    bookmaker = _req_str(record, "bookmaker")
     tminus = format_t_minus(
-        kickoff_ts=record.get("kickoff_ts"),
-        information_cutoff=record.get("information_cutoff", 0.0),
+        kickoff_ts=_req_num(record, "kickoff_ts"),
+        information_cutoff=_req_num(record, "information_cutoff"),
     )
-    p_market = format_probability_pct(record.get("p_market_devig", 0.0))
-    p_model = format_probability_pct(record.get("p_model", 0.0))
-    resid = format_pp(record.get("raw_probability_residual", 0.0))
-    ref = _short_ref(record.get("shadow_id", ""))
+    p_market = format_probability_pct(_req_prob(record, "p_market_devig"))
+    p_model = format_probability_pct(_req_prob(record, "p_model"))
+    resid = format_pp(_req_num(record, "raw_probability_residual"))
+    ref = _short_ref(_req_str(record, "shadow_id"))
 
     lines = [
         _HEADER_SHADOW,
@@ -315,10 +497,11 @@ def render_shadow_group_card(
     for book in order:
         lines.append(book)
         for r in by_book[book]:
-            market_label = _line_label(r.get("market", ""), r.get("selection", ""), r.get("line"))
-            p_market = format_probability_pct(r.get("p_market_devig", 0.0))
-            p_model = format_probability_pct(r.get("p_model", 0.0))
-            resid = format_pp(r.get("raw_probability_residual", 0.0))
+            market_label = _line_label(_req_str(r, "market"), _req_str(r, "selection"),
+                                       _req_num(r, "line"))
+            p_market = format_probability_pct(_req_prob(r, "p_market_devig"))
+            p_model = format_probability_pct(_req_prob(r, "p_model"))
+            resid = format_pp(_req_num(r, "raw_probability_residual"))
             lines.append(f"\u2022 {market_label}: Market {p_market} | Model {p_model} | {resid}")
         lines.append("")
 
@@ -331,7 +514,7 @@ def _group_frozen_hint(records: list[dict]) -> str:
     labels = [
         format_t_minus(
             kickoff_ts=r.get("kickoff_ts"),
-            information_cutoff=r.get("information_cutoff", 0.0),
+            information_cutoff=r.get("information_cutoff"),
         )
         for r in records
     ]
@@ -348,26 +531,32 @@ def render_evaluation_card(record: dict, *, resolver: Optional[FixtureNameResolv
     a recomputation. Everything degrades gracefully if the original is absent.
     """
     fixture = _fixture_label(record, resolver)
-    market_label = _line_label(record.get("market", ""), record.get("selection", ""), record.get("line"))
-    bookmaker = str(record.get("bookmaker", "")).strip() or "unknown"
+    # Scientific fields: strict access (no zero-default).
+    market_label = _line_label(_req_str(record, "market"), _req_str(record, "selection"),
+                               _req_num(record, "line"))
+    bookmaker = _req_str(record, "bookmaker")
 
-    p_market_earlier = format_probability_pct(record.get("p_market_earlier", 0.0))
-    later = format_probability_pct(record.get("later_market_devig", 0.0))
-    movement = format_pp(record.get("delta_probability", 0.0))
-    direction = _DIRECTION_LABEL.get(
-        str(record.get("movement_direction", "")), "Direction: FLAT"
-    )
-    ref = _short_ref(record.get("shadow_id", ""))
+    p_market_earlier = format_probability_pct(_req_prob(record, "p_market_earlier"))
+    later = format_probability_pct(_req_prob(record, "later_market_devig"))
+    movement = format_pp(_req_num(record, "delta_probability"))
+    md = record.get("movement_direction")
+    if md not in _VALID_MOVEMENT_DIRECTIONS:
+        raise ShadowCardError(f"invalid movement_direction {md!r}")
+    direction = _DIRECTION_LABEL[md]
+    ref = _short_ref(_req_str(record, "shadow_id"))
 
     # Optional enrichment from the frozen original shadow (persisted, not re-run).
+    # This is a validated PARENT shadow (the evaluation only publishes when its
+    # parent is publishable), so its scientific fields are trustworthy here.
     model_line = None
     initial_resid_line = None
     if shadow_lookup:
         original = shadow_lookup.get(record.get("shadow_id"))
-        if isinstance(original, dict):
-            model_line = f"Research model: {format_probability_pct(original.get('p_model', 0.0))}"
+        if isinstance(original, dict) and _is_probability(original.get("p_model")) \
+                and _is_finite_number(original.get("raw_probability_residual")):
+            model_line = f"Research model: {format_probability_pct(original['p_model'])}"
             initial_resid_line = (
-                f"Initial residual: {format_pp(original.get('raw_probability_residual', 0.0))}"
+                f"Initial residual: {format_pp(original['raw_probability_residual'])}"
             )
 
     lines = [
@@ -484,11 +673,19 @@ def select_unseen_shadows(records: Iterable[dict], *, ledger: NotifyLedger) -> l
     return out
 
 
-def select_unseen_evaluations(records: Iterable[dict], *, ledger: NotifyLedger) -> list[dict]:
+def select_unseen_evaluations(
+    records: Iterable[dict], *, ledger: NotifyLedger, shadow_lookup: dict
+) -> list[dict]:
+    """Filter to publishable, not-yet-delivered evaluations, preserving order.
+
+    An evaluation is only publishable when its parent shadow (resolved via
+    ``shadow_lookup``) is itself publishable-prospective (BLOCKER 1). Dedup by
+    ``evaluation_id`` within the batch and against the ledger.
+    """
     out: list[dict] = []
     seen: set[str] = set()
     for r in records:
-        if not is_publishable_evaluation(r):
+        if not is_publishable_evaluation(r, shadow_lookup=shadow_lookup):
             continue
         eid = str(r.get("evaluation_id"))
         if eid in seen:
@@ -581,14 +778,18 @@ def publish_shadow_feed(
     all_shadows = list(candidate_store.read_all_dicts())
     all_evaluations = list(evaluation_store.read_all_dicts())
 
-    # A lookup so an evaluation card can show the frozen original residual
-    # (persisted, not recomputed). Includes ALL persisted shadows for linkage.
+    # A lookup mapping shadow_id -> the persisted parent shadow. Includes ALL
+    # persisted shadows (prospective, reconstructed, malformed) so evaluation
+    # parent-linkage validation (BLOCKER 1) can re-check the parent with
+    # is_publishable_shadow and reject non-prospective / malformed parents.
     shadow_lookup = {
         str(r.get("shadow_id")): r for r in all_shadows if r.get("shadow_id")
     }
 
     unseen_shadows = select_unseen_shadows(all_shadows, ledger=ledger)
-    unseen_evaluations = select_unseen_evaluations(all_evaluations, ledger=ledger)
+    unseen_evaluations = select_unseen_evaluations(
+        all_evaluations, ledger=ledger, shadow_lookup=shadow_lookup
+    )
 
     result = ShadowFeedResult(
         shadows_seen=len(unseen_shadows),

@@ -72,6 +72,7 @@ def _evaluation(**over) -> dict:
         "line": 2.5,
         "p_market_earlier": 0.512,
         "later_market_devig": 0.534,
+        "later_observed_at": 998000.0,
         "delta_probability": 0.022,
         "movement_direction": "TOWARD_MODEL",
     }
@@ -296,27 +297,27 @@ def test_12_restart_does_not_replay_history(tmp_path):
 
 
 def test_13_toward_model_formatting(tmp_path):
-    _seed(tmp_path, evaluations=[_evaluation(movement_direction="TOWARD_MODEL")])
+    _seed(tmp_path, shadows=[_shadow()], evaluations=[_evaluation(movement_direction="TOWARD_MODEL")])
     t = _OkTransport()
     _publish(tmp_path, t)
-    assert "Direction: TOWARD MODEL" in t.sent[0]
+    assert "Direction: TOWARD MODEL" in t.sent[-1]
     # Not celebrated as a win.
-    assert "win" not in t.sent[0].lower()
+    assert "win" not in t.sent[-1].lower()
 
 
 def test_14_away_from_model_formatting(tmp_path):
-    _seed(tmp_path, evaluations=[_evaluation(movement_direction="AWAY_FROM_MODEL")])
+    _seed(tmp_path, shadows=[_shadow()], evaluations=[_evaluation(movement_direction="AWAY_FROM_MODEL")])
     t = _OkTransport()
     _publish(tmp_path, t)
-    assert "Direction: AWAY FROM MODEL" in t.sent[0]
-    assert "loss" not in t.sent[0].lower()
+    assert "Direction: AWAY FROM MODEL" in t.sent[-1]
+    assert "loss" not in t.sent[-1].lower()
 
 
 def test_15_flat_formatting(tmp_path):
-    _seed(tmp_path, evaluations=[_evaluation(movement_direction="FLAT")])
+    _seed(tmp_path, shadows=[_shadow()], evaluations=[_evaluation(movement_direction="FLAT")])
     t = _OkTransport()
     _publish(tmp_path, t)
-    assert "Direction: FLAT" in t.sent[0]
+    assert "Direction: FLAT" in t.sent[-1]
 
 
 # ---------------------------------------------------------------------------
@@ -561,3 +562,230 @@ def test_evaluation_malformed_classification_fails_closed(tmp_path):
     t = _OkTransport()
     res = _publish(tmp_path, t)
     assert res.messages_sent == 0 and t.sent == []
+
+
+
+# ===========================================================================
+# BLOCKER 1 — evaluation must prove its parent shadow is prospective
+# ===========================================================================
+
+
+def _lookup(*shadows: dict) -> dict:
+    return {s["shadow_id"]: s for s in shadows}
+
+
+def test_b1_1_evaluation_linked_to_prospective_publishes(tmp_path):
+    parent = _shadow(shadow_id="p1", fixture_id="F1")
+    ev = _evaluation(shadow_id="p1", fixture_id="F1", evaluation_id="ev_p1")
+    assert shadow_feed.is_publishable_evaluation(ev, shadow_lookup=_lookup(parent)) is True
+    _seed(tmp_path, shadows=[parent], evaluations=[ev])
+    t = _OkTransport()
+    res = _publish(tmp_path, t)
+    assert res.evaluations_published == 1
+    assert any("SHADOW UPDATE" in m for m in t.sent)
+
+
+def test_b1_2_evaluation_linked_to_reconstructed_does_not_publish(tmp_path):
+    parent = _shadow(shadow_id="r1", fixture_id="F1", provenance_kind="RECONSTRUCTED_SHADOW")
+    ev = _evaluation(shadow_id="r1", fixture_id="F1", evaluation_id="ev_r1")
+    # The evaluation itself is structurally valid, but its parent is reconstructed.
+    assert shadow_feed.is_structurally_valid_evaluation(ev) is True
+    assert shadow_feed.is_publishable_evaluation(ev, shadow_lookup=_lookup(parent)) is False
+    _seed(tmp_path, shadows=[parent], evaluations=[ev])
+    t = _OkTransport()
+    res = _publish(tmp_path, t)
+    assert res.evaluations_published == 0
+    assert all("SHADOW UPDATE" not in m for m in t.sent)
+
+
+def test_b1_3_evaluation_missing_parent_does_not_publish(tmp_path):
+    ev = _evaluation(shadow_id="ghost", fixture_id="F1", evaluation_id="ev_ghost")
+    assert shadow_feed.is_publishable_evaluation(ev, shadow_lookup={}) is False
+    _seed(tmp_path, shadows=[], evaluations=[ev])  # no parent persisted
+    t = _OkTransport()
+    res = _publish(tmp_path, t)
+    assert res.evaluations_published == 0 and t.sent == []
+
+
+def test_b1_4_evaluation_malformed_parent_does_not_publish(tmp_path):
+    # Parent present but malformed (bad p_model) -> not publishable-prospective.
+    parent = _shadow(shadow_id="m1", fixture_id="F1", p_model=1.5)  # invalid probability
+    ev = _evaluation(shadow_id="m1", fixture_id="F1", evaluation_id="ev_m1")
+    assert shadow_feed.is_publishable_shadow(parent) is False
+    assert shadow_feed.is_publishable_evaluation(ev, shadow_lookup=_lookup(parent)) is False
+    _seed(tmp_path, shadows=[parent], evaluations=[ev])
+    t = _OkTransport()
+    res = _publish(tmp_path, t)
+    assert res.evaluations_published == 0
+    assert all("SHADOW UPDATE" not in m for m in t.sent)
+
+
+def test_b1_5_evaluation_not_publishable_from_own_classification_alone(tmp_path):
+    # Own classification is valid, but there is NO publishable parent. Provenance
+    # must be proven by parent linkage, never inferred from classification.
+    ev = _evaluation(shadow_id="orphan", evaluation_id="ev_orphan")
+    assert shadow_feed._classification_ok(ev) is True
+    assert shadow_feed.is_structurally_valid_evaluation(ev) is True
+    assert shadow_feed.is_publishable_evaluation(ev, shadow_lookup={}) is False
+    # Even with a reconstructed parent carrying the same valid classification.
+    recon = _shadow(shadow_id="orphan", provenance_kind="RECONSTRUCTED_SHADOW")
+    assert shadow_feed.is_publishable_evaluation(ev, shadow_lookup=_lookup(recon)) is False
+
+
+# ===========================================================================
+# BLOCKER 2 — scientific fields must fail closed, not default to zero
+# ===========================================================================
+
+
+def test_b2_1_valid_prospective_shadow_renders_unchanged(tmp_path):
+    _seed(tmp_path, shadows=[_shadow()])
+    t = _OkTransport()
+    _publish(tmp_path, t)
+    assert "Market: 51.2%" in t.sent[0]
+    assert "Research model: 57.0%" in t.sent[0]
+    assert "Residual: +5.8 pp" in t.sent[0]
+
+
+@pytest.mark.parametrize("bad", [1.5, 0.0, 1.0, -0.1, "0.57", None])
+def test_b2_2_malformed_p_model_rejected(bad):
+    assert shadow_feed.is_publishable_shadow(_shadow(p_model=bad)) is False
+
+
+@pytest.mark.parametrize("bad", [1.5, 0.0, 1.0, -0.1, "0.5", None])
+def test_b2_3_malformed_p_market_rejected(bad):
+    assert shadow_feed.is_publishable_shadow(_shadow(p_market_devig=bad)) is False
+
+
+def test_b2_4_missing_residual_rejected():
+    rec = _shadow()
+    del rec["raw_probability_residual"]
+    assert shadow_feed.is_publishable_shadow(rec) is False
+
+
+def test_b2_5_nan_inf_rejected():
+    assert shadow_feed.is_publishable_shadow(_shadow(raw_probability_residual=float("nan"))) is False
+    assert shadow_feed.is_publishable_shadow(_shadow(raw_probability_residual=float("inf"))) is False
+    assert shadow_feed.is_publishable_shadow(_shadow(p_model=float("nan"))) is False
+    assert shadow_feed.is_publishable_shadow(_shadow(kickoff_ts=float("inf"))) is False
+
+
+def test_b2_6_cutoff_ge_kickoff_rejected():
+    assert shadow_feed.is_publishable_shadow(_shadow(information_cutoff=2000.0, kickoff_ts=2000.0)) is False
+    assert shadow_feed.is_publishable_shadow(_shadow(information_cutoff=2001.0, kickoff_ts=2000.0)) is False
+
+
+def test_b2_7_missing_bookmaker_market_selection_rejected():
+    assert shadow_feed.is_publishable_shadow(_shadow(bookmaker="")) is False
+    assert shadow_feed.is_publishable_shadow(_shadow(market="   ")) is False
+    rec = _shadow(); del rec["selection"]
+    assert shadow_feed.is_publishable_shadow(rec) is False
+    assert shadow_feed.is_publishable_shadow(_shadow(fixture_id="")) is False
+
+
+def test_b2_line_required_finite():
+    assert shadow_feed.is_publishable_shadow(_shadow(line=None)) is False
+    assert shadow_feed.is_publishable_shadow(_shadow(line="2.5")) is False
+    assert shadow_feed.is_publishable_shadow(_shadow(line=float("nan"))) is False
+
+
+def test_b2_8_malformed_evaluation_rejected():
+    parent = _shadow(shadow_id="p1")
+    lut = _lookup(parent)
+    # missing later_market_devig
+    ev = _evaluation(shadow_id="p1"); del ev["later_market_devig"]
+    assert shadow_feed.is_publishable_evaluation(ev, shadow_lookup=lut) is False
+    # non-finite delta
+    ev2 = _evaluation(shadow_id="p1", delta_probability=float("inf"))
+    assert shadow_feed.is_publishable_evaluation(ev2, shadow_lookup=lut) is False
+    # bad earlier probability
+    ev3 = _evaluation(shadow_id="p1", p_market_earlier=0.0)
+    assert shadow_feed.is_publishable_evaluation(ev3, shadow_lookup=lut) is False
+
+
+def test_b2_9_unknown_movement_direction_rejected():
+    parent = _shadow(shadow_id="p1")
+    ev = _evaluation(shadow_id="p1", movement_direction="MOON")
+    assert shadow_feed.is_publishable_evaluation(ev, shadow_lookup=_lookup(parent)) is False
+    ev2 = _evaluation(shadow_id="p1", movement_direction="")
+    assert shadow_feed.is_publishable_evaluation(ev2, shadow_lookup=_lookup(parent)) is False
+
+
+def test_b2_render_never_fabricates_zero(tmp_path):
+    # A record that slips past would raise rather than print 0.0 — prove the
+    # strict renderer refuses a missing scientific field.
+    bad = _shadow()
+    del bad["p_model"]
+    with pytest.raises(shadow_feed.ShadowCardError):
+        shadow_feed.render_shadow_card(bad)
+    # And the feed as a whole never emits a fabricated 0.0 card for it.
+    _seed(tmp_path, shadows=[bad])
+    t = _OkTransport()
+    res = _publish(tmp_path, t)
+    assert res.messages_sent == 0 and t.sent == []
+
+
+def test_b2_no_zero_percent_or_zero_pp_in_any_emitted_card(tmp_path):
+    # Seed a mix of valid + corrupt; only valid publishes, and no emitted card
+    # contains a fabricated 0.0% / +0.0 pp from a missing field.
+    _seed(
+        tmp_path,
+        shadows=[_shadow(shadow_id="ok1"), _shadow(shadow_id="bad1", p_model=None)],
+    )
+    t = _OkTransport()
+    _publish(tmp_path, t)
+    for m in t.sent:
+        assert "0.0%" not in m
+        assert "+0.0 pp" not in m
+
+
+# ===========================================================================
+# Regression: dedup / batching / gates / champion still hold after the fixes
+# ===========================================================================
+
+
+def test_reg_dedup_unchanged(tmp_path):
+    _seed(tmp_path, shadows=[_shadow()])
+    t = _OkTransport()
+    led = NotifyLedger(path=tmp_path / "notify_ledger.json")
+    assert _publish(tmp_path, t, ledger=led).messages_sent == 1
+    assert _publish(tmp_path, t, ledger=led).messages_sent == 0
+
+
+def test_reg_batching_unchanged(tmp_path):
+    shadows = [_shadow(fixture_id=f"F{i}", shadow_id=f"s{i}") for i in range(5)]
+    _seed(tmp_path, shadows=shadows)
+    t = _OkTransport()
+    led = NotifyLedger(path=tmp_path / "notify_ledger.json")
+    res = shadow_feed.publish_shadow_feed(shadow_root=tmp_path, ledger=led, transport=t,
+                                          group_by_fixture_cards=True, max_messages=3)
+    assert res.messages_sent == 3 and res.shadows_queued == 2
+
+
+def test_reg_gates_remain_300_200_150_100():
+    from src.research.prospective.research_notify import MILESTONES
+    assert MILESTONES["captured_fixtures"][-1] == 300
+    assert MILESTONES["same_book_late_final"][-1] == 200
+    assert MILESTONES["confirmed_lineups"][-1] == 150
+    assert MILESTONES["pre_post_lineup_pairs"][-1] == 100
+
+
+def test_reg_no_provider_calls(tmp_path, monkeypatch):
+    import urllib.request
+    monkeypatch.setattr(urllib.request, "urlopen",
+                        lambda *a, **k: (_ for _ in ()).throw(AssertionError("network")))
+    _seed(tmp_path, shadows=[_shadow()], evaluations=[_evaluation()])
+    t = _OkTransport()
+    res = _publish(tmp_path, t)
+    assert res.messages_sent >= 1
+
+
+def test_reg_no_model_calls(tmp_path, monkeypatch):
+    import src.research.prospective.shadow_residual as sr
+    monkeypatch.setattr(sr, "build_shadow_residual",
+                        lambda *a, **k: (_ for _ in ()).throw(AssertionError("model")))
+    monkeypatch.setattr(sr, "market_over_probability",
+                        lambda *a, **k: (_ for _ in ()).throw(AssertionError("devig")))
+    _seed(tmp_path, shadows=[_shadow()], evaluations=[_evaluation()])
+    t = _OkTransport()
+    res = _publish(tmp_path, t)
+    assert res.messages_sent >= 1
