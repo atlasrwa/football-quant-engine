@@ -1,0 +1,19 @@
+[Unit]
+Description=Refresh the shared discovered fixture universe every 6 hours (keeps it well under the 36h stale-inflow threshold)
+Documentation=file:///home/ubuntu/scripts/prospective_universe_refresh_run.sh
+
+[Timer]
+# Every 6 hours at :20 past the hour (00:20, 06:20, 12:20, 18:20 UTC). Offset off
+# the top of the hour so it does not collide with the forecast-broadcast tick or
+# the legacy Mon/Thu 06:00 discovery cron entry; the shared discovery lock makes
+# an overlap harmless regardless.
+OnCalendar=00/6:20:00
+# Catch up one missed run after downtime so a reboot cannot leave the universe
+# stale past the 36h threshold.
+Persistent=true
+OnBootSec=5min
+AccuracySec=1min
+Unit=prospective-universe-refresh.service
+
+[Install]
+WantedBy=timers.target
