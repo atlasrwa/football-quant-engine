@@ -50,6 +50,7 @@ from src.research.prospective.research_notify_delivery import (  # noqa: E402
     deliver,
 )
 from src.research.prospective.research_weekly import format_weekly_summary  # noqa: E402
+from src.research.prospective import shadow_feed  # noqa: E402
 
 
 #: Collector health states that warrant an immediate CRITICAL alert.
@@ -93,6 +94,29 @@ def cmd_weekly(status: ResearchStatus, *, ledger: NotifyLedger, dry_run: bool) -
     return 0
 
 
+def cmd_shadow(*, capture_root: Path, ledger: NotifyLedger, dry_run: bool) -> int:
+    """Publish research-only shadow-residual cards from persisted records.
+
+    Consume-only: reads data/prospective/shadow_residuals.jsonl and
+    shadow_evaluations.jsonl and delivers SHADOW_RESEARCH / SHADOW_RESEARCH_UPDATE
+    cards for records not already delivered (deduped via the shared ledger). No
+    provider/model call. Use --dry-run to render without sending or recording.
+    """
+    res = shadow_feed.publish_shadow_feed(
+        shadow_root=Path(capture_root), ledger=ledger, dry_run=dry_run
+    )
+    for r in res.delivery_results:
+        tag = "DRY-RUN" if dry_run else ("SENT" if r.sent else ("DEDUP" if r.deduped else "NOT-SENT"))
+        print(f"[{tag}] {r.message_type} {r.event_id}: {r.detail}")
+    print(
+        "[shadow-feed] "
+        f"shadows_seen={res.shadows_seen} published={res.shadows_published} "
+        f"queued={res.shadows_queued} evals_seen={res.evaluations_seen} "
+        f"evals_published={res.evaluations_published} messages_sent={res.messages_sent}"
+    )
+    return 0
+
+
 def build_parser() -> argparse.ArgumentParser:
     p = argparse.ArgumentParser(prog="research-monitor", description=__doc__)
     p.add_argument("--capture-root", type=Path, default=Path("data/prospective"))
@@ -101,17 +125,23 @@ def build_parser() -> argparse.ArgumentParser:
     sub.add_parser("heartbeat", help="daily heartbeat + milestones + readiness transition")
     sub.add_parser("alerts", help="event-driven critical alerts only")
     sub.add_parser("weekly", help="weekly coverage summary")
+    sub.add_parser("shadow", help="publish research-only shadow-residual cards from persisted records")
     sub.add_parser("status", help="print status JSON (no send)")
     return p
 
 
 def main(argv: Optional[Sequence[str]] = None) -> int:
     args = build_parser().parse_args(argv)
+    ledger = NotifyLedger(path=Path(args.capture_root) / "notify_ledger.json")
+    # The shadow feed is consume-only over persisted shadow ledgers and does not
+    # need the collector status snapshot, so it is dispatched without collecting
+    # status (keeps it decoupled and cheap).
+    if args.command == "shadow":
+        return cmd_shadow(capture_root=args.capture_root, ledger=ledger, dry_run=args.dry_run)
     status = collect_status(capture_root=args.capture_root)
     if args.command == "status":
         print(json.dumps(status.to_dict(), indent=2, sort_keys=True))
         return 0
-    ledger = NotifyLedger(path=Path(args.capture_root) / "notify_ledger.json")
     if args.command == "heartbeat":
         return cmd_heartbeat(status, ledger=ledger, dry_run=args.dry_run)
     if args.command == "alerts":

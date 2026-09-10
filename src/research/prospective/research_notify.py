@@ -50,6 +50,13 @@ class MessageType(str, Enum):
     READINESS_TRANSITION = "READINESS_TRANSITION"
     CRITICAL_ALERT = "CRITICAL_ALERT"
     WEEKLY_SUMMARY = "WEEKLY_SUMMARY"
+    # research-only shadow-residual feed (see shadow_feed.py). These are NOT
+    # betting signals: they publish an already-persisted, immutable
+    # PROSPECTIVE_SHADOW model-vs-market disagreement (and its later market
+    # movement) purely as evidence. They are distinct from — and can never be
+    # emitted as — the reserved VALIDATED_SIGNAL / STRATEGY_ACTION types.
+    SHADOW_RESEARCH = "SHADOW_RESEARCH"
+    SHADOW_RESEARCH_UPDATE = "SHADOW_RESEARCH_UPDATE"
     # reserved — require a future explicit promotion gate; NOT activated
     VALIDATED_SIGNAL = "VALIDATED_SIGNAL"
     STRATEGY_ACTION = "STRATEGY_ACTION"
@@ -91,6 +98,47 @@ def assert_no_signal_content(text: str) -> None:
             "research status message contains forbidden signal vocabulary: "
             f"{sorted(set(hits))}. During DATA ACCUMULATION MODE Telegram reports "
             "collector/research status only — never bets, stakes, ROI, or tips."
+        )
+
+
+#: The ONLY additional phrases permitted specifically on the research-shadow
+#: message path (mission section 11: "update only the research-message
+#: validation path narrowly enough to allow the approved research
+#: terminology"). Nothing here relaxes the global ``assert_no_signal_content``
+#: used by every other message type.
+#:
+#: Only ``actionable`` needs an exception: the frozen research classification
+#: label "NOT ACTIONABLE" / "NOT_ACTIONABLE" (carried verbatim from the shadow
+#: record) contains the forbidden substring ``actionable``. We allow it ONLY as
+#: part of that explicit negative-classification phrase, so the message can
+#: state the record is not actionable without being able to reintroduce any
+#: other use of the word.
+_RESEARCH_ALLOWED_PHRASES: tuple[str, ...] = (
+    "not actionable",
+    "not_actionable",
+)
+
+
+def assert_no_signal_content_research(text: str) -> None:
+    """Content guard for the research-shadow feed only (narrowly widened).
+
+    Identical to :func:`assert_no_signal_content` EXCEPT that the explicit
+    approved research phrases in :data:`_RESEARCH_ALLOWED_PHRASES` (currently
+    only the "NOT ACTIONABLE" classification label) are neutralised before the
+    forbidden-substring scan. Every other betting-signal term — stake, ROI,
+    +EV, edge over, profit, alpha:, tip:, value bet, etc. — is STILL rejected,
+    so this cannot be used to smuggle a signal. The global guard is unchanged.
+    """
+    low = f" {text.lower()} "
+    for allowed in _RESEARCH_ALLOWED_PHRASES:
+        low = low.replace(allowed, " ")
+    hits = [s for s in _FORBIDDEN_SUBSTRINGS if s in low]
+    if hits:
+        raise SignalContentError(
+            "research-shadow message contains forbidden signal vocabulary: "
+            f"{sorted(set(hits))}. The research-shadow feed publishes a persisted "
+            "model-vs-market residual as evidence only — never bets, stakes, "
+            "ROI, edges, or tips."
         )
 
 
@@ -306,6 +354,52 @@ def _msg(mtype: MessageType, event_id: str, text: str, status: ResearchStatus) -
         message_type=mtype, event_id=event_id, text=text,
         generated_at=status.generated_at, main_sha=status.main_sha,
         collector_version=status.collector_version, readiness_state=status.readiness_state,
+        source_version=SOURCE_VERSION,
+    ).with_hash()
+
+
+#: Message types the research-shadow feed is allowed to emit. Deliberately a
+#: subset that EXCLUDES the reserved signal/strategy types, so the feed can
+#: never publish a validated signal even by mistake.
+_SHADOW_RESEARCH_TYPES: frozenset[MessageType] = frozenset(
+    {MessageType.SHADOW_RESEARCH, MessageType.SHADOW_RESEARCH_UPDATE}
+)
+
+
+def build_research_shadow_message(
+    mtype: MessageType,
+    event_id: str,
+    text: str,
+    *,
+    generated_at: float,
+    main_sha: str = "",
+    readiness_state: str = "RESEARCH_ONLY",
+    collector_version: str = COLLECTOR_VERSION,
+) -> NotifyMessage:
+    """Construct a research-shadow ``NotifyMessage`` through the guarded path.
+
+    This is the shadow-feed analogue of :func:`_msg`. It enforces THREE things:
+      1. ``mtype`` must be one of :data:`_SHADOW_RESEARCH_TYPES` — the reserved
+         VALIDATED_SIGNAL / STRATEGY_ACTION types (and any status type) are
+         rejected here, so the shadow feed can never emit a signal.
+      2. the text passes :func:`assert_no_signal_content_research` (all betting
+         vocabulary rejected; only the "NOT ACTIONABLE" label is allowed).
+      3. a deterministic ``payload_hash`` is attached for provenance/audit.
+
+    It does not require a full :class:`ResearchStatus` (the shadow feed reads
+    persisted shadow records, not the collector snapshot), so provenance fields
+    are passed explicitly.
+    """
+    if mtype not in _SHADOW_RESEARCH_TYPES:
+        raise ReservedMessageTypeError(
+            f"{mtype.value} may not be emitted by the research-shadow feed; "
+            f"only {sorted(t.value for t in _SHADOW_RESEARCH_TYPES)} are permitted."
+        )
+    assert_no_signal_content_research(text)
+    return NotifyMessage(
+        message_type=mtype, event_id=event_id, text=text,
+        generated_at=generated_at, main_sha=main_sha,
+        collector_version=collector_version, readiness_state=readiness_state,
         source_version=SOURCE_VERSION,
     ).with_hash()
 
