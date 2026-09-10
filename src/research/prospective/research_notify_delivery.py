@@ -77,6 +77,33 @@ class NotifyLedger:
         tmp.write_text(json.dumps(data, indent=2, sort_keys=True) + "\n", encoding="utf-8")
         tmp.replace(p)
 
+    def record_member(self, member_event_id: str, *, parent: NotifyMessage, detail: str = "") -> None:
+        """Mark an additional (member) event id delivered under a parent message.
+
+        Used when ONE delivered message covers several logical events (e.g. a
+        fixture-grouped research-shadow card that contains several individual
+        shadows). Each member gets its own durable dedup key so it is never
+        re-published on a later tick, even if a future card would re-include it.
+        Stores only non-secret provenance; keyed by the member id.
+        """
+        if not member_event_id:
+            return
+        p = Path(self.path)
+        p.parent.mkdir(parents=True, exist_ok=True)
+        data = self._load()
+        delivered = data.setdefault("delivered", {})
+        if member_event_id in delivered:
+            return
+        delivered[member_event_id] = {
+            "message_type": parent.message_type.value,
+            "payload_hash": parent.payload_hash,
+            "delivered_at": time.time(),
+            "detail": (f"member of {parent.event_id}: {detail}")[:200],
+        }
+        tmp = p.with_suffix(p.suffix + ".tmp")
+        tmp.write_text(json.dumps(data, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+        tmp.replace(p)
+
 
 @dataclass(frozen=True)
 class DeliveryResult:
