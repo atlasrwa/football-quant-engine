@@ -502,6 +502,69 @@ class ProspectiveCollector:
         return result
 
 
+def _run_shadow_after_capture(*, capture_root: Path, broadcast_root: Optional[Path] = None) -> None:
+    """Run the prospective shadow-residual processor over just-persisted state.
+
+    Called at the END of a successful ``capture-due`` tick, inside the same
+    single-instance flock the capture run already holds. It performs NO provider
+    request (reads only the append-only capture store + the committed broadcast
+    ledger) and runs NO model.
+
+    Failure isolation (mission BLOCKER 2): a shadow-processing failure must
+    never corrupt capture data or fail the parent capture run. All exceptions
+    are caught here; the outcome is written to a SEPARATE shadow ops log
+    (``shadow_ops.jsonl``) so a shadow failure is observable without affecting
+    the capture ops record or the process exit code.
+    """
+    from src.research.prospective import shadow_process
+    from src.research.prospective.ops_log import append_run, hostname, OpsRunRecord
+
+    shadow_ops_path = Path(capture_root) / "shadow_ops.jsonl"
+    started = now_ts()
+    try:
+        kwargs = {"shadow_root": Path(capture_root)}
+        if broadcast_root is not None:
+            kwargs["broadcast_root"] = Path(broadcast_root)
+        res = shadow_process.run(**kwargs)
+        finished = now_ts()
+        note = (
+            f"shadow: kind={res.provenance_kind} "
+            f"new_candidates={res.candidates_new} "
+            f"pre_frontier_excluded={res.candidates_pre_frontier_excluded} "
+            f"new_evaluations={res.evaluations_new} "
+            f"frontier={res.frontier_established_at}"
+        )
+        append_run(
+            OpsRunRecord(
+                run_started_at=started,
+                run_finished_at=finished,
+                duration_seconds=round(finished - started, 3),
+                exit_status="OK",
+                health_state="SHADOW_OK",
+                odds_captured=0,
+                errors=0,
+                hostname=hostname(),
+                note=note,
+            ),
+            path=shadow_ops_path,
+        )
+    except Exception as exc:  # noqa: BLE001 - shadow failure must never crash capture
+        finished = now_ts()
+        append_run(
+            OpsRunRecord(
+                run_started_at=started,
+                run_finished_at=finished,
+                duration_seconds=round(finished - started, 3),
+                exit_status="ERROR",
+                health_state="SHADOW_FAILED",
+                errors=1,
+                hostname=hostname(),
+                note=f"shadow processing failed (isolated; capture unaffected): {type(exc).__name__}",
+            ),
+            path=shadow_ops_path,
+        )
+
+
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(prog="prospective-collector", description=__doc__)
     parser.add_argument("--capture-root", type=Path, default=DEFAULT_CAPTURE_ROOT)
@@ -662,6 +725,24 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
                 ),
                 path=Path(args.capture_root) / "ops_runs.jsonl",
             )
+
+            # --- Prospective shadow-residual processing (BLOCKER 2 wiring) ---
+            # The capture above has ALREADY safely persisted its observations and
+            # logged its ops record. Only now do we run the shadow processor,
+            # in-process, over that just-persisted state. This makes shadow
+            # instrumentation operational on the normal scheduled path with:
+            #   * ZERO incremental provider requests (reads persisted state only),
+            #   * no new timer / no scheduler-cadence change (same 15-min tick),
+            #   * the SAME flock the capture run already holds (no new/overlapping
+            #     writer; single-instance discipline preserved),
+            #   * idempotency preserved (append-only, dedup on shadow_id),
+            #   * the live PROSPECTIVE FRONTIER gating provenance so only
+            #     post-frontier candidates become PROSPECTIVE_SHADOW.
+            # Shadow failure is ISOLATED: it is recorded as a separate ops record
+            # and NEVER corrupts capture data or fails the parent capture run
+            # (the research capture already succeeded and is what matters).
+            _run_shadow_after_capture(capture_root=Path(args.capture_root))
+
     except ProspectiveConfigError as exc:
         print(str(exc), file=sys.stderr)
         return 2

@@ -17,8 +17,12 @@ and no scheduler-cadence change. Re-running against unchanged state is a no-op.
     python -m src.research.prospective.shadow_process run
     python -m src.research.prospective.shadow_process run --as-of 2026-09-09T13:00:00Z
 
-By default it emits PROSPECTIVE_SHADOW records (created live from state that was
-persisted before the cutoff). Use --reconstructed for RECONSTRUCTED_SHADOW
+By default it emits PROSPECTIVE_SHADOW records, but ONLY for candidates that
+froze at/after the persisted live PROSPECTIVE FRONTIER (see
+:mod:`src.research.prospective.shadow_frontier`). The frontier — not the CLI
+flag — is what authorizes prospective provenance: a default run over historical
+pre-frontier state produces NO prospective records (those candidates are
+excluded, never relabeled). Use --reconstructed for RECONSTRUCTED_SHADOW
 diagnostics over historical state; those must never be claimed prospective.
 """
 
@@ -36,6 +40,10 @@ from src.research.prospective.shadow_builder import (
     build_candidates,
     build_evaluations,
     default_capture_store,
+)
+from src.research.prospective.shadow_frontier import (
+    ShadowFrontier,
+    establish_frontier,
 )
 from src.research.prospective.shadow_residual import ShadowProvenanceKind
 from src.research.prospective.shadow_store import (
@@ -56,14 +64,21 @@ class ShadowRunResult:
     evaluations_considered: int
     evaluations_new: int
     provenance_kind: str
+    #: Frontier timestamp used to gate prospectivity (None for reconstructed).
+    frontier_established_at: Optional[float] = None
+    #: Candidates the join produced but which were EXCLUDED because they froze
+    #: before the live frontier (pre-deployment history; never made prospective).
+    candidates_pre_frontier_excluded: int = 0
 
     def to_dict(self) -> dict:
         return {
             "candidates_considered": self.candidates_considered,
             "candidates_new": self.candidates_new,
+            "candidates_pre_frontier_excluded": self.candidates_pre_frontier_excluded,
             "evaluations_considered": self.evaluations_considered,
             "evaluations_new": self.evaluations_new,
             "provenance_kind": self.provenance_kind,
+            "frontier_established_at": self.frontier_established_at,
         }
 
 
@@ -85,15 +100,36 @@ def run(
     ``now`` (unix) bounds "live" prospectivity: for PROSPECTIVE_SHADOW the
     effective horizon is ``min(as_of or now, ...)`` so a live run never freezes
     a candidate using a snapshot from the future relative to the wall clock.
+
+    Provenance & the live frontier (BLOCKER 1):
+      A live (``reconstructed=False``) run establishes/loads the persisted
+      PROSPECTIVE FRONTIER ``F`` (see :mod:`shadow_frontier`). A candidate frozen
+      at information cutoff ``T`` is emitted as PROSPECTIVE_SHADOW ONLY when
+      ``T >= F`` — i.e. it was frozen while the instrumentation was live.
+      Candidates that froze before ``F`` are pre-deployment history: they are
+      EXCLUDED here (never relabeled prospective). They can only ever be
+      produced explicitly via ``reconstructed=True`` (RECONSTRUCTED_SHADOW).
+      A corrupt/tampered frontier raises and fails closed (no candidate is made
+      prospective). A restart reuses the same immutable ``F``, so the
+      prospective/reconstructed partition of history is preserved across
+      reboots. ``reconstructed=True`` never consults or mutates the frontier.
     """
     kind = (
         ShadowProvenanceKind.RECONSTRUCTED_SHADOW
         if reconstructed
         else ShadowProvenanceKind.PROSPECTIVE_SHADOW
     )
+    wall = now if now is not None else datetime.datetime.now(datetime.timezone.utc).timestamp()
+
+    # Establish/load the immutable live frontier for a prospective run. This is
+    # the ONLY thing that authorizes prospective provenance; CLI intent alone is
+    # never sufficient. Fails closed on corrupt state (raises ShadowFrontierError).
+    frontier: Optional[ShadowFrontier] = None
+    if not reconstructed:
+        frontier = establish_frontier(shadow_root, now=wall)
+
     # For a live prospective run, the horizon must not exceed the current time.
     if not reconstructed:
-        wall = now if now is not None else datetime.datetime.now(datetime.timezone.utc).timestamp()
         horizon = wall if as_of is None else min(as_of, wall)
     else:
         horizon = as_of
@@ -108,6 +144,21 @@ def run(
         provenance_kind=kind,
         as_of=horizon,
     )
+
+    # Frontier gate: a live candidate may only be PROSPECTIVE_SHADOW if it froze
+    # at/after the frontier. Pre-frontier candidates are dropped here — never
+    # persisted as prospective, never relabeled. (Historical candidates remain
+    # available as RECONSTRUCTED_SHADOW via a --reconstructed run.)
+    pre_frontier_excluded = 0
+    if not reconstructed and frontier is not None:
+        eligible: list = []
+        for c in candidates:
+            if frontier.allows_prospective(c.information_cutoff):
+                eligible.append(c)
+            else:
+                pre_frontier_excluded += 1
+        candidates = eligible
+
     cand_store = default_candidate_store(root=shadow_root)
     new_cands = cand_store.extend(candidates)
 
@@ -121,9 +172,7 @@ def run(
     if reconstructed:
         eval_horizon = None
     else:
-        eval_horizon = now if now is not None else datetime.datetime.now(
-            datetime.timezone.utc
-        ).timestamp()
+        eval_horizon = wall
     evaluations = build_evaluations(
         candidates=known,
         capture_store=capture_store,
@@ -138,6 +187,8 @@ def run(
         evaluations_considered=len(evaluations),
         evaluations_new=new_evals,
         provenance_kind=kind.value,
+        frontier_established_at=(frontier.established_at if frontier is not None else None),
+        candidates_pre_frontier_excluded=pre_frontier_excluded,
     )
 
 
