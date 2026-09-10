@@ -48,7 +48,10 @@ def _status(**over) -> ResearchStatus:
         collector_health="HEALTHY", minutes_since_success=4.0, last_successful_run=1_787_999_000.0,
         quota_remaining=96_700, errors_last_run=0, total_runs=5,
         captured_fixtures=30, same_book_late_final=0, confirmed_lineups=0,
-        pre_post_lineup_pairs=0, genuine_closes=0,
+        pre_post_lineup_pairs=0,
+        genuine_close_available=over.get("genuine_close_available", True),
+        fixtures_with_genuine_close=over.get("fixtures_with_genuine_close", 0),
+        genuine_closing_keys=over.get("genuine_closing_keys", 0),
         readiness_state="PRICE_DISCOVERY_EXPLORATORY", gate_met=False, gate=gate,
     )
     base.update({k: v for k, v in over.items() if k in base})
@@ -82,11 +85,13 @@ def test_heartbeat_format_and_live_counts():
     s = _status(captured_fixtures=42, quota_remaining=96_700)
     msg = format_daily_heartbeat(s)
     assert msg.message_type is MessageType.DATA_PROGRESS
-    assert "Football Quant Engine" in msg.text
+    assert "FOOTBALL QUANT ENGINE" in msg.text
+    assert "SYSTEM" in msg.text and "RESEARCH ACCUMULATION" in msg.text
     assert "Collector: HEALTHY" in msg.text
     assert "Fixtures: 42 / 300" in msg.text          # live count, not hard-coded
     assert "96,700 / 100,000" in msg.text
-    assert "PRICE_DISCOVERY_EXPLORATORY" in msg.text
+    assert "PRICE DISCOVERY \u2014 EXPLORATORY" in msg.text
+    assert "Research only. Not validated. Not actionable." in msg.text
     # provenance present
     assert msg.main_sha == "abc123"
     assert msg.payload_hash and len(msg.payload_hash) == 64
@@ -122,6 +127,57 @@ def test_milestone_dedup_across_restart(tmp_path):
     ledger2 = NotifyLedger(path=tmp_path / "ledger.json")
     r2 = deliver(msg, transport=t, ledger=ledger2)
     assert r2.deduped is True and len(t.sent) == 1  # not resent
+
+
+def test_milestone_threshold_vs_captured_wording():
+    # The observed count can be far above the threshold; the message must show
+    # BOTH explicitly (Required vs Captured), never the misleading
+    # "Reached 200 ... (2520 observed)" phrasing.
+    s = _status(same_book_late_final=2520)
+    msg = format_milestone(s, metric="same_book_late_final", threshold=200)
+    assert "RESEARCH MILESTONE" in msg.text
+    assert "Required: 200" in msg.text
+    assert "Captured: 2,520" in msg.text            # thousands-separated
+    assert "\u2705" in msg.text                       # captured tick
+    # Exploratory framing preserved; no validation/actionable/edge language.
+    assert "This unlocks analysis. It does not validate a signal." in msg.text
+    assert "PRICE DISCOVERY \u2014 EXPLORATORY" in msg.text
+    low = msg.text.lower()
+    for banned in ("validated", "alpha", "edge", "profitable", "actionable ", " ev ", "+ev"):
+        assert banned not in low
+
+
+def test_milestone_dedup_id_unchanged():
+    s = _status(same_book_late_final=2520)
+    msg = format_milestone(s, metric="same_book_late_final", threshold=200)
+    assert msg.event_id == "milestone:same_book_late_final:200"
+
+
+def test_status_sections_and_genuine_close_unit():
+    s = _status(captured_fixtures=35, same_book_late_final=2520,
+                fixtures_with_genuine_close=27, genuine_closing_keys=3058)
+    text = format_daily_heartbeat(s).text
+    # Three clearly separated sections.
+    assert "SYSTEM" in text
+    assert "RESEARCH ACCUMULATION" in text
+    assert "READINESS" in text
+    # Genuine-close metric carries an EXPLICIT unit (fixtures), never bare
+    # "Genuine closes: N".
+    assert "Fixtures with genuine close: 27 / 35" in text
+    assert "genuine closing keys: 3,058" in text
+    assert "Genuine closes:" not in text
+    # Crossed accumulation line marked, research-only footer present.
+    assert "LATE \u2192 FINAL transitions: 2,520 / 200 \u2705" in text
+    assert "Research only. Not validated. Not actionable." in text
+
+
+def test_status_genuine_close_unknown_not_zero():
+    s = _status(genuine_close_available=False, fixtures_with_genuine_close=None,
+                genuine_closing_keys=None)
+    text = format_daily_heartbeat(s).text
+    assert "Fixtures with genuine close: UNKNOWN (source unavailable)" in text
+    # Must never render a fabricated 0 for an unavailable source.
+    assert "Fixtures with genuine close: 0" not in text
 
 
 # --- readiness transition ----------------------------------------------
