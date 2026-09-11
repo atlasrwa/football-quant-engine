@@ -1001,6 +1001,18 @@ def run(
         logger.info("no fixture has reached the T-%dh horizon this tick",
                     config.horizon_hours_before_kickoff)
         summary["finished_at_utc"] = _now_iso()
+        # Persist a health report even on a no-due tick. The gate is not exercised
+        # (no fit happens), so freshness_gate is None and publication_blocked is
+        # False — but writing it records "the broadcaster ticked and nothing was
+        # due", refreshing generated_at_utc. Without this the report ages past the
+        # heartbeat's staleness threshold during any quiet period between matchdays
+        # and fires a false CORPUS FRESHNESS REPORT STALE alert, even though the
+        # gate has simply had nothing to evaluate. run_summary.due==0 lets the
+        # heartbeat distinguish this quiet tick from a genuinely stalled gate.
+        emit_health_report(
+            _health_report(summary, config, engine=None, verdict=None),
+            dry_run=dry_run,
+        )
         return summary
 
     # 3. Refresh the corpus, then fit once so every forecast in this run shares one

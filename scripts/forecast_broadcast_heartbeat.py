@@ -275,6 +275,116 @@ def _in_scope_past_horizon(now: float) -> list[tuple[str, dict, float]]:
     return out
 
 
+# Three-state, fail-closed current-due determination for the stale-corpus
+# quiet-period proof. Kept SEPARATE from _in_scope_past_horizon (which other
+# checks depend on and which collapses every "cannot tell" case to an empty
+# list) so those monitors are unaffected.
+DUE = "DUE"
+NONE_DUE = "NONE_DUE"
+UNKNOWN = "UNKNOWN"
+
+
+def _current_due_state(now: float) -> str:
+    """Positively establish whether zero in-scope fixtures are currently due.
+
+    Returns exactly one of :data:`DUE`, :data:`NONE_DUE`, :data:`UNKNOWN`.
+    This is fail-closed: it returns :data:`NONE_DUE` ONLY when the independent
+    scope + fixture-universe evidence is present, well-formed, and sufficient to
+    PROVE that no in-scope fixture has passed its forecast horizon. Any missing,
+    unreadable, malformed, ambiguous, or otherwise insufficient evidence yields
+    :data:`UNKNOWN` — never a false :data:`NONE_DUE`.
+
+    It deliberately re-reads the raw artifacts itself rather than reusing
+    :func:`_scope` / :func:`_universe` / :func:`_in_scope_past_horizon`, because
+    those intentionally swallow "file missing" and "file unreadable/invalid" into
+    the same empty result as a genuinely quiet calendar — exactly the UNKNOWN vs
+    NONE_DUE collapse this helper must avoid. It does not alter their contracts.
+    """
+    # --- Scope evidence -----------------------------------------------------
+    # A missing or unreadable/invalid scope config is not proof of a quiet
+    # calendar; without it we cannot even know which competitions are in scope.
+    if not SCOPE_CONFIG.exists():
+        return UNKNOWN
+    try:
+        with open(SCOPE_CONFIG) as fh:
+            scope_cfg = json.load(fh)
+    except Exception:
+        return UNKNOWN
+    if not isinstance(scope_cfg, dict):
+        return UNKNOWN
+
+    leagues = scope_cfg.get("leagues")
+    if not isinstance(leagues, list):
+        return UNKNOWN
+    comp_ids = {
+        str(lg.get("comp_id"))
+        for lg in leagues
+        if isinstance(lg, dict) and lg.get("comp_id")
+    }
+    if not comp_ids:
+        # No usable competition scope -> cannot establish the calendar.
+        return UNKNOWN
+
+    horizon_h = scope_cfg.get("horizon_hours_before_kickoff")
+    # Must be a real, finite number of hours. bool is an int subclass but is not
+    # a meaningful horizon, so reject it explicitly.
+    if isinstance(horizon_h, bool) or not isinstance(horizon_h, (int, float)):
+        return UNKNOWN
+    try:
+        horizon_seconds = float(horizon_h) * 3600.0
+    except (TypeError, ValueError):
+        return UNKNOWN
+    if horizon_seconds != horizon_seconds or horizon_seconds in (
+        float("inf"), float("-inf")
+    ):  # NaN / inf guard
+        return UNKNOWN
+
+    # --- Fixture-universe evidence -----------------------------------------
+    # A missing or unreadable/invalid universe artifact is not proof of a quiet
+    # calendar either. The absence of fixtures we cannot read must not be read
+    # as "no fixtures".
+    if not FIXTURE_LIST.exists():
+        return UNKNOWN
+    try:
+        with open(FIXTURE_LIST) as fh:
+            universe_doc = json.load(fh)
+    except Exception:
+        return UNKNOWN
+    if not isinstance(universe_doc, dict):
+        return UNKNOWN
+    meta = universe_doc.get("meta")
+    if not isinstance(meta, dict):
+        # Malformed structure: cannot enumerate fixtures.
+        return UNKNOWN
+
+    # --- Evaluate in-scope fixtures ----------------------------------------
+    any_due = False
+    for fid, info in meta.items():
+        if not isinstance(info, dict):
+            # A malformed record we cannot even classify by competition: we
+            # cannot prove it is irrelevant, so we cannot prove the calendar is
+            # quiet.
+            return UNKNOWN
+        comp = str(info.get("comp"))
+        if comp not in comp_ids:
+            # Defensibly irrelevant per the existing contract: out-of-scope
+            # competition. Skip without forcing UNKNOWN.
+            continue
+        # In-scope fixture: its kickoff MUST be interpretable to judge due-state.
+        ts = info.get("ts")
+        try:
+            kickoff = float(ts)
+        except (TypeError, ValueError):
+            return UNKNOWN
+        if kickoff != kickoff or kickoff in (float("inf"), float("-inf")):
+            return UNKNOWN
+        horizon_at = kickoff - horizon_seconds
+        if now >= horizon_at:
+            any_due = True
+
+    return DUE if any_due else NONE_DUE
+
+
 def _ledger_rows() -> list[dict]:
     return _read_jsonl(BROADCAST_LEDGER)
 
@@ -634,16 +744,40 @@ def check_stale_corpus(state: dict) -> dict | None:
         }
 
     if age_h is not None and age_h > STALE_HEALTH_REPORT_HOURS:
+        # A stale report is only NOT a fault when we can POSITIVELY prove the gate
+        # legitimately had nothing to evaluate: the broadcaster writes a fresh
+        # report on every tick, including no-due ticks (run_summary.due == 0), so a
+        # genuine quiet period between matchdays keeps the report current. If it is
+        # nonetheless stale, suppression is fail-closed and requires BOTH:
+        #   1. the last recorded tick itself found nothing due (run_summary.due==0,
+        #      strictly the integer 0 — a missing/malformed value is NOT proof); AND
+        #   2. an INDEPENDENT determination that no in-scope fixture is currently
+        #      due, and that this could be positively established (NONE_DUE).
+        # Any other combination ALERTS, including current due-state == UNKNOWN
+        # (missing/unreadable/malformed scope or fixture universe): "cannot prove
+        # quiet" must never be read as "quiet". This is the original failure mode —
+        # a gate that stops being evaluated while the corpus could be drifting.
+        run_summary = report.get("run_summary")
+        raw_due = run_summary.get("due") if isinstance(run_summary, dict) else None
+        # Strict: only the integer 0 counts (reject bool True/False, floats, str,
+        # None, missing). "due" is written by the broadcaster as len(due) -> int.
+        last_tick_had_no_due = type(raw_due) is int and raw_due == 0
+        due_state = _current_due_state(_now())
+        if last_tick_had_no_due and due_state == NONE_DUE:
+            return None
         return {
             "severity": SEV_ALERT,
             "title": "CORPUS FRESHNESS REPORT STALE",
             "detail": (
                 f"The freshness gate last recorded a verdict {age_h}h ago "
-                f"(> {STALE_HEALTH_REPORT_HOURS:g}h). The gate is not being "
+                f"(> {STALE_HEALTH_REPORT_HOURS:g}h) and a quiet period could not "
+                f"be positively established (current due-state: {due_state}; last "
+                f"recorded run due=0: {last_tick_had_no_due}). The gate is not being "
                 "evaluated, so the corpus could be drifting unobserved — which is "
                 "the original failure mode, not a new one."
             ),
-            "metrics": base_metrics,
+            "metrics": {**base_metrics, "current_due_state": due_state,
+                        "last_tick_had_no_due": last_tick_had_no_due},
         }
 
     if gate_state == "DORMANT":
