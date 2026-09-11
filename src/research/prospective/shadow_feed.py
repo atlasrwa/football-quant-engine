@@ -442,6 +442,28 @@ def _fixture_label(record: dict, resolver: Optional[FixtureNameResolver]) -> str
     return f"fixture {fixture_id}"
 
 
+def _competition_label(record: dict) -> Optional[str]:
+    """The competition this shadow belongs to, or ``None`` when not persisted.
+
+    Rendered because shadows now span the whole dual-provider league universe. While
+    coverage was the four Pilot-C leagues a reader could infer the competition from
+    the fixture; across 40+ competitions that inference is no longer available, and a
+    research observation whose league is unidentifiable is much harder to interpret.
+
+    The value is emitted exactly as persisted on the record (the canonical
+    TheStatsAPI competition id). No lookup, no mapping table, and no display-name
+    join: a wrong league label on a research card would be worse than none, and any
+    name resolution here would be a second source of identity truth competing with
+    the canonical registry. Absent/blank yields ``None`` and the line is omitted
+    rather than rendered as "unknown".
+    """
+    raw = record.get("competition")
+    if raw is None:
+        return None
+    label = str(raw).strip()
+    return label or None
+
+
 def _short_ref(shadow_id: str) -> str:
     return str(shadow_id)[:8]
 
@@ -520,6 +542,11 @@ def render_shadow_card(record: dict, *, resolver: Optional[FixtureNameResolver] 
         _HEADER_SHADOW,
         "",
         f"\u26bd {fixture}",
+    ]
+    competition = _competition_label(record)
+    if competition:
+        lines.append(f"\U0001f3c6 {competition}")
+    lines += [
         f"\U0001f4ca {market_label}",
         f"\U0001f3e6 {bookmaker}",
         f"\u23f1 {tminus}",
@@ -553,6 +580,10 @@ def render_shadow_group_card(
     tminus = _group_frozen_hint(records)
 
     lines = [f"{_HEADER_GROUP} \u2014 {fixture}", ""]
+    competition = _competition_label(records[0])
+    if competition:
+        lines.append(f"\U0001f3c6 {competition}")
+        lines.append("")
     by_book: dict[str, list[dict]] = {}
     order: list[str] = []
     for r in records:
@@ -631,6 +662,17 @@ def render_evaluation_card(record: dict, *, resolver: Optional[FixtureNameResolv
         _HEADER_UPDATE,
         "",
         f"\u26bd {fixture}",
+    ]
+    # Prefer the evaluation's own competition; fall back to the frozen parent
+    # shadow, which always carries it. Never inferred from anything else.
+    competition = _competition_label(record)
+    if competition is None and shadow_lookup:
+        parent = shadow_lookup.get(record.get("shadow_id"))
+        if isinstance(parent, dict):
+            competition = _competition_label(parent)
+    if competition:
+        lines.append(f"\U0001f3c6 {competition}")
+    lines += [
         f"\U0001f4ca {market_label}",
         f"\U0001f3e6 {bookmaker}",
         "",

@@ -1,44 +1,61 @@
-"""Initial operational universe for prospective live capture.
+"""DEPRECATED hard-coded operational universe. Retained for provenance only.
 
-We do NOT start with every competition. The initial universe is a controlled
-set where all four conditions hold, verified against the research corpus:
+.. deprecated::
+    Superseded by the dual-provider intersection rule in
+    :mod:`src.research.scope.dual_provider`, surfaced operationally through
+    :func:`src.research.prospective.cli.default_competition_ids`.
 
-1. canonical identity mapping is strong (present in the provider registry),
-2. the champion supports the relevant markets (goals, corners),
-3. TheStatsAPI coverage is good,
-4. odds coverage is good.
+WHY IT WAS REMOVED FROM THE EXECUTION PATH
+==========================================
+:data:`INITIAL_UNIVERSE` declared five leagues but carried a live TheStatsAPI
+competition id for only one of them (``comp_3039``, the Premier League); the other
+four were ``None`` and were meant to "resolve at runtime". They never did.
+:func:`universe_competition_ids` filters to ids that are present, so the function
+returned a **single** competition id, and any caller that fell back to it silently
+operated on one league while appearing to declare five.
 
-Selection was made from corpus coverage statistics (goals O/U 2.5 and corners
-O/U 9.5 pre-match odds coverage), NOT from any apparent model profitability.
+That fallback was reachable from ``ProspectiveCollector.discover_upcoming``. On the
+scheduled path ``capture_due`` always passed explicit ids, so the collapse was
+invisible in production — which is precisely what made it dangerous.
 
-Chosen: the five major European leagues, which show ~100% goals-odds and
-94-100% corners-odds coverage in the discovery corpus and have strong canonical
-identity mapping and champion support.
+The replacement derives the universe from provider evidence: a competition is in
+scope when FootyStats and TheStatsAPI both support it and its identity maps
+deterministically. A curated list cannot go stale into a one-league fallback,
+because there is no list.
 
-Competition ids are the live TheStatsAPI ``comp_*`` ids; only ids we have
-verified in the contract examples are hard-coded. Others resolve at runtime via
-the identity registry — the universe is a POLICY (league names + optional ids),
-not a guarantee that every id is live-valid here (no API key in this env).
+WHAT IS PRESERVED
+=================
+The corpus-name helper is still used by coverage tooling that reports on the
+original five-league selection, and the rationale strings document why those
+leagues were chosen (odds coverage in the discovery corpus, never apparent model
+profitability). Nothing here gates the engine's reach any more.
 """
 
 from __future__ import annotations
 
+import warnings
 from dataclasses import dataclass
 from typing import Optional
+
+#: Marker so the deprecation is greppable and testable, not just documented.
+UNIVERSE_POLICY_DEPRECATED = True
+
+#: What replaced it, named so a reader of this module is never left guessing.
+UNIVERSE_POLICY_SUCCESSOR = "src.research.scope.dual_provider.build_dual_provider_universe"
 
 
 @dataclass(frozen=True)
 class UniverseLeague:
-    """One league in the operational universe."""
+    """One league in the legacy hard-coded universe (provenance only)."""
 
     corpus_name: str          # name as it appears in the research corpus
     competition_id: Optional[str]  # TheStatsAPI comp id when known, else None
     rationale: str
 
 
-#: The initial operational universe. comp_3039 = Premier League is the only id
-#: confirmed from the live contract examples; others are left None and resolved
-#: at runtime via the identity registry (no fabricated ids).
+#: DEPRECATED. The original five-league selection, kept so historical coverage
+#: reports remain interpretable. Note that four of the five carry no competition
+#: id — the reason this could never function as an operational universe.
 INITIAL_UNIVERSE: tuple[UniverseLeague, ...] = (
     UniverseLeague(
         "England Premier League", "comp_3039",
@@ -64,10 +81,25 @@ INITIAL_UNIVERSE: tuple[UniverseLeague, ...] = (
 
 
 def universe_corpus_names() -> frozenset[str]:
-    """Corpus league names in the initial universe (for coverage filtering)."""
+    """Corpus league names in the legacy universe (historical reporting only)."""
     return frozenset(u.corpus_name for u in INITIAL_UNIVERSE)
 
 
 def universe_competition_ids() -> tuple[str, ...]:
-    """Known live competition ids in the universe (only verified ids)."""
+    """DEPRECATED. Do not use to scope discovery, capture, or forecasting.
+
+    Returns only ``("comp_3039",)`` because the other four legacy entries have no
+    competition id. Emits a :class:`DeprecationWarning` so any remaining caller
+    surfaces in test output rather than quietly narrowing the engine to one league.
+
+    Use :func:`src.research.prospective.cli.default_competition_ids` instead.
+    """
+    warnings.warn(
+        "universe_competition_ids() is deprecated and returns a single competition "
+        "id, which silently collapses the engine to one league. Use "
+        "src.research.prospective.cli.default_competition_ids(), backed by the "
+        f"dual-provider intersection rule in {UNIVERSE_POLICY_SUCCESSOR}.",
+        DeprecationWarning,
+        stacklevel=2,
+    )
     return tuple(u.competition_id for u in INITIAL_UNIVERSE if u.competition_id)

@@ -202,21 +202,36 @@ KNOWN_LEAGUES: dict[str, dict[str, Any]] = {
 }
 
 
-# ── Pilot C covered leagues — the SINGLE SOURCE OF TRUTH ─────────────────────
+# ── Pilot C covered leagues — SCOPED TO THE PILOT C EXPERIMENT ONLY ──────────
 #
-# These are the four leagues Pilot C's pre-registration covers (TheStatsAPI
-# competition ids). Discovery, the predict/commit gate, settlement, and the health
-# report all import THIS mapping so "covered" means exactly one thing everywhere.
+# These are the four leagues Pilot C's PRE-REGISTRATION covers (TheStatsAPI
+# competition ids). Pilot C is a fixed, pre-registered experiment: its sample is
+# frozen by design, so this list must keep defining *its* boundary exactly. The
+# ``scripts/pilotC_*`` discovery, predict/commit gate, settlement and health report
+# all import THIS mapping so "covered" means one thing across that experiment.
 #
-# WHY THIS EXISTS (the bug it fixes). Discovery is covered-league-only, but the
-# predict phase historically gated on *corpus-team membership* rather than
-# *covered-league membership*. Because the fixture universe still contains fixtures
-# from an older broad fetch, any fixture whose two teams happen to appear in the
-# corpus (e.g. Veikkausliiga sides that also played covered-league opponents, or
-# Serie A / Brazil teams) slipped through the predict gate and got committed —
-# out-of-coverage commitments in a pre-registered, covered-league-only sample.
-# Gating on the competition id closes that gap: a fixture outside these four
-# competitions can never be committed, regardless of its teams.
+# WHY IT STILL EXISTS (the bug it fixes, within Pilot C). Discovery is
+# covered-league-only, but the predict phase historically gated on *corpus-team
+# membership* rather than *covered-league membership*. Because the fixture universe
+# contains fixtures from a broad fetch, any fixture whose two teams happen to
+# appear in the corpus (e.g. Veikkausliiga sides that also played covered-league
+# opponents, or Serie A / Brazil teams) slipped through the predict gate and got
+# committed — out-of-coverage commitments in a pre-registered sample. Gating on the
+# competition id closes that gap.
+#
+# ── DEPRECATED AS AN ENGINE-SCOPE INPUT ──────────────────────────────────────
+#
+# This list is NOT the engine's league scope and must never be used as one. It was
+# copied verbatim into ``config/forecast_broadcast_scope.json``, and because a
+# forecast commitment is the prerequisite for every downstream research artifact
+# (capture join -> shadow residual -> evaluation -> research telemetry), a
+# four-league experiment boundary became the reach of the whole engine.
+#
+# The engine's universe is now derived from provider evidence:
+# :mod:`src.research.scope.dual_provider`. Do not import this mapping into
+# discovery scope, fixture-universe filters, model scheduling, prospective/shadow
+# eligibility, shadow evaluation, or research Telegram eligibility. Nothing in
+# ``src/`` imports it today, and a regression test pins that.
 COVERED_LEAGUE_COMP_IDS: dict[str, str] = {
     "comp_8321": "England Championship",
     "comp_3039": "England Premier League",
@@ -224,13 +239,22 @@ COVERED_LEAGUE_COMP_IDS: dict[str, str] = {
     "comp_0976": "Spain La Liga 2",
 }
 
+#: Marker so the scope deprecation is greppable and testable.
+PILOT_C_SCOPE_DEPRECATED_AS_ENGINE_SCOPE = True
+
+#: Where engine league scope actually comes from now.
+ENGINE_SCOPE_SUCCESSOR = "src.research.scope.dual_provider.build_dual_provider_universe"
+
 
 def is_covered_comp(comp_id: Optional[str]) -> bool:
-    """True iff ``comp_id`` is one of the pre-registered covered leagues.
+    """True iff ``comp_id`` is one of Pilot C's pre-registered covered leagues.
 
-    This is the authoritative covered-league membership test used by the predict
-    gate (and echoed by discovery/settlement/health) so coverage is defined in
-    exactly one place. Membership is by COMPETITION, never by team — team-based
-    gating is what let out-of-coverage fixtures through.
+    Authoritative for **Pilot C's own experiment boundary** and nothing else.
+    Membership is by COMPETITION, never by team — team-based gating is what let
+    out-of-coverage fixtures into the pre-registered sample.
+
+    Do NOT use this to decide what the engine processes. For engine league scope
+    see :data:`ENGINE_SCOPE_SUCCESSOR`; a research-eligible competition is one both
+    providers safely support, which has nothing to do with Pilot C membership.
     """
     return comp_id in COVERED_LEAGUE_COMP_IDS
