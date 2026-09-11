@@ -634,14 +634,29 @@ def check_stale_corpus(state: dict) -> dict | None:
         }
 
     if age_h is not None and age_h > STALE_HEALTH_REPORT_HOURS:
+        # A stale report is only a fault if the gate SHOULD have run. The broadcaster
+        # writes a fresh report on every tick, including no-due ticks (run_summary.due
+        # == 0), so during a genuine quiet period between matchdays the report stays
+        # current. If it is nonetheless stale, distinguish two cases:
+        #   * fixtures ARE due (a horizon has passed) but no fresh verdict exists ->
+        #     the gate/pipeline really has stopped: ALERT (the original failure mode);
+        #   * nothing is due AND the last recorded tick itself found nothing due ->
+        #     the gate legitimately had nothing to evaluate: do NOT alert. This mirrors
+        #     check_stale_forecast_ledger, which already stays silent when no horizon
+        #     has recently passed.
+        run_summary = report.get("run_summary") or {}
+        last_tick_had_no_due = run_summary.get("due") == 0
+        nothing_currently_due = not _in_scope_past_horizon(_now())
+        if last_tick_had_no_due and nothing_currently_due:
+            return None
         return {
             "severity": SEV_ALERT,
             "title": "CORPUS FRESHNESS REPORT STALE",
             "detail": (
                 f"The freshness gate last recorded a verdict {age_h}h ago "
-                f"(> {STALE_HEALTH_REPORT_HOURS:g}h). The gate is not being "
-                "evaluated, so the corpus could be drifting unobserved — which is "
-                "the original failure mode, not a new one."
+                f"(> {STALE_HEALTH_REPORT_HOURS:g}h) while fixtures were due. The "
+                "gate is not being evaluated, so the corpus could be drifting "
+                "unobserved — which is the original failure mode, not a new one."
             ),
             "metrics": base_metrics,
         }
