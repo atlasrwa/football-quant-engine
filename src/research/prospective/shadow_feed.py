@@ -36,6 +36,7 @@ magnitude, and residuals are never filtered by a magnitude threshold.
 
 from __future__ import annotations
 
+import os
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Callable, Iterable, Optional
@@ -86,6 +87,73 @@ DEFAULT_MAX_MESSAGES_PER_TICK = 8
 #: fall back to a concise fixture identifier). A caller may inject a resolver
 #: backed by already-persisted local state; this module never calls a provider.
 FixtureNameResolver = Callable[[str], Optional[str]]
+
+
+# ---------------------------------------------------------------------------
+# Publication boundary: explicit opt-in + DEDICATED research channel
+#
+# The shadow-research feed is research-only, but delivering it to Telegram is
+# still an external publication. Two independent guards protect it (both must
+# pass before anything is sent live):
+#
+#   1. RESEARCH_SHADOW_FEED_PUBLISH must be explicitly enabled. Unset / empty /
+#      malformed / unknown => DISABLED (fail closed). No capture tick can start
+#      sending research cards without an operator deliberately turning this on.
+#
+#   2. Delivery uses a DEDICATED research Telegram channel resolved ONLY from
+#      RESEARCH_TELEGRAM_BOT_TOKEN + RESEARCH_TELEGRAM_CHAT_ID. There is NO
+#      fallback to the SIGNALS_* / HEARTBEAT_* / FORECAST_BROADCAST_* consumer
+#      credentials, so a research card can never be routed into the consumer
+#      signals channel just because those variables happen to be set. If the
+#      dedicated pair is absent, the transport fails closed (sends nothing).
+# ---------------------------------------------------------------------------
+
+#: Env flag that must be explicitly enabled to allow ANY live shadow-feed send.
+SHADOW_FEED_PUBLISH_ENV = "RESEARCH_SHADOW_FEED_PUBLISH"
+
+#: Exact tokens that enable publication (case-insensitive, trimmed). Anything
+#: else — including unset — leaves the feed OFF.
+_SHADOW_FEED_PUBLISH_ENABLED_TOKENS: frozenset[str] = frozenset({"1", "TRUE", "ON", "ENABLED"})
+
+#: Dedicated research-channel credentials. NO consumer-channel fallback.
+RESEARCH_TELEGRAM_TOKEN_ENV = "RESEARCH_TELEGRAM_BOT_TOKEN"
+RESEARCH_TELEGRAM_CHAT_ENV = "RESEARCH_TELEGRAM_CHAT_ID"
+
+
+def shadow_feed_publication_enabled() -> bool:
+    """Whether the operator has explicitly opted in to live shadow-feed sends.
+
+    Fail closed: unset / empty / malformed / unknown => False. This gate is
+    INDEPENDENT of message eligibility — an enabled flag never makes a
+    non-publishable record publishable; it only permits delivery of records
+    that are already publishable.
+    """
+    raw = os.environ.get(SHADOW_FEED_PUBLISH_ENV)
+    if raw is None:
+        return False
+    return raw.strip().upper() in _SHADOW_FEED_PUBLISH_ENABLED_TOKENS
+
+
+def research_telegram_transport() -> Optional[TelegramTransport]:
+    """Build a transport bound to the DEDICATED research channel, or None.
+
+    Resolves credentials ONLY from :data:`RESEARCH_TELEGRAM_TOKEN_ENV` and
+    :data:`RESEARCH_TELEGRAM_CHAT_ENV`. It deliberately does NOT reuse the
+    default :class:`TelegramTransport` env resolution (which would fall back to
+    the consumer SIGNALS_* / HEARTBEAT_* channel). Returns None when the
+    dedicated pair is not fully configured, so the caller fails closed rather
+    than routing research cards to a consumer audience.
+    """
+    token = os.environ.get(RESEARCH_TELEGRAM_TOKEN_ENV)
+    chat = os.environ.get(RESEARCH_TELEGRAM_CHAT_ENV)
+    if not token or not chat:
+        return None
+    # Pin the env tuples to the dedicated names ONLY (single-element tuples): no
+    # silent fallback to any consumer channel is possible from this transport.
+    return TelegramTransport(
+        token_env=(RESEARCH_TELEGRAM_TOKEN_ENV,),
+        chat_env=(RESEARCH_TELEGRAM_CHAT_ENV,),
+    )
 
 
 # ---------------------------------------------------------------------------
@@ -755,6 +823,7 @@ def publish_shadow_feed(
     max_messages: int = DEFAULT_MAX_MESSAGES_PER_TICK,
     group_by_fixture_cards: bool = True,
     resolver: Optional[FixtureNameResolver] = None,
+    require_optin: bool = True,
 ) -> ShadowFeedResult:
     """Read persisted shadow records and deliver research-only Telegram cards.
 
@@ -766,6 +835,21 @@ def publish_shadow_feed(
     ``max_messages`` caps messages sent this tick; anything beyond is left as
     "queued" (unseen), to be delivered on a later tick via the ledger. The cap
     is neutral (order of appearance), never by residual magnitude.
+
+    Publication boundary (fail closed on the LIVE default path):
+      * ``dry_run=True`` always renders without sending or recording (tests /
+        inspection).
+      * An explicitly injected ``transport`` is used as-is (tests and advanced
+        callers own their routing).
+      * Otherwise (live, no injected transport) BOTH guards must pass or nothing
+        is sent this tick:
+          - ``require_optin`` and :func:`shadow_feed_publication_enabled` — the
+            operator must have explicitly enabled ``RESEARCH_SHADOW_FEED_PUBLISH``;
+          - a DEDICATED research channel must be configured
+            (:func:`research_telegram_transport` returns a transport, never the
+            consumer SIGNALS_* / HEARTBEAT_* fallback).
+        If either guard fails, publishable records are simply left unseen
+        ("queued") for a later tick — never routed to a consumer channel.
     """
     import time as _time
 
@@ -834,7 +918,19 @@ def publish_shadow_feed(
     published_shadow_ids: set[str] = set()
     published_eval_ids: set[str] = set()
 
-    transport = transport or (RecordingTransport() if dry_run else TelegramTransport())
+    # Resolve the effective transport with the publication boundary enforced on
+    # the LIVE default path (see the docstring). An injected transport (tests /
+    # advanced callers) or a dry run bypasses the env gates by design.
+    if dry_run:
+        transport = transport or RecordingTransport()
+    elif transport is None:
+        # Live path, no injected transport: BOTH guards must pass, else send
+        # nothing this tick (records stay unseen / queued for a later tick).
+        if require_optin and not shadow_feed_publication_enabled():
+            return result  # opt-in not enabled: nothing published
+        transport = research_telegram_transport()
+        if transport is None:
+            return result  # no dedicated research channel: fail closed
     for idx, (msg, member_ids) in enumerate(plan):
         res = deliver(msg, transport=transport, ledger=ledger, dry_run=dry_run)
         result.delivery_results.append(res)

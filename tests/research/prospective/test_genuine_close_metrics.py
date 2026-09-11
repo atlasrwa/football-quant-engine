@@ -176,3 +176,50 @@ def test_unknown_counts_dict_shape():
         "fixtures_with_genuine_close": None,
         "genuine_closing_keys": None,
     }
+
+
+# --- BLOCKER 4 (review): truncated/partial gzip fails closed to UNKNOWN ----
+#
+# A truncated .jsonl.gz capture store raises EOFError (zlib, NOT OSError) when
+# the compressed stream ends before its end-of-stream marker. That must report
+# UNKNOWN (source untrustworthy), never a fabricated 0 and never an escaping
+# exception into the monitor.
+
+
+def _write_truncated_gzip(path: Path, records: int = 300) -> None:
+    import gzip
+
+    path.parent.mkdir(parents=True, exist_ok=True)
+    with gzip.open(path, "wt", encoding="utf-8") as fh:
+        for i in range(records):
+            fh.write(
+                '{"provider":"p","provider_entity_id":"e","canonical_entity_id":'
+                f'"f{i}","concept":"odds:total_goals:over:2.5:pinnacle","value":"1.9",'
+                '"observed_at":1.0,"retrieved_at":1.0,"raw_payload_hash":"h",'
+                '"raw_status":"PROSPECTIVE_SNAPSHOT","event_time":2000000.0}\n'
+            )
+    raw = path.read_bytes()
+    path.write_bytes(raw[: len(raw) // 2])  # cut mid-stream -> EOFError on read
+
+
+def test_truncated_gzip_from_root_reports_unknown_not_zero(tmp_path):
+    _write_truncated_gzip(tmp_path / "captures.jsonl.gz")
+    counts = genuine_close_counts_from_root(tmp_path)
+    assert counts.available is False
+    assert counts.fixtures_with_genuine_close is None
+    assert counts.genuine_closing_keys is None
+
+
+def test_truncated_gzip_direct_count_reports_unknown_not_zero(tmp_path):
+    # Exercise count_genuine_closes directly (bypassing CaptureStore.__post_init__
+    # priming, which would also raise) to prove the metric's own reader fails
+    # closed on EOFError rather than raising or fabricating 0.
+    path = tmp_path / "captures.jsonl.gz"
+    _write_truncated_gzip(path)
+    store = object.__new__(CaptureStore)
+    store.path = path
+    store._seen_ids = set()
+    counts = count_genuine_closes(store)
+    assert counts.available is False
+    assert counts.fixtures_with_genuine_close is None
+    assert counts.genuine_closing_keys is None

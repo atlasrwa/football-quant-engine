@@ -195,8 +195,11 @@ def count_genuine_closes(store: CaptureStore) -> GenuineCloseCounts:
                     provider_payload_hash=getattr(rec, "raw_payload_hash", ""),
                 )
             )
-    except (OSError, ValueError, KeyError, TypeError):
+    except (OSError, ValueError, KeyError, TypeError, EOFError):
         # Missing / unreadable / malformed canonical source -> UNKNOWN, not 0.
+        # EOFError covers a truncated/partial gzip stream (zlib raises EOFError,
+        # NOT OSError, when the compressed data ends before the end-of-stream
+        # marker); gzip.BadGzipFile is already an OSError subclass.
         return _unknown_counts()
 
     fixtures_with_close: set = set()
@@ -227,11 +230,14 @@ def genuine_close_counts_from_root(
 ) -> GenuineCloseCounts:
     """Convenience: build the canonical store from the capture root and count.
 
-    If the store itself cannot even be constructed (e.g. an unreadable root),
-    fail closed to UNKNOWN rather than raising into the monitor.
+    If the store itself cannot even be constructed (e.g. an unreadable root, or
+    a truncated/partial gzip that fails while the store primes its idempotency
+    set), fail closed to UNKNOWN rather than raising into the monitor. A
+    truncated gzip raises ``EOFError`` (not ``OSError``) at construction, so it
+    is caught explicitly here too.
     """
     try:
         store = CaptureStore(path=Path(capture_root) / "captures.jsonl.gz")
-    except OSError:
+    except (OSError, EOFError):
         return _unknown_counts()
     return count_genuine_closes(store)

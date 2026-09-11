@@ -789,3 +789,112 @@ def test_reg_no_model_calls(tmp_path, monkeypatch):
     t = _OkTransport()
     res = _publish(tmp_path, t)
     assert res.messages_sent >= 1
+
+
+
+# ---------------------------------------------------------------------------
+# BLOCKER 1 (review): explicit opt-in + DEDICATED research channel.
+#
+# The LIVE default path (no injected transport, not a dry run) must publish
+# NOTHING unless BOTH guards pass:
+#   * RESEARCH_SHADOW_FEED_PUBLISH is explicitly enabled, AND
+#   * a dedicated RESEARCH_TELEGRAM_* channel is configured (never the consumer
+#     SIGNALS_* / HEARTBEAT_* fallback).
+# These tests exercise the real transport-resolution seam, so they clear the
+# publication env vars first and only send by stubbing the resolved transport.
+# ---------------------------------------------------------------------------
+
+_PUBLICATION_ENV_VARS = (
+    "RESEARCH_SHADOW_FEED_PUBLISH",
+    "RESEARCH_TELEGRAM_BOT_TOKEN",
+    "RESEARCH_TELEGRAM_CHAT_ID",
+    "SIGNALS_TELEGRAM_BOT_TOKEN",
+    "SIGNALS_TELEGRAM_CHAT_ID",
+    "HEARTBEAT_TELEGRAM_CHAT_ID",
+    "FORECAST_BROADCAST_TELEGRAM_BOT_TOKEN",
+    "FORECAST_BROADCAST_TELEGRAM_CHAT_ID",
+)
+
+
+def _clear_publication_env(monkeypatch):
+    for name in _PUBLICATION_ENV_VARS:
+        monkeypatch.delenv(name, raising=False)
+
+
+def test_optin_default_off_publishes_nothing_on_live_path(tmp_path, monkeypatch):
+    # Default deployment: opt-in unset, no dedicated channel. The live default
+    # path (transport=None, not dry_run) must send nothing and record nothing.
+    _clear_publication_env(monkeypatch)
+    _seed(tmp_path, shadows=[_shadow()])
+    ledger = NotifyLedger(path=tmp_path / "notify_ledger.json")
+    res = shadow_feed.publish_shadow_feed(shadow_root=tmp_path, ledger=ledger)
+    assert res.messages_sent == 0
+    assert res.shadows_published == 0
+    # Nothing was recorded as delivered, so it can be picked up once enabled.
+    assert ledger.already_sent(shadow_feed.shadow_event_id(_shadow())) is False
+
+
+def test_optin_enabled_but_no_dedicated_channel_publishes_nothing(tmp_path, monkeypatch):
+    # Opt-in ON but the dedicated research channel is NOT configured -> fail
+    # closed (no send), even though SIGNALS_* consumer creds are present.
+    _clear_publication_env(monkeypatch)
+    monkeypatch.setenv("RESEARCH_SHADOW_FEED_PUBLISH", "1")
+    monkeypatch.setenv("SIGNALS_TELEGRAM_BOT_TOKEN", "signals-token")
+    monkeypatch.setenv("SIGNALS_TELEGRAM_CHAT_ID", "signals-chat")
+    _seed(tmp_path, shadows=[_shadow()])
+    res = shadow_feed.publish_shadow_feed(shadow_root=tmp_path)
+    assert res.messages_sent == 0
+    assert res.shadows_published == 0
+
+
+def test_dedicated_channel_never_falls_back_to_signals(monkeypatch):
+    # research_telegram_transport must resolve ONLY the dedicated pair and must
+    # NEVER route to the consumer SIGNALS_* / HEARTBEAT_* channel.
+    _clear_publication_env(monkeypatch)
+    monkeypatch.setenv("SIGNALS_TELEGRAM_BOT_TOKEN", "s")
+    monkeypatch.setenv("SIGNALS_TELEGRAM_CHAT_ID", "sc")
+    monkeypatch.setenv("HEARTBEAT_TELEGRAM_CHAT_ID", "hc")
+    assert shadow_feed.research_telegram_transport() is None
+    # With the dedicated pair set, the transport is pinned to those names only.
+    monkeypatch.setenv("RESEARCH_TELEGRAM_BOT_TOKEN", "rt")
+    monkeypatch.setenv("RESEARCH_TELEGRAM_CHAT_ID", "rc")
+    transport = shadow_feed.research_telegram_transport()
+    assert transport is not None
+    assert transport.token_env == ("RESEARCH_TELEGRAM_BOT_TOKEN",)
+    assert transport.chat_env == ("RESEARCH_TELEGRAM_CHAT_ID",)
+
+
+def test_optin_gate_fail_closed_on_malformed_value(monkeypatch):
+    _clear_publication_env(monkeypatch)
+    for bad in ("", "0", "no", "off", "disabled", "garbage", "  "):
+        monkeypatch.setenv("RESEARCH_SHADOW_FEED_PUBLISH", bad)
+        assert shadow_feed.shadow_feed_publication_enabled() is False
+    for good in ("1", "true", "TRUE", " on ", "enabled"):
+        monkeypatch.setenv("RESEARCH_SHADOW_FEED_PUBLISH", good)
+        assert shadow_feed.shadow_feed_publication_enabled() is True
+
+
+def test_both_guards_pass_publishes_via_dedicated_channel(tmp_path, monkeypatch):
+    # Both guards satisfied: the live default path resolves the dedicated
+    # transport and publishes. We stub research_telegram_transport to a recording
+    # transport so no real network is touched while still exercising the gate.
+    _clear_publication_env(monkeypatch)
+    monkeypatch.setenv("RESEARCH_SHADOW_FEED_PUBLISH", "on")
+    monkeypatch.setenv("RESEARCH_TELEGRAM_BOT_TOKEN", "rt")
+    monkeypatch.setenv("RESEARCH_TELEGRAM_CHAT_ID", "rc")
+    recorder = _OkTransport()
+    monkeypatch.setattr(shadow_feed, "research_telegram_transport", lambda: recorder)
+    _seed(tmp_path, shadows=[_shadow()])
+    res = shadow_feed.publish_shadow_feed(shadow_root=tmp_path)
+    assert res.messages_sent == 1
+    assert len(recorder.sent) == 1
+
+
+def test_dry_run_bypasses_optin_and_channel_gates(tmp_path, monkeypatch):
+    # A dry run renders without sending or recording, regardless of the gates.
+    _clear_publication_env(monkeypatch)
+    _seed(tmp_path, shadows=[_shadow()])
+    res = shadow_feed.publish_shadow_feed(shadow_root=tmp_path, dry_run=True)
+    assert res.messages_sent == 0  # dry run never actually sends
+    # But it built and inspected the plan (the record was seen as publishable).
+    assert res.shadows_seen == 1

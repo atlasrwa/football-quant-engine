@@ -575,6 +575,14 @@ def _publish_shadow_feed_after_capture(*, capture_root: Path) -> None:
     It performs NO provider request, runs NO model, recomputes NO residual, and
     can only emit the non-reserved SHADOW_RESEARCH / SHADOW_RESEARCH_UPDATE types.
 
+    Publication boundary (fail closed): a LIVE send happens ONLY when the
+    operator has explicitly enabled ``RESEARCH_SHADOW_FEED_PUBLISH`` AND a
+    dedicated research Telegram channel (``RESEARCH_TELEGRAM_BOT_TOKEN`` +
+    ``RESEARCH_TELEGRAM_CHAT_ID``) is configured. There is NO fallback to the
+    consumer SIGNALS_* / HEARTBEAT_* channel. With either guard unmet, the
+    just-frozen records are simply left unseen for a later tick — the default
+    deployment publishes nothing.
+
     Failure isolation (same discipline as ``_run_shadow_after_capture``): any
     error is caught and recorded to the SEPARATE shadow ops log; a Telegram or
     formatting problem must never corrupt capture data or fail the capture run.
