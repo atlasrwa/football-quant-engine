@@ -170,7 +170,7 @@ def test_research_monitor_status_unaffected(monkeypatch):
     from tests.research.prospective.test_research_notify import _status
 
     msg = format_daily_heartbeat(_status())
-    assert "Research Status" in msg.text
+    assert "RESEARCH STATUS" in msg.text
     # And with the most permissive env, the heartbeat is still just status.
     _set(monkeypatch, "0", "PROMOTED")
     msg2 = format_daily_heartbeat(_status())

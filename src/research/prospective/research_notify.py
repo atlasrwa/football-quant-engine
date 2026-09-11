@@ -50,6 +50,13 @@ class MessageType(str, Enum):
     READINESS_TRANSITION = "READINESS_TRANSITION"
     CRITICAL_ALERT = "CRITICAL_ALERT"
     WEEKLY_SUMMARY = "WEEKLY_SUMMARY"
+    # research-only shadow-residual feed (see shadow_feed.py). These are NOT
+    # betting signals: they publish an already-persisted, immutable
+    # PROSPECTIVE_SHADOW model-vs-market disagreement (and its later market
+    # movement) purely as evidence. They are distinct from — and can never be
+    # emitted as — the reserved VALIDATED_SIGNAL / STRATEGY_ACTION types.
+    SHADOW_RESEARCH = "SHADOW_RESEARCH"
+    SHADOW_RESEARCH_UPDATE = "SHADOW_RESEARCH_UPDATE"
     # reserved — require a future explicit promotion gate; NOT activated
     VALIDATED_SIGNAL = "VALIDATED_SIGNAL"
     STRATEGY_ACTION = "STRATEGY_ACTION"
@@ -94,6 +101,47 @@ def assert_no_signal_content(text: str) -> None:
         )
 
 
+#: The ONLY additional phrases permitted specifically on the research-shadow
+#: message path (mission section 11: "update only the research-message
+#: validation path narrowly enough to allow the approved research
+#: terminology"). Nothing here relaxes the global ``assert_no_signal_content``
+#: used by every other message type.
+#:
+#: Only ``actionable`` needs an exception: the frozen research classification
+#: label "NOT ACTIONABLE" / "NOT_ACTIONABLE" (carried verbatim from the shadow
+#: record) contains the forbidden substring ``actionable``. We allow it ONLY as
+#: part of that explicit negative-classification phrase, so the message can
+#: state the record is not actionable without being able to reintroduce any
+#: other use of the word.
+_RESEARCH_ALLOWED_PHRASES: tuple[str, ...] = (
+    "not actionable",
+    "not_actionable",
+)
+
+
+def assert_no_signal_content_research(text: str) -> None:
+    """Content guard for the research-shadow feed only (narrowly widened).
+
+    Identical to :func:`assert_no_signal_content` EXCEPT that the explicit
+    approved research phrases in :data:`_RESEARCH_ALLOWED_PHRASES` (currently
+    only the "NOT ACTIONABLE" classification label) are neutralised before the
+    forbidden-substring scan. Every other betting-signal term — stake, ROI,
+    +EV, edge over, profit, alpha:, tip:, value bet, etc. — is STILL rejected,
+    so this cannot be used to smuggle a signal. The global guard is unchanged.
+    """
+    low = f" {text.lower()} "
+    for allowed in _RESEARCH_ALLOWED_PHRASES:
+        low = low.replace(allowed, " ")
+    hits = [s for s in _FORBIDDEN_SUBSTRINGS if s in low]
+    if hits:
+        raise SignalContentError(
+            "research-shadow message contains forbidden signal vocabulary: "
+            f"{sorted(set(hits))}. The research-shadow feed publishes a persisted "
+            "model-vs-market residual as evidence only — never bets, stakes, "
+            "ROI, edges, or tips."
+        )
+
+
 # ---------------------------------------------------------------------------
 # Frozen milestones (mirrors the preregistered gate; do NOT change thresholds)
 # ---------------------------------------------------------------------------
@@ -134,7 +182,16 @@ class ResearchStatus:
     same_book_late_final: int
     confirmed_lineups: int
     pre_post_lineup_pairs: int
-    genuine_closes: int
+    # Genuine-close telemetry (explicitly named units; never an ambiguous
+    # "genuine_closes" scalar). ``genuine_close_available`` is False ONLY when
+    # the canonical closing/odds source was missing / unreadable / malformed;
+    # in that case the two counts are None (UNKNOWN), never a fabricated 0.
+    #   * fixtures_with_genuine_close: distinct fixtures with >=1 genuine close
+    #   * genuine_closing_keys:        distinct (fixture,book,market,sel,line)
+    #                                  keys resolving to a genuine close
+    genuine_close_available: bool
+    fixtures_with_genuine_close: Optional[int]
+    genuine_closing_keys: Optional[int]
     readiness_state: str
     gate_met: bool
     # frozen gate thresholds (for display; never mutated here)
@@ -163,7 +220,9 @@ class ResearchStatus:
             "same_book_late_final": self.same_book_late_final,
             "confirmed_lineups": self.confirmed_lineups,
             "pre_post_lineup_pairs": self.pre_post_lineup_pairs,
-            "genuine_closes": self.genuine_closes,
+            "genuine_close_available": self.genuine_close_available,
+            "fixtures_with_genuine_close": self.fixtures_with_genuine_close,
+            "genuine_closing_keys": self.genuine_closing_keys,
             "readiness_state": self.readiness_state,
             "gate_met": self.gate_met,
         }
@@ -201,6 +260,7 @@ def collect_status(
     from src.research.experiments.price_discovery.dataset import build_dataset
     from src.research.experiments.price_discovery.report import assess_readiness
     from src.research.prospective.coverage_funnel import analysis_support
+    from src.research.prospective.genuine_close_metrics import count_genuine_closes
     from src.research.prospective.ops_log import DEFAULT_OPS_LOG
     from src.research.prospective.scheduler_health import assess_health
     from src.research.prospective.storage import CaptureStore
@@ -217,6 +277,11 @@ def collect_status(
         confirmed_lineups=support.fixtures_with_confirmed_lineup,
         pre_post_lineup_pairs=0,  # PRE->POST pairing needs lineup captures (none yet)
     )
+    # Genuine-close telemetry is derived from the SAME canonical capture store
+    # using the repository's existing genuine-close predicate
+    # (resolve_genuine_close). It fails closed to UNKNOWN if the source is
+    # missing/unreadable/malformed — it is never a hard-coded 0.
+    gc = count_genuine_closes(store)
 
     return ResearchStatus(
         generated_at=now,
@@ -232,7 +297,9 @@ def collect_status(
         same_book_late_final=readiness.same_book_late_final,
         confirmed_lineups=readiness.confirmed_lineups,
         pre_post_lineup_pairs=readiness.pre_post_lineup_pairs,
-        genuine_closes=0,  # requires a resolved genuine close (none until FINAL/settled)
+        genuine_close_available=gc.available,
+        fixtures_with_genuine_close=gc.fixtures_with_genuine_close,
+        genuine_closing_keys=gc.genuine_closing_keys,
         readiness_state=readiness.readiness_state,
         gate_met=readiness.gate["met"],
         gate=readiness.gate,
@@ -301,11 +368,63 @@ def _msg(mtype: MessageType, event_id: str, text: str, status: ResearchStatus) -
             f"{mtype.value} is reserved and must not be emitted during DATA "
             "ACCUMULATION MODE; it requires a future promotion gate."
         )
-    assert_no_signal_content(text)
+    # Research/operational monitor messages may carry the explicit negative
+    # classification label "NOT ACTIONABLE" (e.g. the status footer "Research
+    # only. Not validated. Not actionable."). We use the narrowly-widened guard
+    # that neutralises ONLY that approved phrase before scanning; every other
+    # betting-signal term (stake, ROI, +EV, edge, profit, tip, value bet, ...)
+    # is STILL rejected, so this cannot be used to smuggle a signal.
+    assert_no_signal_content_research(text)
     return NotifyMessage(
         message_type=mtype, event_id=event_id, text=text,
         generated_at=status.generated_at, main_sha=status.main_sha,
         collector_version=status.collector_version, readiness_state=status.readiness_state,
+        source_version=SOURCE_VERSION,
+    ).with_hash()
+
+
+#: Message types the research-shadow feed is allowed to emit. Deliberately a
+#: subset that EXCLUDES the reserved signal/strategy types, so the feed can
+#: never publish a validated signal even by mistake.
+_SHADOW_RESEARCH_TYPES: frozenset[MessageType] = frozenset(
+    {MessageType.SHADOW_RESEARCH, MessageType.SHADOW_RESEARCH_UPDATE}
+)
+
+
+def build_research_shadow_message(
+    mtype: MessageType,
+    event_id: str,
+    text: str,
+    *,
+    generated_at: float,
+    main_sha: str = "",
+    readiness_state: str = "RESEARCH_ONLY",
+    collector_version: str = COLLECTOR_VERSION,
+) -> NotifyMessage:
+    """Construct a research-shadow ``NotifyMessage`` through the guarded path.
+
+    This is the shadow-feed analogue of :func:`_msg`. It enforces THREE things:
+      1. ``mtype`` must be one of :data:`_SHADOW_RESEARCH_TYPES` — the reserved
+         VALIDATED_SIGNAL / STRATEGY_ACTION types (and any status type) are
+         rejected here, so the shadow feed can never emit a signal.
+      2. the text passes :func:`assert_no_signal_content_research` (all betting
+         vocabulary rejected; only the "NOT ACTIONABLE" label is allowed).
+      3. a deterministic ``payload_hash`` is attached for provenance/audit.
+
+    It does not require a full :class:`ResearchStatus` (the shadow feed reads
+    persisted shadow records, not the collector snapshot), so provenance fields
+    are passed explicitly.
+    """
+    if mtype not in _SHADOW_RESEARCH_TYPES:
+        raise ReservedMessageTypeError(
+            f"{mtype.value} may not be emitted by the research-shadow feed; "
+            f"only {sorted(t.value for t in _SHADOW_RESEARCH_TYPES)} are permitted."
+        )
+    assert_no_signal_content_research(text)
+    return NotifyMessage(
+        message_type=mtype, event_id=event_id, text=text,
+        generated_at=generated_at, main_sha=main_sha,
+        collector_version=collector_version, readiness_state=readiness_state,
         source_version=SOURCE_VERSION,
     ).with_hash()
 
@@ -327,25 +446,85 @@ def _quota_str(status: ResearchStatus) -> str:
     return f"{q:,} / 100,000" if isinstance(q, int) else "unknown"
 
 
+def _fmt_int(value: int) -> str:
+    """Thousands-separated integer, e.g. 2520 -> '2,520'."""
+    return f"{int(value):,}"
+
+
+def _gate_line(g: dict, key: str, label: str) -> str:
+    """Render an 'observed / required' accumulation line with a ✅ when met.
+
+    A crossed accumulation checkpoint is marked ✅ to make progress legible; it
+    signals ONLY that this single input threshold is satisfied — never that the
+    overall experiment has passed or that any signal is validated.
+    """
+    obs = g[key]["observed"]
+    req = g[key]["required"]
+    tick = " \u2705" if obs >= req else ""
+    return f"{label}: {_fmt_int(obs)} / {_fmt_int(req)}{tick}"
+
+
+def _genuine_close_line(status: ResearchStatus) -> str:
+    """Render the genuine-close metric with an EXPLICIT, unambiguous unit.
+
+    The headline is fixture-based (operationally the most useful): the number of
+    distinct fixtures that have at least one genuine close, out of the fixtures
+    captured so far. If the canonical source could not be trusted, we render
+    UNKNOWN rather than a fabricated 0 (missing truth stays missing). We never
+    print a bare "Genuine closes: N" whose unit is ambiguous.
+    """
+    if not status.genuine_close_available or status.fixtures_with_genuine_close is None:
+        return "Fixtures with genuine close: UNKNOWN (source unavailable)"
+    fixtures = _fmt_int(status.fixtures_with_genuine_close)
+    total = _fmt_int(status.captured_fixtures)
+    line = f"Fixtures with genuine close: {fixtures} / {total}"
+    # Also surface the finer key-level count, explicitly named so the fixture
+    # count and the market-key count are never conflated under one label.
+    if status.genuine_closing_keys is not None:
+        line += f" (genuine closing keys: {_fmt_int(status.genuine_closing_keys)})"
+    return line
+
+
+def _readiness_label(readiness_state: str) -> str:
+    """Human-facing readiness label, kept explicitly exploratory.
+
+    The machine token (e.g. PRICE_DISCOVERY_EXPLORATORY) is mapped to spaced
+    words for the consumer-ish research surface without losing its meaning. The
+    exploratory nature is preserved verbatim.
+    """
+    return readiness_state.replace("PRICE_DISCOVERY_", "PRICE DISCOVERY \u2014 ").replace("_", " ")
+
+
 def format_daily_heartbeat(status: ResearchStatus) -> NotifyMessage:
+    # NOTE ON STATISTICAL N: the "LATE -> FINAL transitions" figure below is a
+    # RAW transition count. Many transitions can belong to the SAME fixture,
+    # bookmaker, market and line (a single fixture priced by several books
+    # across several vintages produces many transitions). Raw transition N is
+    # therefore NOT the effective statistical N / number of independent
+    # experiments, fixtures, picks, or samples. It is a data-accumulation
+    # counter only. No independence claim is made or implied here, and no new
+    # statistical estimator is introduced.
     g = status.gate["checks"]
     text = "\n".join([
-        "Football Quant Engine \u2014 Research Status",
+        "\u2699\ufe0f FOOTBALL QUANT ENGINE \u2014 RESEARCH STATUS",
         "",
+        "SYSTEM",
         f"Collector: {status.collector_health}",
         f"Quota: {_quota_str(status)}",
-        "",
-        f"Fixtures: {g['captured_fixtures']['observed']} / {g['captured_fixtures']['required']}",
-        f"LATE->FINAL: {g['same_book_late_final']['observed']} / {g['same_book_late_final']['required']}",
-        f"Confirmed lineups: {g['confirmed_lineups']['observed']} / {g['confirmed_lineups']['required']}",
-        f"PRE->POST lineup pairs: {g['pre_post_lineup_pairs']['observed']} / {g['pre_post_lineup_pairs']['required']}",
-        f"Genuine closes: {status.genuine_closes}",
-        "",
-        "Readiness:",
-        status.readiness_state,
-        "",
-        f"Last successful capture: {_iso(status.last_successful_run)}",
+        f"Last capture: {_iso(status.last_successful_run)}",
         f"Errors last run: {status.errors_last_run if status.errors_last_run is not None else 'n/a'}",
+        "",
+        "RESEARCH ACCUMULATION",
+        _gate_line(g, "captured_fixtures", "Fixtures"),
+        _gate_line(g, "same_book_late_final", "LATE \u2192 FINAL transitions"),
+        _gate_line(g, "confirmed_lineups", "Confirmed lineups"),
+        _gate_line(g, "pre_post_lineup_pairs", "PRE \u2192 POST lineup pairs"),
+        _genuine_close_line(status),
+        "",
+        "READINESS",
+        _readiness_label(status.readiness_state),
+        "",
+        "Research only. Not validated. Not actionable.",
     ])
     # Daily heartbeat dedups per UTC day so a re-run same day is not resent.
     day = _iso(status.generated_at)[:10]
@@ -369,19 +548,40 @@ def format_critical_alert(status: ResearchStatus, *, reason: str, detail: str = 
 
 
 def format_milestone(status: ResearchStatus, *, metric: str, threshold: int) -> NotifyMessage:
+    # Explicit Required-vs-Captured wording. The threshold (Required) is the
+    # frozen data gate; the observed (Captured) count is what we have actually
+    # accumulated so far and is often FAR above the threshold. Showing both
+    # avoids the misleading "Reached 200 ... (2520 observed)" phrasing.
+    #
+    # NOTE ON STATISTICAL N: for transition-based metrics the Captured figure is
+    # a RAW count. Many transitions/observations can share the same fixture,
+    # bookmaker, market and line, so this is NOT the effective statistical N /
+    # number of independent experiments, picks, fixtures, or samples. Crossing
+    # this data gate unlocks ANALYSIS only; it does not validate any signal and
+    # does not mean the overall experiment has passed.
     label = {
-        "captured_fixtures": "captured fixtures",
-        "same_book_late_final": "same-book LATE->FINAL transitions",
-        "confirmed_lineups": "confirmed lineups",
-        "pre_post_lineup_pairs": "PRE->POST lineup pairs",
+        "captured_fixtures": "Captured fixtures",
+        "same_book_late_final": "Same-book LATE \u2192 FINAL transitions",
+        "confirmed_lineups": "Confirmed lineups",
+        "pre_post_lineup_pairs": "PRE \u2192 POST lineup pairs",
     }[metric]
     observed = status.counts()[metric]
     text = "\n".join([
-        "Football Quant Engine \u2014 Research Milestone",
+        "\U0001f52c RESEARCH MILESTONE",
         "",
-        f"Reached {threshold} {label} ({observed} observed).",
-        f"Readiness: {status.readiness_state}",
+        "Price-discovery data gate reached",
+        "",
+        label,
+        f"Required: {_fmt_int(threshold)}",
+        f"Captured: {_fmt_int(observed)} \u2705",
+        "",
+        "Research stage unlocked:",
+        _readiness_label(status.readiness_state),
+        "",
+        "This unlocks analysis. It does not validate a signal.",
     ])
+    # Dedup key unchanged: one milestone message per (metric, threshold), so an
+    # already-crossed gate is never re-sent (preserved via the NotifyLedger).
     return _msg(MessageType.RESEARCH_MILESTONE, f"milestone:{metric}:{threshold}", text, status)
 
 

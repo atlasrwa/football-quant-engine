@@ -565,6 +565,80 @@ def _run_shadow_after_capture(*, capture_root: Path, broadcast_root: Optional[Pa
         )
 
 
+def _publish_shadow_feed_after_capture(*, capture_root: Path) -> None:
+    """Publish just-persisted PROSPECTIVE_SHADOW records to the research feed.
+
+    Additive UX step (mission: Telegram shadow research feed). Runs AFTER the
+    shadow processor has appended any new records, inside the same capture tick /
+    flock. It is strictly consume-only: it reads the append-only shadow ledgers
+    and delivers research-only Telegram cards for records not already delivered.
+    It performs NO provider request, runs NO model, recomputes NO residual, and
+    can only emit the non-reserved SHADOW_RESEARCH / SHADOW_RESEARCH_UPDATE types.
+
+    Publication boundary (fail closed): a LIVE send happens ONLY when the
+    operator has explicitly enabled ``RESEARCH_SHADOW_FEED_PUBLISH`` AND a
+    dedicated research Telegram channel (``RESEARCH_TELEGRAM_BOT_TOKEN`` +
+    ``RESEARCH_TELEGRAM_CHAT_ID``) is configured. There is NO fallback to the
+    consumer SIGNALS_* / HEARTBEAT_* channel. With either guard unmet, the
+    just-frozen records are simply left unseen for a later tick — the default
+    deployment publishes nothing.
+
+    Failure isolation (same discipline as ``_run_shadow_after_capture``): any
+    error is caught and recorded to the SEPARATE shadow ops log; a Telegram or
+    formatting problem must never corrupt capture data or fail the capture run.
+    Delivery itself is already failure-isolated per message by ``deliver``.
+    """
+    from src.research.prospective import shadow_feed
+    from src.research.prospective.ops_log import append_run, hostname, OpsRunRecord
+
+    # Separate ops log from the shadow PROCESSOR's shadow_ops.jsonl, so this
+    # additive UX step never displaces the processor's own ops record.
+    shadow_ops_path = Path(capture_root) / "shadow_feed_ops.jsonl"
+    started = now_ts()
+    try:
+        res = shadow_feed.publish_shadow_feed(shadow_root=Path(capture_root))
+        finished = now_ts()
+        note = (
+            "shadow_feed: "
+            f"shadows_seen={res.shadows_seen} published={res.shadows_published} "
+            f"queued={res.shadows_queued} "
+            f"evals_seen={res.evaluations_seen} evals_published={res.evaluations_published} "
+            f"messages_sent={res.messages_sent}"
+        )
+        append_run(
+            OpsRunRecord(
+                run_started_at=started,
+                run_finished_at=finished,
+                duration_seconds=round(finished - started, 3),
+                exit_status="OK",
+                health_state="SHADOW_FEED_OK",
+                odds_captured=0,
+                errors=0,
+                hostname=hostname(),
+                note=note,
+            ),
+            path=shadow_ops_path,
+        )
+    except Exception as exc:  # noqa: BLE001 - feed failure must never crash capture
+        finished = now_ts()
+        append_run(
+            OpsRunRecord(
+                run_started_at=started,
+                run_finished_at=finished,
+                duration_seconds=round(finished - started, 3),
+                exit_status="ERROR",
+                health_state="SHADOW_FEED_FAILED",
+                errors=1,
+                hostname=hostname(),
+                note=(
+                    "shadow feed publish failed (isolated; capture unaffected): "
+                    f"{type(exc).__name__}"
+                ),
+            ),
+            path=shadow_ops_path,
+        )
+
+
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(prog="prospective-collector", description=__doc__)
     parser.add_argument("--capture-root", type=Path, default=DEFAULT_CAPTURE_ROOT)
@@ -742,6 +816,14 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
             # and NEVER corrupts capture data or fails the parent capture run
             # (the research capture already succeeded and is what matters).
             _run_shadow_after_capture(capture_root=Path(args.capture_root))
+
+            # --- Prospective shadow research Telegram feed (additive UX) ---
+            # Consume-only publication of the records the processor just froze:
+            # research-only PROSPECTIVE_SHADOW cards + later movement updates,
+            # deduped via the existing restart-safe notify ledger. No provider /
+            # model call; distinct from validated-signal publication; isolated so
+            # a Telegram failure never affects the capture run.
+            _publish_shadow_feed_after_capture(capture_root=Path(args.capture_root))
 
     except ProspectiveConfigError as exc:
         print(str(exc), file=sys.stderr)

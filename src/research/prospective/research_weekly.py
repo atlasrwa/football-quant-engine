@@ -16,6 +16,7 @@ from src.research.prospective.research_notify import (
     MessageType,
     NotifyMessage,
     ResearchStatus,
+    _genuine_close_line,
     _iso,
     _msg,
     _quota_str,
@@ -77,7 +78,7 @@ def format_weekly_summary(
         f"  LATE->FINAL: {status.same_book_late_final}",
         f"  Confirmed lineups: {status.confirmed_lineups}",
         f"  PRE->POST pairs: {status.pre_post_lineup_pairs}",
-        f"  Genuine closes: {status.genuine_closes}",
+        f"  {_genuine_close_line(status)}",
         "",
         f"Readiness: {status.readiness_state}",
     ]

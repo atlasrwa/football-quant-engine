@@ -48,7 +48,10 @@ def _status(**over) -> ResearchStatus:
         collector_health="HEALTHY", minutes_since_success=4.0, last_successful_run=1_787_999_000.0,
         quota_remaining=96_700, errors_last_run=0, total_runs=5,
         captured_fixtures=30, same_book_late_final=0, confirmed_lineups=0,
-        pre_post_lineup_pairs=0, genuine_closes=0,
+        pre_post_lineup_pairs=0,
+        genuine_close_available=over.get("genuine_close_available", True),
+        fixtures_with_genuine_close=over.get("fixtures_with_genuine_close", 0),
+        genuine_closing_keys=over.get("genuine_closing_keys", 0),
         readiness_state="PRICE_DISCOVERY_EXPLORATORY", gate_met=False, gate=gate,
     )
     base.update({k: v for k, v in over.items() if k in base})
@@ -82,11 +85,13 @@ def test_heartbeat_format_and_live_counts():
     s = _status(captured_fixtures=42, quota_remaining=96_700)
     msg = format_daily_heartbeat(s)
     assert msg.message_type is MessageType.DATA_PROGRESS
-    assert "Football Quant Engine" in msg.text
+    assert "FOOTBALL QUANT ENGINE" in msg.text
+    assert "SYSTEM" in msg.text and "RESEARCH ACCUMULATION" in msg.text
     assert "Collector: HEALTHY" in msg.text
     assert "Fixtures: 42 / 300" in msg.text          # live count, not hard-coded
     assert "96,700 / 100,000" in msg.text
-    assert "PRICE_DISCOVERY_EXPLORATORY" in msg.text
+    assert "PRICE DISCOVERY \u2014 EXPLORATORY" in msg.text
+    assert "Research only. Not validated. Not actionable." in msg.text
     # provenance present
     assert msg.main_sha == "abc123"
     assert msg.payload_hash and len(msg.payload_hash) == 64
@@ -122,6 +127,57 @@ def test_milestone_dedup_across_restart(tmp_path):
     ledger2 = NotifyLedger(path=tmp_path / "ledger.json")
     r2 = deliver(msg, transport=t, ledger=ledger2)
     assert r2.deduped is True and len(t.sent) == 1  # not resent
+
+
+def test_milestone_threshold_vs_captured_wording():
+    # The observed count can be far above the threshold; the message must show
+    # BOTH explicitly (Required vs Captured), never the misleading
+    # "Reached 200 ... (2520 observed)" phrasing.
+    s = _status(same_book_late_final=2520)
+    msg = format_milestone(s, metric="same_book_late_final", threshold=200)
+    assert "RESEARCH MILESTONE" in msg.text
+    assert "Required: 200" in msg.text
+    assert "Captured: 2,520" in msg.text            # thousands-separated
+    assert "\u2705" in msg.text                       # captured tick
+    # Exploratory framing preserved; no validation/actionable/edge language.
+    assert "This unlocks analysis. It does not validate a signal." in msg.text
+    assert "PRICE DISCOVERY \u2014 EXPLORATORY" in msg.text
+    low = msg.text.lower()
+    for banned in ("validated", "alpha", "edge", "profitable", "actionable ", " ev ", "+ev"):
+        assert banned not in low
+
+
+def test_milestone_dedup_id_unchanged():
+    s = _status(same_book_late_final=2520)
+    msg = format_milestone(s, metric="same_book_late_final", threshold=200)
+    assert msg.event_id == "milestone:same_book_late_final:200"
+
+
+def test_status_sections_and_genuine_close_unit():
+    s = _status(captured_fixtures=35, same_book_late_final=2520,
+                fixtures_with_genuine_close=27, genuine_closing_keys=3058)
+    text = format_daily_heartbeat(s).text
+    # Three clearly separated sections.
+    assert "SYSTEM" in text
+    assert "RESEARCH ACCUMULATION" in text
+    assert "READINESS" in text
+    # Genuine-close metric carries an EXPLICIT unit (fixtures), never bare
+    # "Genuine closes: N".
+    assert "Fixtures with genuine close: 27 / 35" in text
+    assert "genuine closing keys: 3,058" in text
+    assert "Genuine closes:" not in text
+    # Crossed accumulation line marked, research-only footer present.
+    assert "LATE \u2192 FINAL transitions: 2,520 / 200 \u2705" in text
+    assert "Research only. Not validated. Not actionable." in text
+
+
+def test_status_genuine_close_unknown_not_zero():
+    s = _status(genuine_close_available=False, fixtures_with_genuine_close=None,
+                genuine_closing_keys=None)
+    text = format_daily_heartbeat(s).text
+    assert "Fixtures with genuine close: UNKNOWN (source unavailable)" in text
+    # Must never render a fabricated 0 for an unavailable source.
+    assert "Fixtures with genuine close: 0" not in text
 
 
 # --- readiness transition ----------------------------------------------
@@ -243,3 +299,183 @@ def test_dedup_prevents_resend_same_event(tmp_path):
     assert deliver(msg, transport=t, ledger=ledger).sent is True
     assert deliver(msg, transport=t, ledger=ledger).deduped is True
     assert len(t.sent) == 1
+
+
+
+# ---------------------------------------------------------------------------
+# BLOCKER 3 (review): cross-process ledger integrity via fcntl.flock.
+#
+# The capture collector and the research monitor run as SEPARATE processes
+# under DIFFERENT flocks and share notify_ledger.json. Without a lock around
+# the ledger read-modify-write, two concurrent record_sent calls could each
+# load the same state and the last writer would clobber the other's marker,
+# dropping a delivered event and causing a duplicate resend. The ledger now
+# serializes writes with an exclusive advisory lock; these tests prove no
+# marker is lost under concurrency.
+# ---------------------------------------------------------------------------
+
+
+def _ledger_writer_worker(ledger_path_str: str, event_id: str) -> None:
+    """Module-level worker: record one distinct event into the shared ledger."""
+    from src.research.prospective.research_notify import MessageType, NotifyMessage
+    from src.research.prospective.research_notify_delivery import NotifyLedger
+
+    ledger = NotifyLedger(path=Path(ledger_path_str))
+    msg = NotifyMessage(
+        message_type=MessageType.SHADOW_RESEARCH,
+        event_id=event_id,
+        text="x",
+        generated_at=1.0,
+        main_sha="s",
+        collector_version="c",
+        readiness_state="R",
+        source_version="v",
+    ).with_hash()
+    ledger.record_sent(msg, detail="concurrent")
+
+
+def test_concurrent_processes_do_not_lose_ledger_entries(tmp_path):
+    import multiprocessing as mp
+
+    # Use 'fork' so the child inherits this module (spawn re-imports by path and
+    # cannot resolve the worker under pytest's import layout). Skip if fork is
+    # unavailable on the platform; the threaded test still covers concurrency.
+    methods = mp.get_all_start_methods()
+    if "fork" not in methods:
+        import pytest as _pytest
+
+        _pytest.skip("fork start method unavailable; threaded concurrency test covers this")
+    ctx = mp.get_context("fork")
+
+    ledger_path = tmp_path / "notify_ledger.json"
+    n = 24
+    event_ids = [f"evt:{i:03d}" for i in range(n)]
+
+    procs = [
+        ctx.Process(target=_ledger_writer_worker, args=(str(ledger_path), eid))
+        for eid in event_ids
+    ]
+    for p in procs:
+        p.start()
+    for p in procs:
+        p.join(timeout=30)
+        assert p.exitcode == 0
+
+    ledger = NotifyLedger(path=ledger_path)
+    # Every distinct event must survive — none clobbered by a racing writer.
+    for eid in event_ids:
+        assert ledger.already_sent(eid) is True, f"lost ledger entry for {eid}"
+
+
+def test_concurrent_threads_do_not_lose_ledger_entries(tmp_path):
+    import threading
+
+    from src.research.prospective.research_notify import MessageType, NotifyMessage
+
+    ledger_path = tmp_path / "notify_ledger.json"
+    n = 40
+    barrier = threading.Barrier(n)
+
+    def worker(i: int) -> None:
+        ledger = NotifyLedger(path=ledger_path)
+        msg = NotifyMessage(
+            message_type=MessageType.SHADOW_RESEARCH, event_id=f"t:{i:03d}", text="x",
+            generated_at=1.0, main_sha="s", collector_version="c",
+            readiness_state="R", source_version="v",
+        ).with_hash()
+        barrier.wait()  # maximize contention
+        ledger.record_sent(msg)
+
+    threads = [threading.Thread(target=worker, args=(i,)) for i in range(n)]
+    for t in threads:
+        t.start()
+    for t in threads:
+        t.join(timeout=30)
+
+    ledger = NotifyLedger(path=ledger_path)
+    for i in range(n):
+        assert ledger.already_sent(f"t:{i:03d}") is True, f"lost entry t:{i:03d}"
+
+
+
+# ---------------------------------------------------------------------------
+# BLOCKER 2 (review): explicit at-least-once / dedup best-effort contract.
+#
+# The contract is NOT exactly-once. Steps are send-then-record, so the only
+# crash-window failure mode is a DUPLICATE resend, never a silent drop. These
+# tests pin both halves of that contract.
+# ---------------------------------------------------------------------------
+
+
+class _CountingOkTransport:
+    def __init__(self):
+        self.calls = 0
+
+    def send(self, text):
+        self.calls += 1
+        return True, f"ok message_id={self.calls}"
+
+
+def test_crash_between_send_and_record_resends_next_run_no_drop(tmp_path, monkeypatch):
+    # Simulate a crash AFTER Telegram accepts the message but BEFORE the ledger
+    # write persists: record_sent raises. deliver() reports the raise defensively
+    # but the event is NOT recorded, so the next run resends it (a tolerated
+    # duplicate) rather than silently dropping it.
+    s = _status()
+    ledger = NotifyLedger(path=tmp_path / "ledger.json")
+    msg = format_daily_heartbeat(s)
+    transport = _CountingOkTransport()
+
+    original_record = ledger.record_sent
+
+    def _boom(*a, **k):
+        raise RuntimeError("crash after send, before ledger persist")
+
+    # First run: send succeeds, ledger write "crashes".
+    monkeypatch.setattr(ledger, "record_sent", _boom)
+    r1 = deliver(msg, transport=transport, ledger=ledger)
+    assert transport.calls == 1
+    # The event was NOT durably recorded (crash window) ...
+    assert ledger.already_sent(msg.event_id) is False
+    # deliver must not raise to the caller (capture pipeline stays alive).
+    assert r1.sent in (True, False)
+
+    # Second run (post-restart): ledger write works again -> event RESENDS
+    # (at-least-once: a duplicate, but never a drop), then is recorded.
+    monkeypatch.setattr(ledger, "record_sent", original_record)
+    r2 = deliver(msg, transport=transport, ledger=ledger)
+    assert transport.calls == 2          # duplicate resend happened
+    assert r2.sent is True
+    assert ledger.already_sent(msg.event_id) is True
+
+    # Third run: now deduped, no further resend (steady state).
+    r3 = deliver(msg, transport=transport, ledger=ledger)
+    assert transport.calls == 2          # no additional send
+    assert r3.deduped is True
+
+
+def test_confirmed_send_is_recorded_and_not_resent(tmp_path):
+    # Normal path: a confirmed send is recorded and never resent (dedup best
+    # effort holds absent a crash window).
+    s = _status()
+    ledger = NotifyLedger(path=tmp_path / "ledger.json")
+    msg = format_daily_heartbeat(s)
+    transport = _CountingOkTransport()
+    assert deliver(msg, transport=transport, ledger=ledger).sent is True
+    assert deliver(msg, transport=transport, ledger=ledger).deduped is True
+    assert transport.calls == 1  # exactly one real send in the no-crash case
+
+
+def test_failed_send_is_not_recorded_and_retries(tmp_path):
+    # A send that never succeeds is never recorded, so it is retried (not
+    # dropped) — the drop-avoidance half of at-least-once.
+    s = _status()
+    ledger = NotifyLedger(path=tmp_path / "ledger.json")
+    msg = format_daily_heartbeat(s)
+    r1 = deliver(msg, transport=_FailTransport(), ledger=ledger)
+    assert r1.sent is False
+    assert ledger.already_sent(msg.event_id) is False
+    # A later successful attempt then delivers and records it.
+    r2 = deliver(msg, transport=_OkTransport(), ledger=ledger)
+    assert r2.sent is True
+    assert ledger.already_sent(msg.event_id) is True
