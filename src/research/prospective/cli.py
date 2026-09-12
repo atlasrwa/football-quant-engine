@@ -707,6 +707,141 @@ def _publish_shadow_feed_after_capture(*, capture_root: Path) -> None:
         )
 
 
+def _settle_shadows_after_capture(
+    *,
+    capture_root: Path,
+    broadcast_root: Optional[Path] = None,
+    research_broadcast_root: Optional[Path] = None,
+) -> None:
+    """Settle genuine prospective shadows whose fixtures have finished.
+
+    Runs AFTER shadow processing + evaluation, inside the same capture tick /
+    flock. Strictly downstream and append-only: it reads the shadow ledger and
+    the commitment ledgers, resolves a canonical FINAL result per finished
+    fixture via the provider (memoised once per fixture, only for past-kickoff
+    fixtures not already settled), grades WIN/LOSS/PUSH/VOID, and appends to
+    ``shadow_settlements.jsonl``. It NEVER mutates a shadow, evaluation,
+    commitment, or the frontier.
+
+    Bounded provider usage: at most one result resolution per unsettled finished
+    fixture per run. Failure isolation: any error is caught and recorded to a
+    SEPARATE settlement ops log; a settlement failure must never corrupt capture
+    data or fail the capture run.
+    """
+    from src.research.prospective import shadow_settle_process as ssp
+    from src.research.prospective.ops_log import append_run, hostname, OpsRunRecord
+
+    settle_ops_path = Path(capture_root) / "shadow_settle_ops.jsonl"
+    started = now_ts()
+    try:
+        kwargs = {
+            "shadow_root": Path(capture_root),
+            "result_resolver": ssp.provider_result_resolver(),
+        }
+        if broadcast_root is not None:
+            kwargs["broadcast_root"] = Path(broadcast_root)
+        if research_broadcast_root is not None:
+            kwargs["research_broadcast_root"] = Path(research_broadcast_root)
+        res = ssp.run(**kwargs)
+        finished = now_ts()
+        note = (
+            "shadow_settle: "
+            f"considered={res.shadows_considered} "
+            f"already_settled={res.shadows_already_settled} "
+            f"pending_kickoff={res.fixtures_pending_kickoff} "
+            f"resolved={res.fixtures_resolved} unresolved={res.fixtures_unresolved} "
+            f"new={res.settlements_new} outcomes={res.settlements_by_outcome} "
+            f"refusals={res.refusals}"
+        )
+        append_run(
+            OpsRunRecord(
+                run_started_at=started,
+                run_finished_at=finished,
+                duration_seconds=round(finished - started, 3),
+                exit_status="OK",
+                health_state="SHADOW_SETTLE_OK",
+                odds_captured=0,
+                errors=len(res.errors),
+                hostname=hostname(),
+                note=note,
+            ),
+            path=settle_ops_path,
+        )
+    except Exception as exc:  # noqa: BLE001 - settlement failure must never crash capture
+        finished = now_ts()
+        append_run(
+            OpsRunRecord(
+                run_started_at=started,
+                run_finished_at=finished,
+                duration_seconds=round(finished - started, 3),
+                exit_status="ERROR",
+                health_state="SHADOW_SETTLE_FAILED",
+                errors=1,
+                hostname=hostname(),
+                note=(
+                    "shadow settlement failed (isolated; capture unaffected): "
+                    f"{type(exc).__name__}"
+                ),
+            ),
+            path=settle_ops_path,
+        )
+
+
+def _publish_settlement_feed_after_capture(*, capture_root: Path) -> None:
+    """Publish just-persisted SHADOW_SETTLEMENT records to the research feed.
+
+    Same consume-only, fail-closed publication boundary as
+    ``_publish_shadow_feed_after_capture``: a LIVE send requires
+    ``RESEARCH_SHADOW_FEED_PUBLISH`` AND the dedicated research Telegram
+    credentials, with NO consumer-channel fallback and default OFF. Failure
+    isolated to a separate ops log.
+    """
+    from src.research.prospective import shadow_feed
+    from src.research.prospective.ops_log import append_run, hostname, OpsRunRecord
+
+    ops_path = Path(capture_root) / "shadow_settle_feed_ops.jsonl"
+    started = now_ts()
+    try:
+        res = shadow_feed.publish_settlement_feed(shadow_root=Path(capture_root))
+        finished = now_ts()
+        append_run(
+            OpsRunRecord(
+                run_started_at=started,
+                run_finished_at=finished,
+                duration_seconds=round(finished - started, 3),
+                exit_status="OK",
+                health_state="SHADOW_SETTLE_FEED_OK",
+                odds_captured=0,
+                errors=0,
+                hostname=hostname(),
+                note=(
+                    "shadow_settle_feed: "
+                    f"settlements_seen={res.shadows_seen} published={res.shadows_published} "
+                    f"queued={res.shadows_queued} messages_sent={res.messages_sent}"
+                ),
+            ),
+            path=ops_path,
+        )
+    except Exception as exc:  # noqa: BLE001 - feed failure must never crash capture
+        finished = now_ts()
+        append_run(
+            OpsRunRecord(
+                run_started_at=started,
+                run_finished_at=finished,
+                duration_seconds=round(finished - started, 3),
+                exit_status="ERROR",
+                health_state="SHADOW_SETTLE_FEED_FAILED",
+                errors=1,
+                hostname=hostname(),
+                note=(
+                    "settlement feed publish failed (isolated; capture unaffected): "
+                    f"{type(exc).__name__}"
+                ),
+            ),
+            path=ops_path,
+        )
+
+
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(prog="prospective-collector", description=__doc__)
     parser.add_argument("--capture-root", type=Path, default=DEFAULT_CAPTURE_ROOT)
@@ -892,6 +1027,21 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
             # model call; distinct from validated-signal publication; isolated so
             # a Telegram failure never affects the capture run.
             _publish_shadow_feed_after_capture(capture_root=Path(args.capture_root))
+
+            # --- Final settlement of prospective shadows (downstream) ---
+            # Grade genuine prospective shadows whose fixtures have finished into
+            # WIN/LOSS/PUSH/VOID against canonical final results. Strictly
+            # append-only and downstream: never mutates a shadow, evaluation,
+            # commitment, or the frontier. Bounded provider usage (one result per
+            # finished, unsettled fixture). Isolated so a settlement failure never
+            # affects the capture run.
+            _settle_shadows_after_capture(capture_root=Path(args.capture_root))
+
+            # --- Settlement research Telegram feed (additive UX) ---
+            # Consume-only publication of just-persisted SHADOW_SETTLEMENT records
+            # under the SAME fail-closed guards and dedicated credentials as the
+            # shadow feed (default OFF, no consumer fallback). Isolated.
+            _publish_settlement_feed_after_capture(capture_root=Path(args.capture_root))
 
     except ProspectiveConfigError as exc:
         print(str(exc), file=sys.stderr)

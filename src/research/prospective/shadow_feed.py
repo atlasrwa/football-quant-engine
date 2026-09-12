@@ -993,3 +993,272 @@ def publish_shadow_feed(
     result.evaluations_queued = result.evaluations_seen - result.evaluations_published
 
     return result
+
+
+
+# ---------------------------------------------------------------------------
+# SHADOW SETTLEMENT publication (research-only final-result cards)
+#
+# A settlement is a strictly-downstream, append-only FINAL-RESULT grading of a
+# genuine prospective shadow (WIN/LOSS/PUSH/VOID). It reaches the dedicated
+# research Telegram channel under the SAME two guards and the SAME dedicated
+# credentials as every other research-shadow card: it can never fall back to a
+# consumer channel, is OFF by default, and a settlement whose parent shadow is
+# not itself a publishable prospective shadow is refused (parent-linkage proof,
+# mirroring is_publishable_evaluation). Settlement and market-movement remain
+# separate axes: the card shows BOTH the final market direction (if a movement
+# evaluation exists) and the realized settlement, never merged.
+# ---------------------------------------------------------------------------
+
+SETTLEMENT_RECORD_TYPE = "SHADOW_SETTLEMENT"
+SHADOW_SETTLEMENTS_FILE = "shadow_settlements.jsonl"
+
+_VALID_SETTLEMENT_OUTCOMES: frozenset[str] = frozenset({"WIN", "LOSS", "PUSH", "VOID"})
+
+
+def settlement_scientific_fields_ok(record: dict) -> bool:
+    """Validate every scientific field a settlement card relies on (fail closed)."""
+    if not isinstance(record, dict):
+        return False
+    for key in ("settlement_id", "shadow_id", "fixture_id", "market", "selection", "bookmaker"):
+        if not _nonempty_str(record.get(key)):
+            return False
+    if not _is_finite_number(record.get("line")):
+        return False
+    if not _is_finite_number(record.get("result_statistic_value")):
+        return False
+    if record.get("settlement_outcome") not in _VALID_SETTLEMENT_OUTCOMES:
+        return False
+    # p_model / p_market_devig are carried for reporting; require them valid so a
+    # card never renders a fabricated 0.0 probability.
+    if not _is_probability(record.get("p_model")):
+        return False
+    if not _is_probability(record.get("p_market_devig")):
+        return False
+    return True
+
+
+def is_structurally_valid_settlement(record: dict) -> bool:
+    """Structural + scientific validity of a settlement record ITSELF."""
+    if not isinstance(record, dict):
+        return False
+    if record.get("record_type") != SETTLEMENT_RECORD_TYPE:
+        return False
+    if record.get("provenance_kind") != PROSPECTIVE_PROVENANCE:
+        return False
+    if not _classification_ok(record):
+        return False
+    if not record.get("settlement_id") or not record.get("shadow_id"):
+        return False
+    if not settlement_scientific_fields_ok(record):
+        return False
+    return True
+
+
+def is_publishable_settlement(record: dict, *, shadow_lookup: dict) -> bool:
+    """Gate for a SHADOW_SETTLEMENT entering the LIVE research feed.
+
+    Publishable IFF (parent-provenance proof, mirroring evaluations):
+      1. the settlement itself is structurally + scientifically valid, AND
+      2. its ``shadow_id`` resolves to a persisted PARENT shadow, AND
+      3. that parent passes :func:`is_publishable_shadow` (a genuine
+         PROSPECTIVE_SHADOW with valid scientific fields).
+
+    A reconstructed / missing / malformed parent -> never publish. Provenance is
+    proven by PARENT LINKAGE, never inferred from the settlement's own fields.
+    """
+    if not is_structurally_valid_settlement(record):
+        return False
+    if not isinstance(shadow_lookup, dict):
+        return False
+    parent = shadow_lookup.get(record.get("shadow_id"))
+    if not isinstance(parent, dict):
+        return False
+    if not is_publishable_shadow(parent):
+        return False
+    return True
+
+
+_HEADER_SETTLED = "\U0001f9ea SHADOW RESEARCH \u2014 SETTLED"
+
+#: Neutral wording for the settlement outcome. WIN/LOSS here describe the frozen
+#: model SIDE's realized grading of a research observation; they are not a bet
+#: result, not profit, and carry no stake. Kept plain and non-promotional.
+_OUTCOME_LABEL = {
+    "WIN": "Settlement: WIN",
+    "LOSS": "Settlement: LOSS",
+    "PUSH": "Settlement: PUSH",
+    "VOID": "Settlement: VOID",
+}
+
+
+def render_settlement_card(
+    record: dict,
+    *,
+    resolver: Optional[FixtureNameResolver] = None,
+    shadow_lookup: Optional[dict] = None,
+    final_direction: Optional[str] = None,
+) -> str:
+    """Render a research-only SETTLED card from a persisted settlement dict.
+
+    All numbers come straight from the record; nothing is recomputed. Where a
+    frozen parent shadow is available it enriches the frozen model/market
+    context. ``final_direction`` (optional) is the market's final movement
+    direction from the canonical close/last evaluation; it is displayed as a
+    SEPARATE line from the settlement so the two axes are never merged.
+    """
+    fixture = _fixture_label(record, resolver)
+    market_label = _line_label(
+        _req_str(record, "market"), _req_str(record, "selection"), _req_num(record, "line")
+    )
+    bookmaker = _req_str(record, "bookmaker")
+    outcome = record.get("settlement_outcome")
+    if outcome not in _VALID_SETTLEMENT_OUTCOMES:
+        raise ShadowCardError(f"invalid settlement_outcome {outcome!r}")
+    result_stat = _req_num(record, "result_statistic_value")
+    p_model = format_probability_pct(_req_prob(record, "p_model"))
+    p_market = format_probability_pct(_req_prob(record, "p_market_devig"))
+    ref = _short_ref(_req_str(record, "shadow_id"))
+
+    lines = [_HEADER_SETTLED, "", f"\u26bd {fixture}"]
+    competition = _competition_label(record)
+    if competition:
+        lines.append(f"\U0001f3c6 {competition}")
+    lines += [
+        f"\U0001f4ca {market_label}",
+        f"\U0001f3e6 {bookmaker}",
+        "",
+        f"Frozen research model: {p_model}",
+        f"Frozen market: {p_market}",
+    ]
+    if final_direction in ("TOWARD_MODEL", "AWAY_FROM_MODEL", "FLAT"):
+        lines.append(f"Final market movement: {final_direction}")
+    lines += [
+        "",
+        f"Final result statistic: {result_stat:g}",
+        _OUTCOME_LABEL[outcome],
+        "",
+        f"Ref: {ref}",
+        *_FOOTER_LINES,
+    ]
+    return "\n".join(lines)
+
+
+def settlement_event_id(record: dict) -> str:
+    return f"shadow_settlement:{record.get('settlement_id')}"
+
+
+def build_settlement_message(
+    record: dict,
+    *,
+    now: float,
+    main_sha: str = "",
+    resolver: Optional[FixtureNameResolver] = None,
+    shadow_lookup: Optional[dict] = None,
+    final_direction: Optional[str] = None,
+) -> NotifyMessage:
+    """Build the research-shadow SETTLED message (typed SHADOW_RESEARCH_UPDATE).
+
+    A settlement is the terminal research UPDATE to a shadow, so it uses the
+    existing non-reserved SHADOW_RESEARCH_UPDATE type — it can never be a
+    VALIDATED_SIGNAL / STRATEGY_ACTION.
+    """
+    text = render_settlement_card(
+        record, resolver=resolver, shadow_lookup=shadow_lookup, final_direction=final_direction
+    )
+    return build_research_shadow_message(
+        MessageType.SHADOW_RESEARCH_UPDATE, settlement_event_id(record), text,
+        generated_at=now, main_sha=main_sha,
+    )
+
+
+def select_unseen_settlements(
+    records: Iterable[dict], *, ledger: NotifyLedger, shadow_lookup: dict
+) -> list[dict]:
+    """Filter to publishable, not-yet-delivered settlements, preserving order."""
+    out: list[dict] = []
+    seen: set[str] = set()
+    for r in records:
+        if not is_publishable_settlement(r, shadow_lookup=shadow_lookup):
+            continue
+        sid = str(r.get("settlement_id"))
+        if sid in seen:
+            continue
+        if ledger.already_sent(settlement_event_id(r)):
+            continue
+        seen.add(sid)
+        out.append(r)
+    return out
+
+
+def publish_settlement_feed(
+    *,
+    shadow_root: Path = DEFAULT_SHADOW_ROOT,
+    ledger: Optional[NotifyLedger] = None,
+    transport=None,
+    dry_run: bool = False,
+    now: Optional[float] = None,
+    main_sha: str = "",
+    max_messages: int = DEFAULT_MAX_MESSAGES_PER_TICK,
+    resolver: Optional[FixtureNameResolver] = None,
+    require_optin: bool = True,
+) -> ShadowFeedResult:
+    """Read persisted settlements and deliver research-only SETTLED cards.
+
+    Consume-only, fail-closed on the LIVE default path with EXACTLY the same two
+    guards as :func:`publish_shadow_feed`:
+      * ``require_optin`` + :func:`shadow_feed_publication_enabled`
+        (``RESEARCH_SHADOW_FEED_PUBLISH``), AND
+      * a DEDICATED research transport (:func:`research_telegram_transport`,
+        never the consumer SIGNALS_*/HEARTBEAT_* fallback).
+    If either fails, nothing is sent (settlements stay unseen for a later tick).
+    """
+    import time as _time
+
+    now = _time.time() if now is None else now
+    ledger = ledger or NotifyLedger(path=Path(shadow_root) / "notify_ledger.json")
+
+    candidate_store = ShadowResidualStore(path=Path(shadow_root) / SHADOW_CANDIDATES_FILE)
+    # Read settlements directly (kept independent of the settlement store module
+    # so the feed has no import cycle); each line is a settlement dict.
+    settle_path = Path(shadow_root) / SHADOW_SETTLEMENTS_FILE
+    all_settlements: list[dict] = []
+    if settle_path.exists():
+        import json as _json
+        with open(settle_path, encoding="utf-8") as fh:
+            for line in fh:
+                line = line.strip()
+                if line:
+                    all_settlements.append(_json.loads(line))
+
+    all_shadows = list(candidate_store.read_all_dicts())
+    shadow_lookup = {str(r.get("shadow_id")): r for r in all_shadows if r.get("shadow_id")}
+
+    unseen = select_unseen_settlements(
+        all_settlements, ledger=ledger, shadow_lookup=shadow_lookup
+    )
+    result = ShadowFeedResult(shadows_seen=len(unseen))
+
+    if dry_run:
+        transport = transport or RecordingTransport()
+    elif transport is None:
+        if require_optin and not shadow_feed_publication_enabled():
+            return result
+        transport = research_telegram_transport()
+        if transport is None:
+            return result
+
+    budget = max(0, int(max_messages))
+    published = 0
+    for r in unseen[:budget]:
+        msg = build_settlement_message(
+            r, now=now, main_sha=main_sha, resolver=resolver, shadow_lookup=shadow_lookup
+        )
+        res = deliver(msg, transport=transport, ledger=ledger, dry_run=dry_run)
+        result.delivery_results.append(res)
+        if res.sent:
+            result.messages_sent += 1
+            published += 1
+    result.shadows_published = published
+    result.shadows_queued = result.shadows_seen - published
+    return result
