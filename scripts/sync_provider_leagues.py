@@ -143,8 +143,6 @@ def _current_footy_season(league: dict[str, Any]) -> dict[str, Any] | None:
 def build_registry(
     footy_leagues: list[dict[str, Any]], stats_competitions: list[dict[str, Any]]
 ) -> dict[str, Any]:
-    from src.research.forward.league_coverage import COVERED_LEAGUE_COMP_IDS
-
     stats_by_id = {row["id"]: row for row in stats_competitions if row.get("id")}
     manifest = json.loads(CORPUS_MANIFEST.read_text()) if CORPUS_MANIFEST.exists() else {}
     corpus_by_name = {row["league"]: row for row in manifest.get("leagues", [])}
@@ -166,13 +164,25 @@ def build_registry(
         else:
             mapping_status = "MATCHED"
 
-        existing_pilot = any(cid in COVERED_LEAGUE_COMP_IDS for cid in (reviewed_ids or ()))
+        # DEPRECATED, NON-BEHAVIORAL. ``model_status`` is descriptive metadata; no
+        # code reads it as a gate, and none may. It is retained so persisted
+        # registry snapshots stay comparable and historical runs reproducible.
+        #
+        # The Pilot-C branch is REMOVED. It previously stamped
+        # PILOT_C_EXISTING_SCOPE by testing the reviewed competition ids against
+        # COVERED_LEAGUE_COMP_IDS, which made the authoritative provider registry
+        # Pilot-C-aware. Nothing consumed that label, but its presence invited any
+        # future reader to inherit a four-league experiment boundary as engine
+        # scope. Engine scope now comes from the dual-provider intersection rule in
+        # src.research.scope.dual_provider, which never reads this field.
+        #
+        # BLOCKED_NO_TWO_SEASON_CORPUS is likewise NOT an exclusion: corpus depth
+        # decides which processing stages can run, not whether a competition
+        # belongs to the engine universe.
         if mapping_status == "BLOCKED":
             model_status = "BLOCKED_PROVIDER_MAPPING"
         elif season_count < 2:
             model_status = "BLOCKED_NO_TWO_SEASON_CORPUS"
-        elif existing_pilot:
-            model_status = "PILOT_C_EXISTING_SCOPE"
         else:
             model_status = "RESEARCH_ONLY_NOT_VALIDATED"
 
@@ -209,6 +219,13 @@ def build_registry(
                 ),
             },
             "model_status": model_status,
+            "model_status_deprecated": True,
+            "model_status_note": (
+                "DEPRECATED, NON-BEHAVIORAL. Descriptive only; no code reads this "
+                "field as a gate. Engine league scope is derived from the "
+                "dual-provider intersection rule in src.research.scope.dual_provider. "
+                "PILOT_C_EXISTING_SCOPE is no longer emitted."
+            ),
             "production_enabled": False,
             "production_note": (
                 "Registry synchronization is metadata only. Enablement requires "
@@ -219,16 +236,24 @@ def build_registry(
     footy_names = {row.get("name") for row in footy_leagues}
     unreviewed = sorted(name for name in footy_names if name not in REVIEWED_CROSSWALK)
     counts: dict[str, int] = {}
+    mapping_counts: dict[str, int] = {}
     for row in rows:
         counts[row["model_status"]] = counts.get(row["model_status"], 0) + 1
+        mapping_counts[row["mapping_status"]] = mapping_counts.get(row["mapping_status"], 0) + 1
     return {
         "generated_at": datetime.now(timezone.utc).isoformat(),
         "policy": "all provider matches start fail-closed; synchronization does not imply model eligibility",
+        "scope_policy": (
+            "Engine league scope is the dual-provider FootyStats x TheStatsAPI "
+            "intersection (see src.research.scope.dual_provider). mapping_status is "
+            "the behavioral field; model_status is deprecated, non-behavioral metadata."
+        ),
         "footystats_chosen_leagues": len(footy_leagues),
         "thestatsapi_competitions": len(stats_competitions),
         "reviewed_crosswalk_entries": len(REVIEWED_CROSSWALK),
         "unreviewed_footystats_names": unreviewed,
         "summary": counts,
+        "mapping_status_summary": mapping_counts,
         "leagues": rows,
     }
 

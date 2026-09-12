@@ -1,0 +1,48 @@
+# Research coverage schedule — dual-provider FootyStats x TheStatsAPI universe.
+#
+# NOT INSTALLED AUTOMATICALLY. Review, then append with:
+#
+#     crontab -l > /tmp/ct && cat deploy/research_coverage_cron.txt >> /tmp/ct \
+#       && crontab /tmp/ct
+#
+# Reviewed by hand on purpose: this repo has a live deployment, and a crontab
+# rewrite is not a reversible local edit. Nothing here replaces or removes an
+# existing entry.
+#
+# ── Why these two entries ────────────────────────────────────────────────────
+#
+# 1. research_fixture_discovery.py
+#    Refreshes upcoming fixtures for every competition in the dual-provider
+#    intersection into data/research/research_fixture_universe.json.
+#
+#    This is the entry that actually removes the last Pilot-C scope dependency.
+#    pilotC_fixture_discovery.py (the 06:00 Mon/Thu entry, left untouched) only
+#    refreshes Pilot C's four pre-registered competitions, so before this the
+#    shared universe held future kickoffs for those four leagues only — every
+#    downstream stage stayed Pilot-C scoped even after the declared-scope gate
+#    was removed.
+#
+#    Cost: one live request per competition per UTC day (46 today), because the
+#    provider cache is bucketed by day. Twice daily costs ~46 requests, not 92.
+#    Runs at 05:30 and 17:30 so the morning pass precedes the forecast ticks.
+#
+# 2. research_forecast_commit.py
+#    Commits research forecasts at T-30h for every eligible competition x market
+#    with model inputs available. Local and free: it reads the corpus and the
+#    frozen model and calls no provider. It has no transport and cannot publish.
+#
+#    Every 30 minutes so a fixture crossing its horizon is picked up promptly.
+#    Exactly-once per fixture is enforced against the research ledger, so a
+#    frequent cadence cannot double-commit.
+#
+# Both use their own flock files, so neither can race the other or the existing
+# forecast_broadcast / pilotC entries.
+#
+# Shadow processing and research Telegram publication need NO new entry: the
+# existing prospective-capture timer already invokes them at the end of each
+# capture tick, and they now read the research commitment ledger alongside the
+# consumer one.
+
+30 5,17 * * * cd /home/ubuntu && /usr/bin/flock -n /tmp/research_fixture_discovery.lock /home/ubuntu/.venv/bin/python scripts/research_fixture_discovery.py >> /home/ubuntu/logs/research_fixture_discovery.log 2>&1
+
+*/30 * * * * cd /home/ubuntu && /usr/bin/flock -n /tmp/research_forecast_commit.lock /home/ubuntu/.venv/bin/python scripts/research_forecast_commit.py >> /home/ubuntu/logs/research_forecast_commit.log 2>&1

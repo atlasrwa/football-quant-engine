@@ -3,12 +3,20 @@
 This is the integration point. It performs NO provider request and runs NO
 model. It reads:
 
-    * committed forecasts  (data/forecast_broadcast/broadcasts.jsonl), and
+    * committed forecasts, from BOTH commitment ledgers:
+        - data/forecast_broadcast/broadcasts.jsonl   (consumer scope)
+        - data/research_forecast/broadcasts.jsonl    (dual-provider research
+          universe — every safely mapped FootyStats x TheStatsAPI competition)
     * own market snapshots  (data/prospective/captures.jsonl.gz),
 
 joins them into eligible frozen SHADOW_RESIDUAL candidates, appends new ones to
 the append-only ledger (idempotent), and derives later-movement evaluations for
 candidates that already have a later same-key snapshot.
+
+There is NO league allowlist on this path. Which competitions can produce a
+shadow is decided entirely by which competitions have a committed forecast and a
+paired pre-kickoff snapshot — never by league identity, and never by Pilot-C
+membership.
 
 Intended to be invoked by an EXISTING scheduled run (e.g. right after the
 prospective capture run or the forecast-broadcast tick). It adds no new timer
@@ -31,7 +39,7 @@ from __future__ import annotations
 import argparse
 import datetime
 import sys
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Optional, Sequence
 
@@ -54,6 +62,22 @@ from src.research.prospective.shadow_store import (
 DEFAULT_SHADOW_ROOT = Path("data/prospective")
 DEFAULT_BROADCAST_ROOT = Path("data/forecast_broadcast")
 
+#: Additional append-only commitment ledgers joined alongside the consumer
+#: broadcast ledger.
+#:
+#: The research ledger (written by ``scripts/research_forecast_commit.py``) carries
+#: forecast commitments for the full dual-provider league universe. Reading both
+#: roots is what lets a competition outside the historical Pilot-C four produce a
+#: prospective shadow at all: a shadow candidate requires a FORECAST_COMMITTED row,
+#: and before this the only such rows were the four consumer-scope leagues.
+#:
+#: Every integrity control is unchanged by widening the *input* set. Each candidate
+#: still has to clear the same joins, the same strictly-pre-kickoff rule, and the
+#: same live frontier, and ``shadow_id`` is derived from the forecast commitment
+#: hash, so a record's provenance stays traceable to the exact ledger row that
+#: produced it.
+DEFAULT_RESEARCH_BROADCAST_ROOT = Path("data/research_forecast")
+
 
 @dataclass(frozen=True)
 class ShadowRunResult:
@@ -69,6 +93,15 @@ class ShadowRunResult:
     #: Candidates the join produced but which were EXCLUDED because they froze
     #: before the live frontier (pre-deployment history; never made prospective).
     candidates_pre_frontier_excluded: int = 0
+    #: Commitment ledger roots that were actually read this run, in order.
+    #: Recorded so a run that produced nothing can be distinguished from a run
+    #: that silently never looked at the research ledger.
+    broadcast_roots_read: tuple[str, ...] = ()
+    #: FORECAST_COMMITTED rows found per ledger root.
+    forecast_records_by_root: dict[str, int] = field(default_factory=dict)
+    #: Distinct competitions represented among the new candidates. Observability
+    #: only; never a promotion metric and never a filter.
+    candidate_competitions: tuple[str, ...] = ()
 
     def to_dict(self) -> dict:
         return {
@@ -79,6 +112,9 @@ class ShadowRunResult:
             "evaluations_new": self.evaluations_new,
             "provenance_kind": self.provenance_kind,
             "frontier_established_at": self.frontier_established_at,
+            "broadcast_roots_read": list(self.broadcast_roots_read),
+            "forecast_records_by_root": dict(sorted(self.forecast_records_by_root.items())),
+            "candidate_competitions": list(self.candidate_competitions),
         }
 
 
@@ -87,10 +123,74 @@ def _parse_utc(value: str) -> float:
     return datetime.datetime.fromisoformat(v).timestamp()
 
 
+def _commitment_roots(
+    broadcast_root: Path,
+    research_broadcast_root: Optional[Path],
+    extra_broadcast_roots: Sequence[Path],
+) -> tuple[Path, ...]:
+    """Ordered, de-duplicated commitment ledger roots to read.
+
+    Order is stable (consumer first, then research, then extras) so a fixture
+    committed in more than one ledger deterministically resolves to the same
+    record every run — which matters because ``shadow_id`` incorporates the
+    forecast commitment hash.
+    """
+    ordered: list[Path] = [Path(broadcast_root)]
+    if research_broadcast_root is not None:
+        ordered.append(Path(research_broadcast_root))
+    ordered.extend(Path(r) for r in extra_broadcast_roots)
+
+    seen: set[str] = set()
+    out: list[Path] = []
+    for root in ordered:
+        key = str(root)
+        if key in seen:
+            continue
+        seen.add(key)
+        out.append(root)
+    return tuple(out)
+
+
+def _load_commitment_records(
+    roots: Sequence[Path],
+) -> tuple[list[dict], dict[str, int]]:
+    """Read and merge FORECAST_COMMITTED-bearing rows from every ledger root.
+
+    Deduplicated by ``commitment_hash``. Two ledgers holding the same commitment
+    is legitimate (a fixture can be in both consumer and research scope), but it
+    must not produce two shadow candidates for one forecast, so the first
+    occurrence wins under the stable root ordering.
+
+    Returns:
+        ``(records, forecast_rows_per_root)``. The per-root count is of
+        FORECAST_COMMITTED rows specifically, so an empty research ledger is
+        visibly zero rather than absent.
+    """
+    merged: list[dict] = []
+    per_root: dict[str, int] = {}
+    seen_hashes: set[str] = set()
+    for root in roots:
+        ledger = BroadcastLedger(root=Path(root))
+        committed = 0
+        for rec in ledger.records():
+            if rec.get("record_type") == "FORECAST_COMMITTED":
+                committed += 1
+                digest = str(rec.get("commitment_hash") or "")
+                if digest and digest in seen_hashes:
+                    continue
+                if digest:
+                    seen_hashes.add(digest)
+            merged.append(rec)
+        per_root[str(root)] = committed
+    return merged, per_root
+
+
 def run(
     *,
     shadow_root: Path = DEFAULT_SHADOW_ROOT,
     broadcast_root: Path = DEFAULT_BROADCAST_ROOT,
+    research_broadcast_root: Optional[Path] = DEFAULT_RESEARCH_BROADCAST_ROOT,
+    extra_broadcast_roots: Sequence[Path] = (),
     reconstructed: bool = False,
     as_of: Optional[float] = None,
     now: Optional[float] = None,
@@ -100,6 +200,20 @@ def run(
     ``now`` (unix) bounds "live" prospectivity: for PROSPECTIVE_SHADOW the
     effective horizon is ``min(as_of or now, ...)`` so a live run never freezes
     a candidate using a snapshot from the future relative to the wall clock.
+
+    Commitment ledgers (dual-provider coverage):
+      Forecast commitments are read from ``broadcast_root`` (consumer scope) AND
+      ``research_broadcast_root`` (the full dual-provider research universe), plus
+      any ``extra_broadcast_roots``. Reading more than one ledger widens the set of
+      competitions that can produce a shadow; it changes no rule about what a
+      shadow *is*. Records are concatenated and deduplicated by commitment hash,
+      so a fixture present in both ledgers cannot yield two shadows for the same
+      forecast. A root that does not exist contributes nothing and is not an error
+      — but it is reported in ``forecast_records_by_root``, so "the research ledger
+      is empty" is never confused with "the research ledger was not read".
+
+      There is no league filter here and there never was: this function has no
+      allowlist, and competition is carried as metadata only.
 
     Provenance & the live frontier (BLOCKER 1):
       A live (``reconstructed=False``) run establishes/loads the persisted
@@ -134,8 +248,10 @@ def run(
     else:
         horizon = as_of
 
-    ledger = BroadcastLedger(root=broadcast_root)
-    records = ledger.records()
+    roots = _commitment_roots(
+        broadcast_root, research_broadcast_root, extra_broadcast_roots
+    )
+    records, per_root = _load_commitment_records(roots)
     capture_store = default_capture_store(root=shadow_root)
 
     candidates = build_candidates(
@@ -189,6 +305,11 @@ def run(
         provenance_kind=kind.value,
         frontier_established_at=(frontier.established_at if frontier is not None else None),
         candidates_pre_frontier_excluded=pre_frontier_excluded,
+        broadcast_roots_read=tuple(str(r) for r in roots),
+        forecast_records_by_root=per_root,
+        candidate_competitions=tuple(
+            sorted({str(c.competition) for c in candidates if c.competition})
+        ),
     )
 
 
@@ -214,6 +335,11 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
     run_p = sub.add_parser("run", help="process eligible shadow candidates + evaluations")
     run_p.add_argument("--shadow-root", default=str(DEFAULT_SHADOW_ROOT))
     run_p.add_argument("--broadcast-root", default=str(DEFAULT_BROADCAST_ROOT))
+    run_p.add_argument(
+        "--research-broadcast-root", default=str(DEFAULT_RESEARCH_BROADCAST_ROOT),
+        help="research commitment ledger (dual-provider universe); "
+             "pass an empty string to read the consumer ledger only",
+    )
     run_p.add_argument("--reconstructed", action="store_true",
                        help="emit RECONSTRUCTED_SHADOW (diagnostics; never prospective)")
     run_p.add_argument("--as-of", default=None, help="ISO-8601 UTC cutoff horizon")
@@ -221,9 +347,15 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
 
     if args.cmd == "run":
         as_of = _parse_utc(args.as_of) if args.as_of else None
+        research_root = (
+            Path(args.research_broadcast_root)
+            if str(args.research_broadcast_root).strip()
+            else None
+        )
         result = run(
             shadow_root=Path(args.shadow_root),
             broadcast_root=Path(args.broadcast_root),
+            research_broadcast_root=research_root,
             reconstructed=args.reconstructed,
             as_of=as_of,
         )

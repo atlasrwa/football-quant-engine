@@ -115,6 +115,48 @@ def load_active_universe(*, include_partial: bool = True, path: Path = COVERAGE_
     return out
 
 
+def default_competition_ids(
+    *,
+    include_partial: bool = True,
+    coverage_matrix_path: Path = COVERAGE_MATRIX_PATH,
+) -> tuple[str, ...]:
+    """The default competition scope when a caller supplies none.
+
+    Resolution order, most-informed first:
+
+    1. the active universe from the persisted coverage matrix (identity VERIFIED,
+       capture-classified, with at least one eligible market);
+    2. the dual-provider league universe from the provider registry — every
+       competition both FootyStats and TheStatsAPI safely support. This still
+       applies when the coverage matrix has not been generated yet, so a missing
+       observability artifact no longer collapses the engine's reach;
+    3. an empty tuple, which the caller turns into an unscoped query.
+
+    This replaced ``universe.universe_competition_ids()``, whose hard-coded
+    five-league policy resolved to exactly one live id and made any direct
+    ``discover_upcoming()`` call a single-league operation. Pilot-C membership is
+    not consulted at any step.
+    """
+    try:
+        active = load_active_universe(
+            include_partial=include_partial, path=coverage_matrix_path
+        )
+    except (OSError, ValueError):
+        active = []
+    ids = tuple(
+        a.thestatsapi_competition_id for a in active if a.thestatsapi_competition_id
+    )
+    if ids:
+        return ids
+
+    try:
+        from src.research.scope.dual_provider import build_dual_provider_universe
+
+        return build_dual_provider_universe().eligible_competition_ids
+    except Exception:  # noqa: BLE001 - registry unreadable: fall through to unscoped
+        return ()
+
+
 def universe_report(*, path: Path = COVERAGE_MATRIX_PATH) -> dict:
     """Summarise the data-driven universe from the persisted coverage matrix.
 
@@ -349,22 +391,32 @@ class ProspectiveCollector:
         """Discover scheduled fixtures within ``hours``, scoped to the universe.
 
         Uses the live ``date_from``/``date_to`` filters (UTC) to bound the
-        window and iterates the initial operational universe's competition ids
-        so we find NEAR-TERM fixtures in supported leagues rather than the API's
-        unscoped first page. Falls back to an unscoped ``status=scheduled``
-        query only when no competition ids are available.
+        window and iterates the requested competition ids so we find NEAR-TERM
+        fixtures in supported leagues rather than the API's unscoped first page.
+
+        When no ids are supplied the fallback is the **dual-provider league
+        universe** (every competition both FootyStats and TheStatsAPI safely
+        support). That replaces the former hard-coded five-league
+        ``INITIAL_UNIVERSE`` fallback, which resolved to a single competition id
+        (``comp_3039``) because the other four carried ``None`` — so any direct
+        call to this method silently collapsed the engine to the Premier League.
+
+        Falls back to an unscoped ``status=scheduled`` query only when no
+        competition ids can be resolved at all.
         """
         import datetime as _dt
 
         from src.research.prospective.scheduler import UpcomingFixture
-        from src.research.prospective.universe import universe_competition_ids
 
         now = self.clock()
         horizon = now + hours * 3600
         date_from = _dt.datetime.fromtimestamp(now, _dt.timezone.utc).date().isoformat()
         date_to = _dt.datetime.fromtimestamp(horizon, _dt.timezone.utc).date().isoformat()
 
-        comps = list(competition_ids) if competition_ids is not None else list(universe_competition_ids())
+        if competition_ids is not None:
+            comps = list(competition_ids)
+        else:
+            comps = list(default_competition_ids())
         queries: list[dict] = []
         if comps:
             for cid in comps:
@@ -502,13 +554,25 @@ class ProspectiveCollector:
         return result
 
 
-def _run_shadow_after_capture(*, capture_root: Path, broadcast_root: Optional[Path] = None) -> None:
+def _run_shadow_after_capture(
+    *,
+    capture_root: Path,
+    broadcast_root: Optional[Path] = None,
+    research_broadcast_root: Optional[Path] = None,
+) -> None:
     """Run the prospective shadow-residual processor over just-persisted state.
 
     Called at the END of a successful ``capture-due`` tick, inside the same
     single-instance flock the capture run already holds. It performs NO provider
     request (reads only the append-only capture store + the committed broadcast
-    ledger) and runs NO model.
+    ledgers) and runs NO model.
+
+    Both commitment ledgers are read: the consumer broadcast ledger and the
+    research ledger covering the full dual-provider universe. That is what allows
+    a competition outside the historical Pilot-C four to produce a shadow, since a
+    candidate requires a committed forecast to join against. Widening the input
+    changes no rule about what a shadow is — the frontier gate, the strictly
+    pre-kickoff rule and the provenance requirements all still apply per candidate.
 
     Failure isolation (mission BLOCKER 2): a shadow-processing failure must
     never corrupt capture data or fail the parent capture run. All exceptions
@@ -525,6 +589,8 @@ def _run_shadow_after_capture(*, capture_root: Path, broadcast_root: Optional[Pa
         kwargs = {"shadow_root": Path(capture_root)}
         if broadcast_root is not None:
             kwargs["broadcast_root"] = Path(broadcast_root)
+        if research_broadcast_root is not None:
+            kwargs["research_broadcast_root"] = Path(research_broadcast_root)
         res = shadow_process.run(**kwargs)
         finished = now_ts()
         note = (
@@ -532,7 +598,9 @@ def _run_shadow_after_capture(*, capture_root: Path, broadcast_root: Optional[Pa
             f"new_candidates={res.candidates_new} "
             f"pre_frontier_excluded={res.candidates_pre_frontier_excluded} "
             f"new_evaluations={res.evaluations_new} "
-            f"frontier={res.frontier_established_at}"
+            f"frontier={res.frontier_established_at} "
+            f"forecast_rows_by_root={res.forecast_records_by_root} "
+            f"candidate_competitions={len(res.candidate_competitions)}"
         )
         append_run(
             OpsRunRecord(
