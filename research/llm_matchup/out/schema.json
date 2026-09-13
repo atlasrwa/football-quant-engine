@@ -1,0 +1,448 @@
+{
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "fixture_id",
+    "information_cutoff_unix",
+    "context_flags",
+    "team_a_states",
+    "team_b_states",
+    "matchup_states"
+  ],
+  "properties": {
+    "fixture_id": {
+      "type": "string"
+    },
+    "information_cutoff_unix": {
+      "type": "integer"
+    },
+    "context_flags": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "formation_status",
+        "formation_resolution_status",
+        "prematch_formation_status",
+        "injury_status",
+        "neutral_venue",
+        "score_state_conditioning",
+        "provider_agreement"
+      ],
+      "properties": {
+        "formation_status": {
+          "type": "string",
+          "enum": [
+            "KNOWN_PIT_SAFE",
+            "FORMATION_UNKNOWN"
+          ]
+        },
+        "formation_resolution_status": {
+          "type": "string",
+          "enum": [
+            "RESOLVED_AVAILABLE",
+            "RESOLVED_PARTIAL",
+            "RESOLVED_UNAVAILABLE"
+          ]
+        },
+        "prematch_formation_status": {
+          "type": "string",
+          "enum": [
+            "ANNOUNCED",
+            "PROJECTED",
+            "PREMATCH_UNKNOWN"
+          ]
+        },
+        "injury_status": {
+          "type": "string",
+          "enum": [
+            "KNOWN_PIT_SAFE",
+            "INJURY_STATUS_UNKNOWN"
+          ]
+        },
+        "neutral_venue": {
+          "type": "string",
+          "enum": [
+            "TRUE",
+            "FALSE",
+            "UNKNOWN"
+          ]
+        },
+        "score_state_conditioning": {
+          "type": "string",
+          "enum": [
+            "APPLIED",
+            "UNAVAILABLE"
+          ]
+        },
+        "provider_agreement": {
+          "type": "string",
+          "enum": [
+            "AGREE",
+            "DISAGREE",
+            "SINGLE_PROVIDER",
+            "UNKNOWN"
+          ]
+        }
+      }
+    },
+    "team_a_states": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "mechanism",
+          "level",
+          "confidence",
+          "evidence_ids",
+          "counter_evidence_ids",
+          "uncertainty_factors",
+          "preferred_evidence_level"
+        ],
+        "properties": {
+          "mechanism": {
+            "type": "string",
+            "enum": [
+              "BOOKING_CONVERSION",
+              "BOX_PRESSURE",
+              "BOX_PRESSURE_MATCHUP",
+              "BOX_PROTECTION",
+              "CLEARANCE_DEPENDENCE",
+              "CONTACT_INTENSITY",
+              "CONTACT_MATCHUP",
+              "CORNER_CONCESSION",
+              "CORNER_MECHANISM_MATCHUP",
+              "CROSS_ALLOWANCE",
+              "FORMATION_BEHAVIOR_FIT",
+              "FORMATION_BOX_INTERACTION",
+              "FORMATION_TRANSITION_STATE",
+              "FORMATION_VS_OPP_DEFENSIVE_PROFILE",
+              "FORMATION_WIDTH_INTERACTION",
+              "FOUL_DRAWING",
+              "FOUL_TENDENCY",
+              "SAVE_ENVIRONMENT",
+              "SECOND_HALF_ESCALATION",
+              "SECOND_HALF_PRESSURE_SHIFT",
+              "SET_PIECE_GENERATION",
+              "SHOT_CREATION_MATCHUP",
+              "SHOT_QUALITY",
+              "SHOT_SUPPRESSION",
+              "SHOT_VOLUME",
+              "TEMPO_EXPECTATION",
+              "TERRITORIAL_PRESSURE",
+              "WIDE_PRESSURE_MATCHUP",
+              "WIDTH_PRESSURE"
+            ]
+          },
+          "level": {
+            "type": "string",
+            "enum": [
+              "VERY_LOW",
+              "LOW",
+              "MEDIUM",
+              "HIGH",
+              "VERY_HIGH",
+              "UNKNOWN"
+            ]
+          },
+          "confidence": {
+            "type": "string",
+            "enum": [
+              "LOW",
+              "MEDIUM_LOW",
+              "MEDIUM",
+              "MEDIUM_HIGH",
+              "HIGH",
+              "UNKNOWN"
+            ]
+          },
+          "evidence_ids": {
+            "type": "array",
+            "minItems": 0,
+            "items": {
+              "type": "string"
+            }
+          },
+          "counter_evidence_ids": {
+            "type": "array",
+            "minItems": 0,
+            "items": {
+              "type": "string"
+            }
+          },
+          "uncertainty_factors": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "enum": [
+                "SMALL_SAMPLE",
+                "SHRUNK_TO_PRIOR",
+                "PROVIDER_DISAGREEMENT",
+                "FORMATION_UNKNOWN",
+                "SCORE_STATE_CONFOUND",
+                "COLD_START",
+                "SINGLE_PROVIDER",
+                "WIDE_COHORT_ONLY",
+                "EXACT_FORMATION_SPARSE",
+                "FORMATION_FAMILY_ONLY",
+                "OPP_FORMATION_UNKNOWN",
+                "PREMATCH_FORMATION_UNKNOWN",
+                "FORMATION_LABEL_UNRELIABLE"
+              ]
+            }
+          },
+          "preferred_evidence_level": {
+            "type": "string",
+            "enum": [
+              "EXACT_OPPONENT",
+              "EXACT_FORMATION",
+              "FORMATION_FAMILY",
+              "TACTICAL_CLUSTER",
+              "VENUE_OVERALL",
+              "ALL_VENUES",
+              "COMPETITION_PRIOR",
+              "NONE"
+            ]
+          }
+        }
+      }
+    },
+    "team_b_states": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "mechanism",
+          "level",
+          "confidence",
+          "evidence_ids",
+          "counter_evidence_ids",
+          "uncertainty_factors",
+          "preferred_evidence_level"
+        ],
+        "properties": {
+          "mechanism": {
+            "type": "string",
+            "enum": [
+              "BOOKING_CONVERSION",
+              "BOX_PRESSURE",
+              "BOX_PRESSURE_MATCHUP",
+              "BOX_PROTECTION",
+              "CLEARANCE_DEPENDENCE",
+              "CONTACT_INTENSITY",
+              "CONTACT_MATCHUP",
+              "CORNER_CONCESSION",
+              "CORNER_MECHANISM_MATCHUP",
+              "CROSS_ALLOWANCE",
+              "FORMATION_BEHAVIOR_FIT",
+              "FORMATION_BOX_INTERACTION",
+              "FORMATION_TRANSITION_STATE",
+              "FORMATION_VS_OPP_DEFENSIVE_PROFILE",
+              "FORMATION_WIDTH_INTERACTION",
+              "FOUL_DRAWING",
+              "FOUL_TENDENCY",
+              "SAVE_ENVIRONMENT",
+              "SECOND_HALF_ESCALATION",
+              "SECOND_HALF_PRESSURE_SHIFT",
+              "SET_PIECE_GENERATION",
+              "SHOT_CREATION_MATCHUP",
+              "SHOT_QUALITY",
+              "SHOT_SUPPRESSION",
+              "SHOT_VOLUME",
+              "TEMPO_EXPECTATION",
+              "TERRITORIAL_PRESSURE",
+              "WIDE_PRESSURE_MATCHUP",
+              "WIDTH_PRESSURE"
+            ]
+          },
+          "level": {
+            "type": "string",
+            "enum": [
+              "VERY_LOW",
+              "LOW",
+              "MEDIUM",
+              "HIGH",
+              "VERY_HIGH",
+              "UNKNOWN"
+            ]
+          },
+          "confidence": {
+            "type": "string",
+            "enum": [
+              "LOW",
+              "MEDIUM_LOW",
+              "MEDIUM",
+              "MEDIUM_HIGH",
+              "HIGH",
+              "UNKNOWN"
+            ]
+          },
+          "evidence_ids": {
+            "type": "array",
+            "minItems": 0,
+            "items": {
+              "type": "string"
+            }
+          },
+          "counter_evidence_ids": {
+            "type": "array",
+            "minItems": 0,
+            "items": {
+              "type": "string"
+            }
+          },
+          "uncertainty_factors": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "enum": [
+                "SMALL_SAMPLE",
+                "SHRUNK_TO_PRIOR",
+                "PROVIDER_DISAGREEMENT",
+                "FORMATION_UNKNOWN",
+                "SCORE_STATE_CONFOUND",
+                "COLD_START",
+                "SINGLE_PROVIDER",
+                "WIDE_COHORT_ONLY",
+                "EXACT_FORMATION_SPARSE",
+                "FORMATION_FAMILY_ONLY",
+                "OPP_FORMATION_UNKNOWN",
+                "PREMATCH_FORMATION_UNKNOWN",
+                "FORMATION_LABEL_UNRELIABLE"
+              ]
+            }
+          },
+          "preferred_evidence_level": {
+            "type": "string",
+            "enum": [
+              "EXACT_OPPONENT",
+              "EXACT_FORMATION",
+              "FORMATION_FAMILY",
+              "TACTICAL_CLUSTER",
+              "VENUE_OVERALL",
+              "ALL_VENUES",
+              "COMPETITION_PRIOR",
+              "NONE"
+            ]
+          }
+        }
+      }
+    },
+    "matchup_states": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "mechanism",
+          "assessment",
+          "confidence",
+          "supporting_evidence_ids",
+          "counter_evidence_ids",
+          "uncertainty_factors"
+        ],
+        "properties": {
+          "mechanism": {
+            "type": "string",
+            "enum": [
+              "BOOKING_CONVERSION",
+              "BOX_PRESSURE",
+              "BOX_PRESSURE_MATCHUP",
+              "BOX_PROTECTION",
+              "CLEARANCE_DEPENDENCE",
+              "CONTACT_INTENSITY",
+              "CONTACT_MATCHUP",
+              "CORNER_CONCESSION",
+              "CORNER_MECHANISM_MATCHUP",
+              "CROSS_ALLOWANCE",
+              "FORMATION_BEHAVIOR_FIT",
+              "FORMATION_BOX_INTERACTION",
+              "FORMATION_TRANSITION_STATE",
+              "FORMATION_VS_OPP_DEFENSIVE_PROFILE",
+              "FORMATION_WIDTH_INTERACTION",
+              "FOUL_DRAWING",
+              "FOUL_TENDENCY",
+              "SAVE_ENVIRONMENT",
+              "SECOND_HALF_ESCALATION",
+              "SECOND_HALF_PRESSURE_SHIFT",
+              "SET_PIECE_GENERATION",
+              "SHOT_CREATION_MATCHUP",
+              "SHOT_QUALITY",
+              "SHOT_SUPPRESSION",
+              "SHOT_VOLUME",
+              "TEMPO_EXPECTATION",
+              "TERRITORIAL_PRESSURE",
+              "WIDE_PRESSURE_MATCHUP",
+              "WIDTH_PRESSURE"
+            ]
+          },
+          "assessment": {
+            "type": "string",
+            "enum": [
+              "STRONG_B_ADVANTAGE",
+              "B_ADVANTAGE",
+              "NEUTRAL",
+              "A_ADVANTAGE",
+              "STRONG_A_ADVANTAGE",
+              "UNKNOWN",
+              "CONFLICTED",
+              "VERY_LOW",
+              "LOW",
+              "MEDIUM",
+              "HIGH",
+              "VERY_HIGH",
+              "UNKNOWN"
+            ]
+          },
+          "confidence": {
+            "type": "string",
+            "enum": [
+              "LOW",
+              "MEDIUM_LOW",
+              "MEDIUM",
+              "MEDIUM_HIGH",
+              "HIGH",
+              "UNKNOWN"
+            ]
+          },
+          "supporting_evidence_ids": {
+            "type": "array",
+            "minItems": 0,
+            "items": {
+              "type": "string"
+            }
+          },
+          "counter_evidence_ids": {
+            "type": "array",
+            "minItems": 0,
+            "items": {
+              "type": "string"
+            }
+          },
+          "uncertainty_factors": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "enum": [
+                "SMALL_SAMPLE",
+                "SHRUNK_TO_PRIOR",
+                "PROVIDER_DISAGREEMENT",
+                "FORMATION_UNKNOWN",
+                "SCORE_STATE_CONFOUND",
+                "COLD_START",
+                "SINGLE_PROVIDER",
+                "WIDE_COHORT_ONLY",
+                "EXACT_FORMATION_SPARSE",
+                "FORMATION_FAMILY_ONLY",
+                "OPP_FORMATION_UNKNOWN",
+                "PREMATCH_FORMATION_UNKNOWN",
+                "FORMATION_LABEL_UNRELIABLE"
+              ]
+            }
+          }
+        }
+      }
+    }
+  }
+}

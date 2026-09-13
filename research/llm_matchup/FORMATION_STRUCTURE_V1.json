@@ -1,0 +1,271 @@
+{
+  "version": "formation_structure_v1",
+  "policy_version": "formation_policy_v1",
+  "description": "Deterministic, versioned, auditable mapping from an exact resolved/projected formation string to (a) a NEUTRAL formation_id token with no semantic loading, and (b) explicit STRUCTURAL attributes (back line / midfield bands / forward line counts) derived from the formation string's own digit-band notation. This is a CONDITIONING KEY + STRUCTURAL DESCRIPTION only, carrying no behavioral assumption (same principle as FORMATION_FAMILY_V1.json). It exists so the Sonnet-facing packet can expose WHAT STRUCTURE a formation represents without exposing the human-readable label itself (V3 patch SS9-12).",
+  "authority": "back_line_count and forward_line_count are read literally from the first and last '-'-separated band of the formation string -- this is standard football notation, not an invented convention. When there are exactly two middle bands, the first is labelled holding_midfield_count and the second advanced_midfield_count (deeper-to-more-advanced band order, the conventional reading of e.g. 4-2-3-1); when there is only one middle band, only a combined midfield_count is recorded and the holding/advanced split is left null rather than invented (V3 patch SS10: do not invent structure). Formations with zero or more than two middle bands, or that are otherwise unparseable, get structure_known=false and every count is null -- callers must render this as FORMATION_STRUCTURE_UNKNOWN, never a guessed structure.",
+  "neutral_family_ids": {
+    "BACK3_OTHER": "FF_01",
+    "BACK3_WINGBACK": "FF_02",
+    "BACK4_1STRIKER": "FF_03",
+    "BACK4_2STRIKER": "FF_04",
+    "BACK4_OTHER": "FF_05",
+    "BACK5_DEFENSIVE": "FF_06",
+    "UNKNOWN_FORMATION": "FF_07"
+  },
+  "unknown_formation_id": "F_UNK",
+  "unknown_family_id": "FF_07",
+  "exact_to_structure": {
+    "3-1-4-2": {
+      "formation_id": "F_01",
+      "back_line_count": 3,
+      "holding_midfield_count": 1,
+      "advanced_midfield_count": 4,
+      "midfield_count": 5,
+      "forward_line_count": 2,
+      "n_bands": 4,
+      "structure_known": true
+    },
+    "3-2-4-1": {
+      "formation_id": "F_02",
+      "back_line_count": 3,
+      "holding_midfield_count": 2,
+      "advanced_midfield_count": 4,
+      "midfield_count": 6,
+      "forward_line_count": 1,
+      "n_bands": 4,
+      "structure_known": true
+    },
+    "3-3-1-3": {
+      "formation_id": "F_03",
+      "back_line_count": 3,
+      "holding_midfield_count": 3,
+      "advanced_midfield_count": 1,
+      "midfield_count": 4,
+      "forward_line_count": 3,
+      "n_bands": 4,
+      "structure_known": true
+    },
+    "3-4-1-2": {
+      "formation_id": "F_04",
+      "back_line_count": 3,
+      "holding_midfield_count": 4,
+      "advanced_midfield_count": 1,
+      "midfield_count": 5,
+      "forward_line_count": 2,
+      "n_bands": 4,
+      "structure_known": true
+    },
+    "3-4-2-1": {
+      "formation_id": "F_05",
+      "back_line_count": 3,
+      "holding_midfield_count": 4,
+      "advanced_midfield_count": 2,
+      "midfield_count": 6,
+      "forward_line_count": 1,
+      "n_bands": 4,
+      "structure_known": true
+    },
+    "3-4-3": {
+      "formation_id": "F_06",
+      "back_line_count": 3,
+      "holding_midfield_count": null,
+      "advanced_midfield_count": null,
+      "midfield_count": 4,
+      "forward_line_count": 3,
+      "n_bands": 3,
+      "structure_known": true
+    },
+    "3-5-1-1": {
+      "formation_id": "F_07",
+      "back_line_count": 3,
+      "holding_midfield_count": 5,
+      "advanced_midfield_count": 1,
+      "midfield_count": 6,
+      "forward_line_count": 1,
+      "n_bands": 4,
+      "structure_known": true
+    },
+    "3-5-2": {
+      "formation_id": "F_08",
+      "back_line_count": 3,
+      "holding_midfield_count": null,
+      "advanced_midfield_count": null,
+      "midfield_count": 5,
+      "forward_line_count": 2,
+      "n_bands": 3,
+      "structure_known": true
+    },
+    "4-1-2-3": {
+      "formation_id": "F_09",
+      "back_line_count": 4,
+      "holding_midfield_count": 1,
+      "advanced_midfield_count": 2,
+      "midfield_count": 3,
+      "forward_line_count": 3,
+      "n_bands": 4,
+      "structure_known": true
+    },
+    "4-1-3-2": {
+      "formation_id": "F_10",
+      "back_line_count": 4,
+      "holding_midfield_count": 1,
+      "advanced_midfield_count": 3,
+      "midfield_count": 4,
+      "forward_line_count": 2,
+      "n_bands": 4,
+      "structure_known": true
+    },
+    "4-1-4-1": {
+      "formation_id": "F_11",
+      "back_line_count": 4,
+      "holding_midfield_count": 1,
+      "advanced_midfield_count": 4,
+      "midfield_count": 5,
+      "forward_line_count": 1,
+      "n_bands": 4,
+      "structure_known": true
+    },
+    "4-2-2-2": {
+      "formation_id": "F_12",
+      "back_line_count": 4,
+      "holding_midfield_count": 2,
+      "advanced_midfield_count": 2,
+      "midfield_count": 4,
+      "forward_line_count": 2,
+      "n_bands": 4,
+      "structure_known": true
+    },
+    "4-2-3-1": {
+      "formation_id": "F_13",
+      "back_line_count": 4,
+      "holding_midfield_count": 2,
+      "advanced_midfield_count": 3,
+      "midfield_count": 5,
+      "forward_line_count": 1,
+      "n_bands": 4,
+      "structure_known": true
+    },
+    "4-3-1-2": {
+      "formation_id": "F_14",
+      "back_line_count": 4,
+      "holding_midfield_count": 3,
+      "advanced_midfield_count": 1,
+      "midfield_count": 4,
+      "forward_line_count": 2,
+      "n_bands": 4,
+      "structure_known": true
+    },
+    "4-3-2-1": {
+      "formation_id": "F_15",
+      "back_line_count": 4,
+      "holding_midfield_count": 3,
+      "advanced_midfield_count": 2,
+      "midfield_count": 5,
+      "forward_line_count": 1,
+      "n_bands": 4,
+      "structure_known": true
+    },
+    "4-3-3": {
+      "formation_id": "F_16",
+      "back_line_count": 4,
+      "holding_midfield_count": null,
+      "advanced_midfield_count": null,
+      "midfield_count": 3,
+      "forward_line_count": 3,
+      "n_bands": 3,
+      "structure_known": true
+    },
+    "4-4-1-1": {
+      "formation_id": "F_17",
+      "back_line_count": 4,
+      "holding_midfield_count": 4,
+      "advanced_midfield_count": 1,
+      "midfield_count": 5,
+      "forward_line_count": 1,
+      "n_bands": 4,
+      "structure_known": true
+    },
+    "4-4-2": {
+      "formation_id": "F_18",
+      "back_line_count": 4,
+      "holding_midfield_count": null,
+      "advanced_midfield_count": null,
+      "midfield_count": 4,
+      "forward_line_count": 2,
+      "n_bands": 3,
+      "structure_known": true
+    },
+    "4-5-1": {
+      "formation_id": "F_19",
+      "back_line_count": 4,
+      "holding_midfield_count": null,
+      "advanced_midfield_count": null,
+      "midfield_count": 5,
+      "forward_line_count": 1,
+      "n_bands": 3,
+      "structure_known": true
+    },
+    "5-2-2-1": {
+      "formation_id": "F_20",
+      "back_line_count": 5,
+      "holding_midfield_count": 2,
+      "advanced_midfield_count": 2,
+      "midfield_count": 4,
+      "forward_line_count": 1,
+      "n_bands": 4,
+      "structure_known": true
+    },
+    "5-2-3": {
+      "formation_id": "F_21",
+      "back_line_count": 5,
+      "holding_midfield_count": null,
+      "advanced_midfield_count": null,
+      "midfield_count": 2,
+      "forward_line_count": 3,
+      "n_bands": 3,
+      "structure_known": true
+    },
+    "5-3-1-1": {
+      "formation_id": "F_22",
+      "back_line_count": 5,
+      "holding_midfield_count": 3,
+      "advanced_midfield_count": 1,
+      "midfield_count": 4,
+      "forward_line_count": 1,
+      "n_bands": 4,
+      "structure_known": true
+    },
+    "5-3-2": {
+      "formation_id": "F_23",
+      "back_line_count": 5,
+      "holding_midfield_count": null,
+      "advanced_midfield_count": null,
+      "midfield_count": 3,
+      "forward_line_count": 2,
+      "n_bands": 3,
+      "structure_known": true
+    },
+    "5-4-1": {
+      "formation_id": "F_24",
+      "back_line_count": 5,
+      "holding_midfield_count": null,
+      "advanced_midfield_count": null,
+      "midfield_count": 4,
+      "forward_line_count": 1,
+      "n_bands": 3,
+      "structure_known": true
+    }
+  },
+  "derivation_rule": {
+    "note": "For any exact formation not in exact_to_structure, apply this same digit-band rule at lookup time so the mapping is total; formation_id falls back to 'F_UNK' for such (unlisted) formations even when structurally parseable, keeping the neutral-id namespace closed to formations that have been through explicit review (V3 patch SS10) while the structural counts (which carry no identity) are still safely derivable and returned.",
+    "steps": [
+      "parse formation into integer bands split on '-'",
+      "if unparseable, empty, or any band <= 0 -> FORMATION_STRUCTURE_UNKNOWN (all counts null)",
+      "back_line_count = first band; forward_line_count = last band (always literal, unambiguous)",
+      "middle = bands[1:-1]",
+      "if len(middle) == 1 -> midfield_count = middle[0]; holding/advanced left null",
+      "if len(middle) == 2 -> holding_midfield_count = middle[0]; advanced_midfield_count = middle[1]",
+      "otherwise (0 or >2 middle bands) -> FORMATION_STRUCTURE_UNKNOWN (all counts null)"
+    ]
+  }
+}
