@@ -500,6 +500,39 @@ def test_16_bound_artifacts_declare_the_frozen_engine_spec():
     assert not stale, f"bound artifacts produced under a superseded engine spec: {stale}"
 
 
+def test_16_blast_radius_test_reachability_is_not_stale():
+    """The published blast radius must match a LIVE re-derivation, test modules included.
+
+    The D14 repair guarded the changed-MODULE set against drift but not the reachable-TEST set,
+    so adding a test module left the bound artifact silently stale (6 reaching / 225 scanned on
+    disk vs 7 / 226 live). A reachability claim is evidence; stale evidence is worse than none.
+    """
+    path = f"{OUT}/V7_1_BLAST_RADIUS.json"
+    if not os.path.exists(path):
+        pytest.skip("blast radius artifact absent")
+    published = json.load(open(path))
+
+    tests_on_disk = []
+    for dirpath, _dirs, files in os.walk(os.path.join(ROOT, "tests")):
+        for fn in files:
+            if fn.startswith("test_") and fn.endswith(".py"):
+                tests_on_disk.append(os.path.relpath(os.path.join(dirpath, fn), ROOT))
+    assert published["n_test_modules_scanned"] == len(tests_on_disk), (
+        f"published scan covered {published['n_test_modules_scanned']} test modules, "
+        f"{len(tests_on_disk)} are on disk")
+
+    changed = set(published["changed_modules"])
+    live_reaching = set()
+    for t in sorted(tests_on_disk):
+        importers, _u, _a = PV.static_closure([t], root=ROOT)
+        if set(importers) & changed:
+            live_reaching.add(t)
+    declared = {r["test_module"] for r in published["test_modules_reaching_changed_code"]}
+    assert declared == live_reaching, {
+        "missing_from_artifact": sorted(live_reaching - declared),
+        "stale_in_artifact": sorted(declared - live_reaching)}
+
+
 def test_16_bound_artifact_hashes_all_recompute():
     """Every artifact the manifest binds must still hash to its frozen value."""
     manifest_path = f"{OUT}/V7_1_FREEZE_MANIFEST.json"

@@ -8,10 +8,14 @@ ZERO SPEND. Static analysis only -- imports nothing it analyses.
 """
 from __future__ import annotations
 
-import ast
 import json
 import os
 import sys
+
+sys.path.insert(0, "/home/ubuntu")
+sys.path.insert(0, "/home/ubuntu/src")
+
+from src.research.hypothesis_v71 import provenance as PV
 
 ROOT = "/home/ubuntu"
 # The declaration is DERIVED from disk, never hand-maintained.  A hand-written list is the
@@ -30,51 +34,29 @@ def _declared_changed():
 CHANGED = _declared_changed()
 
 
-
-def _module_to_path(mod: str):
-    """Map a dotted first-party module name to a file under ROOT, if it exists."""
-    rel = mod.replace(".", "/")
-    for cand in (f"{rel}.py", f"{rel}/__init__.py"):
-        if os.path.exists(os.path.join(ROOT, cand)):
-            return cand
-    return None
-
-
 def imports_of(path: str):
-    """First-party modules imported by `path` (absolute dotted names resolved under ROOT)."""
-    out = set()
-    try:
-        tree = ast.parse(open(os.path.join(ROOT, path)).read())
-    except (SyntaxError, UnicodeDecodeError, FileNotFoundError):
-        return out
-    for node in ast.walk(tree):
-        if isinstance(node, ast.Import):
-            for a in node.names:
-                out.add(a.name)
-        elif isinstance(node, ast.ImportFrom):
-            if node.module and node.level == 0:
-                out.add(node.module)
-                for a in node.names:
-                    out.add(f"{node.module}.{a.name}")
-    return out
+    """First-party modules imported by `path`.
+
+    Delegates to the provenance resolver rather than carrying a second copy of the analysis.
+    This driver previously duplicated the walker AND its `node.level == 0` guard, so it shared
+    the D16 blind spot: every `from . import x` was invisible, and the V7.1 package imports its
+    interior that way. A reachability claim computed by a weaker mechanism than the real import
+    graph understates blast radius, which is the same defect class D14 exists to prevent.
+    """
+    return PV._imported_names(path, ROOT)
 
 
 def closure(start: str, cache: dict):
-    """Transitive first-party file closure reachable from `start`."""
+    """Transitive first-party file closure reachable from `start`.
+
+    Uses the repaired resolver, so relative imports, ancestor packages, the `scripts/` import
+    root and the corpus layer are all reachable -- one mechanism, one truth.
+    """
     if start in cache:
         return cache[start]
-    cache[start] = set()          # cycle guard
-    seen = {start}
-    stack = [start]
-    while stack:
-        cur = stack.pop()
-        for mod in imports_of(cur):
-            p = _module_to_path(mod)
-            if p and p not in seen:
-                seen.add(p)
-                stack.append(p)
-    cache[start] = seen
-    return seen
+    importers, _unresolved, _ambiguous = PV.static_closure([start], root=ROOT)
+    cache[start] = set(importers)
+    return cache[start]
 
 
 def main() -> int:
