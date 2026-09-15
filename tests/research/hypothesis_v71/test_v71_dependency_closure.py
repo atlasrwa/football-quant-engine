@@ -512,18 +512,20 @@ def test_16_blast_radius_test_reachability_is_not_stale():
         pytest.skip("blast radius artifact absent")
     published = json.load(open(path))
 
-    tests_on_disk = []
-    for dirpath, _dirs, files in os.walk(os.path.join(ROOT, "tests")):
-        for fn in files:
-            if fn.startswith("test_") and fn.endswith(".py"):
-                tests_on_disk.append(os.path.relpath(os.path.join(dirpath, fn), ROOT))
-    assert published["n_test_modules_scanned"] == len(tests_on_disk), (
+    # enumerated from git, exactly as the driver does: the claim must describe the COMMIT, not
+    # whatever scratch test files happen to sit in a working tree
+    tracked = PV.git_tracked_files(ROOT, "HEAD")
+    assert tracked is not None, "git tracking could not be determined"
+    tests_tracked = sorted(p for p in tracked
+                           if p.startswith("tests/")
+                           and os.path.basename(p).startswith("test_") and p.endswith(".py"))
+    assert published["n_test_modules_scanned"] == len(tests_tracked), (
         f"published scan covered {published['n_test_modules_scanned']} test modules, "
-        f"{len(tests_on_disk)} are on disk")
+        f"{len(tests_tracked)} are tracked at HEAD")
 
     changed = set(published["changed_modules"])
     live_reaching = set()
-    for t in sorted(tests_on_disk):
+    for t in tests_tracked:
         importers, _u, _a = PV.static_closure([t], root=ROOT)
         if set(importers) & changed:
             live_reaching.add(t)

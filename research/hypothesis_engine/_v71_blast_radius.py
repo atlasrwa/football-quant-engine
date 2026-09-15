@@ -59,13 +59,25 @@ def closure(start: str, cache: dict):
     return cache[start]
 
 
+def tracked_test_modules():
+    """Every test module TRACKED at HEAD, sorted.
+
+    Enumerated from git rather than from the working tree on purpose. Walking the filesystem
+    counted untracked test files too (226 in a working tree against 219 in the commit), so the
+    published artifact could not be reproduced from a clean checkout and went stale the moment a
+    scratch test file appeared. Blast-radius evidence must describe the COMMIT.
+    """
+    tracked = PV.git_tracked_files(ROOT, "HEAD")
+    if tracked is None:
+        raise SystemExit("cannot determine git-tracked files; refusing to publish a "
+                         "blast-radius claim that may not describe the commit")
+    return sorted(p for p in tracked
+                  if p.startswith("tests/") and os.path.basename(p).startswith("test_")
+                  and p.endswith(".py"))
+
+
 def main() -> int:
-    tests = []
-    for dirpath, _dirs, files in os.walk(os.path.join(ROOT, "tests")):
-        for fn in files:
-            if fn.startswith("test_") and fn.endswith(".py"):
-                tests.append(os.path.relpath(os.path.join(dirpath, fn), ROOT))
-    tests.sort()
+    tests = tracked_test_modules()
 
     cache = {}
     reaching, not_reaching = [], []
