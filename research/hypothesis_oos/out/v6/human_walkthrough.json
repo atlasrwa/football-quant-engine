@@ -1,0 +1,184 @@
+{
+ "arm_a_packet": {
+  "arm": "base",
+  "conditionable_terms": [],
+  "evidence_id_kinds": {
+   "AVAIL": 20,
+   "FORMATION": 2,
+   "SUMMARY": 92
+  },
+  "exposed_terms": [
+   "formation_recorded_history",
+   "target_fixture_venue_context",
+   "xg"
+  ],
+  "fixture_id": "mt_010243515",
+  "information_cutoff_unix": 1756645200,
+  "n_evidence_ids": 114,
+  "packet_hash": "6426476671c7272c91d69aa1f1a07f76edca63b2979d2f3c934325693477d740",
+  "section_types": [
+   "TARGET_FIXTURE_CONTEXT",
+   "AVAILABILITY_MAP",
+   "METRIC_SEMANTICS",
+   "DERIVED_SUMMARIES",
+   "FORMATION_CONTEXT",
+   "EVIDENCE_CITATION_INSTRUCTIONS"
+  ],
+  "windows": [
+   "ALL_PRIOR"
+  ]
+ },
+ "arm_b_packet": {
+  "arm": "research",
+  "conditionable_terms": [
+   "competition",
+   "historical_venue_conditioning",
+   "opponent_formation_family",
+   "opponent_profile",
+   "own_formation_family"
+  ],
+  "evidence_id_kinds": {
+   "AVAIL": 20,
+   "FORMATION": 2,
+   "MATCH": 2820,
+   "PROFILE": 64,
+   "SUMMARY": 460
+  },
+  "exposed_terms": [
+   "competition",
+   "formation_recorded_history",
+   "historical_venue_conditioning",
+   "match_level_observations",
+   "opponent_formation_family",
+   "opponent_profile",
+   "own_formation_family",
+   "recent_window_summaries",
+   "target_fixture_venue_context",
+   "xg"
+  ],
+  "fixture_id": "mt_010243515",
+  "information_cutoff_unix": 1756645200,
+  "n_evidence_ids": 3366,
+  "packet_hash": "35b3457403802dc09d6e6e6d1e01d581efab341c0da73e2aaff1ca2bcf04a2dd",
+  "section_types": [
+   "TARGET_FIXTURE_CONTEXT",
+   "AVAILABILITY_MAP",
+   "METRIC_SEMANTICS",
+   "MATCH_LEVEL_OBSERVATIONS",
+   "DERIVED_SUMMARIES",
+   "OPPONENT_PROFILE_SUMMARIES",
+   "FORMATION_CONTEXT",
+   "EVIDENCE_CITATION_INSTRUCTIONS"
+  ],
+  "windows": [
+   "ALL_PRIOR",
+   "W10",
+   "W5"
+  ]
+ },
+ "conclusion": "The response carried one firewall violation (H3) and one unavailable-dimension violation (H4). Both were rejected as individual hypotheses; H1, H2 (opponent profile) and H5 (evidence-backed abstention) survived and were measured. \u00a73 holds on the production path, on a real packet.",
+ "exact_output_schema": {
+  "evidence_summary_optional": true,
+  "item_required": [
+   "hypothesis_id",
+   "research_family",
+   "subject",
+   "question",
+   "target_metrics",
+   "side",
+   "window",
+   "conditions",
+   "comparison",
+   "evidence_refs",
+   "candidate_confounders",
+   "required_capabilities",
+   "sufficiency",
+   "priority"
+  ],
+  "schema_content_hash": "94b77cbac6b3cc1f444aeb9610d224eb536fe1948b8c33578ef74a75bdb57092",
+  "schema_version": "hypothesis_set_schema_v4"
+ },
+ "exact_system_prompt_first_400_chars": "You are a quantitative football RESEARCH assistant.\n\nYou receive one point-in-time-safe EVIDENCE PACKET describing the history that precedes one\nupcoming fixture. Every number in it was computed by a deterministic engine from matches\nthat kicked off strictly before that fixture's information cutoff.\n\nYOUR JOB IS NOT TO PREDICT THE MATCH.\nYour job is to propose FALSIFIABLE HISTORICAL QUESTIONS that",
+ "exact_system_prompt_sha256": "e5a4529dfa69b8f4437e2f45ea7a9522304c5377abe927cc6373acdf271e244b",
+ "mixed_response": {
+  "n_hypotheses": 5,
+  "only_intended_hypotheses_failed": true,
+  "per_hypothesis": [
+   {
+    "abstaining": false,
+    "expected": "VALID_HYPOTHESIS",
+    "hypothesis_id": "H1",
+    "match": true,
+    "observed": "VALID_HYPOTHESIS",
+    "qualified": true,
+    "reasons": {}
+   },
+   {
+    "abstaining": false,
+    "expected": "VALID_HYPOTHESIS",
+    "hypothesis_id": "H2",
+    "match": true,
+    "observed": "VALID_HYPOTHESIS",
+    "qualified": true,
+    "reasons": {}
+   },
+   {
+    "abstaining": false,
+    "expected": "MODEL_FIREWALL_VIOLATION",
+    "hypothesis_id": "H3",
+    "match": true,
+    "observed": "MODEL_FIREWALL_VIOLATION",
+    "qualified": false,
+    "reasons": {
+     "firewall_valid": [
+      "[MODEL_AUTHORED_PREDICTIVE_QUANTIFICATION] $.hypotheses[2].question: percentage -- model-authored predictive quantification in 'question': the sentence carries ['chance', 'gives', 'upcoming fixture'], which makes the number a claim about the upcoming fixture or about a predictive magnitude. The deterministic engine owns every such number; no field and no phrasing makes one admissible.",
+      "[MODEL_AUTHORED_PREDICTIVE_QUANTIFICATION] $.hypotheses[2].question: probability_claim -- model-authored predictive quantification in 'question': the sentence carries ['chance', 'gives', 'upcoming fixture'], which makes the number a claim about the upcoming fixture or about a predictive magnitude. The deterministic engine owns every such number; no field and no phrasing makes one admissible.",
+      "[MODEL_AUTHORED_PREDICTIVE_QUANTIFICATION] $.hypotheses[2].question: probability_claim -- model-authored predictive quantification in 'question': the sentence carries ['chance', 'gives', 'upcoming fixture'], which makes the number a claim about the upcoming fixture or about a predictive magnitude. The deterministic engine owns every such number; no field and no phrasing makes one admissible."
+     ]
+    }
+   },
+   {
+    "abstaining": false,
+    "expected": "MODEL_AVAILABILITY_VIOLATION",
+    "hypothesis_id": "H4",
+    "match": true,
+    "observed": "MODEL_AVAILABILITY_VIOLATION",
+    "qualified": false,
+    "reasons": {
+     "availability_valid": [
+      "term 'referee' is not available anywhere in this corpus: Split by match official. The adapter surfaces no referee field for this corpus, so no packet can support it.",
+      "this hypothesis declares it requires 'referee', which this packet declares 'NOT_PROVIDED_BY_SOURCE'"
+     ]
+    }
+   },
+   {
+    "abstaining": true,
+    "expected": "VALID_ABSTENTION",
+    "hypothesis_id": "H5",
+    "match": true,
+    "observed": "VALID_ABSTENTION",
+    "qualified": false,
+    "reasons": {}
+   }
+  ],
+  "response_class": "VALID_MODEL_RESPONSE",
+  "response_fatal": false,
+  "scorecard": {
+   "class_counts": {
+    "MODEL_AVAILABILITY_VIOLATION": 1,
+    "MODEL_FIREWALL_VIOLATION": 1,
+    "VALID_ABSTENTION": 1,
+    "VALID_HYPOTHESIS": 2
+   },
+   "n_abstentions": 1,
+   "n_abstentions_with_refs": 1,
+   "n_qualified": 2,
+   "n_recoverable": 5,
+   "qualified_rate": 0.5
+  },
+  "valid_siblings_survived_rejected_siblings": true
+ },
+ "serialized_request_sha256_arm_b": "6138c70bb12a4954b5337e21cf2723ce644ba4615f4a63d2e7a6c2712c31f862",
+ "spend_usd": 0.0,
+ "walkthrough_version": "v6_walkthrough_v1"
+}

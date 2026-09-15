@@ -1,0 +1,310 @@
+{
+ "raw": {
+  "fixture_id": "mt_010243515",
+  "hypotheses": [
+   {
+    "candidate_confounders": [
+     "venue",
+     "opponent_profile"
+    ],
+    "comparison": "LEAGUE_ENVIRONMENT_BASELINE",
+    "conditions": [],
+    "evidence_refs": [
+     "AWAY_ATK_corners_ca1538"
+    ],
+    "hypothesis_id": "H1",
+    "priority": "HIGH",
+    "question": "Does the away team generate corners at a rate above the league environment baseline, given its recorded corners-for average across all prior matches?",
+    "required_capabilities": [
+     "venue"
+    ],
+    "research_family": "ATTACK_VOLUME",
+    "side": "FOR",
+    "subject": "AWAY_TEAM",
+    "sufficiency": "SUFFICIENT",
+    "target_metrics": [
+     "corners"
+    ],
+    "window": "ALL_PRIOR"
+   },
+   {
+    "candidate_confounders": [
+     "venue",
+     "opponent_profile"
+    ],
+    "comparison": "LEAGUE_ENVIRONMENT_BASELINE",
+    "conditions": [],
+    "evidence_refs": [
+     "AWAY_DEF_corners_598e33"
+    ],
+    "hypothesis_id": "H2",
+    "priority": "HIGH",
+    "question": "Does the away team suppress opponent corners at a rate below the league environment baseline, given its recorded corners-against average across all prior matches?",
+    "required_capabilities": [
+     "venue"
+    ],
+    "research_family": "DEFENSIVE_SUPPRESSION",
+    "side": "AGAINST",
+    "subject": "AWAY_TEAM",
+    "sufficiency": "SUFFICIENT",
+    "target_metrics": [
+     "corners"
+    ],
+    "window": "ALL_PRIOR"
+   },
+   {
+    "candidate_confounders": [
+     "venue",
+     "opponent_profile"
+    ],
+    "comparison": "SUBJECT_OVERALL_BASELINE",
+    "conditions": [
+     {
+      "axis": "possession_for",
+      "dimension": "opponent_profile",
+      "value": "HIGH"
+     }
+    ],
+    "evidence_refs": [
+     "AWAY_ATK_possession_82105a",
+     "HOME_ATK_possession_190f3f"
+    ],
+    "hypothesis_id": "H3",
+    "priority": "HIGH",
+    "question": "Does the away team's recorded possession-for average differ from the home team's recorded possession-for average in a way that is consistent across matches against opponents with high possession-for profiles?",
+    "required_capabilities": [
+     "venue"
+    ],
+    "research_family": "TEMPO_AND_TERRITORY",
+    "side": "FOR",
+    "subject": "AWAY_TEAM",
+    "sufficiency": "SUFFICIENT",
+    "target_metrics": [
+     "possession"
+    ],
+    "window": "ALL_PRIOR"
+   },
+   {
+    "candidate_confounders": [
+     "venue",
+     "opponent_formation_family"
+    ],
+    "comparison": "SUBJECT_OVERALL_BASELINE",
+    "conditions": [
+     {
+      "axis": "shots_on_target_against",
+      "dimension": "opponent_profile",
+      "value": "LOW"
+     }
+    ],
+    "evidence_refs": [
+     "AWAY_ATK_shots_inside_box_567ee5",
+     "AWAY_ATK_touches_in_box_2c76ca",
+     "AWAY_DEF_shots_on_target_dcda5e"
+    ],
+    "hypothesis_id": "H4",
+    "priority": "MEDIUM",
+    "question": "Does the away team's shots-inside-box rate and touches-in-box rate against opponents with low shots-on-target-against profiles differ from its overall baseline?",
+    "required_capabilities": [],
+    "research_family": "ATTACK_QUALITY",
+    "side": "FOR",
+    "subject": "AWAY_TEAM",
+    "sufficiency": "SUFFICIENT",
+    "target_metrics": [
+     "shots_inside_box",
+     "touches_in_box"
+    ],
+    "window": "ALL_PRIOR"
+   },
+   {
+    "candidate_confounders": [
+     "venue",
+     "opponent_formation_family"
+    ],
+    "comparison": "SUBJECT_OVERALL_BASELINE",
+    "conditions": [
+     {
+      "axis": "shots_for",
+      "dimension": "opponent_profile",
+      "value": "HIGH"
+     }
+    ],
+    "evidence_refs": [
+     "HOME_DEF_touches_in_box_94cd98",
+     "HOME_DEF_shots_inside_box_e6b28d",
+     "AWAY_ATK_total_shots_004f7a"
+    ],
+    "hypothesis_id": "H5",
+    "priority": "HIGH",
+    "question": "Does the home team concede more touches in its own box and shots inside box against opponents with high shots-for profiles compared to its overall baseline?",
+    "required_capabilities": [],
+    "research_family": "DEFENSIVE_CONCESSION",
+    "side": "AGAINST",
+    "subject": "HOME_TEAM",
+    "sufficiency": "SUFFICIENT",
+    "target_metrics": [
+     "touches_in_box",
+     "shots_inside_box"
+    ],
+    "window": "ALL_PRIOR"
+   },
+   {
+    "candidate_confounders": [
+     "opponent_profile",
+     "competition"
+    ],
+    "comparison": "SUBJECT_VENUE_BASELINE",
+    "conditions": [
+     {
+      "dimension": "venue",
+      "value": "AWAY"
+     }
+    ],
+    "evidence_refs": [
+     "AWAY_ATK_total_shots_004f7a",
+     "AWAY_ATK_shots_on_target_9afd02"
+    ],
+    "hypothesis_id": "H6",
+    "priority": "MEDIUM",
+    "question": "Does the away team's total-shots and shots-on-target rate at home differ from its rate when playing away, given its recorded overall averages?",
+    "required_capabilities": [
+     "venue"
+    ],
+    "research_family": "ATTACK_VOLUME",
+    "side": "FOR",
+    "subject": "AWAY_TEAM",
+    "sufficiency": "SUFFICIENT",
+    "target_metrics": [
+     "total_shots",
+     "shots_on_target"
+    ],
+    "window": "ALL_PRIOR"
+   },
+   {
+    "candidate_confounders": [
+     "opponent_profile",
+     "competition"
+    ],
+    "comparison": "SUBJECT_VENUE_BASELINE",
+    "conditions": [
+     {
+      "dimension": "venue",
+      "value": "HOME"
+     }
+    ],
+    "evidence_refs": [
+     "HOME_ATK_yellow_cards_80b7a4",
+     "HOME_ATK_fouls_8107c6"
+    ],
+    "hypothesis_id": "H7",
+    "priority": "LOW",
+    "question": "Does the home team's yellow-card rate when playing at home differ from its overall baseline, given its recorded fouls-for and yellow-cards-for averages?",
+    "required_capabilities": [
+     "venue"
+    ],
+    "research_family": "DISCIPLINE",
+    "side": "FOR",
+    "subject": "HOME_TEAM",
+    "sufficiency": "SUFFICIENT",
+    "target_metrics": [
+     "yellow_cards",
+     "fouls"
+    ],
+    "window": "ALL_PRIOR"
+   },
+   {
+    "candidate_confounders": [
+     "venue",
+     "opponent_formation_family"
+    ],
+    "comparison": "LEAGUE_ENVIRONMENT_BASELINE",
+    "conditions": [
+     {
+      "axis": "corners_against",
+      "dimension": "opponent_profile",
+      "value": "HIGH"
+     }
+    ],
+    "evidence_refs": [
+     "AWAY_ATK_accurate_crosses_005290",
+     "AWAY_ATK_corners_ca1538"
+    ],
+    "hypothesis_id": "H8",
+    "priority": "MEDIUM",
+    "question": "Does the away team generate accurate crosses at a rate above the league environment baseline, and does this rate vary against opponents with high corners-against profiles?",
+    "required_capabilities": [],
+    "research_family": "SET_PIECE_GENERATION",
+    "side": "FOR",
+    "subject": "AWAY_TEAM",
+    "sufficiency": "SUFFICIENT",
+    "target_metrics": [
+     "accurate_crosses",
+     "corners"
+    ],
+    "window": "ALL_PRIOR"
+   },
+   {
+    "candidate_confounders": [
+     "venue",
+     "opponent_profile"
+    ],
+    "comparison": "LEAGUE_ENVIRONMENT_BASELINE",
+    "conditions": [],
+    "evidence_refs": [
+     "AWAY_DEF_goals_4ad3b7",
+     "AWAY_DEF_shots_on_target_dcda5e"
+    ],
+    "hypothesis_id": "H9",
+    "priority": "HIGH",
+    "question": "Does the away team's goals-against rate differ from the league environment baseline, given its recorded goals-against and shots-on-target-against averages?",
+    "required_capabilities": [
+     "venue"
+    ],
+    "research_family": "DEFENSIVE_SUPPRESSION",
+    "side": "AGAINST",
+    "subject": "AWAY_TEAM",
+    "sufficiency": "SUFFICIENT",
+    "target_metrics": [
+     "goals",
+     "shots_on_target"
+    ],
+    "window": "ALL_PRIOR"
+   },
+   {
+    "candidate_confounders": [
+     "opponent_profile",
+     "venue"
+    ],
+    "comparison": "SUBJECT_RECENT_VS_LONG_BASELINE",
+    "conditions": [],
+    "evidence_refs": [
+     "HOME_ATK_corners_406027",
+     "HOME_ATK_accurate_crosses_c28b9e"
+    ],
+    "hypothesis_id": "H10",
+    "priority": "MEDIUM",
+    "question": "Does the home team's recent corners-for and accurate-crosses-for rate differ from its long-term baseline, suggesting a shift in wide-area attacking output?",
+    "required_capabilities": [],
+    "research_family": "FORM_VS_BASELINE",
+    "side": "FOR",
+    "subject": "HOME_TEAM",
+    "sufficiency": "SUFFICIENT",
+    "target_metrics": [
+     "corners",
+     "accurate_crosses"
+    ],
+    "window": "W5"
+   }
+  ],
+  "packet_hash": "330b6bf79329143823559703674194a4861cd9cf5ff60941e5502e5e086d8825"
+ },
+ "seq": 32,
+ "stop_reason": "tool_use",
+ "usage": {
+  "cacheReadInputTokens": 0,
+  "cacheWriteInputTokens": 0,
+  "inputTokens": 21480,
+  "outputTokens": 2470,
+  "totalTokens": 23950
+ }
+}

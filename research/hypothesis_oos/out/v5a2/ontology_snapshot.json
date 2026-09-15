@@ -1,0 +1,252 @@
+{
+ "axis_required_terms": [
+  "opponent_profile"
+ ],
+ "capability_terms": [
+  "competition",
+  "expected_formation",
+  "formation_recorded_history",
+  "half_time_score_state",
+  "historical_venue_conditioning",
+  "injuries",
+  "lineup",
+  "match_level_observations",
+  "match_period",
+  "minute_level_events",
+  "opponent_formation_family",
+  "opponent_profile",
+  "own_formation_family",
+  "player_ratings",
+  "recent_window_summaries",
+  "referee",
+  "target_fixture_venue_context",
+  "weather",
+  "xg"
+ ],
+ "condition_dimension_terms": [
+  "competition",
+  "half_time_score_state",
+  "historical_venue_conditioning",
+  "match_period",
+  "opponent_formation_family",
+  "opponent_profile",
+  "own_formation_family",
+  "referee"
+ ],
+ "ontology_version": "v5a2_ontology_v1",
+ "single_language_rule": "Every term you read in the availability map is spelled exactly the same way in `conditions[].dimension` (when it is conditionable) and in `required_capabilities`. There is no second vocabulary and no translation for you to perform.",
+ "terms": {
+  "competition": {
+   "axes": [],
+   "axis_required": false,
+   "corpus_supported": true,
+   "desc": "Restrict the cohort to the upcoming fixture's competition, or any.",
+   "role": "CONDITION_DIMENSION",
+   "values": [
+    "SAME",
+    "ANY"
+   ]
+  },
+  "expected_formation": {
+   "axes": [],
+   "axis_required": false,
+   "corpus_supported": false,
+   "desc": "Announced or predicted formation for the upcoming fixture. Not provided by the source.",
+   "role": "EVIDENCE_CONTEXT",
+   "values": []
+  },
+  "formation_recorded_history": {
+   "axes": [],
+   "axis_required": false,
+   "corpus_supported": true,
+   "desc": "How much of the prior history carries a recorded formation. Coverage alone tells you how reliable a formation question would be; conditioning on formation additionally requires match_level_observations.",
+   "role": "EVIDENCE_CONTEXT",
+   "values": []
+  },
+  "half_time_score_state": {
+   "axes": [],
+   "axis_required": false,
+   "corpus_supported": false,
+   "desc": "Split by the score at half time. No half-level data exists in this corpus, so no packet can support it.",
+   "role": "CONDITION_DIMENSION",
+   "values": [
+    "LEADING_AT_HT",
+    "LEVEL_AT_HT",
+    "TRAILING_AT_HT",
+    "ANY"
+   ]
+  },
+  "historical_venue_conditioning": {
+   "axes": [],
+   "axis_required": false,
+   "corpus_supported": true,
+   "desc": "Split the subject's PRIOR matches by where they were played. Requires venue-split evidence in this packet. This is NOT the same as knowing which side is at home in the upcoming fixture -- that is `target_fixture_venue_context`, and it does not license this split.",
+   "role": "CONDITION_DIMENSION",
+   "values": [
+    "HOME",
+    "AWAY",
+    "ANY"
+   ]
+  },
+  "injuries": {
+   "axes": [],
+   "axis_required": false,
+   "corpus_supported": false,
+   "desc": "Availability of individual players. Not provided by the source.",
+   "role": "EVIDENCE_CONTEXT",
+   "values": []
+  },
+  "lineup": {
+   "axes": [],
+   "axis_required": false,
+   "corpus_supported": false,
+   "desc": "Starting eleven. Provided by the source but not derivable point-in-time safe, so it is withheld.",
+   "role": "EVIDENCE_CONTEXT",
+   "values": []
+  },
+  "market_prices": {
+   "axes": [],
+   "axis_required": false,
+   "corpus_supported": false,
+   "desc": "Odds or prices of any kind. Never provided to this layer by design.",
+   "role": "EVIDENCE_CONTEXT",
+   "values": []
+  },
+  "match_level_observations": {
+   "axes": [],
+   "axis_required": false,
+   "corpus_supported": true,
+   "desc": "One row per prior match, per team, with every canonical metric. The lossless view of the history.",
+   "role": "EVIDENCE_CONTEXT",
+   "values": []
+  },
+  "match_period": {
+   "axes": [],
+   "axis_required": false,
+   "corpus_supported": false,
+   "desc": "Restrict to a half of the match. No half-level split exists in this corpus, so no packet can support it.",
+   "role": "CONDITION_DIMENSION",
+   "values": [
+    "ALL",
+    "FIRST_HALF",
+    "SECOND_HALF"
+   ]
+  },
+  "minute_level_events": {
+   "axes": [],
+   "axis_required": false,
+   "corpus_supported": false,
+   "desc": "Timed events within a match. Not provided by the source.",
+   "role": "EVIDENCE_CONTEXT",
+   "values": []
+  },
+  "opponent_formation_family": {
+   "axes": [],
+   "axis_required": false,
+   "corpus_supported": true,
+   "desc": "Structural family of the OPPONENT's recorded formation in each prior match. Requires a recorded formation on each observation.",
+   "role": "CONDITION_DIMENSION",
+   "values": [
+    "BACK_THREE",
+    "BACK_FOUR",
+    "BACK_FIVE",
+    "OTHER",
+    "ANY"
+   ]
+  },
+  "opponent_profile": {
+   "axes": [
+    "shots_for",
+    "shots_against",
+    "shots_on_target_for",
+    "shots_on_target_against",
+    "corners_for",
+    "corners_against",
+    "possession_for",
+    "goals_for",
+    "goals_against",
+    "tackles_for",
+    "fouls_for",
+    "yellow_cards_for",
+    "total_bookings_for",
+    "accurate_crosses_for",
+    "accurate_crosses_against"
+   ],
+   "axis_required": true,
+   "corpus_supported": true,
+   "desc": "Split the subject's prior matches by a band of the opponent faced, on one named measured axis. `axis` is REQUIRED for this term and forbidden for every other.",
+   "role": "CONDITION_DIMENSION",
+   "values": [
+    "LOW",
+    "MID",
+    "HIGH",
+    "ANY"
+   ]
+  },
+  "own_formation_family": {
+   "axes": [],
+   "axis_required": false,
+   "corpus_supported": true,
+   "desc": "Structural family of the subject's RECORDED formation in each prior match. Requires a recorded formation on each observation.",
+   "role": "CONDITION_DIMENSION",
+   "values": [
+    "BACK_THREE",
+    "BACK_FOUR",
+    "BACK_FIVE",
+    "OTHER",
+    "ANY"
+   ]
+  },
+  "player_ratings": {
+   "axes": [],
+   "axis_required": false,
+   "corpus_supported": false,
+   "desc": "Per-player performance ratings. Not provided by the source.",
+   "role": "EVIDENCE_CONTEXT",
+   "values": []
+  },
+  "recent_window_summaries": {
+   "axes": [],
+   "axis_required": false,
+   "corpus_supported": true,
+   "desc": "Short-window summaries (W5, W10) alongside the long-run one, which is what makes a recent-versus-long-run question answerable.",
+   "role": "EVIDENCE_CONTEXT",
+   "values": []
+  },
+  "referee": {
+   "axes": [],
+   "axis_required": false,
+   "corpus_supported": false,
+   "desc": "Split by match official. The adapter surfaces no referee field for this corpus, so no packet can support it.",
+   "role": "CONDITION_DIMENSION",
+   "values": [
+    "SAME",
+    "ANY"
+   ]
+  },
+  "target_fixture_venue_context": {
+   "axes": [],
+   "axis_required": false,
+   "corpus_supported": true,
+   "desc": "Which side of the UPCOMING fixture is at home. A fact about the fixture, stated in TARGET_FIXTURE_CONTEXT, always available in every packet. It does NOT let you split prior matches by venue -- see `historical_venue_conditioning`.",
+   "role": "EVIDENCE_CONTEXT",
+   "values": []
+  },
+  "weather": {
+   "axes": [],
+   "axis_required": false,
+   "corpus_supported": false,
+   "desc": "Match conditions. Not provided by the source.",
+   "role": "EVIDENCE_CONTEXT",
+   "values": []
+  },
+  "xg": {
+   "axes": [],
+   "axis_required": false,
+   "corpus_supported": true,
+   "desc": "Expected goals as published by the provider. See METRIC_SEMANTICS for what it counts and what is excluded.",
+   "role": "EVIDENCE_CONTEXT",
+   "values": []
+  }
+ }
+}

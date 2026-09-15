@@ -1,0 +1,64 @@
+{
+ "audit_version": "v6_1_final_prespend_audit_v1",
+ "executive_verdict": "V6_1_FINAL_AUDIT_FIXED_AND_REFROZEN",
+ "spend_authorization": "NOT_GRANTED",
+ "V6_1_CONVERSE_CALLS": 0,
+ "V6_1_INVOKEMODEL_CALLS": 0,
+ "V6_1_EXPERIMENTAL_OBSERVATIONS": 0,
+ "fix_applied": {
+  "class": "engineering_lifecycle_test_repair_only",
+  "scientific_parameters_changed": false,
+  "description": "3 stale pre-spend tests asserted V6 execution artifacts do not exist; that invariant was valid only before V6 authorization and became historically false after the authorized COMPLETE run. Replaced with lifecycle-aware validation (experiment_lifecycle module) that reads the recorded phase from the immutable execution-state artifact: NEVER_EXECUTED -> artifacts must not exist; COMPLETE/STOPPED -> artifacts must exist and hash-match. Added Hypothesis CI profile (derandomize) for reproducible property tests.",
+  "files_added": [
+   "src/research/hypothesis_oos/experiment_lifecycle.py",
+   "tests/research/hypothesis_oos/test_experiment_lifecycle.py"
+  ],
+  "files_modified_tests_only": [
+   "tests/research/hypothesis_oos/test_v6_prespend.py",
+   "tests/research/hypothesis_oos/test_v6_exact_tokens.py",
+   "tests/research/hypothesis_oos/test_v6_1_prespend.py",
+   "tests/conftest.py"
+  ]
+ },
+ "frozen_scientific_artifacts_unchanged": {
+  "v6_verdict_py": "f195cf7f2db48d47d1bedc20cf6a364efc7b7efca46f5089045d3803b4d99854",
+  "v6_scorecard_py": "0b89e96ec042a762bbaf78b4e3cdb9e65054b9514688d6d0c260663f86a13bcf",
+  "v6_execution_V6_VERDICT_json": "0225963d1ca6e0ca2accaf6f1e9c84ff1a9077816dd99d4675922782ceac86d6",
+  "v6_execution_scores_json": "4ba5f37b98aec2ad2a04cf62f3b40587786a907dd6abe19c6939d2f26cf5ec3c",
+  "v6_1_PREREGISTRATION_json": "93c2374248ec1c2f14a144205ebb198ec46f6c1dc65a98a00793918fce901cfc",
+  "v6_1_EVALUATOR_FREEZE_json": "4fe9c18b3a18f0a481072035ef96f0e49f3636b52699cd1d84da727bcd9eb8be",
+  "v6_1_EXACT_INPUT_TOKEN_MANIFEST_json": "583593c992743c6333500bbbafd15ec49d097b6ec6b1739c84b12ac96354fc9c",
+  "v6_1_metrics_py": "ad0711a89deb3070069ba73a389d613421cd66599ada993e9523d0e5d4593957",
+  "v6_1_verdict_py": "421e43a725080978b03dc9dab0db3fca33dc2e50ce52920be8ae1e84ccda4e42",
+  "v6_1_fixtures_py": "9053f60d60ce920707f30026782731b8e0a85a02f624f43ca17837c6fcbaf2d7"
+ },
+ "phase_results": {
+  "1_lifecycle_test_repair": "FIXED (test-only, 7 regression cases + 3 repaired tests, 0 scientific change)",
+  "2_evaluator_call_graph": "PASS (v6_1 verdict never reaches legacy V6._compile_rate/discipline; tripwire-proven)",
+  "3_bug_reproduction": "PASS (old 211/183=1.153 + synthetic 5/3=1.667 reproduced; v6_1 gives 1.0)",
+  "4_metric_contracts": "PASS (11 metrics fully declared; impossible metric -> EVALUATOR_INVALID)",
+  "5_property_tests": "PASS (non-vacuous; NaN/inf/neg/>1 injection + verbosity/domination covered; derandomized)",
+  "6_replay_firewall": "PASS (replay NON_CONFIRMATORY; freeze reads no V6 scores; V6 fixtures held out)",
+  "7_fixture_selection": "PASS (5319->4100->3763 eligible; V6 mix hash-ordered; outcome-blind; 4-seed identical)",
+  "8_pit": "PASS (all 10 fixtures obs<cutoff; 3 leakage mutations rejected; no market/odds evidence)",
+  "9_arm_isolation": "PASS (system/model/config/schema byte-identical across arms; only evidence differs)",
+  "10_sample_self_noise": "PASS (all params identical to V6; none tuned to +0.1134/0.1281/MIXED)",
+  "11_discipline_gates": "PASS (strict delta>tolerance; boundary exact; sign correct)",
+  "12_primary_endpoint": "PASS (fixture-balanced; verbosity/duplication add no fixture weight)",
+  "13_stop_rules": "PASS (model-rate diversity-gated; apparatus immediate)",
+  "14_execution_order": "PASS (round-robin A/B adjacent; prefix balanced; no fixture dominates)",
+  "15_canonicalization": "PASS (one builder; every executable field hash-bound)",
+  "16_cost": "PASS (Decimal recompute = $8.52 exactly; pre-call guard proven in executor)",
+  "17_provider": "PASS (bedrock us-east-1 profile; retries disabled asserted on client; no fallback)",
+  "18_champion": "PASS (hash unchanged; executable import isolation both directions)",
+  "19_lifecycle_state_machine": "PASS (illegal transitions rejected via experiment_lifecycle)",
+  "20_filesystem": "PASS (V6.1 no model observations; V6 COMPLETE artifacts hash-match)",
+  "21_full_test_suite": "PASS (805 engine+oos, 294 oos, 448 asymmetric; 0 fail, 0 skip, 0 xfail)",
+  "22_reproducibility": "PASS (10 artifacts byte-identical under seeds 1/2/3/12345)",
+  "23_no_tuning": "PASS (every scientific parameter identical V6 vs V6.1)",
+  "24_adversarial_verdicts": "PASS (PASS/MIXED/FAIL/NON_EVALUABLE/EVALUATOR_INVALID + strict boundaries)"
+ },
+ "informational_note_for_execution_phase": "V6.1 has no dedicated executor yet (it is pre-spend). The cost pre-call guard and observed-vs-frozen-bound reconciliation are proven in research/hypothesis_engine/_execute_v6.py. A V6.1 executor MUST reuse this exact guard pattern and the no-retry v6_transport.build_client. This is a pre-EXECUTION requirement, not a pre-spend blocker.",
+ "result": "All 25 phases pass. Only the stale lifecycle tests required repair (engineering, no scientific change). No genuine pre-spend scientific defect found. Frozen artifacts unchanged. Returned to human spend authorization.",
+ "next_state": "V6_1_SPEND_AUTHORIZATION_REQUIRED"
+}

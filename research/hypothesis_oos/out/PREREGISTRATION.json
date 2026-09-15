@@ -1,0 +1,882 @@
+{
+ "anti_selection_rule": {
+  "criteria_contain_no_effect_term": true,
+  "eligibility": "STRUCTURAL_ONLY",
+  "families_inherited_unchanged_from": "v3_next_stage_eligibility_v1",
+  "forbidden_selectors": [
+   "conditional_minus_comparison_difference",
+   "sign",
+   "magnitude",
+   "abs_diff_over_se",
+   "significance",
+   "story_success"
+  ]
+ },
+ "baselines": {
+  "B0": "f_champ (champion-parity, F0)",
+  "B1": "f_champ + f_matchup + f_league_env + f_home_away (no LLM measurement)",
+  "B2": "B1 + hd_shrunk_diff (mapped opponent_profile template)",
+  "harness": "src/research/matchup/harness.py (existing walk-forward OOS)",
+  "key_comparison": "B2 vs B1"
+ },
+ "champion_protection": {
+  "artifact": "/home/ubuntu/data/discovery/pilotC_stat_mixer.json",
+  "auto_promotion": false,
+  "current_sha256": "0b8f5ff3dc4ddf15363d17989330b6f010197265ce8d2ee892cdc7ca410c00c9",
+  "frozen_sha256": "0b8f5ff3dc4ddf15363d17989330b6f010197265ce8d2ee892cdc7ca410c00c9",
+  "read_only": true
+ },
+ "confounders": {
+  "adjustment": "B2 - B1 (B1 already carries strength/venue/competition context)",
+  "causality_claimed": false,
+  "opponent_profile": [
+   "team strength",
+   "opponent strength",
+   "venue",
+   "competition",
+   "historical sample size",
+   "score state",
+   "band drift",
+   "profile-selection effects"
+  ]
+ },
+ "contamination_protocol": {
+  "band_semantics": "AS_OF_TARGET_CUTOFF",
+  "design": "B_templates_walk_forward",
+  "origin_fixtures_quarantined": [
+   "mt_010243515",
+   "mt_010243537",
+   "mt_010243938",
+   "mt_010244159",
+   "mt_010244193",
+   "mt_010441320",
+   "mt_010441491",
+   "mt_010444904",
+   "mt_012232295",
+   "mt_012232411",
+   "mt_013233190"
+  ],
+  "templates_identity_blind": true
+ },
+ "decision_rules": {
+  "FAIL": "dLogLoss(B2-B1)>=0 pooled, OR calibration degraded, OR a negative control matches/exceeds the mapped axis",
+  "MIXED": "point<0 but CI crosses zero (MARGINAL), OR a control not cleanly beaten, OR fold direction inconsistent",
+  "PASS": "dLogLoss(B2-B1)<0 AND 95% block-bootstrap CI entirely<0 (CLEAR|PROMISING) AND calibration preserved (slope in [0.8,1.25], ECE not worse than B1 by >0.01) AND mapped-axis lift exceeds ALL three negative controls AND direction consistent >=3/4 folds",
+  "pass_is_historical_oos_candidate_only": true,
+  "scope": "confirmatory contrast only (opponent_profile.corners.hd_shrunk_diff.B2_vs_B1)"
+ },
+ "excluded_baselines": {
+  "SUBJECT_COMPETITION_BASELINE": "zero real-data exercise in the eligible corpus; not required by any eligible V4 candidate; readiness smoke provided but not included"
+ },
+ "families": {
+  "behavioral_comparator_control": "unconditional_behavioral_profile",
+  "eligible_from_v3": [
+   "opponent_profile",
+   "unconditional_behavioral_profile",
+   "venue"
+  ],
+  "excluded": {
+   "formation": "corpus coverage",
+   "meaningful_multi_condition": "n=1 generator limit"
+  },
+  "primary_research_target": "opponent_profile",
+  "secondary": "venue"
+ },
+ "feature_representation": {
+  "ablation_only": [
+   {
+    "definition": "shrunk conditional mean",
+    "name": "hd_shrunk_cond_mean"
+   },
+   {
+    "definition": "conditional usable N (raw count)",
+    "name": "hd_cond_n"
+   },
+   {
+    "definition": "1 if MEASURED else 0",
+    "name": "hd_available"
+   }
+  ],
+  "computed_as_of_cutoff": true,
+  "excluded_transforms": [
+   "cond_over_comp_ratio",
+   "raw_band_one_hot",
+   "any_interaction"
+  ],
+  "primary": {
+   "definition": "shrunk (conditional_mean - comparison_mean), n/(n+6)",
+   "name": "hd_shrunk_diff"
+  }
+ },
+ "hypothesis_oos_version": "hypothesis_derived_oos_v4_design",
+ "identifiability": {
+  "confirmatory_cell_identifiable": true,
+  "scope": "opponent_profile.corners confirmatory; everything else exploratory",
+  "threats": [
+   "target-mapping loss (~40/53 candidates have no validated target)",
+   "origin-fixture scarcity (11 clean origin fixtures)",
+   "single-side vs match-total estimand gap"
+  ],
+  "verdict": "IDENTIFIABLE_FOR_SINGLE_CONFIRMATORY_CONTRAST"
+ },
+ "metrics": {
+  "also": [
+   "ece",
+   "calib_slope",
+   "calib_intercept",
+   "auc",
+   "p_std",
+   "coverage",
+   "fold_level",
+   "per_league"
+  ],
+  "hit_rate_is_primary": false,
+  "primary": [
+   "log_loss",
+   "brier"
+  ],
+  "primary_comparison": "incremental dLogLoss B2 - B1 (pooled + fold-level)"
+ },
+ "missingness_policy": {
+  "absent_feature": "NaN -> train-only median impute (B1 convention) + hd_available",
+  "favorable_imputation_forbidden": true,
+  "indicator_preregistered": "hd_available",
+  "states": [
+   "SUFFICIENT_MEASUREMENT",
+   "INSUFFICIENT_HISTORY",
+   "NOT_DISTINCT",
+   "UNSUPPORTED",
+   "MISSING_PROVIDER_EVIDENCE"
+  ]
+ },
+ "multiplicity": {
+  "confirmatory": {
+   "comparison": "B2_vs_B1",
+   "family": "opponent_profile",
+   "feature": "hd_shrunk_diff",
+   "market": "corners",
+   "selection_basis": "structural: most-populated mapped opponent_profile target metric (corners FOR/AGAINST=6); NOT any observed effect"
+  },
+  "exploratory": [
+   "goals",
+   "cards",
+   "unconditional_behavioral_profile",
+   "venue",
+   "all ablation transforms",
+   "per-league",
+   "per-fold"
+  ],
+  "families": 3,
+  "fdr": "Benjamini-Hochberg over the exploratory family (src/research/fdr/)",
+  "markets": [
+   "corners",
+   "goals",
+   "cards"
+  ],
+  "primary_transform": "hd_shrunk_diff"
+ },
+ "n_templates": 40,
+ "negative_controls": [
+  {
+   "definition": "hd_shrunk_diff from an axis structurally unrelated to the market (e.g. fouls_for band for corners)",
+   "name": "irrelevant_axis"
+  },
+  {
+   "definition": "unconditional_behavioral_profile feature in place of opponent_profile",
+   "name": "unconditional_comparator"
+  },
+  {
+   "definition": "seeded permutation of band->opponent within the pre-cutoff candidate pool, marginal band sizes fixed; never touches outcomes",
+   "name": "pit_safe_band_shuffle"
+  }
+ ],
+ "oos_and_prospective_are_separate_claims": true,
+ "pit": {
+  "reconstructed_not_reused": true,
+  "rule": "feature_history_kickoff < prediction_fixture_cutoff (strict)",
+  "target_fixture_excluded_from_own_feature": true
+ },
+ "preregistration_version": "hypothesis_derived_oos_v4_prereg_v1",
+ "prospective_followup": [
+  "historical OOS candidate (V4 PASS)",
+  "frozen challenger",
+  "prospective shadow predictions",
+  "timestamped market comparison",
+  "genuine closing line",
+  "settlement",
+  "possible later promotion"
+ ],
+ "scientific_question": "Do deterministic measurements derived from the frozen LLM hypotheses provide stable incremental predictive information in walk-forward OOS football forecasting beyond appropriate existing quantitative baselines?",
+ "shrinkage": {
+  "MIN_COMPARISON_N": 8,
+  "MIN_CONDITIONAL_N": 4,
+  "MIN_PRIOR_MATCHES": 4,
+  "SHRINK_K": 6.0,
+  "canonical_sources": {
+   "MIN_COMPARISON_N": "src/research/hypothesis_engine/measurement.py:42",
+   "MIN_CONDITIONAL_N": "src/research/hypothesis_engine/measurement.py:41",
+   "MIN_HISTORY": "src/research/llm_matchup/cohorts.py:27",
+   "MIN_PRIOR_MATCHES": "src/research/hypothesis_engine/similarity.py:122",
+   "SHRINK_K": "src/research/llm_matchup/cohorts.py:28 (= measurement.py:38)",
+   "reliability_bands": "src/research/hypothesis_engine/context_packet.py:70 (LOW <8, MEDIUM 8-19, HIGH >=20)"
+  },
+  "tuned_against_oos": false
+ },
+ "spend_usd": 0.0,
+ "target_mapping": {
+  "aggregation_frame": "matchup A-attack (+) B-defence -> match-total frame",
+  "metric_to_market": {
+   "corners": "corners",
+   "goals": "goals",
+   "yellow_cards": "cards"
+  },
+  "per_metric": {
+   "accurate_crosses": {
+    "classification": "NO_VALIDATED_PREDICTIVE_TARGET",
+    "market": null,
+    "n_candidates": 7
+   },
+   "big_chances": {
+    "classification": "NO_VALIDATED_PREDICTIVE_TARGET",
+    "market": null,
+    "n_candidates": 14
+   },
+   "clearances": {
+    "classification": "NO_VALIDATED_PREDICTIVE_TARGET",
+    "market": null,
+    "n_candidates": 2
+   },
+   "corners": {
+    "classification": "MAPS_TO_VALIDATED_TARGET_VIA_SIDE_AGGREGATION",
+    "market": "corners",
+    "n_candidates": 6
+   },
+   "final_third_entries": {
+    "classification": "NO_VALIDATED_PREDICTIVE_TARGET",
+    "market": null,
+    "n_candidates": 2
+   },
+   "goals": {
+    "classification": "MAPS_TO_VALIDATED_TARGET_VIA_SIDE_AGGREGATION",
+    "market": "goals",
+    "n_candidates": 2
+   },
+   "possession": {
+    "classification": "NO_VALIDATED_PREDICTIVE_TARGET",
+    "market": null,
+    "n_candidates": 1
+   },
+   "shots_inside_box": {
+    "classification": "NO_VALIDATED_PREDICTIVE_TARGET",
+    "market": null,
+    "n_candidates": 4
+   },
+   "shots_on_target": {
+    "classification": "NO_VALIDATED_PREDICTIVE_TARGET",
+    "market": null,
+    "n_candidates": 8
+   },
+   "tackles": {
+    "classification": "NO_VALIDATED_PREDICTIVE_TARGET",
+    "market": null,
+    "n_candidates": 1
+   },
+   "touches_in_box": {
+    "classification": "NO_VALIDATED_PREDICTIVE_TARGET",
+    "market": null,
+    "n_candidates": 3
+   },
+   "yellow_cards": {
+    "classification": "MAPS_TO_VALIDATED_TARGET_VIA_SIDE_AGGREGATION",
+    "market": "cards",
+    "n_candidates": 3
+   }
+  },
+  "predictive_metrics": [
+   "corners",
+   "goals",
+   "yellow_cards"
+  ],
+  "set_aside_no_validated_target": [
+   "accurate_crosses",
+   "big_chances",
+   "clearances",
+   "final_third_entries",
+   "possession",
+   "shots_inside_box",
+   "shots_on_target",
+   "tackles",
+   "touches_in_box"
+  ],
+  "validated_markets": {
+   "btts": [
+    null
+   ],
+   "cards": [
+    3.5,
+    4.5
+   ],
+   "corners": [
+    8.5,
+    9.5,
+    10.5
+   ],
+   "goals": [
+    1.5,
+    2.5,
+    3.5
+   ]
+  }
+ },
+ "templates": [
+  {
+   "comparison_cohort": "SUBJECT_OVERALL_BASELINE",
+   "condition_dimension": "opponent_profile",
+   "opponent_profile_axis": "accurate_crosses_for",
+   "opponent_profile_band": "HIGH",
+   "period": "ALL",
+   "side": "AGAINST",
+   "target_metric": "accurate_crosses",
+   "window": "ALL_PRIOR"
+  },
+  {
+   "comparison_cohort": "SUBJECT_OVERALL_BASELINE",
+   "condition_dimension": "opponent_profile",
+   "opponent_profile_axis": "possession_for",
+   "opponent_profile_band": "HIGH",
+   "period": "ALL",
+   "side": "AGAINST",
+   "target_metric": "big_chances",
+   "window": "ALL_PRIOR"
+  },
+  {
+   "comparison_cohort": "SUBJECT_OVERALL_BASELINE",
+   "condition_dimension": "opponent_profile",
+   "opponent_profile_axis": "shots_on_target_for",
+   "opponent_profile_band": "LOW",
+   "period": "ALL",
+   "side": "FOR",
+   "target_metric": "big_chances",
+   "window": "ALL_PRIOR"
+  },
+  {
+   "comparison_cohort": "SUBJECT_OVERALL_BASELINE",
+   "condition_dimension": "opponent_profile",
+   "opponent_profile_axis": "corners_against",
+   "opponent_profile_band": "HIGH",
+   "period": "ALL",
+   "side": "FOR",
+   "target_metric": "corners",
+   "window": "ALL_PRIOR"
+  },
+  {
+   "comparison_cohort": "SUBJECT_OVERALL_BASELINE",
+   "condition_dimension": "opponent_profile",
+   "opponent_profile_axis": "corners_against",
+   "opponent_profile_band": "HIGH",
+   "period": "ALL",
+   "side": "FOR",
+   "target_metric": "accurate_crosses",
+   "window": "ALL_PRIOR"
+  },
+  {
+   "comparison_cohort": "SUBJECT_OVERALL_BASELINE",
+   "condition_dimension": "opponent_profile",
+   "opponent_profile_axis": "goals_against",
+   "opponent_profile_band": "LOW",
+   "period": "ALL",
+   "side": "FOR",
+   "target_metric": "goals",
+   "window": "ALL_PRIOR"
+  },
+  {
+   "comparison_cohort": "SUBJECT_OVERALL_BASELINE",
+   "condition_dimension": "opponent_profile",
+   "opponent_profile_axis": "goals_against",
+   "opponent_profile_band": "LOW",
+   "period": "ALL",
+   "side": "FOR",
+   "target_metric": "big_chances",
+   "window": "ALL_PRIOR"
+  },
+  {
+   "comparison_cohort": "SUBJECT_OVERALL_BASELINE",
+   "condition_dimension": "opponent_profile",
+   "opponent_profile_axis": "accurate_crosses_for",
+   "opponent_profile_band": "HIGH",
+   "period": "ALL",
+   "side": "AGAINST",
+   "target_metric": "shots_inside_box",
+   "window": "ALL_PRIOR"
+  },
+  {
+   "comparison_cohort": "SUBJECT_OVERALL_BASELINE",
+   "condition_dimension": "opponent_profile",
+   "opponent_profile_axis": "possession_for",
+   "opponent_profile_band": "HIGH",
+   "period": "ALL",
+   "side": "FOR",
+   "target_metric": "shots_on_target",
+   "window": "ALL_PRIOR"
+  },
+  {
+   "comparison_cohort": "SUBJECT_OVERALL_BASELINE",
+   "condition_dimension": "opponent_profile",
+   "opponent_profile_axis": "possession_for",
+   "opponent_profile_band": "HIGH",
+   "period": "ALL",
+   "side": "FOR",
+   "target_metric": "big_chances",
+   "window": "ALL_PRIOR"
+  },
+  {
+   "comparison_cohort": "SUBJECT_OVERALL_BASELINE",
+   "condition_dimension": "opponent_profile",
+   "opponent_profile_axis": "possession_for",
+   "opponent_profile_band": "HIGH",
+   "period": "ALL",
+   "side": "FOR",
+   "target_metric": "yellow_cards",
+   "window": "ALL_PRIOR"
+  },
+  {
+   "comparison_cohort": "SUBJECT_OVERALL_BASELINE",
+   "condition_dimension": "opponent_profile",
+   "opponent_profile_axis": "shots_on_target_for",
+   "opponent_profile_band": "HIGH",
+   "period": "ALL",
+   "side": "AGAINST",
+   "target_metric": "shots_on_target",
+   "window": "ALL_PRIOR"
+  },
+  {
+   "comparison_cohort": "SUBJECT_OVERALL_BASELINE",
+   "condition_dimension": "opponent_profile",
+   "opponent_profile_axis": "goals_against",
+   "opponent_profile_band": "HIGH",
+   "period": "ALL",
+   "side": "FOR",
+   "target_metric": "big_chances",
+   "window": "ALL_PRIOR"
+  },
+  {
+   "comparison_cohort": "SUBJECT_OVERALL_BASELINE",
+   "condition_dimension": "opponent_profile",
+   "opponent_profile_axis": "goals_against",
+   "opponent_profile_band": "HIGH",
+   "period": "ALL",
+   "side": "FOR",
+   "target_metric": "shots_on_target",
+   "window": "ALL_PRIOR"
+  },
+  {
+   "comparison_cohort": "SUBJECT_OVERALL_BASELINE",
+   "condition_dimension": "opponent_profile",
+   "opponent_profile_axis": "shots_on_target_for",
+   "opponent_profile_band": "HIGH",
+   "period": "ALL",
+   "side": "FOR",
+   "target_metric": "clearances",
+   "window": "ALL_PRIOR"
+  },
+  {
+   "comparison_cohort": "SUBJECT_OVERALL_BASELINE",
+   "condition_dimension": "opponent_profile",
+   "opponent_profile_axis": "shots_on_target_for",
+   "opponent_profile_band": "HIGH",
+   "period": "ALL",
+   "side": "FOR",
+   "target_metric": "tackles",
+   "window": "ALL_PRIOR"
+  },
+  {
+   "comparison_cohort": "SUBJECT_OVERALL_BASELINE",
+   "condition_dimension": "opponent_profile",
+   "opponent_profile_axis": "accurate_crosses_for",
+   "opponent_profile_band": "HIGH",
+   "period": "ALL",
+   "side": "AGAINST",
+   "target_metric": "big_chances",
+   "window": "ALL_PRIOR"
+  },
+  {
+   "comparison_cohort": "SUBJECT_OVERALL_BASELINE",
+   "condition_dimension": "opponent_profile",
+   "opponent_profile_axis": "accurate_crosses_for",
+   "opponent_profile_band": "HIGH",
+   "period": "ALL",
+   "side": "AGAINST",
+   "target_metric": "goals",
+   "window": "ALL_PRIOR"
+  },
+  {
+   "comparison_cohort": "SUBJECT_OVERALL_BASELINE",
+   "condition_dimension": "opponent_profile",
+   "opponent_profile_axis": "shots_on_target_against",
+   "opponent_profile_band": "HIGH",
+   "period": "ALL",
+   "side": "FOR",
+   "target_metric": "big_chances",
+   "window": "ALL_PRIOR"
+  },
+  {
+   "comparison_cohort": "SUBJECT_OVERALL_BASELINE",
+   "condition_dimension": "opponent_profile",
+   "opponent_profile_axis": "shots_on_target_against",
+   "opponent_profile_band": "HIGH",
+   "period": "ALL",
+   "side": "FOR",
+   "target_metric": "shots_on_target",
+   "window": "ALL_PRIOR"
+  },
+  {
+   "comparison_cohort": "SUBJECT_OVERALL_BASELINE",
+   "condition_dimension": "opponent_profile",
+   "opponent_profile_axis": "possession_for",
+   "opponent_profile_band": "LOW",
+   "period": "ALL",
+   "side": "FOR",
+   "target_metric": "final_third_entries",
+   "window": "ALL_PRIOR"
+  },
+  {
+   "comparison_cohort": "SUBJECT_OVERALL_BASELINE",
+   "condition_dimension": "opponent_profile",
+   "opponent_profile_axis": "possession_for",
+   "opponent_profile_band": "LOW",
+   "period": "ALL",
+   "side": "FOR",
+   "target_metric": "possession",
+   "window": "ALL_PRIOR"
+  },
+  {
+   "comparison_cohort": "SUBJECT_OVERALL_BASELINE",
+   "condition_dimension": "opponent_profile",
+   "opponent_profile_axis": "accurate_crosses_against",
+   "opponent_profile_band": "HIGH",
+   "period": "ALL",
+   "side": "FOR",
+   "target_metric": "corners",
+   "window": "ALL_PRIOR"
+  },
+  {
+   "comparison_cohort": "SUBJECT_OVERALL_BASELINE",
+   "condition_dimension": "opponent_profile",
+   "opponent_profile_axis": "accurate_crosses_against",
+   "opponent_profile_band": "HIGH",
+   "period": "ALL",
+   "side": "FOR",
+   "target_metric": "accurate_crosses",
+   "window": "ALL_PRIOR"
+  },
+  {
+   "comparison_cohort": "SUBJECT_OVERALL_BASELINE",
+   "condition_dimension": "opponent_profile",
+   "opponent_profile_axis": "fouls_for",
+   "opponent_profile_band": "HIGH",
+   "period": "ALL",
+   "side": "FOR",
+   "target_metric": "yellow_cards",
+   "window": "ALL_PRIOR"
+  },
+  {
+   "comparison_cohort": "SUBJECT_OVERALL_BASELINE",
+   "condition_dimension": "opponent_profile",
+   "opponent_profile_axis": "shots_on_target_for",
+   "opponent_profile_band": "HIGH",
+   "period": "ALL",
+   "side": "AGAINST",
+   "target_metric": "touches_in_box",
+   "window": "ALL_PRIOR"
+  },
+  {
+   "comparison_cohort": "SUBJECT_OVERALL_BASELINE",
+   "condition_dimension": "opponent_profile",
+   "opponent_profile_axis": "shots_on_target_for",
+   "opponent_profile_band": "HIGH",
+   "period": "ALL",
+   "side": "AGAINST",
+   "target_metric": "big_chances",
+   "window": "ALL_PRIOR"
+  },
+  {
+   "comparison_cohort": "SUBJECT_OVERALL_BASELINE",
+   "condition_dimension": "opponent_profile",
+   "opponent_profile_axis": "accurate_crosses_for",
+   "opponent_profile_band": "HIGH",
+   "period": "ALL",
+   "side": "AGAINST",
+   "target_metric": "touches_in_box",
+   "window": "ALL_PRIOR"
+  },
+  {
+   "comparison_cohort": "SUBJECT_OVERALL_BASELINE",
+   "condition_dimension": "opponent_profile",
+   "opponent_profile_axis": "possession_for",
+   "opponent_profile_band": "HIGH",
+   "period": "ALL",
+   "side": "AGAINST",
+   "target_metric": "shots_on_target",
+   "window": "ALL_PRIOR"
+  },
+  {
+   "comparison_cohort": "SUBJECT_OVERALL_BASELINE",
+   "condition_dimension": "opponent_profile",
+   "opponent_profile_axis": "possession_for",
+   "opponent_profile_band": "HIGH",
+   "period": "ALL",
+   "side": "AGAINST",
+   "target_metric": "final_third_entries",
+   "window": "ALL_PRIOR"
+  },
+  {
+   "comparison_cohort": "SUBJECT_OVERALL_BASELINE",
+   "condition_dimension": "opponent_profile",
+   "opponent_profile_axis": "corners_against",
+   "opponent_profile_band": "LOW",
+   "period": "ALL",
+   "side": "FOR",
+   "target_metric": "corners",
+   "window": "ALL_PRIOR"
+  },
+  {
+   "comparison_cohort": "SUBJECT_OVERALL_BASELINE",
+   "condition_dimension": "opponent_profile",
+   "opponent_profile_axis": "shots_on_target_for",
+   "opponent_profile_band": "HIGH",
+   "period": "ALL",
+   "side": "AGAINST",
+   "target_metric": "shots_inside_box",
+   "window": "ALL_PRIOR"
+  },
+  {
+   "comparison_cohort": "SUBJECT_OVERALL_BASELINE",
+   "condition_dimension": "opponent_profile",
+   "opponent_profile_axis": "goals_against",
+   "opponent_profile_band": "HIGH",
+   "period": "ALL",
+   "side": "FOR",
+   "target_metric": "shots_inside_box",
+   "window": "ALL_PRIOR"
+  },
+  {
+   "comparison_cohort": "SUBJECT_OVERALL_BASELINE",
+   "condition_dimension": "opponent_profile",
+   "opponent_profile_axis": "accurate_crosses_for",
+   "opponent_profile_band": "HIGH",
+   "period": "ALL",
+   "side": "FOR",
+   "target_metric": "clearances",
+   "window": "ALL_PRIOR"
+  },
+  {
+   "comparison_cohort": "SUBJECT_OVERALL_BASELINE",
+   "condition_dimension": "opponent_profile",
+   "opponent_profile_axis": "corners_for",
+   "opponent_profile_band": "HIGH",
+   "period": "ALL",
+   "side": "FOR",
+   "target_metric": "corners",
+   "window": "ALL_PRIOR"
+  },
+  {
+   "comparison_cohort": "SUBJECT_OVERALL_BASELINE",
+   "condition_dimension": "opponent_profile",
+   "opponent_profile_axis": "shots_on_target_against",
+   "opponent_profile_band": "LOW",
+   "period": "ALL",
+   "side": "FOR",
+   "target_metric": "big_chances",
+   "window": "ALL_PRIOR"
+  },
+  {
+   "comparison_cohort": "SUBJECT_OVERALL_BASELINE",
+   "condition_dimension": "opponent_profile",
+   "opponent_profile_axis": "shots_on_target_against",
+   "opponent_profile_band": "LOW",
+   "period": "ALL",
+   "side": "FOR",
+   "target_metric": "shots_on_target",
+   "window": "ALL_PRIOR"
+  },
+  {
+   "comparison_cohort": "SUBJECT_OVERALL_BASELINE",
+   "condition_dimension": "opponent_profile",
+   "opponent_profile_axis": "accurate_crosses_for",
+   "opponent_profile_band": "HIGH",
+   "period": "ALL",
+   "side": "FOR",
+   "target_metric": "big_chances",
+   "window": "ALL_PRIOR"
+  },
+  {
+   "comparison_cohort": "SUBJECT_OVERALL_BASELINE",
+   "condition_dimension": "opponent_profile",
+   "opponent_profile_axis": "accurate_crosses_for",
+   "opponent_profile_band": "HIGH",
+   "period": "ALL",
+   "side": "FOR",
+   "target_metric": "shots_on_target",
+   "window": "ALL_PRIOR"
+  },
+  {
+   "comparison_cohort": "SUBJECT_OVERALL_BASELINE",
+   "condition_dimension": "opponent_profile",
+   "opponent_profile_axis": "accurate_crosses_for",
+   "opponent_profile_band": "HIGH",
+   "period": "ALL",
+   "side": "AGAINST",
+   "target_metric": "corners",
+   "window": "ALL_PRIOR"
+  }
+ ],
+ "uncertainty": {
+  "bands": [
+   "CLEAR",
+   "PROMISING",
+   "MARGINAL",
+   "INCONCLUSIVE",
+   "NEGATIVE"
+  ],
+  "frozen_before_evaluation": true,
+  "method": "paired block bootstrap of dLogLoss(B2-B1) over competition blocks",
+  "resamples": 400
+ },
+ "venue_tautology_rule": {
+  "absorption_map": {
+   "LEAGUE_ENVIRONMENT_BASELINE": null,
+   "SUBJECT_COMPETITION_BASELINE": "competition",
+   "SUBJECT_OVERALL_BASELINE": null,
+   "SUBJECT_RECENT_VS_LONG_BASELINE": null,
+   "SUBJECT_VENUE_BASELINE": "venue"
+  },
+  "excluded_candidates": [
+   {
+    "absorbed_dimension": "venue",
+    "comparison_cohort": "SUBJECT_VENUE_BASELINE",
+    "compatibility_version": "baseline_compatibility_v1",
+    "conditioning_dimensions": [
+     "venue"
+    ],
+    "eligible": false,
+    "fixture_id": "mt_010243515",
+    "hypothesis_id": "H1",
+    "reason": "comparison 'SUBJECT_VENUE_BASELINE' absorbs conditioning dimension 'venue': the conditional cohort is the identical match set as its comparison, so the candidate encodes no contrast and is excluded before any data is read",
+    "status": "NOT_DISTINCT_BY_CONSTRUCTION"
+   },
+   {
+    "absorbed_dimension": null,
+    "comparison_cohort": "SUBJECT_OVERALL_BASELINE",
+    "compatibility_version": "baseline_compatibility_v1",
+    "conditioning_dimensions": [],
+    "eligible": false,
+    "fixture_id": "mt_010243515",
+    "hypothesis_id": "H3",
+    "reason": "unconditioned candidate compared against SUBJECT_OVERALL_BASELINE is the identical window; no contrast by construction",
+    "status": "NOT_DISTINCT_BY_CONSTRUCTION"
+   },
+   {
+    "absorbed_dimension": null,
+    "comparison_cohort": "SUBJECT_OVERALL_BASELINE",
+    "compatibility_version": "baseline_compatibility_v1",
+    "conditioning_dimensions": [],
+    "eligible": false,
+    "fixture_id": "mt_010243515",
+    "hypothesis_id": "H3",
+    "reason": "unconditioned candidate compared against SUBJECT_OVERALL_BASELINE is the identical window; no contrast by construction",
+    "status": "NOT_DISTINCT_BY_CONSTRUCTION"
+   },
+   {
+    "absorbed_dimension": "venue",
+    "comparison_cohort": "SUBJECT_VENUE_BASELINE",
+    "compatibility_version": "baseline_compatibility_v1",
+    "conditioning_dimensions": [
+     "venue"
+    ],
+    "eligible": false,
+    "fixture_id": "mt_010243515",
+    "hypothesis_id": "H4",
+    "reason": "comparison 'SUBJECT_VENUE_BASELINE' absorbs conditioning dimension 'venue': the conditional cohort is the identical match set as its comparison, so the candidate encodes no contrast and is excluded before any data is read",
+    "status": "NOT_DISTINCT_BY_CONSTRUCTION"
+   },
+   {
+    "absorbed_dimension": "venue",
+    "comparison_cohort": "SUBJECT_VENUE_BASELINE",
+    "compatibility_version": "baseline_compatibility_v1",
+    "conditioning_dimensions": [
+     "venue"
+    ],
+    "eligible": false,
+    "fixture_id": "mt_010243515",
+    "hypothesis_id": "H4",
+    "reason": "comparison 'SUBJECT_VENUE_BASELINE' absorbs conditioning dimension 'venue': the conditional cohort is the identical match set as its comparison, so the candidate encodes no contrast and is excluded before any data is read",
+    "status": "NOT_DISTINCT_BY_CONSTRUCTION"
+   },
+   {
+    "absorbed_dimension": "venue",
+    "comparison_cohort": "SUBJECT_VENUE_BASELINE",
+    "compatibility_version": "baseline_compatibility_v1",
+    "conditioning_dimensions": [
+     "venue"
+    ],
+    "eligible": false,
+    "fixture_id": "mt_010243515",
+    "hypothesis_id": "H9",
+    "reason": "comparison 'SUBJECT_VENUE_BASELINE' absorbs conditioning dimension 'venue': the conditional cohort is the identical match set as its comparison, so the candidate encodes no contrast and is excluded before any data is read",
+    "status": "NOT_DISTINCT_BY_CONSTRUCTION"
+   },
+   {
+    "absorbed_dimension": "venue",
+    "comparison_cohort": "SUBJECT_VENUE_BASELINE",
+    "compatibility_version": "baseline_compatibility_v1",
+    "conditioning_dimensions": [
+     "venue"
+    ],
+    "eligible": false,
+    "fixture_id": "mt_010243537",
+    "hypothesis_id": "H4",
+    "reason": "comparison 'SUBJECT_VENUE_BASELINE' absorbs conditioning dimension 'venue': the conditional cohort is the identical match set as its comparison, so the candidate encodes no contrast and is excluded before any data is read",
+    "status": "NOT_DISTINCT_BY_CONSTRUCTION"
+   },
+   {
+    "absorbed_dimension": null,
+    "comparison_cohort": "SUBJECT_OVERALL_BASELINE",
+    "compatibility_version": "baseline_compatibility_v1",
+    "conditioning_dimensions": [],
+    "eligible": false,
+    "fixture_id": "mt_010243537",
+    "hypothesis_id": "H6",
+    "reason": "unconditioned candidate compared against SUBJECT_OVERALL_BASELINE is the identical window; no contrast by construction",
+    "status": "NOT_DISTINCT_BY_CONSTRUCTION"
+   },
+   {
+    "absorbed_dimension": "venue",
+    "comparison_cohort": "SUBJECT_VENUE_BASELINE",
+    "compatibility_version": "baseline_compatibility_v1",
+    "conditioning_dimensions": [
+     "venue"
+    ],
+    "eligible": false,
+    "fixture_id": "mt_010243537",
+    "hypothesis_id": "H7",
+    "reason": "comparison 'SUBJECT_VENUE_BASELINE' absorbs conditioning dimension 'venue': the conditional cohort is the identical match set as its comparison, so the candidate encodes no contrast and is excluded before any data is read",
+    "status": "NOT_DISTINCT_BY_CONSTRUCTION"
+   },
+   {
+    "absorbed_dimension": "venue",
+    "comparison_cohort": "SUBJECT_VENUE_BASELINE",
+    "compatibility_version": "baseline_compatibility_v1",
+    "conditioning_dimensions": [
+     "venue"
+    ],
+    "eligible": false,
+    "fixture_id": "mt_010243537",
+    "hypothesis_id": "H7",
+    "reason": "comparison 'SUBJECT_VENUE_BASELINE' absorbs conditioning dimension 'venue': the conditional cohort is the identical match set as its comparison, so the candidate encodes no contrast and is excluded before any data is read",
+    "status": "NOT_DISTINCT_BY_CONSTRUCTION"
+   }
+  ],
+  "n_excluded": 10,
+  "version": "baseline_compatibility_v1"
+ }
+}

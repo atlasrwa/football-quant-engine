@@ -1,0 +1,383 @@
+{
+ "arms": {
+  "A": "frozen V3 compressed evidence body (venue=ALL, window=ALL_PRIOR scalars)",
+  "B": "full match-level PIT-safe research view (columnar lossless) + DERIVED_SUMMARY + opponent-profile bands + availability map"
+ },
+ "availability_aware_scoring": true,
+ "canonical_match_metrics": [
+  "accurate_crosses",
+  "big_chances",
+  "blocked_shots",
+  "clearances",
+  "corners",
+  "final_third_entries",
+  "fouls",
+  "goals",
+  "interceptions",
+  "npxg",
+  "offsides",
+  "possession",
+  "red_cards",
+  "saves",
+  "shots_inside_box",
+  "shots_off_target",
+  "shots_on_target",
+  "shots_outside_box",
+  "tackles",
+  "throw_ins",
+  "total_shots",
+  "touches_in_box",
+  "xg",
+  "yellow_cards"
+ ],
+ "champion_protection": {
+  "artifact": "/home/ubuntu/data/discovery/pilotC_stat_mixer.json",
+  "auto_promotion": false,
+  "current_sha256": "0b8f5ff3dc4ddf15363d17989330b6f010197265ce8d2ee892cdc7ca410c00c9",
+  "frozen_sha256": "0b8f5ff3dc4ddf15363d17989330b6f010197265ce8d2ee892cdc7ca410c00c9",
+  "read_only": true
+ },
+ "cost_model": {
+  "expected_cost_usd": 7.1826,
+  "hard_ceiling_usd": 8.049,
+  "n_base_calls": 20,
+  "n_calls_total": 38,
+  "n_repeatability_extra_calls": 18,
+  "n_repeatability_fixture_arms": 6,
+  "p90_cost_usd": 7.5354,
+  "price_in_per_1k": 0.003,
+  "price_out_per_1k": 0.015,
+  "repeat_calls_per_selected_fixture_arm": 3,
+  "token_calibration": {
+   "source": "V3 observed 21457 in / 39297 bytes",
+   "system_prompt_tokens_est": 3485,
+   "tokens_per_byte": 0.546
+  },
+  "total_input_tokens_est": 1904747,
+  "total_output_tokens_max": 155648,
+  "total_output_tokens_mean": 97888,
+  "total_output_tokens_p90": 121410
+ },
+ "downstream_boundary": "V5A stops at hypothesis-generation evaluation; no predictive coefficients, no candidate features, no OOS search, no shrinkage tuning, no thresholds, no prospective betting. A PASS triggers a SEPARATE preregistered V5B.",
+ "evaluation_rubric": {
+  "criteria": [
+   "groundedness (evidence_refs resolve to real rows/summaries)",
+   "compilability (VALID rate under query_plan)",
+   "non_degenerate_conditions",
+   "evidence_referenced_rate",
+   "appropriate_venue_use (given availability)",
+   "appropriate_opponent_profile_use",
+   "appropriate_recent_vs_long_use",
+   "restraint_on_weak_formation_coverage",
+   "meaningful_interactions",
+   "baseline_diversity",
+   "metric_family_diversity",
+   "redundancy_rate",
+   "unsupported_data_rate",
+   "fabricated_evidence_rate",
+   "repeatability_vs_self_noise"
+  ],
+  "note": "Success is NOT more/complex hypotheses. Scored on:"
+ },
+ "excluded_fixtures": {
+  "mt_013233190": "below history_policy.min_matches_per_team in Arm B; excluded from BOTH arms to keep the pairing symmetric"
+ },
+ "experiment": "V5A: full-fidelity evidence vs frozen V3 compressed evidence",
+ "governing_architecture": "LLM = research-question layer only; no LLM->p_model path",
+ "history_policy": {
+  "include_all_competitions": true,
+  "max_matches_per_team": 30,
+  "min_matches_per_team": 6,
+  "rule": "most recent N prior matches strictly before cutoff, all competitions, N frozen before spend and identical per fixture",
+  "version": "history_policy_v1"
+ },
+ "meaningful_interaction_rule": [
+  "both conditions independently supported",
+  "not aliases/duplicates",
+  "not contradictory",
+  "neither baseline-absorbed",
+  "dimensions available",
+  "sample feasibility exists",
+  "football reason visible in evidence"
+ ],
+ "module_hashes": {
+  "research/hypothesis_engine/_build_v5a.py": "1338b3ca16d1a9ee5c8750c17c22977a3e131e3b99c18d28e8738fbee1202cb3",
+  "research/hypothesis_engine/_freeze_v5a.py": "ff717d143aff22facfa1154a47ccb3e204148970bffdfc9ec9e54276319bdb6f",
+  "src/research/hypothesis_engine/corpus_adapter.py": "5c6cb2c770b2734b4ae032b3cbd96ec374b40bece942875a574ba2b3bad28b37",
+  "src/research/hypothesis_engine/firewall_v2.py": "400e89b9ecf79e322a3efb661fd5c26a2e5cb087ba0cfd4e3ad3768a7ab94d48",
+  "src/research/hypothesis_engine/query_plan.py": "184991835110d940819dcf35375d025876ed10c2df1fee94d1f10861d3f8826c",
+  "src/research/hypothesis_engine/schema_v2.py": "a9f96e19c52aa7fd8d5df42ee9051b57429c581837b7b161eb1172fd68522718",
+  "src/research/hypothesis_engine/validator_v2.py": "2a2dc4e68daa76974b8656125f469427b2291a129e3674a6fafe9fdf2be4c284",
+  "src/research/hypothesis_engine/vocabulary.py": "ba123f798a404911f62557ed1cb4c985046f9e480375d40ef04e5ffd797a7f0d",
+  "src/research/hypothesis_oos/v5a_full_fidelity.py": "4879c28f0f208c996af286aff41c24e940ff9d4c84c83dc4b585eae05a58d47a",
+  "src/research/hypothesis_oos/v5a_prompt.py": "8204d63190984c26f696b6ebd53a780e9f3bb1dae81fecab81bd040cae1b56f8"
+ },
+ "paired_fixtures": [
+  "mt_010243515",
+  "mt_010243537",
+  "mt_010243938",
+  "mt_010244159",
+  "mt_010244193",
+  "mt_010441320",
+  "mt_010441491",
+  "mt_010444904",
+  "mt_012232295",
+  "mt_012232411"
+ ],
+ "preregistration_version": "v5a_full_fidelity_prereg_v1",
+ "profile_similarity_axes": [
+  "shots_on_target_for",
+  "shots_on_target_against",
+  "corners_for",
+  "corners_against",
+  "possession_for",
+  "accurate_crosses_for",
+  "goals_for",
+  "goals_against"
+ ],
+ "request_manifest": {
+  "calls": [
+   {
+    "arm": "A",
+    "est_input_tokens": 23429,
+    "fixture_id": "mt_010243515",
+    "n_calls": 4,
+    "packet_hash": "b6850835fe960607511067db9ddab4ca3fca984a0f67ceb79a4a7f92f9e853e4",
+    "payload_bytes": 36529,
+    "repeatability_calls": 3,
+    "serialized_request_sha256": "9c1bad721b03a4d8f537e5447056865c88c7b93d9c53c41464ffbabebb07b71d"
+   },
+   {
+    "arm": "B",
+    "est_input_tokens": 77226,
+    "fixture_id": "mt_010243515",
+    "n_calls": 4,
+    "packet_hash": "9c1ef1b2f49378477d808f61a5f4ed84bcc337b8643887b436e78612d6a4f9de",
+    "payload_bytes": 135057,
+    "repeatability_calls": 3,
+    "serialized_request_sha256": "18c6208700f00a645f4bedf98e5b9974f05dd651108569e723c84f5fff3bd26c"
+   },
+   {
+    "arm": "A",
+    "est_input_tokens": 23521,
+    "fixture_id": "mt_010243537",
+    "n_calls": 4,
+    "packet_hash": "52c2ce304d8cf12acc70200a56d52ba9ae30bff363e78a5fe0b479eae9546da3",
+    "payload_bytes": 36697,
+    "repeatability_calls": 3,
+    "serialized_request_sha256": "9bf3cb0a3eca0ab72c9a1a13eea928d7f2136943b191f03d900216d858d643de"
+   },
+   {
+    "arm": "B",
+    "est_input_tokens": 77184,
+    "fixture_id": "mt_010243537",
+    "n_calls": 4,
+    "packet_hash": "3eb1c8377463891a159407866b77b05974176191b7ab910841cc7ebe179c302f",
+    "payload_bytes": 134980,
+    "repeatability_calls": 3,
+    "serialized_request_sha256": "d7c2c43d6d3f47f543d5ebf14becb1dbaed68bd302eb5d5da4b5ddb9087bed35"
+   },
+   {
+    "arm": "A",
+    "est_input_tokens": 23428,
+    "fixture_id": "mt_010243938",
+    "n_calls": 4,
+    "packet_hash": "11580c1bd6d7bb65faf4c2121254cb80e2ef4735e4384113d09b8ddaaee1f9ae",
+    "payload_bytes": 36527,
+    "repeatability_calls": 3,
+    "serialized_request_sha256": "21f2c317d675065a90e680427c08439ef7b314a52aa398cedd8810f0002e4380"
+   },
+   {
+    "arm": "B",
+    "est_input_tokens": 77253,
+    "fixture_id": "mt_010243938",
+    "n_calls": 4,
+    "packet_hash": "3e19a19ba60b34a066f92360dba0be68ff263cd9fabb22d4be5d31c7cc66b2a3",
+    "payload_bytes": 135107,
+    "repeatability_calls": 3,
+    "serialized_request_sha256": "5717160f79c38882d610035fbf40ccf015bca34fa0cd1be0527264b1346cf03f"
+   },
+   {
+    "arm": "A",
+    "est_input_tokens": 23432,
+    "fixture_id": "mt_010244159",
+    "n_calls": 1,
+    "packet_hash": "9ad28ea4dabdcd04ba8b8491bc66a46d681e41ca6ef9e15e8e261e467e084855",
+    "payload_bytes": 36534,
+    "repeatability_calls": 0,
+    "serialized_request_sha256": "c8e8eb7b18115f74084f9966d275401a9e3227422c782b75adfd10bcf0ab3b83"
+   },
+   {
+    "arm": "B",
+    "est_input_tokens": 77239,
+    "fixture_id": "mt_010244159",
+    "n_calls": 1,
+    "packet_hash": "767c9cae6c127413cc013b284bc47b16c2fc2d0c92cf58cd03cc796b6d10541d",
+    "payload_bytes": 135082,
+    "repeatability_calls": 0,
+    "serialized_request_sha256": "2f2b8d96c77a0a5bcb2153fab7edd59f5235e6ccbcb355a7bcf34055ed530b67"
+   },
+   {
+    "arm": "A",
+    "est_input_tokens": 23440,
+    "fixture_id": "mt_010244193",
+    "n_calls": 1,
+    "packet_hash": "cbe7696b7f3a8f83b46e33ea538fb80898220f811970146aa2fb3d87ac132c6f",
+    "payload_bytes": 36548,
+    "repeatability_calls": 0,
+    "serialized_request_sha256": "9cd53a4d6f472ffbab746b6f0791bd005968c7c84b79076fa9d7c660394b1ffe"
+   },
+   {
+    "arm": "B",
+    "est_input_tokens": 77246,
+    "fixture_id": "mt_010244193",
+    "n_calls": 1,
+    "packet_hash": "4e559ec0c67b3343f4fa44d5fb46c74a34ed9aec6b51e2ec0405b2349b9f3af3",
+    "payload_bytes": 135095,
+    "repeatability_calls": 0,
+    "serialized_request_sha256": "070311a465530ad04e204e600b94f7ad3311d9dbe5c3806241ce41e4ec351afc"
+   },
+   {
+    "arm": "A",
+    "est_input_tokens": 23436,
+    "fixture_id": "mt_010441320",
+    "n_calls": 1,
+    "packet_hash": "0eec1200e7c2c9c3b87702263d7639d0b5f817d2c7771ebc4cc15d6f059c590a",
+    "payload_bytes": 36542,
+    "repeatability_calls": 0,
+    "serialized_request_sha256": "ea14d86d8311f07ddec7c3a1362cac923068704b37e93fe9afa0843e0b20166a"
+   },
+   {
+    "arm": "B",
+    "est_input_tokens": 77275,
+    "fixture_id": "mt_010441320",
+    "n_calls": 1,
+    "packet_hash": "85a33b51ecf4151c317588cfeecf60376d6b7f99b8ab6b3213e40e5375ff8194",
+    "payload_bytes": 135147,
+    "repeatability_calls": 0,
+    "serialized_request_sha256": "bfaab5df98dd51ccd96ae466e0b78a8ccfe611fe6dd978b3330472ddde283357"
+   },
+   {
+    "arm": "A",
+    "est_input_tokens": 23429,
+    "fixture_id": "mt_010441491",
+    "n_calls": 1,
+    "packet_hash": "fe1d269c0d7c23607ee90b882e2073e8a6770034de6bad0037299cec0276ce23",
+    "payload_bytes": 36529,
+    "repeatability_calls": 0,
+    "serialized_request_sha256": "194fcd7343d2979e106bd943c0c7266602517d709d41273062c9f2040a76c11c"
+   },
+   {
+    "arm": "B",
+    "est_input_tokens": 77306,
+    "fixture_id": "mt_010441491",
+    "n_calls": 1,
+    "packet_hash": "b83d8bd7e882c88dfca98590076f02ba1a146af12686d554073afbe6dbb09bc1",
+    "payload_bytes": 135205,
+    "repeatability_calls": 0,
+    "serialized_request_sha256": "6f4e0aab531bad68e91f3eeb7301860818afe03f5d0820a565d485efc391814e"
+   },
+   {
+    "arm": "A",
+    "est_input_tokens": 23474,
+    "fixture_id": "mt_010444904",
+    "n_calls": 1,
+    "packet_hash": "3a464720dfbad42a378ac07d7339eb5624db9d58de5276ca5a6a7cd89ebde1f4",
+    "payload_bytes": 36611,
+    "repeatability_calls": 0,
+    "serialized_request_sha256": "48e927691b17659df70aa63bd279871a2c7c9ce65453bb1a86c7f0c56e2458cd"
+   },
+   {
+    "arm": "B",
+    "est_input_tokens": 74139,
+    "fixture_id": "mt_010444904",
+    "n_calls": 1,
+    "packet_hash": "0dbaba57c287ad070db1e9cd4ad15a6b15b02cdb57a4b845de376358a1504444",
+    "payload_bytes": 129403,
+    "repeatability_calls": 0,
+    "serialized_request_sha256": "709caae80dde5d5562b8f71bad9c1660620e2bc8e1d24feb755a80c6570b030d"
+   },
+   {
+    "arm": "A",
+    "est_input_tokens": 23481,
+    "fixture_id": "mt_012232295",
+    "n_calls": 1,
+    "packet_hash": "354341bb6f586d7f156d73fa3f37b003b517a38c19fb61092d5a843bfb06361a",
+    "payload_bytes": 36623,
+    "repeatability_calls": 0,
+    "serialized_request_sha256": "ff46ba51c8ae312109a7b3db2190084b2d594d00b95ef970ba7d8cd09d719a0b"
+   },
+   {
+    "arm": "B",
+    "est_input_tokens": 75494,
+    "fixture_id": "mt_012232295",
+    "n_calls": 1,
+    "packet_hash": "62b8e2d452ff352bb87e8b63157cb32ab5ccf17078d61b6b92e288cde0424cd4",
+    "payload_bytes": 131885,
+    "repeatability_calls": 0,
+    "serialized_request_sha256": "aa3d87a2cf1e92630e3bd0158ef68164a3ce7b1276cd7544ec862436f31aa45a"
+   },
+   {
+    "arm": "A",
+    "est_input_tokens": 23014,
+    "fixture_id": "mt_012232411",
+    "n_calls": 1,
+    "packet_hash": "9ec9f0cc535a72f5fc82c0421614ef062d6b07d813f5711909d2f7415b3cfa65",
+    "payload_bytes": 35768,
+    "repeatability_calls": 0,
+    "serialized_request_sha256": "f9681c40fa39a55685470e9eaf773a54ee5e7c2c2f116f47d7161c77991e8d54"
+   },
+   {
+    "arm": "B",
+    "est_input_tokens": 74178,
+    "fixture_id": "mt_012232411",
+    "n_calls": 1,
+    "packet_hash": "e3e84f0d75ad22fb3182a09f6b4d59b1850159cb99623c7ad2901a5918701f1d",
+    "payload_bytes": 129476,
+    "repeatability_calls": 0,
+    "serialized_request_sha256": "2274ec95dbe18eef8ccd6095de3b3381830a69d1f25edeef04b4de11481d9f99"
+   }
+  ],
+  "max_tokens": 8192,
+  "model_id": "us.anthropic.claude-sonnet-4-6",
+  "prompt_version": "v5a_prompt_v1",
+  "schema_content_hash": "7879c6ad5a2ba9265f69a4e7e808d6bfd53144a7348d5788d2676b8135e86077",
+  "schema_version": "hypothesis_set_schema_v2",
+  "temperature": 0.0
+ },
+ "semantic_exclusions": {
+  "dangerous_attacks": "corpus carries only a proxy (touches_in_penalty_area); no validated canonical mapping -> DO_NOT_MERGE, excluded"
+ },
+ "shared_stack": {
+  "aliases": "HOME_TEAM/AWAY_TEAM/COMPETITION/OPP_nnn (identity-neutral)",
+  "compiler": "query_plan.compile_hypothesis",
+  "firewall": "firewall_v2",
+  "max_hypotheses": 12,
+  "model_id": "us.anthropic.claude-sonnet-4-6",
+  "only_evidence_representation_differs": true,
+  "schema": "schema_v2",
+  "schema_content_hash": "7879c6ad5a2ba9265f69a4e7e808d6bfd53144a7348d5788d2676b8135e86077",
+  "temperature": 0.0,
+  "validator": "validator_v2",
+  "vocabulary": "hypothesis_vocabulary_v1"
+ },
+ "spend_usd_so_far": 0.0,
+ "stop_rules": [
+  "PIT leakage",
+  "target-fixture leakage",
+  "future data",
+  "hash mismatch",
+  "unexplained metric omission",
+  "provenance failure",
+  "semantic conflict",
+  "serialization truncation",
+  "schema-invalid rate > 0.30 preregistered",
+  "transport failure > 3 consecutive",
+  "cost ceiling exceeded"
+ ],
+ "verdict_gates": {
+  "FAIL": "Arm B shows no material grounded-use improvement over Arm A, or degrades compilability/firewall cleanliness.",
+  "MIXED": "Arm B improves some dimensions but not others, or improvement is within self-noise.",
+  "PASS": "Arm B shows materially higher grounded, availability-appropriate use of venue/opponent-profile/recent-vs-long than Arm A, at equal or better compilability and firewall-clean rate, with repeatability above self-noise floor."
+ }
+}

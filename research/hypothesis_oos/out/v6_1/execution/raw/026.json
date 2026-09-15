@@ -1,0 +1,1066 @@
+{
+ "payload": {
+  "fixture_id": "mt_257078511",
+  "hypotheses": [
+   {
+    "candidate_confounders": [
+     "opponent_quality_mix_by_venue",
+     "competition_phase",
+     "possession_share"
+    ],
+    "comparison": "SUBJECT_VENUE_BASELINE",
+    "conditions": [
+     {
+      "dimension": "historical_venue_conditioning",
+      "value": "HOME"
+     },
+     {
+      "dimension": "competition",
+      "value": "SAME"
+     }
+    ],
+    "evidence_refs": [
+     "SUMMARY:HOME:ALL_PRIOR:HOME_ONLY:total_shots_for",
+     "SUMMARY:HOME:ALL_PRIOR:AWAY_ONLY:total_shots_for",
+     "SUMMARY:HOME:ALL_PRIOR:HOME_ONLY:touches_in_box_for",
+     "SUMMARY:HOME:ALL_PRIOR:AWAY_ONLY:touches_in_box_for",
+     "SUMMARY:HOME:ALL_PRIOR:HOME_ONLY:shots_inside_box_for",
+     "SUMMARY:HOME:ALL_PRIOR:AWAY_ONLY:shots_inside_box_for"
+    ],
+    "evidence_summary": "HOME_ONLY total_shots_for mean: 11.7 (n=10); AWAY_ONLY: 9.64 (n=11). HOME_ONLY touches_in_box_for: 28.2; AWAY_ONLY: 19.82. HOME_ONLY shots_inside_box_for: 8.1; AWAY_ONLY: 6.09.",
+    "hypothesis_id": "H01",
+    "priority": "HIGH",
+    "question": "Does HOME_TEAM generate materially more total shots and touches in the penalty area when playing at home compared to when playing away, across all prior matches in this competition?",
+    "required_capabilities": [
+     "historical_venue_conditioning",
+     "match_level_observations",
+     "recent_window_summaries"
+    ],
+    "research_family": "ATTACK_VOLUME",
+    "side": "FOR",
+    "subject": "HOME_TEAM",
+    "sufficiency": "SUFFICIENT",
+    "target_metrics": [
+     "total_shots",
+     "touches_in_box",
+     "shots_inside_box"
+    ],
+    "window": "ALL_PRIOR"
+   },
+   {
+    "candidate_confounders": [
+     "opponent_defensive_quality_by_venue",
+     "possession_share"
+    ],
+    "comparison": "SUBJECT_VENUE_BASELINE",
+    "conditions": [
+     {
+      "dimension": "historical_venue_conditioning",
+      "value": "HOME"
+     },
+     {
+      "dimension": "competition",
+      "value": "SAME"
+     }
+    ],
+    "evidence_refs": [
+     "SUMMARY:HOME:ALL_PRIOR:HOME_ONLY:xg_for",
+     "SUMMARY:HOME:ALL_PRIOR:AWAY_ONLY:xg_for",
+     "SUMMARY:HOME:ALL_PRIOR:HOME_ONLY:big_chances_for",
+     "SUMMARY:HOME:ALL_PRIOR:AWAY_ONLY:big_chances_for"
+    ],
+    "evidence_summary": "HOME_ONLY xg_for mean: 1.747 (n=10); AWAY_ONLY: 0.818 (n=11). HOME_ONLY big_chances_for: 2.3 (n=10); AWAY_ONLY: 1.7 (n=10).",
+    "hypothesis_id": "H02",
+    "priority": "HIGH",
+    "question": "Does HOME_TEAM's xG-for and big chances created differ systematically between home and away matches across all prior matches in this competition?",
+    "required_capabilities": [
+     "historical_venue_conditioning",
+     "xg",
+     "match_level_observations"
+    ],
+    "research_family": "ATTACK_QUALITY",
+    "side": "FOR",
+    "subject": "HOME_TEAM",
+    "sufficiency": "SUFFICIENT",
+    "target_metrics": [
+     "xg",
+     "big_chances"
+    ],
+    "window": "ALL_PRIOR"
+   },
+   {
+    "candidate_confounders": [
+     "opponent_attacking_quality_by_venue",
+     "competition_phase"
+    ],
+    "comparison": "SUBJECT_VENUE_BASELINE",
+    "conditions": [
+     {
+      "dimension": "historical_venue_conditioning",
+      "value": "AWAY"
+     },
+     {
+      "dimension": "competition",
+      "value": "SAME"
+     }
+    ],
+    "evidence_refs": [
+     "SUMMARY:AWAY:ALL_PRIOR:AWAY_ONLY:shots_inside_box_against",
+     "SUMMARY:AWAY:ALL_PRIOR:HOME_ONLY:shots_inside_box_against",
+     "SUMMARY:AWAY:ALL_PRIOR:AWAY_ONLY:touches_in_box_against",
+     "SUMMARY:AWAY:ALL_PRIOR:HOME_ONLY:touches_in_box_against",
+     "SUMMARY:AWAY:ALL_PRIOR:AWAY_ONLY:xg_against",
+     "SUMMARY:AWAY:ALL_PRIOR:HOME_ONLY:xg_against"
+    ],
+    "evidence_summary": "AWAY_ONLY shots_inside_box_against mean: 13.4 (n=10); HOME_ONLY: 8.45 (n=11). AWAY_ONLY touches_in_box_against: 35.4 (n=10); HOME_ONLY: 23.45 (n=11). AWAY_ONLY xg_against: 2.329 (n=10); HOME_ONLY: 1.625 (n=11).",
+    "hypothesis_id": "H03",
+    "priority": "HIGH",
+    "question": "Does AWAY_TEAM concede materially more shots inside the box, touches in the box, and xG when playing away compared to when playing at home, across all prior matches in this competition?",
+    "required_capabilities": [
+     "historical_venue_conditioning",
+     "xg",
+     "match_level_observations"
+    ],
+    "research_family": "DEFENSIVE_CONCESSION",
+    "side": "AGAINST",
+    "subject": "AWAY_TEAM",
+    "sufficiency": "SUFFICIENT",
+    "target_metrics": [
+     "shots_inside_box",
+     "touches_in_box",
+     "xg"
+    ],
+    "window": "ALL_PRIOR"
+   },
+   {
+    "candidate_confounders": [
+     "opponent_quality_in_recent_window",
+     "venue_mix_in_recent_window"
+    ],
+    "comparison": "SUBJECT_RECENT_VS_LONG_BASELINE",
+    "conditions": [
+     {
+      "dimension": "competition",
+      "value": "SAME"
+     }
+    ],
+    "evidence_refs": [
+     "SUMMARY:HOME:W5:ANY:total_shots_for",
+     "SUMMARY:HOME:ALL_PRIOR:ANY:total_shots_for",
+     "SUMMARY:HOME:W5:ANY:shots_on_target_for",
+     "SUMMARY:HOME:ALL_PRIOR:ANY:shots_on_target_for",
+     "SUMMARY:HOME:W5:ANY:xg_for",
+     "SUMMARY:HOME:ALL_PRIOR:ANY:xg_for"
+    ],
+    "evidence_summary": "W5 total_shots_for: 11.2 (n=5); ALL_PRIOR: 10.62 (n=21). W5 shots_on_target_for: 3.6 (n=5); ALL_PRIOR: 3.81 (n=21). W5 xg_for: 1.174 (n=5); ALL_PRIOR: 1.261 (n=21).",
+    "hypothesis_id": "H04",
+    "priority": "MEDIUM",
+    "question": "Has HOME_TEAM's attacking output (total shots, shots on target, xG) in the most recent 5 matches declined relative to its season-long baseline, suggesting a shift in recent form?",
+    "required_capabilities": [
+     "recent_window_summaries",
+     "xg",
+     "match_level_observations"
+    ],
+    "research_family": "FORM_VS_BASELINE",
+    "side": "FOR",
+    "subject": "HOME_TEAM",
+    "sufficiency": "SUFFICIENT",
+    "target_metrics": [
+     "total_shots",
+     "shots_on_target",
+     "xg"
+    ],
+    "window": "W5"
+   },
+   {
+    "candidate_confounders": [
+     "opponent_quality_in_recent_window",
+     "venue_mix_in_recent_window"
+    ],
+    "comparison": "SUBJECT_RECENT_VS_LONG_BASELINE",
+    "conditions": [
+     {
+      "dimension": "competition",
+      "value": "SAME"
+     }
+    ],
+    "evidence_refs": [
+     "SUMMARY:AWAY:W5:ANY:shots_on_target_against",
+     "SUMMARY:AWAY:ALL_PRIOR:ANY:shots_on_target_against",
+     "SUMMARY:AWAY:W5:ANY:xg_against",
+     "SUMMARY:AWAY:ALL_PRIOR:ANY:xg_against",
+     "SUMMARY:AWAY:W5:ANY:big_chances_against",
+     "SUMMARY:AWAY:ALL_PRIOR:ANY:big_chances_against"
+    ],
+    "evidence_summary": "W5 shots_on_target_against: 5.2 (n=5); ALL_PRIOR: 4.857 (n=21). W5 xg_against: 2.304 (n=5); ALL_PRIOR: 1.96 (n=21). W5 big_chances_against: 3.6 (n=5); ALL_PRIOR: 3.19 (n=21).",
+    "hypothesis_id": "H05",
+    "priority": "HIGH",
+    "question": "Has AWAY_TEAM's defensive exposure (shots on target against, xG against, big chances against) worsened in the most recent 5 matches relative to its season-long baseline?",
+    "required_capabilities": [
+     "recent_window_summaries",
+     "xg",
+     "match_level_observations"
+    ],
+    "research_family": "FORM_VS_BASELINE",
+    "side": "AGAINST",
+    "subject": "AWAY_TEAM",
+    "sufficiency": "SUFFICIENT",
+    "target_metrics": [
+     "shots_on_target",
+     "xg",
+     "big_chances"
+    ],
+    "window": "W5"
+   },
+   {
+    "candidate_confounders": [
+     "opponent_foul_rate",
+     "referee_tendencies_unavailable"
+    ],
+    "comparison": "SUBJECT_VENUE_BASELINE",
+    "conditions": [
+     {
+      "dimension": "historical_venue_conditioning",
+      "value": "AWAY"
+     },
+     {
+      "dimension": "competition",
+      "value": "SAME"
+     }
+    ],
+    "evidence_refs": [
+     "SUMMARY:AWAY:ALL_PRIOR:AWAY_ONLY:yellow_cards_for",
+     "SUMMARY:AWAY:ALL_PRIOR:HOME_ONLY:yellow_cards_for",
+     "SUMMARY:AWAY:ALL_PRIOR:ANY:yellow_cards_for"
+    ],
+    "evidence_summary": "AWAY_ONLY yellow_cards_for mean: 3.0 (n=9); HOME_ONLY: 3.18 (n=11); ALL_PRIOR: 3.1 (n=20).",
+    "hypothesis_id": "H06",
+    "priority": "MEDIUM",
+    "question": "Does AWAY_TEAM accumulate yellow cards at a higher rate when playing away compared to when playing at home, across all prior matches in this competition?",
+    "required_capabilities": [
+     "historical_venue_conditioning",
+     "match_level_observations"
+    ],
+    "research_family": "DISCIPLINE",
+    "side": "FOR",
+    "subject": "AWAY_TEAM",
+    "sufficiency": "SUFFICIENT",
+    "target_metrics": [
+     "yellow_cards"
+    ],
+    "window": "ALL_PRIOR"
+   },
+   {
+    "candidate_confounders": [
+     "opponent_defensive_block_style",
+     "possession_share"
+    ],
+    "comparison": "SUBJECT_VENUE_BASELINE",
+    "conditions": [
+     {
+      "dimension": "historical_venue_conditioning",
+      "value": "HOME"
+     },
+     {
+      "dimension": "competition",
+      "value": "SAME"
+     }
+    ],
+    "evidence_refs": [
+     "SUMMARY:HOME:ALL_PRIOR:HOME_ONLY:corners_for",
+     "SUMMARY:HOME:ALL_PRIOR:AWAY_ONLY:corners_for",
+     "SUMMARY:HOME:W10:ANY:corners_for",
+     "SUMMARY:HOME:ALL_PRIOR:ANY:corners_for"
+    ],
+    "evidence_summary": "HOME_ONLY corners_for mean: 5.6 (n=10); AWAY_ONLY: 4.18 (n=11); ALL_PRIOR: 4.857 (n=21); W10: 4.9 (n=10).",
+    "hypothesis_id": "H07",
+    "priority": "MEDIUM",
+    "question": "Does HOME_TEAM generate more corners per match when playing at home compared to away, and does this home advantage in corner generation persist in the most recent 10-match window?",
+    "required_capabilities": [
+     "historical_venue_conditioning",
+     "recent_window_summaries",
+     "match_level_observations"
+    ],
+    "research_family": "SET_PIECE_GENERATION",
+    "side": "FOR",
+    "subject": "HOME_TEAM",
+    "sufficiency": "SUFFICIENT",
+    "target_metrics": [
+     "corners"
+    ],
+    "window": "ALL_PRIOR"
+   },
+   {
+    "candidate_confounders": [
+     "venue_mix_in_cohort",
+     "opponent_quality_beyond_single_axis",
+     "competition_phase"
+    ],
+    "comparison": "SUBJECT_OVERALL_BASELINE",
+    "conditions": [
+     {
+      "axis": "shots_on_target_against",
+      "dimension": "opponent_profile",
+      "value": "HIGH"
+     },
+     {
+      "dimension": "competition",
+      "value": "SAME"
+     }
+    ],
+    "evidence_refs": [
+     "PROFILE:HOME:ATK_VS_DEFSIM:shots_on_target_against:total_shots_for",
+     "PROFILE:HOME:ATK_VS_DEFSIM:shots_on_target_against:shots_on_target_for",
+     "PROFILE:HOME:ATK_VS_DEFSIM:shots_on_target_against:goals_for",
+     "SUMMARY:HOME:ALL_PRIOR:ANY:total_shots_for",
+     "SUMMARY:HOME:ALL_PRIOR:ANY:shots_on_target_for",
+     "SUMMARY:HOME:ALL_PRIOR:ANY:goals_for"
+    ],
+    "evidence_summary": "HOME vs HIGH shots_on_target_against opponents: total_shots_for cohort mean 11.75 (n=8) vs baseline 10.62 (n=21); shots_on_target_for 4.5 vs 3.81; goals_for 1.875 vs 1.381.",
+    "hypothesis_id": "H08",
+    "priority": "HIGH",
+    "question": "Does HOME_TEAM's attacking output (total shots, shots on target, goals) increase when facing opponents with a HIGH shots_on_target_against profile (i.e., defensively leaky opponents similar to AWAY_TEAM), compared to its overall baseline?",
+    "required_capabilities": [
+     "opponent_profile",
+     "match_level_observations"
+    ],
+    "research_family": "OPPONENT_PROFILE_INTERACTION",
+    "side": "FOR",
+    "subject": "HOME_TEAM",
+    "sufficiency": "SUFFICIENT",
+    "target_metrics": [
+     "total_shots",
+     "shots_on_target",
+     "goals"
+    ],
+    "window": "ALL_PRIOR"
+   },
+   {
+    "candidate_confounders": [
+     "venue_mix_in_cohort",
+     "opponent_quality_beyond_single_axis",
+     "competition_phase"
+    ],
+    "comparison": "SUBJECT_OVERALL_BASELINE",
+    "conditions": [
+     {
+      "axis": "goals_for",
+      "dimension": "opponent_profile",
+      "value": "HIGH"
+     },
+     {
+      "dimension": "competition",
+      "value": "SAME"
+     }
+    ],
+    "evidence_refs": [
+     "PROFILE:AWAY:DEF_VS_ATKSIM:goals_for:shots_on_target_against",
+     "PROFILE:AWAY:DEF_VS_ATKSIM:goals_for:big_chances_against",
+     "PROFILE:AWAY:DEF_VS_ATKSIM:goals_for:goals_against",
+     "SUMMARY:AWAY:ALL_PRIOR:ANY:shots_on_target_against",
+     "SUMMARY:AWAY:ALL_PRIOR:ANY:big_chances_against",
+     "SUMMARY:AWAY:ALL_PRIOR:ANY:goals_against"
+    ],
+    "evidence_summary": "AWAY vs HIGH goals_for opponents: shots_on_target_against cohort mean 6.4 (n=5) vs baseline 4.857 (n=21); big_chances_against 4.2 vs 3.19; goals_against 2.2 vs 1.619.",
+    "hypothesis_id": "H09",
+    "priority": "HIGH",
+    "question": "Does AWAY_TEAM concede more shots on target, big chances, and goals when facing opponents with a HIGH goals_for profile (offensively prolific opponents similar to HOME_TEAM), compared to its overall baseline?",
+    "required_capabilities": [
+     "opponent_profile",
+     "match_level_observations"
+    ],
+    "research_family": "DEFENSIVE_CONCESSION",
+    "side": "AGAINST",
+    "subject": "AWAY_TEAM",
+    "sufficiency": "SUFFICIENT",
+    "target_metrics": [
+     "shots_on_target",
+     "big_chances",
+     "goals"
+    ],
+    "window": "ALL_PRIOR"
+   },
+   {
+    "candidate_confounders": [
+     "opponent_pressing_intensity",
+     "opponent_quality_mix_by_venue"
+    ],
+    "comparison": "SUBJECT_VENUE_BASELINE",
+    "conditions": [
+     {
+      "dimension": "historical_venue_conditioning",
+      "value": "HOME"
+     },
+     {
+      "dimension": "competition",
+      "value": "SAME"
+     }
+    ],
+    "evidence_refs": [
+     "SUMMARY:HOME:ALL_PRIOR:HOME_ONLY:possession_for",
+     "SUMMARY:HOME:ALL_PRIOR:AWAY_ONLY:possession_for",
+     "SUMMARY:HOME:ALL_PRIOR:HOME_ONLY:final_third_entries_for",
+     "SUMMARY:HOME:ALL_PRIOR:AWAY_ONLY:final_third_entries_for",
+     "SUMMARY:HOME:W10:ANY:possession_for",
+     "SUMMARY:HOME:W10:ANY:final_third_entries_for"
+    ],
+    "evidence_summary": "HOME_ONLY possession_for: 59.1 (n=10); AWAY_ONLY: 57.5 (n=11). HOME_ONLY final_third_entries_for: 56.5 (n=10); AWAY_ONLY: 60.0 (n=11). W10 possession_for: 58.9; W10 final_third_entries_for: 58.8.",
+    "hypothesis_id": "H10",
+    "priority": "MEDIUM",
+    "question": "Does HOME_TEAM maintain a materially higher possession share and final-third entry rate at home compared to away, and does this territorial dominance persist in the most recent 10-match window?",
+    "required_capabilities": [
+     "historical_venue_conditioning",
+     "recent_window_summaries",
+     "match_level_observations"
+    ],
+    "research_family": "TEMPO_AND_TERRITORY",
+    "side": "FOR",
+    "subject": "HOME_TEAM",
+    "sufficiency": "SUFFICIENT",
+    "target_metrics": [
+     "possession",
+     "final_third_entries"
+    ],
+    "window": "ALL_PRIOR"
+   },
+   {
+    "candidate_confounders": [
+     "opponent_attacking_quality_by_venue",
+     "possession_share"
+    ],
+    "comparison": "SUBJECT_VENUE_BASELINE",
+    "conditions": [
+     {
+      "dimension": "historical_venue_conditioning",
+      "value": "HOME"
+     },
+     {
+      "dimension": "competition",
+      "value": "SAME"
+     }
+    ],
+    "evidence_refs": [
+     "SUMMARY:HOME:ALL_PRIOR:HOME_ONLY:shots_inside_box_against",
+     "SUMMARY:HOME:ALL_PRIOR:AWAY_ONLY:shots_inside_box_against",
+     "SUMMARY:HOME:ALL_PRIOR:HOME_ONLY:touches_in_box_against",
+     "SUMMARY:HOME:ALL_PRIOR:AWAY_ONLY:touches_in_box_against"
+    ],
+    "evidence_summary": "HOME_ONLY shots_inside_box_against: 5.3 (n=10); AWAY_ONLY: 7.0 (n=11). HOME_ONLY touches_in_box_against: 15.5 (n=10); AWAY_ONLY: 22.73 (n=11).",
+    "hypothesis_id": "H11",
+    "priority": "MEDIUM",
+    "question": "Does HOME_TEAM concede fewer shots inside the box and fewer touches in the box when playing at home compared to away, across all prior matches in this competition?",
+    "required_capabilities": [
+     "historical_venue_conditioning",
+     "match_level_observations"
+    ],
+    "research_family": "DEFENSIVE_SUPPRESSION",
+    "side": "AGAINST",
+    "subject": "HOME_TEAM",
+    "sufficiency": "SUFFICIENT",
+    "target_metrics": [
+     "shots_inside_box",
+     "touches_in_box"
+    ],
+    "window": "ALL_PRIOR"
+   },
+   {
+    "candidate_confounders": [
+     "opponent_quality_mix_by_venue",
+     "possession_share_by_venue"
+    ],
+    "comparison": "SUBJECT_VENUE_BASELINE",
+    "conditions": [
+     {
+      "dimension": "historical_venue_conditioning",
+      "value": "AWAY"
+     },
+     {
+      "dimension": "competition",
+      "value": "SAME"
+     }
+    ],
+    "evidence_refs": [
+     "SUMMARY:AWAY:ALL_PRIOR:AWAY_ONLY:total_shots_for",
+     "SUMMARY:AWAY:ALL_PRIOR:HOME_ONLY:total_shots_for",
+     "SUMMARY:AWAY:ALL_PRIOR:AWAY_ONLY:touches_in_box_for",
+     "SUMMARY:AWAY:ALL_PRIOR:HOME_ONLY:touches_in_box_for",
+     "SUMMARY:AWAY:W10:ANY:total_shots_for",
+     "SUMMARY:AWAY:ALL_PRIOR:ANY:total_shots_for"
+    ],
+    "evidence_summary": "AWAY_ONLY total_shots_for: 8.3 (n=10); HOME_ONLY: 13.45 (n=11); ALL_PRIOR: 11.0 (n=21). AWAY_ONLY touches_in_box_for: 14.8 (n=10); HOME_ONLY: 20.45 (n=11). W10 total_shots_for: 9.8 (n=10).",
+    "hypothesis_id": "H12",
+    "priority": "HIGH",
+    "question": "Does AWAY_TEAM produce materially fewer total shots and touches in the box when playing away compared to at home, and has this away-venue suppression of attacking output persisted in the most recent 10-match window?",
+    "required_capabilities": [
+     "historical_venue_conditioning",
+     "recent_window_summaries",
+     "match_level_observations"
+    ],
+    "research_family": "ATTACK_VOLUME",
+    "side": "FOR",
+    "subject": "AWAY_TEAM",
+    "sufficiency": "SUFFICIENT",
+    "target_metrics": [
+     "total_shots",
+     "touches_in_box",
+     "shots_inside_box"
+    ],
+    "window": "ALL_PRIOR"
+   }
+  ],
+  "packet_hash": "cf49f41383b268e5b723ee7860fe2a561c3de1b2caaaaf98946d71e10ced77c6"
+ },
+ "request_sha256": "c26ea3f1fbc289fb628efb9360668ac713588ab333f40160e983f00fad91987a",
+ "response": {
+  "ResponseMetadata": {
+   "HTTPHeaders": {
+    "connection": "keep-alive",
+    "content-length": "15056",
+    "content-type": "application/json",
+    "date": "Tue, 15 Sep 2026 04:10:02 GMT",
+    "x-amzn-requestid": "d9e2dece-3da0-4f19-a0b9-eac811b81464"
+   },
+   "HTTPStatusCode": 200,
+   "MaxAttemptsReached": true,
+   "RequestId": "d9e2dece-3da0-4f19-a0b9-eac811b81464",
+   "RetryAttempts": 0
+  },
+  "metrics": {
+   "latencyMs": 46596
+  },
+  "output": {
+   "message": {
+    "content": [
+     {
+      "toolUse": {
+       "input": {
+        "fixture_id": "mt_257078511",
+        "hypotheses": [
+         {
+          "candidate_confounders": [
+           "opponent_quality_mix_by_venue",
+           "competition_phase",
+           "possession_share"
+          ],
+          "comparison": "SUBJECT_VENUE_BASELINE",
+          "conditions": [
+           {
+            "dimension": "historical_venue_conditioning",
+            "value": "HOME"
+           },
+           {
+            "dimension": "competition",
+            "value": "SAME"
+           }
+          ],
+          "evidence_refs": [
+           "SUMMARY:HOME:ALL_PRIOR:HOME_ONLY:total_shots_for",
+           "SUMMARY:HOME:ALL_PRIOR:AWAY_ONLY:total_shots_for",
+           "SUMMARY:HOME:ALL_PRIOR:HOME_ONLY:touches_in_box_for",
+           "SUMMARY:HOME:ALL_PRIOR:AWAY_ONLY:touches_in_box_for",
+           "SUMMARY:HOME:ALL_PRIOR:HOME_ONLY:shots_inside_box_for",
+           "SUMMARY:HOME:ALL_PRIOR:AWAY_ONLY:shots_inside_box_for"
+          ],
+          "evidence_summary": "HOME_ONLY total_shots_for mean: 11.7 (n=10); AWAY_ONLY: 9.64 (n=11). HOME_ONLY touches_in_box_for: 28.2; AWAY_ONLY: 19.82. HOME_ONLY shots_inside_box_for: 8.1; AWAY_ONLY: 6.09.",
+          "hypothesis_id": "H01",
+          "priority": "HIGH",
+          "question": "Does HOME_TEAM generate materially more total shots and touches in the penalty area when playing at home compared to when playing away, across all prior matches in this competition?",
+          "required_capabilities": [
+           "historical_venue_conditioning",
+           "match_level_observations",
+           "recent_window_summaries"
+          ],
+          "research_family": "ATTACK_VOLUME",
+          "side": "FOR",
+          "subject": "HOME_TEAM",
+          "sufficiency": "SUFFICIENT",
+          "target_metrics": [
+           "total_shots",
+           "touches_in_box",
+           "shots_inside_box"
+          ],
+          "window": "ALL_PRIOR"
+         },
+         {
+          "candidate_confounders": [
+           "opponent_defensive_quality_by_venue",
+           "possession_share"
+          ],
+          "comparison": "SUBJECT_VENUE_BASELINE",
+          "conditions": [
+           {
+            "dimension": "historical_venue_conditioning",
+            "value": "HOME"
+           },
+           {
+            "dimension": "competition",
+            "value": "SAME"
+           }
+          ],
+          "evidence_refs": [
+           "SUMMARY:HOME:ALL_PRIOR:HOME_ONLY:xg_for",
+           "SUMMARY:HOME:ALL_PRIOR:AWAY_ONLY:xg_for",
+           "SUMMARY:HOME:ALL_PRIOR:HOME_ONLY:big_chances_for",
+           "SUMMARY:HOME:ALL_PRIOR:AWAY_ONLY:big_chances_for"
+          ],
+          "evidence_summary": "HOME_ONLY xg_for mean: 1.747 (n=10); AWAY_ONLY: 0.818 (n=11). HOME_ONLY big_chances_for: 2.3 (n=10); AWAY_ONLY: 1.7 (n=10).",
+          "hypothesis_id": "H02",
+          "priority": "HIGH",
+          "question": "Does HOME_TEAM's xG-for and big chances created differ systematically between home and away matches across all prior matches in this competition?",
+          "required_capabilities": [
+           "historical_venue_conditioning",
+           "xg",
+           "match_level_observations"
+          ],
+          "research_family": "ATTACK_QUALITY",
+          "side": "FOR",
+          "subject": "HOME_TEAM",
+          "sufficiency": "SUFFICIENT",
+          "target_metrics": [
+           "xg",
+           "big_chances"
+          ],
+          "window": "ALL_PRIOR"
+         },
+         {
+          "candidate_confounders": [
+           "opponent_attacking_quality_by_venue",
+           "competition_phase"
+          ],
+          "comparison": "SUBJECT_VENUE_BASELINE",
+          "conditions": [
+           {
+            "dimension": "historical_venue_conditioning",
+            "value": "AWAY"
+           },
+           {
+            "dimension": "competition",
+            "value": "SAME"
+           }
+          ],
+          "evidence_refs": [
+           "SUMMARY:AWAY:ALL_PRIOR:AWAY_ONLY:shots_inside_box_against",
+           "SUMMARY:AWAY:ALL_PRIOR:HOME_ONLY:shots_inside_box_against",
+           "SUMMARY:AWAY:ALL_PRIOR:AWAY_ONLY:touches_in_box_against",
+           "SUMMARY:AWAY:ALL_PRIOR:HOME_ONLY:touches_in_box_against",
+           "SUMMARY:AWAY:ALL_PRIOR:AWAY_ONLY:xg_against",
+           "SUMMARY:AWAY:ALL_PRIOR:HOME_ONLY:xg_against"
+          ],
+          "evidence_summary": "AWAY_ONLY shots_inside_box_against mean: 13.4 (n=10); HOME_ONLY: 8.45 (n=11). AWAY_ONLY touches_in_box_against: 35.4 (n=10); HOME_ONLY: 23.45 (n=11). AWAY_ONLY xg_against: 2.329 (n=10); HOME_ONLY: 1.625 (n=11).",
+          "hypothesis_id": "H03",
+          "priority": "HIGH",
+          "question": "Does AWAY_TEAM concede materially more shots inside the box, touches in the box, and xG when playing away compared to when playing at home, across all prior matches in this competition?",
+          "required_capabilities": [
+           "historical_venue_conditioning",
+           "xg",
+           "match_level_observations"
+          ],
+          "research_family": "DEFENSIVE_CONCESSION",
+          "side": "AGAINST",
+          "subject": "AWAY_TEAM",
+          "sufficiency": "SUFFICIENT",
+          "target_metrics": [
+           "shots_inside_box",
+           "touches_in_box",
+           "xg"
+          ],
+          "window": "ALL_PRIOR"
+         },
+         {
+          "candidate_confounders": [
+           "opponent_quality_in_recent_window",
+           "venue_mix_in_recent_window"
+          ],
+          "comparison": "SUBJECT_RECENT_VS_LONG_BASELINE",
+          "conditions": [
+           {
+            "dimension": "competition",
+            "value": "SAME"
+           }
+          ],
+          "evidence_refs": [
+           "SUMMARY:HOME:W5:ANY:total_shots_for",
+           "SUMMARY:HOME:ALL_PRIOR:ANY:total_shots_for",
+           "SUMMARY:HOME:W5:ANY:shots_on_target_for",
+           "SUMMARY:HOME:ALL_PRIOR:ANY:shots_on_target_for",
+           "SUMMARY:HOME:W5:ANY:xg_for",
+           "SUMMARY:HOME:ALL_PRIOR:ANY:xg_for"
+          ],
+          "evidence_summary": "W5 total_shots_for: 11.2 (n=5); ALL_PRIOR: 10.62 (n=21). W5 shots_on_target_for: 3.6 (n=5); ALL_PRIOR: 3.81 (n=21). W5 xg_for: 1.174 (n=5); ALL_PRIOR: 1.261 (n=21).",
+          "hypothesis_id": "H04",
+          "priority": "MEDIUM",
+          "question": "Has HOME_TEAM's attacking output (total shots, shots on target, xG) in the most recent 5 matches declined relative to its season-long baseline, suggesting a shift in recent form?",
+          "required_capabilities": [
+           "recent_window_summaries",
+           "xg",
+           "match_level_observations"
+          ],
+          "research_family": "FORM_VS_BASELINE",
+          "side": "FOR",
+          "subject": "HOME_TEAM",
+          "sufficiency": "SUFFICIENT",
+          "target_metrics": [
+           "total_shots",
+           "shots_on_target",
+           "xg"
+          ],
+          "window": "W5"
+         },
+         {
+          "candidate_confounders": [
+           "opponent_quality_in_recent_window",
+           "venue_mix_in_recent_window"
+          ],
+          "comparison": "SUBJECT_RECENT_VS_LONG_BASELINE",
+          "conditions": [
+           {
+            "dimension": "competition",
+            "value": "SAME"
+           }
+          ],
+          "evidence_refs": [
+           "SUMMARY:AWAY:W5:ANY:shots_on_target_against",
+           "SUMMARY:AWAY:ALL_PRIOR:ANY:shots_on_target_against",
+           "SUMMARY:AWAY:W5:ANY:xg_against",
+           "SUMMARY:AWAY:ALL_PRIOR:ANY:xg_against",
+           "SUMMARY:AWAY:W5:ANY:big_chances_against",
+           "SUMMARY:AWAY:ALL_PRIOR:ANY:big_chances_against"
+          ],
+          "evidence_summary": "W5 shots_on_target_against: 5.2 (n=5); ALL_PRIOR: 4.857 (n=21). W5 xg_against: 2.304 (n=5); ALL_PRIOR: 1.96 (n=21). W5 big_chances_against: 3.6 (n=5); ALL_PRIOR: 3.19 (n=21).",
+          "hypothesis_id": "H05",
+          "priority": "HIGH",
+          "question": "Has AWAY_TEAM's defensive exposure (shots on target against, xG against, big chances against) worsened in the most recent 5 matches relative to its season-long baseline?",
+          "required_capabilities": [
+           "recent_window_summaries",
+           "xg",
+           "match_level_observations"
+          ],
+          "research_family": "FORM_VS_BASELINE",
+          "side": "AGAINST",
+          "subject": "AWAY_TEAM",
+          "sufficiency": "SUFFICIENT",
+          "target_metrics": [
+           "shots_on_target",
+           "xg",
+           "big_chances"
+          ],
+          "window": "W5"
+         },
+         {
+          "candidate_confounders": [
+           "opponent_foul_rate",
+           "referee_tendencies_unavailable"
+          ],
+          "comparison": "SUBJECT_VENUE_BASELINE",
+          "conditions": [
+           {
+            "dimension": "historical_venue_conditioning",
+            "value": "AWAY"
+           },
+           {
+            "dimension": "competition",
+            "value": "SAME"
+           }
+          ],
+          "evidence_refs": [
+           "SUMMARY:AWAY:ALL_PRIOR:AWAY_ONLY:yellow_cards_for",
+           "SUMMARY:AWAY:ALL_PRIOR:HOME_ONLY:yellow_cards_for",
+           "SUMMARY:AWAY:ALL_PRIOR:ANY:yellow_cards_for"
+          ],
+          "evidence_summary": "AWAY_ONLY yellow_cards_for mean: 3.0 (n=9); HOME_ONLY: 3.18 (n=11); ALL_PRIOR: 3.1 (n=20).",
+          "hypothesis_id": "H06",
+          "priority": "MEDIUM",
+          "question": "Does AWAY_TEAM accumulate yellow cards at a higher rate when playing away compared to when playing at home, across all prior matches in this competition?",
+          "required_capabilities": [
+           "historical_venue_conditioning",
+           "match_level_observations"
+          ],
+          "research_family": "DISCIPLINE",
+          "side": "FOR",
+          "subject": "AWAY_TEAM",
+          "sufficiency": "SUFFICIENT",
+          "target_metrics": [
+           "yellow_cards"
+          ],
+          "window": "ALL_PRIOR"
+         },
+         {
+          "candidate_confounders": [
+           "opponent_defensive_block_style",
+           "possession_share"
+          ],
+          "comparison": "SUBJECT_VENUE_BASELINE",
+          "conditions": [
+           {
+            "dimension": "historical_venue_conditioning",
+            "value": "HOME"
+           },
+           {
+            "dimension": "competition",
+            "value": "SAME"
+           }
+          ],
+          "evidence_refs": [
+           "SUMMARY:HOME:ALL_PRIOR:HOME_ONLY:corners_for",
+           "SUMMARY:HOME:ALL_PRIOR:AWAY_ONLY:corners_for",
+           "SUMMARY:HOME:W10:ANY:corners_for",
+           "SUMMARY:HOME:ALL_PRIOR:ANY:corners_for"
+          ],
+          "evidence_summary": "HOME_ONLY corners_for mean: 5.6 (n=10); AWAY_ONLY: 4.18 (n=11); ALL_PRIOR: 4.857 (n=21); W10: 4.9 (n=10).",
+          "hypothesis_id": "H07",
+          "priority": "MEDIUM",
+          "question": "Does HOME_TEAM generate more corners per match when playing at home compared to away, and does this home advantage in corner generation persist in the most recent 10-match window?",
+          "required_capabilities": [
+           "historical_venue_conditioning",
+           "recent_window_summaries",
+           "match_level_observations"
+          ],
+          "research_family": "SET_PIECE_GENERATION",
+          "side": "FOR",
+          "subject": "HOME_TEAM",
+          "sufficiency": "SUFFICIENT",
+          "target_metrics": [
+           "corners"
+          ],
+          "window": "ALL_PRIOR"
+         },
+         {
+          "candidate_confounders": [
+           "venue_mix_in_cohort",
+           "opponent_quality_beyond_single_axis",
+           "competition_phase"
+          ],
+          "comparison": "SUBJECT_OVERALL_BASELINE",
+          "conditions": [
+           {
+            "axis": "shots_on_target_against",
+            "dimension": "opponent_profile",
+            "value": "HIGH"
+           },
+           {
+            "dimension": "competition",
+            "value": "SAME"
+           }
+          ],
+          "evidence_refs": [
+           "PROFILE:HOME:ATK_VS_DEFSIM:shots_on_target_against:total_shots_for",
+           "PROFILE:HOME:ATK_VS_DEFSIM:shots_on_target_against:shots_on_target_for",
+           "PROFILE:HOME:ATK_VS_DEFSIM:shots_on_target_against:goals_for",
+           "SUMMARY:HOME:ALL_PRIOR:ANY:total_shots_for",
+           "SUMMARY:HOME:ALL_PRIOR:ANY:shots_on_target_for",
+           "SUMMARY:HOME:ALL_PRIOR:ANY:goals_for"
+          ],
+          "evidence_summary": "HOME vs HIGH shots_on_target_against opponents: total_shots_for cohort mean 11.75 (n=8) vs baseline 10.62 (n=21); shots_on_target_for 4.5 vs 3.81; goals_for 1.875 vs 1.381.",
+          "hypothesis_id": "H08",
+          "priority": "HIGH",
+          "question": "Does HOME_TEAM's attacking output (total shots, shots on target, goals) increase when facing opponents with a HIGH shots_on_target_against profile (i.e., defensively leaky opponents similar to AWAY_TEAM), compared to its overall baseline?",
+          "required_capabilities": [
+           "opponent_profile",
+           "match_level_observations"
+          ],
+          "research_family": "OPPONENT_PROFILE_INTERACTION",
+          "side": "FOR",
+          "subject": "HOME_TEAM",
+          "sufficiency": "SUFFICIENT",
+          "target_metrics": [
+           "total_shots",
+           "shots_on_target",
+           "goals"
+          ],
+          "window": "ALL_PRIOR"
+         },
+         {
+          "candidate_confounders": [
+           "venue_mix_in_cohort",
+           "opponent_quality_beyond_single_axis",
+           "competition_phase"
+          ],
+          "comparison": "SUBJECT_OVERALL_BASELINE",
+          "conditions": [
+           {
+            "axis": "goals_for",
+            "dimension": "opponent_profile",
+            "value": "HIGH"
+           },
+           {
+            "dimension": "competition",
+            "value": "SAME"
+           }
+          ],
+          "evidence_refs": [
+           "PROFILE:AWAY:DEF_VS_ATKSIM:goals_for:shots_on_target_against",
+           "PROFILE:AWAY:DEF_VS_ATKSIM:goals_for:big_chances_against",
+           "PROFILE:AWAY:DEF_VS_ATKSIM:goals_for:goals_against",
+           "SUMMARY:AWAY:ALL_PRIOR:ANY:shots_on_target_against",
+           "SUMMARY:AWAY:ALL_PRIOR:ANY:big_chances_against",
+           "SUMMARY:AWAY:ALL_PRIOR:ANY:goals_against"
+          ],
+          "evidence_summary": "AWAY vs HIGH goals_for opponents: shots_on_target_against cohort mean 6.4 (n=5) vs baseline 4.857 (n=21); big_chances_against 4.2 vs 3.19; goals_against 2.2 vs 1.619.",
+          "hypothesis_id": "H09",
+          "priority": "HIGH",
+          "question": "Does AWAY_TEAM concede more shots on target, big chances, and goals when facing opponents with a HIGH goals_for profile (offensively prolific opponents similar to HOME_TEAM), compared to its overall baseline?",
+          "required_capabilities": [
+           "opponent_profile",
+           "match_level_observations"
+          ],
+          "research_family": "DEFENSIVE_CONCESSION",
+          "side": "AGAINST",
+          "subject": "AWAY_TEAM",
+          "sufficiency": "SUFFICIENT",
+          "target_metrics": [
+           "shots_on_target",
+           "big_chances",
+           "goals"
+          ],
+          "window": "ALL_PRIOR"
+         },
+         {
+          "candidate_confounders": [
+           "opponent_pressing_intensity",
+           "opponent_quality_mix_by_venue"
+          ],
+          "comparison": "SUBJECT_VENUE_BASELINE",
+          "conditions": [
+           {
+            "dimension": "historical_venue_conditioning",
+            "value": "HOME"
+           },
+           {
+            "dimension": "competition",
+            "value": "SAME"
+           }
+          ],
+          "evidence_refs": [
+           "SUMMARY:HOME:ALL_PRIOR:HOME_ONLY:possession_for",
+           "SUMMARY:HOME:ALL_PRIOR:AWAY_ONLY:possession_for",
+           "SUMMARY:HOME:ALL_PRIOR:HOME_ONLY:final_third_entries_for",
+           "SUMMARY:HOME:ALL_PRIOR:AWAY_ONLY:final_third_entries_for",
+           "SUMMARY:HOME:W10:ANY:possession_for",
+           "SUMMARY:HOME:W10:ANY:final_third_entries_for"
+          ],
+          "evidence_summary": "HOME_ONLY possession_for: 59.1 (n=10); AWAY_ONLY: 57.5 (n=11). HOME_ONLY final_third_entries_for: 56.5 (n=10); AWAY_ONLY: 60.0 (n=11). W10 possession_for: 58.9; W10 final_third_entries_for: 58.8.",
+          "hypothesis_id": "H10",
+          "priority": "MEDIUM",
+          "question": "Does HOME_TEAM maintain a materially higher possession share and final-third entry rate at home compared to away, and does this territorial dominance persist in the most recent 10-match window?",
+          "required_capabilities": [
+           "historical_venue_conditioning",
+           "recent_window_summaries",
+           "match_level_observations"
+          ],
+          "research_family": "TEMPO_AND_TERRITORY",
+          "side": "FOR",
+          "subject": "HOME_TEAM",
+          "sufficiency": "SUFFICIENT",
+          "target_metrics": [
+           "possession",
+           "final_third_entries"
+          ],
+          "window": "ALL_PRIOR"
+         },
+         {
+          "candidate_confounders": [
+           "opponent_attacking_quality_by_venue",
+           "possession_share"
+          ],
+          "comparison": "SUBJECT_VENUE_BASELINE",
+          "conditions": [
+           {
+            "dimension": "historical_venue_conditioning",
+            "value": "HOME"
+           },
+           {
+            "dimension": "competition",
+            "value": "SAME"
+           }
+          ],
+          "evidence_refs": [
+           "SUMMARY:HOME:ALL_PRIOR:HOME_ONLY:shots_inside_box_against",
+           "SUMMARY:HOME:ALL_PRIOR:AWAY_ONLY:shots_inside_box_against",
+           "SUMMARY:HOME:ALL_PRIOR:HOME_ONLY:touches_in_box_against",
+           "SUMMARY:HOME:ALL_PRIOR:AWAY_ONLY:touches_in_box_against"
+          ],
+          "evidence_summary": "HOME_ONLY shots_inside_box_against: 5.3 (n=10); AWAY_ONLY: 7.0 (n=11). HOME_ONLY touches_in_box_against: 15.5 (n=10); AWAY_ONLY: 22.73 (n=11).",
+          "hypothesis_id": "H11",
+          "priority": "MEDIUM",
+          "question": "Does HOME_TEAM concede fewer shots inside the box and fewer touches in the box when playing at home compared to away, across all prior matches in this competition?",
+          "required_capabilities": [
+           "historical_venue_conditioning",
+           "match_level_observations"
+          ],
+          "research_family": "DEFENSIVE_SUPPRESSION",
+          "side": "AGAINST",
+          "subject": "HOME_TEAM",
+          "sufficiency": "SUFFICIENT",
+          "target_metrics": [
+           "shots_inside_box",
+           "touches_in_box"
+          ],
+          "window": "ALL_PRIOR"
+         },
+         {
+          "candidate_confounders": [
+           "opponent_quality_mix_by_venue",
+           "possession_share_by_venue"
+          ],
+          "comparison": "SUBJECT_VENUE_BASELINE",
+          "conditions": [
+           {
+            "dimension": "historical_venue_conditioning",
+            "value": "AWAY"
+           },
+           {
+            "dimension": "competition",
+            "value": "SAME"
+           }
+          ],
+          "evidence_refs": [
+           "SUMMARY:AWAY:ALL_PRIOR:AWAY_ONLY:total_shots_for",
+           "SUMMARY:AWAY:ALL_PRIOR:HOME_ONLY:total_shots_for",
+           "SUMMARY:AWAY:ALL_PRIOR:AWAY_ONLY:touches_in_box_for",
+           "SUMMARY:AWAY:ALL_PRIOR:HOME_ONLY:touches_in_box_for",
+           "SUMMARY:AWAY:W10:ANY:total_shots_for",
+           "SUMMARY:AWAY:ALL_PRIOR:ANY:total_shots_for"
+          ],
+          "evidence_summary": "AWAY_ONLY total_shots_for: 8.3 (n=10); HOME_ONLY: 13.45 (n=11); ALL_PRIOR: 11.0 (n=21). AWAY_ONLY touches_in_box_for: 14.8 (n=10); HOME_ONLY: 20.45 (n=11). W10 total_shots_for: 9.8 (n=10).",
+          "hypothesis_id": "H12",
+          "priority": "HIGH",
+          "question": "Does AWAY_TEAM produce materially fewer total shots and touches in the box when playing away compared to at home, and has this away-venue suppression of attacking output persisted in the most recent 10-match window?",
+          "required_capabilities": [
+           "historical_venue_conditioning",
+           "recent_window_summaries",
+           "match_level_observations"
+          ],
+          "research_family": "ATTACK_VOLUME",
+          "side": "FOR",
+          "subject": "AWAY_TEAM",
+          "sufficiency": "SUFFICIENT",
+          "target_metrics": [
+           "total_shots",
+           "touches_in_box",
+           "shots_inside_box"
+          ],
+          "window": "ALL_PRIOR"
+         }
+        ],
+        "packet_hash": "cf49f41383b268e5b723ee7860fe2a561c3de1b2caaaaf98946d71e10ced77c6"
+       },
+       "name": "emit_hypotheses",
+       "toolUseId": "tooluse_buKm9TI6mF20gO65qKBO9o",
+       "type": "tool_use"
+      }
+     }
+    ],
+    "role": "assistant"
+   }
+  },
+  "stopReason": "tool_use",
+  "usage": {
+   "cacheReadInputTokens": 0,
+   "cacheWriteInputTokens": 0,
+   "inputTokens": 54997,
+   "outputTokens": 5997,
+   "totalTokens": 60994
+  }
+ },
+ "seq": 26
+}

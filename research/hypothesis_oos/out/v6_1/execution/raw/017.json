@@ -1,0 +1,776 @@
+{
+ "payload": {
+  "fixture_id": "mt_979109898",
+  "hypotheses": [
+   {
+    "candidate_confounders": [
+     "competition",
+     "historical_venue_conditioning",
+     "opponent_profile"
+    ],
+    "comparison": "SUBJECT_OVERALL_BASELINE",
+    "conditions": [],
+    "evidence_refs": [
+     "SUMMARY:HOME:ALL_PRIOR:ANY:total_shots_for",
+     "SUMMARY:AWAY:ALL_PRIOR:ANY:total_shots_for",
+     "SUMMARY:HOME:ALL_PRIOR:ANY:possession_for",
+     "SUMMARY:AWAY:ALL_PRIOR:ANY:possession_for"
+    ],
+    "evidence_summary": "HOME_TEAM all-prior mean total_shots_for: 10.85 (n=71); AWAY_TEAM all-prior mean total_shots_for: 13.35 (n=74). HOME_TEAM mean possession_for: 43.06%; AWAY_TEAM mean possession_for: 47.70%.",
+    "hypothesis_id": "H001",
+    "priority": "HIGH",
+    "question": "Does HOME_TEAM generate materially fewer total shots per match than AWAY_TEAM across their respective all-prior histories, and does this gap persist when controlling for possession share?",
+    "required_capabilities": [
+     "recent_window_summaries",
+     "target_fixture_venue_context"
+    ],
+    "research_family": "ATTACK_VOLUME",
+    "side": "FOR",
+    "subject": "HOME_TEAM",
+    "sufficiency": "SUFFICIENT",
+    "target_metrics": [
+     "total_shots",
+     "possession"
+    ],
+    "window": "ALL_PRIOR"
+   },
+   {
+    "candidate_confounders": [
+     "historical_venue_conditioning",
+     "opponent_profile",
+     "own_formation_family"
+    ],
+    "comparison": "SUBJECT_OVERALL_BASELINE",
+    "conditions": [],
+    "evidence_refs": [
+     "SUMMARY:HOME:ALL_PRIOR:ANY:shots_inside_box_against",
+     "SUMMARY:AWAY:ALL_PRIOR:ANY:shots_inside_box_for",
+     "SUMMARY:HOME:ALL_PRIOR:ANY:touches_in_box_against",
+     "SUMMARY:AWAY:ALL_PRIOR:ANY:touches_in_box_for"
+    ],
+    "evidence_summary": "HOME_TEAM all-prior mean shots_inside_box_against: 9.28 (n=71); AWAY_TEAM all-prior mean shots_inside_box_for: 8.20 (n=74). HOME_TEAM mean touches_in_box_against: 25.96 (n=71); AWAY_TEAM mean touches_in_box_for: 22.69 (n=29).",
+    "hypothesis_id": "H002",
+    "priority": "HIGH",
+    "question": "Does HOME_TEAM concede substantially more shots inside the box per match than AWAY_TEAM generates, suggesting a structural mismatch in box-entry suppression for this fixture?",
+    "required_capabilities": [
+     "target_fixture_venue_context",
+     "xg"
+    ],
+    "research_family": "DEFENSIVE_CONCESSION",
+    "side": "AGAINST",
+    "subject": "HOME_TEAM",
+    "sufficiency": "SUFFICIENT",
+    "target_metrics": [
+     "shots_inside_box",
+     "touches_in_box"
+    ],
+    "window": "ALL_PRIOR"
+   },
+   {
+    "candidate_confounders": [
+     "opponent_profile",
+     "competition"
+    ],
+    "comparison": "SUBJECT_OVERALL_BASELINE",
+    "conditions": [],
+    "evidence_refs": [
+     "SUMMARY:HOME:ALL_PRIOR:ANY:xg_for",
+     "SUMMARY:HOME:ALL_PRIOR:ANY:goals_for"
+    ],
+    "evidence_summary": "HOME_TEAM all-prior mean xg_for: 0.9612 (n=72); HOME_TEAM all-prior mean goals_for: 1.027 (n=74).",
+    "hypothesis_id": "H003",
+    "priority": "MEDIUM",
+    "question": "Is HOME_TEAM's all-prior mean xG-for materially below its goals-for mean, and does this divergence between xG and goals suggest systematic underperformance relative to chance quality?",
+    "required_capabilities": [
+     "xg"
+    ],
+    "research_family": "ATTACK_QUALITY",
+    "side": "FOR",
+    "subject": "HOME_TEAM",
+    "sufficiency": "SUFFICIENT",
+    "target_metrics": [
+     "xg",
+     "goals"
+    ],
+    "window": "ALL_PRIOR"
+   },
+   {
+    "candidate_confounders": [
+     "opponent_profile",
+     "competition"
+    ],
+    "comparison": "SUBJECT_OVERALL_BASELINE",
+    "conditions": [],
+    "evidence_refs": [
+     "SUMMARY:AWAY:ALL_PRIOR:ANY:xg_for",
+     "SUMMARY:AWAY:ALL_PRIOR:ANY:goals_for"
+    ],
+    "evidence_summary": "AWAY_TEAM all-prior mean xg_for: 1.2536 (n=75); AWAY_TEAM all-prior mean goals_for: 1.1867 (n=75).",
+    "hypothesis_id": "H004",
+    "priority": "MEDIUM",
+    "question": "Does AWAY_TEAM's all-prior xG-for exceed its goals-for mean, and does this suggest a pattern of converting above or below expected chance quality?",
+    "required_capabilities": [
+     "xg"
+    ],
+    "research_family": "ATTACK_QUALITY",
+    "side": "FOR",
+    "subject": "AWAY_TEAM",
+    "sufficiency": "SUFFICIENT",
+    "target_metrics": [
+     "xg",
+     "goals"
+    ],
+    "window": "ALL_PRIOR"
+   },
+   {
+    "candidate_confounders": [
+     "historical_venue_conditioning",
+     "opponent_profile"
+    ],
+    "comparison": "LEAGUE_ENVIRONMENT_BASELINE",
+    "conditions": [],
+    "evidence_refs": [
+     "SUMMARY:HOME:ALL_PRIOR:ANY:corners_against",
+     "SUMMARY:AWAY:ALL_PRIOR:ANY:corners_for",
+     "SUMMARY:HOME:ALL_PRIOR:ANY:corners_for"
+    ],
+    "evidence_summary": "HOME_TEAM all-prior mean corners_against: 6.83 (n=71); HOME_TEAM all-prior mean corners_for: 3.66 (n=71); AWAY_TEAM all-prior mean corners_for: 4.89 (n=73).",
+    "hypothesis_id": "H005",
+    "priority": "HIGH",
+    "question": "Does HOME_TEAM concede corners at a substantially higher rate than AWAY_TEAM generates corners, and is HOME_TEAM's corner-against rate among the highest in the league environment?",
+    "required_capabilities": [
+     "target_fixture_venue_context"
+    ],
+    "research_family": "DEFENSIVE_CONCESSION",
+    "side": "AGAINST",
+    "subject": "HOME_TEAM",
+    "sufficiency": "SUFFICIENT",
+    "target_metrics": [
+     "corners"
+    ],
+    "window": "ALL_PRIOR"
+   },
+   {
+    "candidate_confounders": [
+     "historical_venue_conditioning",
+     "opponent_profile"
+    ],
+    "comparison": "SUBJECT_OVERALL_BASELINE",
+    "conditions": [],
+    "evidence_refs": [
+     "SUMMARY:AWAY:ALL_PRIOR:ANY:corners_for",
+     "SUMMARY:HOME:ALL_PRIOR:ANY:corners_against"
+    ],
+    "evidence_summary": "AWAY_TEAM all-prior mean corners_for: 4.89 (n=73); HOME_TEAM all-prior mean corners_against: 6.83 (n=71).",
+    "hypothesis_id": "H006",
+    "priority": "MEDIUM",
+    "question": "Does AWAY_TEAM generate corners at a rate that, when combined with HOME_TEAM's historically high corners-against rate, suggests an elevated set-piece volume environment for this fixture?",
+    "required_capabilities": [
+     "target_fixture_venue_context"
+    ],
+    "research_family": "SET_PIECE_GENERATION",
+    "side": "FOR",
+    "subject": "AWAY_TEAM",
+    "sufficiency": "SUFFICIENT",
+    "target_metrics": [
+     "corners"
+    ],
+    "window": "ALL_PRIOR"
+   },
+   {
+    "candidate_confounders": [
+     "opponent_profile",
+     "own_formation_family"
+    ],
+    "comparison": "SUBJECT_OVERALL_BASELINE",
+    "conditions": [],
+    "evidence_refs": [
+     "SUMMARY:HOME:ALL_PRIOR:ANY:possession_for",
+     "SUMMARY:HOME:ALL_PRIOR:ANY:clearances_for",
+     "SUMMARY:HOME:ALL_PRIOR:ANY:interceptions_for",
+     "SUMMARY:HOME:ALL_PRIOR:ANY:final_third_entries_for",
+     "SUMMARY:HOME:ALL_PRIOR:ANY:final_third_entries_against"
+    ],
+    "evidence_summary": "HOME_TEAM all-prior mean possession_for: 43.06% (n=71); clearances_for: 31.77 (n=71); interceptions_for: 9.51 (n=71); final_third_entries_for: 54.01 vs final_third_entries_against: 62.34 (n=71).",
+    "hypothesis_id": "H007",
+    "priority": "MEDIUM",
+    "question": "Does HOME_TEAM's all-prior possession deficit relative to opponents reflect a systematic low-possession defensive style, and does this style correlate with elevated clearances and interceptions?",
+    "required_capabilities": [
+     "target_fixture_venue_context"
+    ],
+    "research_family": "TEMPO_AND_TERRITORY",
+    "side": "FOR",
+    "subject": "HOME_TEAM",
+    "sufficiency": "SUFFICIENT",
+    "target_metrics": [
+     "possession",
+     "clearances",
+     "interceptions"
+    ],
+    "window": "ALL_PRIOR"
+   },
+   {
+    "candidate_confounders": [
+     "historical_venue_conditioning",
+     "opponent_profile",
+     "competition"
+    ],
+    "comparison": "LEAGUE_ENVIRONMENT_BASELINE",
+    "conditions": [],
+    "evidence_refs": [
+     "SUMMARY:AWAY:ALL_PRIOR:ANY:fouls_for",
+     "SUMMARY:HOME:ALL_PRIOR:ANY:fouls_for",
+     "SUMMARY:AWAY:ALL_PRIOR:ANY:yellow_cards_for",
+     "SUMMARY:HOME:ALL_PRIOR:ANY:yellow_cards_for"
+    ],
+    "evidence_summary": "AWAY_TEAM all-prior mean fouls_for: 12.12 (n=74), yellow_cards_for: 2.23 (n=70); HOME_TEAM all-prior mean fouls_for: 10.67 (n=70), yellow_cards_for: 1.82 (n=66).",
+    "hypothesis_id": "H008",
+    "priority": "MEDIUM",
+    "question": "Does AWAY_TEAM commit fouls at a higher rate than HOME_TEAM and than the league environment baseline, and does this elevated foul rate translate into a higher yellow-card rate?",
+    "required_capabilities": [
+     "target_fixture_venue_context"
+    ],
+    "research_family": "DISCIPLINE",
+    "side": "FOR",
+    "subject": "AWAY_TEAM",
+    "sufficiency": "SUFFICIENT",
+    "target_metrics": [
+     "fouls",
+     "yellow_cards"
+    ],
+    "window": "ALL_PRIOR"
+   },
+   {
+    "candidate_confounders": [
+     "historical_venue_conditioning",
+     "opponent_profile"
+    ],
+    "comparison": "SUBJECT_OVERALL_BASELINE",
+    "conditions": [],
+    "evidence_refs": [
+     "SUMMARY:AWAY:ALL_PRIOR:ANY:xg_against",
+     "SUMMARY:HOME:ALL_PRIOR:ANY:xg_for",
+     "SUMMARY:AWAY:ALL_PRIOR:ANY:shots_on_target_against",
+     "SUMMARY:AWAY:ALL_PRIOR:ANY:saves_for",
+     "SUMMARY:HOME:ALL_PRIOR:ANY:shots_on_target_for"
+    ],
+    "evidence_summary": "AWAY_TEAM all-prior mean xg_against: 1.2236 (n=75); HOME_TEAM all-prior mean xg_for: 0.9612 (n=72). AWAY_TEAM shots_on_target_against: 4.31 (n=74), saves_for: 2.97 (n=73); HOME_TEAM shots_on_target_for: 3.34 (n=71).",
+    "hypothesis_id": "H009",
+    "priority": "HIGH",
+    "question": "Does AWAY_TEAM's all-prior xG-against rate suggest it concedes lower-quality chances than HOME_TEAM generates, and is this gap consistent with AWAY_TEAM's shots-on-target-against and saves rates?",
+    "required_capabilities": [
+     "xg",
+     "target_fixture_venue_context"
+    ],
+    "research_family": "DEFENSIVE_SUPPRESSION",
+    "side": "AGAINST",
+    "subject": "AWAY_TEAM",
+    "sufficiency": "SUFFICIENT",
+    "target_metrics": [
+     "xg",
+     "shots_on_target",
+     "saves"
+    ],
+    "window": "ALL_PRIOR"
+   },
+   {
+    "candidate_confounders": [
+     "opponent_profile",
+     "historical_venue_conditioning"
+    ],
+    "comparison": "SUBJECT_OVERALL_BASELINE",
+    "conditions": [],
+    "evidence_refs": [
+     "SUMMARY:HOME:ALL_PRIOR:ANY:shots_inside_box_for",
+     "SUMMARY:HOME:ALL_PRIOR:ANY:total_shots_for",
+     "SUMMARY:HOME:ALL_PRIOR:ANY:big_chances_for",
+     "SUMMARY:AWAY:ALL_PRIOR:ANY:shots_inside_box_for",
+     "SUMMARY:AWAY:ALL_PRIOR:ANY:total_shots_for",
+     "SUMMARY:AWAY:ALL_PRIOR:ANY:big_chances_for"
+    ],
+    "evidence_summary": "HOME_TEAM all-prior mean shots_inside_box_for: 5.94, total_shots_for: 10.85, big_chances_for: 1.55 (n=66\u201371); AWAY_TEAM: shots_inside_box_for: 8.20, total_shots_for: 13.35, big_chances_for: 1.79 (n=73\u201374).",
+    "hypothesis_id": "H010",
+    "priority": "HIGH",
+    "question": "Does HOME_TEAM's ratio of shots inside the box to total shots indicate a lower-quality shot profile compared to AWAY_TEAM, and does this correlate with a lower big-chances rate?",
+    "required_capabilities": [
+     "target_fixture_venue_context"
+    ],
+    "research_family": "ATTACK_VOLUME",
+    "side": "FOR",
+    "subject": "HOME_TEAM",
+    "sufficiency": "SUFFICIENT",
+    "target_metrics": [
+     "shots_inside_box",
+     "total_shots",
+     "big_chances"
+    ],
+    "window": "ALL_PRIOR"
+   },
+   {
+    "candidate_confounders": [],
+    "comparison": "SUBJECT_RECENT_VS_LONG_BASELINE",
+    "conditions": [],
+    "evidence_refs": [
+     "AVAIL:recent_window_summaries",
+     "SUMMARY:HOME:ALL_PRIOR:ANY:total_shots_for",
+     "SUMMARY:HOME:ALL_PRIOR:ANY:goals_for"
+    ],
+    "evidence_summary": "AVAIL:recent_window_summaries is NOT_EXPOSED_IN_PACKET; only ALL_PRIOR summaries are present. HOME_TEAM all-prior mean total_shots_for: 10.85 (n=71), goals_for: 1.027 (n=74).",
+    "hypothesis_id": "H011",
+    "priority": "MEDIUM",
+    "question": "Is there sufficient short-window (W5/W10) evidence to test whether HOME_TEAM's recent attacking and defensive metrics deviate from their all-prior baseline?",
+    "required_capabilities": [
+     "recent_window_summaries"
+    ],
+    "research_family": "FORM_VS_BASELINE",
+    "side": "FOR",
+    "subject": "HOME_TEAM",
+    "sufficiency": "INSUFFICIENT_EVIDENCE",
+    "target_metrics": [
+     "total_shots",
+     "goals",
+     "shots_on_target"
+    ],
+    "window": "W5"
+   },
+   {
+    "candidate_confounders": [
+     "historical_venue_conditioning",
+     "opponent_profile"
+    ],
+    "comparison": "SUBJECT_OVERALL_BASELINE",
+    "conditions": [],
+    "evidence_refs": [
+     "SUMMARY:HOME:ALL_PRIOR:ANY:accurate_crosses_against",
+     "SUMMARY:AWAY:ALL_PRIOR:ANY:accurate_crosses_for",
+     "SUMMARY:HOME:ALL_PRIOR:ANY:accurate_crosses_for",
+     "SUMMARY:AWAY:ALL_PRIOR:ANY:accurate_crosses_against"
+    ],
+    "evidence_summary": "HOME_TEAM all-prior mean accurate_crosses_against: 5.04 (n=71), accurate_crosses_for: 3.21 (n=71); AWAY_TEAM all-prior mean accurate_crosses_for: 3.78 (n=74), accurate_crosses_against: 4.43 (n=74).",
+    "hypothesis_id": "H012",
+    "priority": "MEDIUM",
+    "question": "Does HOME_TEAM's all-prior accurate-crosses-against rate substantially exceed AWAY_TEAM's accurate-crosses-for rate, and does this suggest a structural vulnerability to wide delivery for HOME_TEAM?",
+    "required_capabilities": [
+     "target_fixture_venue_context"
+    ],
+    "research_family": "DEFENSIVE_CONCESSION",
+    "side": "AGAINST",
+    "subject": "HOME_TEAM",
+    "sufficiency": "SUFFICIENT",
+    "target_metrics": [
+     "accurate_crosses"
+    ],
+    "window": "ALL_PRIOR"
+   }
+  ],
+  "packet_hash": "e0fc417dc2d715ecabba5ae8d515b8ed3b71e67f32aeda1bdb5134be4aa0d9b9"
+ },
+ "request_sha256": "be03f0d2333dbe63a01f2b716ecd2b1a28e7c051a6431a5f3c5df8c6ffe81a86",
+ "response": {
+  "ResponseMetadata": {
+   "HTTPHeaders": {
+    "connection": "keep-alive",
+    "content-length": "12110",
+    "content-type": "application/json",
+    "date": "Tue, 15 Sep 2026 04:03:03 GMT",
+    "x-amzn-requestid": "ccdc09b4-53b2-430a-a446-82d68592919d"
+   },
+   "HTTPStatusCode": 200,
+   "MaxAttemptsReached": true,
+   "RequestId": "ccdc09b4-53b2-430a-a446-82d68592919d",
+   "RetryAttempts": 0
+  },
+  "metrics": {
+   "latencyMs": 39130
+  },
+  "output": {
+   "message": {
+    "content": [
+     {
+      "toolUse": {
+       "input": {
+        "fixture_id": "mt_979109898",
+        "hypotheses": [
+         {
+          "candidate_confounders": [
+           "competition",
+           "historical_venue_conditioning",
+           "opponent_profile"
+          ],
+          "comparison": "SUBJECT_OVERALL_BASELINE",
+          "conditions": [],
+          "evidence_refs": [
+           "SUMMARY:HOME:ALL_PRIOR:ANY:total_shots_for",
+           "SUMMARY:AWAY:ALL_PRIOR:ANY:total_shots_for",
+           "SUMMARY:HOME:ALL_PRIOR:ANY:possession_for",
+           "SUMMARY:AWAY:ALL_PRIOR:ANY:possession_for"
+          ],
+          "evidence_summary": "HOME_TEAM all-prior mean total_shots_for: 10.85 (n=71); AWAY_TEAM all-prior mean total_shots_for: 13.35 (n=74). HOME_TEAM mean possession_for: 43.06%; AWAY_TEAM mean possession_for: 47.70%.",
+          "hypothesis_id": "H001",
+          "priority": "HIGH",
+          "question": "Does HOME_TEAM generate materially fewer total shots per match than AWAY_TEAM across their respective all-prior histories, and does this gap persist when controlling for possession share?",
+          "required_capabilities": [
+           "recent_window_summaries",
+           "target_fixture_venue_context"
+          ],
+          "research_family": "ATTACK_VOLUME",
+          "side": "FOR",
+          "subject": "HOME_TEAM",
+          "sufficiency": "SUFFICIENT",
+          "target_metrics": [
+           "total_shots",
+           "possession"
+          ],
+          "window": "ALL_PRIOR"
+         },
+         {
+          "candidate_confounders": [
+           "historical_venue_conditioning",
+           "opponent_profile",
+           "own_formation_family"
+          ],
+          "comparison": "SUBJECT_OVERALL_BASELINE",
+          "conditions": [],
+          "evidence_refs": [
+           "SUMMARY:HOME:ALL_PRIOR:ANY:shots_inside_box_against",
+           "SUMMARY:AWAY:ALL_PRIOR:ANY:shots_inside_box_for",
+           "SUMMARY:HOME:ALL_PRIOR:ANY:touches_in_box_against",
+           "SUMMARY:AWAY:ALL_PRIOR:ANY:touches_in_box_for"
+          ],
+          "evidence_summary": "HOME_TEAM all-prior mean shots_inside_box_against: 9.28 (n=71); AWAY_TEAM all-prior mean shots_inside_box_for: 8.20 (n=74). HOME_TEAM mean touches_in_box_against: 25.96 (n=71); AWAY_TEAM mean touches_in_box_for: 22.69 (n=29).",
+          "hypothesis_id": "H002",
+          "priority": "HIGH",
+          "question": "Does HOME_TEAM concede substantially more shots inside the box per match than AWAY_TEAM generates, suggesting a structural mismatch in box-entry suppression for this fixture?",
+          "required_capabilities": [
+           "target_fixture_venue_context",
+           "xg"
+          ],
+          "research_family": "DEFENSIVE_CONCESSION",
+          "side": "AGAINST",
+          "subject": "HOME_TEAM",
+          "sufficiency": "SUFFICIENT",
+          "target_metrics": [
+           "shots_inside_box",
+           "touches_in_box"
+          ],
+          "window": "ALL_PRIOR"
+         },
+         {
+          "candidate_confounders": [
+           "opponent_profile",
+           "competition"
+          ],
+          "comparison": "SUBJECT_OVERALL_BASELINE",
+          "conditions": [],
+          "evidence_refs": [
+           "SUMMARY:HOME:ALL_PRIOR:ANY:xg_for",
+           "SUMMARY:HOME:ALL_PRIOR:ANY:goals_for"
+          ],
+          "evidence_summary": "HOME_TEAM all-prior mean xg_for: 0.9612 (n=72); HOME_TEAM all-prior mean goals_for: 1.027 (n=74).",
+          "hypothesis_id": "H003",
+          "priority": "MEDIUM",
+          "question": "Is HOME_TEAM's all-prior mean xG-for materially below its goals-for mean, and does this divergence between xG and goals suggest systematic underperformance relative to chance quality?",
+          "required_capabilities": [
+           "xg"
+          ],
+          "research_family": "ATTACK_QUALITY",
+          "side": "FOR",
+          "subject": "HOME_TEAM",
+          "sufficiency": "SUFFICIENT",
+          "target_metrics": [
+           "xg",
+           "goals"
+          ],
+          "window": "ALL_PRIOR"
+         },
+         {
+          "candidate_confounders": [
+           "opponent_profile",
+           "competition"
+          ],
+          "comparison": "SUBJECT_OVERALL_BASELINE",
+          "conditions": [],
+          "evidence_refs": [
+           "SUMMARY:AWAY:ALL_PRIOR:ANY:xg_for",
+           "SUMMARY:AWAY:ALL_PRIOR:ANY:goals_for"
+          ],
+          "evidence_summary": "AWAY_TEAM all-prior mean xg_for: 1.2536 (n=75); AWAY_TEAM all-prior mean goals_for: 1.1867 (n=75).",
+          "hypothesis_id": "H004",
+          "priority": "MEDIUM",
+          "question": "Does AWAY_TEAM's all-prior xG-for exceed its goals-for mean, and does this suggest a pattern of converting above or below expected chance quality?",
+          "required_capabilities": [
+           "xg"
+          ],
+          "research_family": "ATTACK_QUALITY",
+          "side": "FOR",
+          "subject": "AWAY_TEAM",
+          "sufficiency": "SUFFICIENT",
+          "target_metrics": [
+           "xg",
+           "goals"
+          ],
+          "window": "ALL_PRIOR"
+         },
+         {
+          "candidate_confounders": [
+           "historical_venue_conditioning",
+           "opponent_profile"
+          ],
+          "comparison": "LEAGUE_ENVIRONMENT_BASELINE",
+          "conditions": [],
+          "evidence_refs": [
+           "SUMMARY:HOME:ALL_PRIOR:ANY:corners_against",
+           "SUMMARY:AWAY:ALL_PRIOR:ANY:corners_for",
+           "SUMMARY:HOME:ALL_PRIOR:ANY:corners_for"
+          ],
+          "evidence_summary": "HOME_TEAM all-prior mean corners_against: 6.83 (n=71); HOME_TEAM all-prior mean corners_for: 3.66 (n=71); AWAY_TEAM all-prior mean corners_for: 4.89 (n=73).",
+          "hypothesis_id": "H005",
+          "priority": "HIGH",
+          "question": "Does HOME_TEAM concede corners at a substantially higher rate than AWAY_TEAM generates corners, and is HOME_TEAM's corner-against rate among the highest in the league environment?",
+          "required_capabilities": [
+           "target_fixture_venue_context"
+          ],
+          "research_family": "DEFENSIVE_CONCESSION",
+          "side": "AGAINST",
+          "subject": "HOME_TEAM",
+          "sufficiency": "SUFFICIENT",
+          "target_metrics": [
+           "corners"
+          ],
+          "window": "ALL_PRIOR"
+         },
+         {
+          "candidate_confounders": [
+           "historical_venue_conditioning",
+           "opponent_profile"
+          ],
+          "comparison": "SUBJECT_OVERALL_BASELINE",
+          "conditions": [],
+          "evidence_refs": [
+           "SUMMARY:AWAY:ALL_PRIOR:ANY:corners_for",
+           "SUMMARY:HOME:ALL_PRIOR:ANY:corners_against"
+          ],
+          "evidence_summary": "AWAY_TEAM all-prior mean corners_for: 4.89 (n=73); HOME_TEAM all-prior mean corners_against: 6.83 (n=71).",
+          "hypothesis_id": "H006",
+          "priority": "MEDIUM",
+          "question": "Does AWAY_TEAM generate corners at a rate that, when combined with HOME_TEAM's historically high corners-against rate, suggests an elevated set-piece volume environment for this fixture?",
+          "required_capabilities": [
+           "target_fixture_venue_context"
+          ],
+          "research_family": "SET_PIECE_GENERATION",
+          "side": "FOR",
+          "subject": "AWAY_TEAM",
+          "sufficiency": "SUFFICIENT",
+          "target_metrics": [
+           "corners"
+          ],
+          "window": "ALL_PRIOR"
+         },
+         {
+          "candidate_confounders": [
+           "opponent_profile",
+           "own_formation_family"
+          ],
+          "comparison": "SUBJECT_OVERALL_BASELINE",
+          "conditions": [],
+          "evidence_refs": [
+           "SUMMARY:HOME:ALL_PRIOR:ANY:possession_for",
+           "SUMMARY:HOME:ALL_PRIOR:ANY:clearances_for",
+           "SUMMARY:HOME:ALL_PRIOR:ANY:interceptions_for",
+           "SUMMARY:HOME:ALL_PRIOR:ANY:final_third_entries_for",
+           "SUMMARY:HOME:ALL_PRIOR:ANY:final_third_entries_against"
+          ],
+          "evidence_summary": "HOME_TEAM all-prior mean possession_for: 43.06% (n=71); clearances_for: 31.77 (n=71); interceptions_for: 9.51 (n=71); final_third_entries_for: 54.01 vs final_third_entries_against: 62.34 (n=71).",
+          "hypothesis_id": "H007",
+          "priority": "MEDIUM",
+          "question": "Does HOME_TEAM's all-prior possession deficit relative to opponents reflect a systematic low-possession defensive style, and does this style correlate with elevated clearances and interceptions?",
+          "required_capabilities": [
+           "target_fixture_venue_context"
+          ],
+          "research_family": "TEMPO_AND_TERRITORY",
+          "side": "FOR",
+          "subject": "HOME_TEAM",
+          "sufficiency": "SUFFICIENT",
+          "target_metrics": [
+           "possession",
+           "clearances",
+           "interceptions"
+          ],
+          "window": "ALL_PRIOR"
+         },
+         {
+          "candidate_confounders": [
+           "historical_venue_conditioning",
+           "opponent_profile",
+           "competition"
+          ],
+          "comparison": "LEAGUE_ENVIRONMENT_BASELINE",
+          "conditions": [],
+          "evidence_refs": [
+           "SUMMARY:AWAY:ALL_PRIOR:ANY:fouls_for",
+           "SUMMARY:HOME:ALL_PRIOR:ANY:fouls_for",
+           "SUMMARY:AWAY:ALL_PRIOR:ANY:yellow_cards_for",
+           "SUMMARY:HOME:ALL_PRIOR:ANY:yellow_cards_for"
+          ],
+          "evidence_summary": "AWAY_TEAM all-prior mean fouls_for: 12.12 (n=74), yellow_cards_for: 2.23 (n=70); HOME_TEAM all-prior mean fouls_for: 10.67 (n=70), yellow_cards_for: 1.82 (n=66).",
+          "hypothesis_id": "H008",
+          "priority": "MEDIUM",
+          "question": "Does AWAY_TEAM commit fouls at a higher rate than HOME_TEAM and than the league environment baseline, and does this elevated foul rate translate into a higher yellow-card rate?",
+          "required_capabilities": [
+           "target_fixture_venue_context"
+          ],
+          "research_family": "DISCIPLINE",
+          "side": "FOR",
+          "subject": "AWAY_TEAM",
+          "sufficiency": "SUFFICIENT",
+          "target_metrics": [
+           "fouls",
+           "yellow_cards"
+          ],
+          "window": "ALL_PRIOR"
+         },
+         {
+          "candidate_confounders": [
+           "historical_venue_conditioning",
+           "opponent_profile"
+          ],
+          "comparison": "SUBJECT_OVERALL_BASELINE",
+          "conditions": [],
+          "evidence_refs": [
+           "SUMMARY:AWAY:ALL_PRIOR:ANY:xg_against",
+           "SUMMARY:HOME:ALL_PRIOR:ANY:xg_for",
+           "SUMMARY:AWAY:ALL_PRIOR:ANY:shots_on_target_against",
+           "SUMMARY:AWAY:ALL_PRIOR:ANY:saves_for",
+           "SUMMARY:HOME:ALL_PRIOR:ANY:shots_on_target_for"
+          ],
+          "evidence_summary": "AWAY_TEAM all-prior mean xg_against: 1.2236 (n=75); HOME_TEAM all-prior mean xg_for: 0.9612 (n=72). AWAY_TEAM shots_on_target_against: 4.31 (n=74), saves_for: 2.97 (n=73); HOME_TEAM shots_on_target_for: 3.34 (n=71).",
+          "hypothesis_id": "H009",
+          "priority": "HIGH",
+          "question": "Does AWAY_TEAM's all-prior xG-against rate suggest it concedes lower-quality chances than HOME_TEAM generates, and is this gap consistent with AWAY_TEAM's shots-on-target-against and saves rates?",
+          "required_capabilities": [
+           "xg",
+           "target_fixture_venue_context"
+          ],
+          "research_family": "DEFENSIVE_SUPPRESSION",
+          "side": "AGAINST",
+          "subject": "AWAY_TEAM",
+          "sufficiency": "SUFFICIENT",
+          "target_metrics": [
+           "xg",
+           "shots_on_target",
+           "saves"
+          ],
+          "window": "ALL_PRIOR"
+         },
+         {
+          "candidate_confounders": [
+           "opponent_profile",
+           "historical_venue_conditioning"
+          ],
+          "comparison": "SUBJECT_OVERALL_BASELINE",
+          "conditions": [],
+          "evidence_refs": [
+           "SUMMARY:HOME:ALL_PRIOR:ANY:shots_inside_box_for",
+           "SUMMARY:HOME:ALL_PRIOR:ANY:total_shots_for",
+           "SUMMARY:HOME:ALL_PRIOR:ANY:big_chances_for",
+           "SUMMARY:AWAY:ALL_PRIOR:ANY:shots_inside_box_for",
+           "SUMMARY:AWAY:ALL_PRIOR:ANY:total_shots_for",
+           "SUMMARY:AWAY:ALL_PRIOR:ANY:big_chances_for"
+          ],
+          "evidence_summary": "HOME_TEAM all-prior mean shots_inside_box_for: 5.94, total_shots_for: 10.85, big_chances_for: 1.55 (n=66\u201371); AWAY_TEAM: shots_inside_box_for: 8.20, total_shots_for: 13.35, big_chances_for: 1.79 (n=73\u201374).",
+          "hypothesis_id": "H010",
+          "priority": "HIGH",
+          "question": "Does HOME_TEAM's ratio of shots inside the box to total shots indicate a lower-quality shot profile compared to AWAY_TEAM, and does this correlate with a lower big-chances rate?",
+          "required_capabilities": [
+           "target_fixture_venue_context"
+          ],
+          "research_family": "ATTACK_VOLUME",
+          "side": "FOR",
+          "subject": "HOME_TEAM",
+          "sufficiency": "SUFFICIENT",
+          "target_metrics": [
+           "shots_inside_box",
+           "total_shots",
+           "big_chances"
+          ],
+          "window": "ALL_PRIOR"
+         },
+         {
+          "candidate_confounders": [],
+          "comparison": "SUBJECT_RECENT_VS_LONG_BASELINE",
+          "conditions": [],
+          "evidence_refs": [
+           "AVAIL:recent_window_summaries",
+           "SUMMARY:HOME:ALL_PRIOR:ANY:total_shots_for",
+           "SUMMARY:HOME:ALL_PRIOR:ANY:goals_for"
+          ],
+          "evidence_summary": "AVAIL:recent_window_summaries is NOT_EXPOSED_IN_PACKET; only ALL_PRIOR summaries are present. HOME_TEAM all-prior mean total_shots_for: 10.85 (n=71), goals_for: 1.027 (n=74).",
+          "hypothesis_id": "H011",
+          "priority": "MEDIUM",
+          "question": "Is there sufficient short-window (W5/W10) evidence to test whether HOME_TEAM's recent attacking and defensive metrics deviate from their all-prior baseline?",
+          "required_capabilities": [
+           "recent_window_summaries"
+          ],
+          "research_family": "FORM_VS_BASELINE",
+          "side": "FOR",
+          "subject": "HOME_TEAM",
+          "sufficiency": "INSUFFICIENT_EVIDENCE",
+          "target_metrics": [
+           "total_shots",
+           "goals",
+           "shots_on_target"
+          ],
+          "window": "W5"
+         },
+         {
+          "candidate_confounders": [
+           "historical_venue_conditioning",
+           "opponent_profile"
+          ],
+          "comparison": "SUBJECT_OVERALL_BASELINE",
+          "conditions": [],
+          "evidence_refs": [
+           "SUMMARY:HOME:ALL_PRIOR:ANY:accurate_crosses_against",
+           "SUMMARY:AWAY:ALL_PRIOR:ANY:accurate_crosses_for",
+           "SUMMARY:HOME:ALL_PRIOR:ANY:accurate_crosses_for",
+           "SUMMARY:AWAY:ALL_PRIOR:ANY:accurate_crosses_against"
+          ],
+          "evidence_summary": "HOME_TEAM all-prior mean accurate_crosses_against: 5.04 (n=71), accurate_crosses_for: 3.21 (n=71); AWAY_TEAM all-prior mean accurate_crosses_for: 3.78 (n=74), accurate_crosses_against: 4.43 (n=74).",
+          "hypothesis_id": "H012",
+          "priority": "MEDIUM",
+          "question": "Does HOME_TEAM's all-prior accurate-crosses-against rate substantially exceed AWAY_TEAM's accurate-crosses-for rate, and does this suggest a structural vulnerability to wide delivery for HOME_TEAM?",
+          "required_capabilities": [
+           "target_fixture_venue_context"
+          ],
+          "research_family": "DEFENSIVE_CONCESSION",
+          "side": "AGAINST",
+          "subject": "HOME_TEAM",
+          "sufficiency": "SUFFICIENT",
+          "target_metrics": [
+           "accurate_crosses"
+          ],
+          "window": "ALL_PRIOR"
+         }
+        ],
+        "packet_hash": "e0fc417dc2d715ecabba5ae8d515b8ed3b71e67f32aeda1bdb5134be4aa0d9b9"
+       },
+       "name": "emit_hypotheses",
+       "toolUseId": "tooluse_9tlZTIiD7DKJPpzx8MEfmG",
+       "type": "tool_use"
+      }
+     }
+    ],
+    "role": "assistant"
+   }
+  },
+  "stopReason": "tool_use",
+  "usage": {
+   "cacheReadInputTokens": 0,
+   "cacheWriteInputTokens": 0,
+   "inputTokens": 17883,
+   "outputTokens": 4632,
+   "totalTokens": 22515
+  }
+ },
+ "seq": 17
+}

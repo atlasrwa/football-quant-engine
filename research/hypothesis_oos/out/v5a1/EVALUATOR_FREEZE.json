@@ -1,0 +1,38 @@
+{
+ "addendum_version": "v5a1_evaluator_freeze_v1",
+ "created_utc": "2026-09-14T20:18:41.794751+00:00",
+ "why_this_exists": "The V5A.1 preregistration froze the rubric CRITERIA and the PASS/MIXED/FAIL gate WORDING but shipped no evaluator implementation and no numeric threshold. Writing one after seeing responses would be the tuning the mandate forbids. It is therefore written, hashed and frozen HERE, before the first paid call. No response existed when this file was written; spend_usd_so_far was 0.0.",
+ "modifies_frozen_artifacts": false,
+ "spend_usd_at_freeze": 0.0,
+ "evaluator_module": "src/research/hypothesis_oos/v5a1_evaluator.py",
+ "evaluator_sha256": "2bdd2365502d52016db217cbc0e6c531632ec15ad9e631e9bb37853741bacf5d",
+ "version_stamp": {
+  "evaluator_version": "v5a1_evaluator_v1",
+  "primary_metric": "grounded_accepted_n",
+  "discipline_tolerance": 0.05,
+  "min_self_noise_floor": 0.5
+ },
+ "primary_metric": "grounded_accepted_n",
+ "primary_metric_definition": "count per call of hypotheses that are SUFFICIENT, accepted by validator_v3 (schema + identity + firewall + grounding + availability axis + packet admissibility), and not abstentions",
+ "thresholds": {
+  "DISCIPLINE_TOLERANCE": 0.05,
+  "MIN_SELF_NOISE_FLOOR": 0.5
+ },
+ "self_noise_definition": "pooled within-(fixture,arm) population standard deviation of the primary metric across the preregistered repeat calls; the floor actually used is max(pooled_sd, MIN_SELF_NOISE_FLOOR) so a degenerate zero spread cannot manufacture a PASS",
+ "gates": {
+  "FAIL_discipline": "research arm degrades compilability or firewall_clean_rate by more than 0.05, or raises fabricated_evidence_rate or unsupported_dimension_rate by more than 0.05",
+  "PASS": "mean paired (research - base) primary metric > self-noise floor AND no discipline degradation",
+  "FAIL_no_effect": "mean paired difference <= 0",
+  "MIXED": "mean paired difference positive but within the self-noise floor"
+ },
+ "frozen_artifact_hashes": {
+  "research/hypothesis_oos/out/v5a1/PREREGISTRATION.json": "02d19e84f498f90a98f908336ce63dda4469693a38d871184d3d1dcfb74985d1",
+  "research/hypothesis_oos/out/v5a1/ab_isolation_audit.json": "c636ca3592d10390788426683d678da3c30b652ac3ea7be627674ec4588f0d5d",
+  "research/hypothesis_oos/out/v5a1/evidence_id_audit.json": "1e946ec54bccf787144ce2559259df82e44c1addddabf973ff1793211e6cb9fb",
+  "research/hypothesis_oos/out/v5a1/exposure_audit.json": "8d51c235ac408a6b9d0f0e76ea83c63d06935d5c5649102ea0d72ca1a6817865",
+  "research/hypothesis_oos/out/v5a1/packets_base.json": "e321536a8bf8b161b0c28a49342cfc495e5647586bea0744bbcc6cbe47a4bae6",
+  "research/hypothesis_oos/out/v5a1/packets_research.json": "646f73e44703443300a7de9f5f2a0b7ee88c5b02c7c650ee1a445a8cae9ac3bf",
+  "research/hypothesis_oos/out/v5a1/section_position_audit.json": "0ea1d294f1dec3ec7b03d57e9f8cb34e48e787c19739a61d4a83398e2732555e"
+ },
+ "champion_sha256": "0b8f5ff3dc4ddf15363d17989330b6f010197265ce8d2ee892cdc7ca410c00c9"
+}

@@ -1,0 +1,502 @@
+{
+ "preregistration_version": "v5a1_full_fidelity_interface_prereg_v1",
+ "experiment": "V5A.1_FULL_FIDELITY_EVIDENCE_INTERFACE",
+ "spend_usd_so_far": 0.0,
+ "V5A_PREVIOUS_VERSION": "ABORTED_PRE_SPEND",
+ "v5a_abort_reasons": [
+  "Arm B evidence references incompatible with shared validator/firewall",
+  "A/B comparison not isolated to evidence representation",
+  "shared prompt invited unavailable dimensions",
+  "raw rows buried behind summary volume",
+  "opponent-profile semantics ambiguous",
+  "match alias collisions",
+  "unresolved xG/npxG semantic conflict"
+ ],
+ "v5a_artifacts_preserved_unchanged": "research/hypothesis_oos/out/v5a/",
+ "governing_architecture": "LLM = research-question layer only. No LLM -> p_model path, no coefficients, no probabilities. The deterministic engine computes every effect; OOS validation decides generalisation; the quant model alone owns probabilities.",
+ "arms": {
+  "base": "shared long-run evidence only: ALL_PRIOR/venue=ANY summaries over the FULL PIT-safe history, formation coverage, availability map, metric semantics, fixture context",
+  "research": "EXACTLY the base evidence (identical evidence_ids and values) PLUS match-level rows, W5/W10 summaries, venue-split summaries and opponent-profile response summaries"
+ },
+ "treatment_definition": "research = base + additional exposed evidence. Proven per fixture in ab_isolation_audit.json, not asserted.",
+ "shared_stack": {
+  "model_id": "us.anthropic.claude-sonnet-4-6",
+  "temperature": 0.0,
+  "max_tokens": 8192,
+  "system_prompt": "IDENTICAL, capability-driven, promises no section",
+  "schema": "schema_v2 (frozen, unmodified)",
+  "schema_content_hash": "7879c6ad5a2ba9265f69a4e7e808d6bfd53144a7348d5788d2676b8135e86077",
+  "validator": "validator_v3 (arm-neutral evidence resolution)",
+  "firewall": "firewall_v3 (arm-neutral evidence provenance)",
+  "compiler": "query_plan.compile_hypothesis (frozen, unmodified)",
+  "evidence_interface": "evidence_interface_v1",
+  "evidence_id_format": "identical in both arms",
+  "admissibility": "v5a1_admissibility_v1",
+  "aliases": "HOME_TEAM/AWAY_TEAM/COMPETITION/OPP_nnn/COMP_nnn",
+  "max_hypotheses": 12,
+  "baseline_universe": "ALL_PIT_SAFE_PRIOR_MATCHES_UNCAPPED",
+  "summary_estimator": "UNSHRUNK_ARITHMETIC_MEAN",
+  "only_exposed_evidence_differs": true
+ },
+ "history_policy": {
+  "baseline_universe": "ALL_PIT_SAFE_PRIOR_MATCHES_UNCAPPED",
+  "summaries": "ALL_PRIOR summaries in BOTH arms aggregate every PIT-safe prior match, uncapped and identical across arms",
+  "raw_rows": "the most recent 30 matches are serialized as rows in the research arm, for prompt size only; this bounds ROW VISIBILITY, never the baseline population",
+  "min_prior_matches_per_team": 6
+ },
+ "paired_fixtures": [
+  "mt_010243515",
+  "mt_010243537",
+  "mt_010243938",
+  "mt_010244159",
+  "mt_010244193",
+  "mt_010441320",
+  "mt_010441491",
+  "mt_010444904",
+  "mt_012232295",
+  "mt_012232411"
+ ],
+ "provider_semantics": {
+  "version": "provider_semantics_v1",
+  "provider": "thestatsapi",
+  "canonical_metrics": [
+   "accurate_crosses",
+   "big_chances",
+   "blocked_shots",
+   "clearances",
+   "corners",
+   "final_third_entries",
+   "fouls",
+   "goals",
+   "interceptions",
+   "offsides",
+   "possession",
+   "red_cards",
+   "saves",
+   "shots_inside_box",
+   "shots_off_target",
+   "shots_on_target",
+   "shots_outside_box",
+   "tackles",
+   "throw_ins",
+   "total_shots",
+   "touches_in_box",
+   "xg",
+   "yellow_cards"
+  ],
+  "excluded_metrics": {
+   "npxg": {
+    "excluded_because": "PROVIDER_SOURCE_INCONSISTENCY",
+    "detail": "np_expected_goals and overview.expected_goals both come from TheStatsAPI, and the intended relationship (npxG = xG minus penalty xG) is confirmed by the raw data: 2214/3242 pairs are exactly equal (no penalty), 182 differ by ~0.8 (one penalty) and 6 by ~1.6 (two). But 511/3242 pairs (15.8%) have npxG GREATER than xG, by up to 0.99, which that relationship makes impossible. The error distribution is smooth rather than penalty-shaped, indicating two independently-maintained provider estimates rather than a derived pair. The corpus carries no penalty or penalty-xG field, so npxG cannot be recomputed from xG. Per the V5A.1 mandate, a metric whose cell-level semantics cannot be confidently validated is excluded rather than exposed with a caveat.",
+    "repairable_by": "a provider penalty-xG field, or a single reconciled xG feed"
+   },
+   "dangerous_attacks": {
+    "excluded_because": "SEMANTIC_CONFLICT_NO_CANONICAL_MAPPING",
+    "detail": "The corpus carries only touches_in_penalty_area as a proxy. There is no validated mapping from that proxy to the FootyStats 'dangerous attacks' concept, so exposing it under that name would be a false canonical metric created by name matching. touches_in_box IS exposed, under its own name.",
+    "repairable_by": "a provider field with a documented dangerous-attacks definition"
+   },
+   "attacks": {
+    "excluded_because": "NOT_PROVIDED_BY_SOURCE",
+    "detail": "No field in either audited corpus supplies it.",
+    "repairable_by": "a provenance-tracked provider field"
+   },
+   "total_bookings": {
+    "excluded_because": "DERIVED_NOT_OBSERVED",
+    "detail": "Would be yellow_cards + red_cards, but red_cards carries a null-coerced-to-zero policy and a second yellow is double-counted, so the sum is not a clean observation. Both components are exposed separately instead.",
+    "repairable_by": "a provider bookings field, or a red-card null policy fix"
+   }
+  },
+  "xg_npxg_resolution": "npxg EXCLUDED (provider-source inconsistency, 15.8% of raw pairs violate npxG <= xG and no penalty field exists to recompute it); xg EXPOSED with coverage declared"
+ },
+ "opponent_profile": {
+  "method": "RANK_BAND_TERCILE_v5a1",
+  "directions": [
+   "ATK_VS_DEFSIM",
+   "DEF_VS_ATKSIM"
+  ],
+  "direction_meaning": {
+   "ATK_VS_DEFSIM": "the subject's ATTACKING output against past opponents whose DEFENSIVE profile resembles the upcoming opponent's",
+   "DEF_VS_ATKSIM": "what the subject CONCEDED against past opponents whose ATTACKING profile resembles the upcoming opponent's"
+  },
+  "defensive_axes": [
+   "shots_on_target_against",
+   "goals_against"
+  ],
+  "offensive_axes": [
+   "shots_on_target_for",
+   "goals_for"
+  ],
+  "response_metrics": [
+   "total_shots",
+   "shots_on_target",
+   "corners",
+   "big_chances",
+   "touches_in_box",
+   "accurate_crosses",
+   "xg",
+   "goals"
+  ],
+  "min_cohort_n": 3,
+  "status": "DESCRIPTIVE_HISTORICAL_EVIDENCE_ONLY"
+ },
+ "request_manifest": {
+  "model_id": "us.anthropic.claude-sonnet-4-6",
+  "temperature": 0.0,
+  "max_tokens": 8192,
+  "prompt_version": "v5a1_prompt_v1",
+  "schema_version": "hypothesis_set_schema_v2",
+  "schema_content_hash": "7879c6ad5a2ba9265f69a4e7e808d6bfd53144a7348d5788d2676b8135e86077",
+  "system_prompt_sha256": "ed127afc8a76d52bfa9ea82d741485725d95c1a827e8d7a7e55ff0b781e2b978",
+  "system_prompt_identical_across_arms": true,
+  "calls": [
+   {
+    "fixture_id": "mt_010243515",
+    "arm_internal": "base",
+    "n_calls": 4,
+    "repeatability_calls": 3,
+    "payload_bytes": 35237,
+    "request_bytes": 38600,
+    "est_input_tokens": 21075,
+    "packet_hash": "3f8e870a6e86bf730c0839d0a3978da392cf786210f18c8f2f83555f9246660c",
+    "serialized_request_sha256": "2a0dda2d706eff78eb6af48950e6b05d0e6ac3682d9681d649ca049847b5d739",
+    "valid_evidence_ids": 109
+   },
+   {
+    "fixture_id": "mt_010243515",
+    "arm_internal": "research",
+    "n_calls": 4,
+    "repeatability_calls": 3,
+    "payload_bytes": 130873,
+    "request_bytes": 134236,
+    "est_input_tokens": 73292,
+    "packet_hash": "8752ba1b1d05f3d02e4885090b0a34832813207139f4afbbe98ce0c04de582bf",
+    "serialized_request_sha256": "47e6e85da8d725b93f60228f7b920d8b3d8e871ce9ea47dbb1c7fb6cf00a2662",
+    "valid_evidence_ids": 3361
+   },
+   {
+    "fixture_id": "mt_010243537",
+    "arm_internal": "base",
+    "n_calls": 4,
+    "repeatability_calls": 3,
+    "payload_bytes": 35341,
+    "request_bytes": 38704,
+    "est_input_tokens": 21132,
+    "packet_hash": "c2c9015b892cd3c517de5f299fc93fb1a3edfdbcc644302ff8666a9f55f8f077",
+    "serialized_request_sha256": "1e3a95e9be2659ef1309075e0f6e082321f71eb70c724d3c78fb07303f4595a9",
+    "valid_evidence_ids": 109
+   },
+   {
+    "fixture_id": "mt_010243537",
+    "arm_internal": "research",
+    "n_calls": 4,
+    "repeatability_calls": 3,
+    "payload_bytes": 131102,
+    "request_bytes": 134465,
+    "est_input_tokens": 73417,
+    "packet_hash": "61266b46851d373c1ac599ebce49ae1c69ef18b586aeb7508761cdc768779b1b",
+    "serialized_request_sha256": "9a81bca2d510ca4138eb85d82325b98c60eaaefbd109fca60fa85e4c85837675",
+    "valid_evidence_ids": 3361
+   },
+   {
+    "fixture_id": "mt_010243938",
+    "arm_internal": "base",
+    "n_calls": 4,
+    "repeatability_calls": 3,
+    "payload_bytes": 35369,
+    "request_bytes": 38732,
+    "est_input_tokens": 21147,
+    "packet_hash": "69958397e51397ff47102e1f29d4721ad6ef59220f19d0e0f389a1ba42ac3182",
+    "serialized_request_sha256": "50034b4ec55b985c66c5f2020c4e3689d0797071bf56e0fea7cee075f845a73a",
+    "valid_evidence_ids": 109
+   },
+   {
+    "fixture_id": "mt_010243938",
+    "arm_internal": "research",
+    "n_calls": 4,
+    "repeatability_calls": 3,
+    "payload_bytes": 131443,
+    "request_bytes": 134806,
+    "est_input_tokens": 73604,
+    "packet_hash": "7399151dae382cf8f35e3c15125d3c5fd2edcc96c6fef438415983e08e43901f",
+    "serialized_request_sha256": "f2d357133301e1133705ddd31bdc206f9cc3be276ceac5bec4159dfb2fefcb2d",
+    "valid_evidence_ids": 3361
+   },
+   {
+    "fixture_id": "mt_010244159",
+    "arm_internal": "base",
+    "n_calls": 1,
+    "repeatability_calls": 0,
+    "payload_bytes": 35385,
+    "request_bytes": 38748,
+    "est_input_tokens": 21156,
+    "packet_hash": "2332b424a1e919f11e149cdcb61e813b4eb66c66f6eb92e8df4a981724255d26",
+    "serialized_request_sha256": "c7b69415c7c9ab0db7f44a9666908d1f978a0073c4941a8bca07185b5dcd198d",
+    "valid_evidence_ids": 109
+   },
+   {
+    "fixture_id": "mt_010244159",
+    "arm_internal": "research",
+    "n_calls": 1,
+    "repeatability_calls": 0,
+    "payload_bytes": 131456,
+    "request_bytes": 134819,
+    "est_input_tokens": 73611,
+    "packet_hash": "4acf5da543e289d6bea9ce0f44a8ef565761cb53c4500208c3e8355a3a326096",
+    "serialized_request_sha256": "f6e2ee6107c1691ccbe9b283435652b2b534b6cc5b178737c1b05dda2971ab40",
+    "valid_evidence_ids": 3361
+   },
+   {
+    "fixture_id": "mt_010244193",
+    "arm_internal": "base",
+    "n_calls": 1,
+    "repeatability_calls": 0,
+    "payload_bytes": 35394,
+    "request_bytes": 38757,
+    "est_input_tokens": 21161,
+    "packet_hash": "5124eee9e7f16dac95efd4b834f1356894cfd0999a762c643b223b8c30c42f88",
+    "serialized_request_sha256": "f7b5afca55a5aa86c94f41e9f101bff8c4d8aa606ba13193b8b73664c252e533",
+    "valid_evidence_ids": 109
+   },
+   {
+    "fixture_id": "mt_010244193",
+    "arm_internal": "research",
+    "n_calls": 1,
+    "repeatability_calls": 0,
+    "payload_bytes": 131385,
+    "request_bytes": 134748,
+    "est_input_tokens": 73572,
+    "packet_hash": "361ecd80ccf32d8a4037ef35b37d99590fc1dc2d8d271fd45f8147d78398de29",
+    "serialized_request_sha256": "ae2601e31f2e6795b193aff5e4f15c0cda28c2e40397d7d6636515dc6fe3f970",
+    "valid_evidence_ids": 3361
+   },
+   {
+    "fixture_id": "mt_010441320",
+    "arm_internal": "base",
+    "n_calls": 1,
+    "repeatability_calls": 0,
+    "payload_bytes": 35382,
+    "request_bytes": 38745,
+    "est_input_tokens": 21154,
+    "packet_hash": "86ec1b9f12ace0e157322c32f296c2b1f1a8b6e7892fa4bfafcc776df5c8fdab",
+    "serialized_request_sha256": "1ed3148592bbd1400c928905c07c7b242457fc8651a75852a3ead2121191fba9",
+    "valid_evidence_ids": 109
+   },
+   {
+    "fixture_id": "mt_010441320",
+    "arm_internal": "research",
+    "n_calls": 1,
+    "repeatability_calls": 0,
+    "payload_bytes": 131422,
+    "request_bytes": 134785,
+    "est_input_tokens": 73592,
+    "packet_hash": "79fd7997bf0759fa7e07e1db65092e95137114000f26434a56804707c1d81ac6",
+    "serialized_request_sha256": "350f6595e0a90b821ba4965bb5e87b3c03d5368d7444a97a68393f0905488be3",
+    "valid_evidence_ids": 3361
+   },
+   {
+    "fixture_id": "mt_010441491",
+    "arm_internal": "base",
+    "n_calls": 1,
+    "repeatability_calls": 0,
+    "payload_bytes": 35384,
+    "request_bytes": 38747,
+    "est_input_tokens": 21155,
+    "packet_hash": "91a0b9c9e6c0c7d9dabdc55a1cec06465a8e8dc3c0ad7e6ed658e785fe834e07",
+    "serialized_request_sha256": "287873d253aa73bb646d6d0731976d78fc6431a12c19076fb44c1f55e101ca96",
+    "valid_evidence_ids": 109
+   },
+   {
+    "fixture_id": "mt_010441491",
+    "arm_internal": "research",
+    "n_calls": 1,
+    "repeatability_calls": 0,
+    "payload_bytes": 131706,
+    "request_bytes": 135069,
+    "est_input_tokens": 73747,
+    "packet_hash": "1d0f4cf9e5e81661f92bf8ae59650086102f13691623397f0673c2a4364840f6",
+    "serialized_request_sha256": "65c690a72c99caca01add4108276b4980f0e2924b7d234aece1cadc5823151af",
+    "valid_evidence_ids": 3361
+   },
+   {
+    "fixture_id": "mt_010444904",
+    "arm_internal": "base",
+    "n_calls": 1,
+    "repeatability_calls": 0,
+    "payload_bytes": 35494,
+    "request_bytes": 38857,
+    "est_input_tokens": 21215,
+    "packet_hash": "39ce3fbb73ddd3c3553330cfaed2127ee44aeca60f66e5bbfafd38e75d4c717c",
+    "serialized_request_sha256": "9c927c8e480e7fb58fe5c99b3bf631e423740fbc54c0ad8d64c4d59a06b82b58",
+    "valid_evidence_ids": 109
+   },
+   {
+    "fixture_id": "mt_010444904",
+    "arm_internal": "research",
+    "n_calls": 1,
+    "repeatability_calls": 0,
+    "payload_bytes": 119746,
+    "request_bytes": 123109,
+    "est_input_tokens": 67217,
+    "packet_hash": "182c94c9c07994d9f36fb5be43f8e86b129f4079a896a00d23af1ccd73a15eac",
+    "serialized_request_sha256": "bed0e8d1bbce40044ae9d9a8f9c09002c7a509e865b45377c29bccac34a5047a",
+    "valid_evidence_ids": 2601
+   },
+   {
+    "fixture_id": "mt_012232295",
+    "arm_internal": "base",
+    "n_calls": 1,
+    "repeatability_calls": 0,
+    "payload_bytes": 35337,
+    "request_bytes": 38700,
+    "est_input_tokens": 21130,
+    "packet_hash": "3b98fd2ca8620c1f7a3e9838600296b68bac5ac9ff86248f1f558c125be2b2b3",
+    "serialized_request_sha256": "8bbe8858f0185ec5c79ad1ca890f6a04b949e775955482a03b68e1eb82d8dde1",
+    "valid_evidence_ids": 109
+   },
+   {
+    "fixture_id": "mt_012232295",
+    "arm_internal": "research",
+    "n_calls": 1,
+    "repeatability_calls": 0,
+    "payload_bytes": 129364,
+    "request_bytes": 132727,
+    "est_input_tokens": 72468,
+    "packet_hash": "71116ea618b59bc1a560a79dcb6c5bef0eaded0592d2b3aa992e644e14758436",
+    "serialized_request_sha256": "7a817087fde86d76ec361638492660a3d1cb8c6e2515688d42cba412b9265b6f",
+    "valid_evidence_ids": 3343
+   },
+   {
+    "fixture_id": "mt_012232411",
+    "arm_internal": "base",
+    "n_calls": 1,
+    "repeatability_calls": 0,
+    "payload_bytes": 35092,
+    "request_bytes": 38455,
+    "est_input_tokens": 20996,
+    "packet_hash": "20fad9f4034d3d74076de88a59e4c2c0ff40aaff258a137563faa080505bd41a",
+    "serialized_request_sha256": "0739456c550cfefe2a4f298fec6f96d30dec46d41276e8d7985a732d846ecd65",
+    "valid_evidence_ids": 107
+   },
+   {
+    "fixture_id": "mt_012232411",
+    "arm_internal": "research",
+    "n_calls": 1,
+    "repeatability_calls": 0,
+    "payload_bytes": 124509,
+    "request_bytes": 127872,
+    "est_input_tokens": 69818,
+    "packet_hash": "8ec0559cac2877668e3401836c59d8dc2aa539f5b1ae0f75d1a98de6207bcf95",
+    "serialized_request_sha256": "d2c11de38efaf4f87fbdafa25342b14c7613dcc162c47b97f6b23746cce3ad58",
+    "valid_evidence_ids": 3054
+   }
+  ]
+ },
+ "cost_model": {
+  "calibration": {
+   "tokens_per_byte": 0.546,
+   "source": "V3 observed 21457 input tokens / 39297 payload bytes",
+   "note": "computed from the ACTUAL frozen serialized requests, not reused from the aborted V5A estimate"
+  },
+  "n_calls_total": 38,
+  "n_base_calls": 20,
+  "n_repeatability_extra_calls": 18,
+  "total_input_bytes": 3272310,
+  "total_input_tokens_est": 1786660,
+  "total_output_tokens_mean": 97888,
+  "total_output_tokens_p90": 121410,
+  "total_output_tokens_max": 155648,
+  "price_in_per_1k": 0.003,
+  "price_out_per_1k": 0.015,
+  "expected_cost_usd": 6.8283,
+  "p90_cost_usd": 7.1811,
+  "hard_ceiling_usd": 7.6947
+ },
+ "evaluation_rubric": {
+  "note": "Success is NOT more hypotheses, more conditions, more tokens or more varied wording. Scored on:",
+  "criteria": [
+   "grounded_acceptance_rate",
+   "compilability",
+   "valid_evidence_reference_rate",
+   "fabricated_evidence_rate",
+   "unsupported_dimension_use_rate",
+   "meaningful_conditionality",
+   "meaningful_interaction_rate",
+   "context_utilization_conditional_on_availability",
+   "baseline_diversity",
+   "metric_family_diversity",
+   "redundancy_rate",
+   "formation_restraint",
+   "evidence_specificity",
+   "self_noise",
+   "within_fixture_research_minus_base_difference"
+  ]
+ },
+ "primary_outcome": "Does the research arm increase the production of grounded, non-degenerate, deterministically measurable, contextually justified research hypotheses beyond repeatability noise, without materially degrading discipline?",
+ "availability_aware_denominators": "A dimension is scored only where it is EXPOSED. The base arm is never penalised for not using evidence it was truthfully told it does not have, and the research arm is never rewarded for merely mentioning a dimension: use must be grounded in a resolvable evidence_id.",
+ "repeatability": {
+  "fixtures": [
+   "mt_010243515",
+   "mt_010243537",
+   "mt_010243938"
+  ],
+  "repeats_per_arm": 3,
+  "purpose": "self-noise floor; the A-vs-B difference is interpreted relative to it"
+ },
+ "stop_rules": [
+  "PIT leakage",
+  "target-fixture leakage",
+  "future data",
+  "hash mismatch",
+  "unexplained metric omission",
+  "provenance failure",
+  "semantic conflict",
+  "serialization truncation",
+  "duplicate evidence id",
+  "arm label visible",
+  "availability declaration untruthful",
+  "valid_evidence_ids == 0 for any packet",
+  "schema-invalid rate > 0.30",
+  "transport failure > 3 consecutive",
+  "cost ceiling exceeded"
+ ],
+ "verdict_gates": {
+  "PASS": "The research arm shows materially higher grounded, availability-appropriate evidence use than the base arm, at equal or better compilability and firewall-clean rate, with the difference above the measured self-noise floor.",
+  "MIXED": "Improvement on some dimensions but not others, or within self-noise.",
+  "FAIL": "No material grounded-use improvement, or degraded compilability or firewall cleanliness."
+ },
+ "downstream_boundary": "V5A.1 stops at hypothesis-generation evaluation. No predictive coefficients, no candidate features, no OOS search, no shrinkage tuning, no thresholds, no prospective betting. A PASS triggers a SEPARATE preregistered stage.",
+ "module_hashes": {
+  "src/research/hypothesis_oos/v5a1_evidence.py": "a0c695e6f9e209e2a7bfae89c7dee720b253b1888d68d3a2aa68cee23da84ece",
+  "src/research/hypothesis_oos/v5a1_semantics.py": "d7acd522f90eb1a42f7abee616efa8c107233cfbeb6e24274b013b2a0df19dd3",
+  "src/research/hypothesis_oos/v5a1_packet.py": "fb3309f977f955a6160b0231c6342079fd39a461ccdd1478673ac2b0e3afdf0a",
+  "src/research/hypothesis_oos/v5a1_prompt.py": "a60e12df4176b31de92b59748f0e597cc08ffbf1ea1a8b76041cb0221efdb951",
+  "src/research/hypothesis_oos/v5a1_admissibility.py": "128502e9f7339f09c91170f2fd03e112ae2deb39b43c651d143d73261460ec24",
+  "src/research/hypothesis_oos/v5a1_ontology.py": "f98338c352401be7722c2e135e9aa23a7347e822158066a31d32dd8b07abd284",
+  "src/research/hypothesis_engine/validator_v3.py": "c6c751c699c4df18eb413a524499db9c00e199be667e78c12c43605fb3b85a94",
+  "src/research/hypothesis_engine/firewall_v3.py": "88aed365191568e75ed8ad31a4a700fcbfb7b79fd583b2b44d8e49c44d35631d",
+  "src/research/hypothesis_engine/schema_v2.py": "a9f96e19c52aa7fd8d5df42ee9051b57429c581837b7b161eb1172fd68522718",
+  "src/research/hypothesis_engine/validator_v2.py": "2a2dc4e68daa76974b8656125f469427b2291a129e3674a6fafe9fdf2be4c284",
+  "src/research/hypothesis_engine/firewall_v2.py": "400e89b9ecf79e322a3efb661fd5c26a2e5cb087ba0cfd4e3ad3768a7ab94d48",
+  "src/research/hypothesis_engine/query_plan.py": "184991835110d940819dcf35375d025876ed10c2df1fee94d1f10861d3f8826c",
+  "src/research/hypothesis_engine/vocabulary.py": "ba123f798a404911f62557ed1cb4c985046f9e480375d40ef04e5ffd797a7f0d",
+  "src/research/hypothesis_engine/availability.py": "f485cda74cf7d17b09a08ca35e9dd1eb14b288b546cbd535252f1e93e97bcdf5",
+  "src/research/hypothesis_engine/corpus_adapter.py": "5c6cb2c770b2734b4ae032b3cbd96ec374b40bece942875a574ba2b3bad28b37",
+  "research/hypothesis_engine/_build_v5a1.py": "8f8f18e17f57fa122a029185d318a6dc7e230fdaf1052eb01e3c257a45f13ab0",
+  "research/hypothesis_engine/_freeze_v5a1.py": "6af27d41c4873eacb2a9f75879410d58d0ae9db6e5f15149ec609e173fc13985"
+ },
+ "frozen_v5a_modules_unchanged": {
+  "src/research/hypothesis_engine/schema_v2.py": true,
+  "src/research/hypothesis_engine/validator_v2.py": true,
+  "src/research/hypothesis_engine/firewall_v2.py": true,
+  "src/research/hypothesis_engine/query_plan.py": true,
+  "src/research/hypothesis_engine/vocabulary.py": true,
+  "src/research/hypothesis_engine/corpus_adapter.py": true
+ },
+ "champion_protection": {
+  "artifact": "/home/ubuntu/data/discovery/pilotC_stat_mixer.json",
+  "frozen_sha256": "0b8f5ff3dc4ddf15363d17989330b6f010197265ce8d2ee892cdc7ca410c00c9",
+  "current_sha256": "0b8f5ff3dc4ddf15363d17989330b6f010197265ce8d2ee892cdc7ca410c00c9",
+  "read_only": true,
+  "auto_promotion": false
+ }
+}

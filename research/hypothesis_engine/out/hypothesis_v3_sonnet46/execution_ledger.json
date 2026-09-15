@@ -1,0 +1,61 @@
+{
+  "actual_to_chars4_ratio": 1.5588,
+  "attempted_calls_this_process": 44,
+  "battery_hash": "6e70d6e5c6962058e78ba44b79aad0919a78ff540f3bfb158f1c382d786c414b",
+  "cache_hits": 0,
+  "ceiling_usd": 10.3694,
+  "completed_calls": 56,
+  "cost_usd_from_actual_tokens": 5.462,
+  "estimated_input_tokens_chars4": 729515,
+  "experiment_id": "SONNET46_HYPOTHESIS_V3",
+  "frozen_calibration_factor": 1.5938,
+  "inference_config_sent": {
+    "maxTokens": 8192,
+    "temperature": 0.0
+  },
+  "infrastructure_censored_calls": 0,
+  "input_tokens": 1137193,
+  "manifest_hash": "cfd9244067c9dc0ca18140f1d02460e9833b1df820cff7070713df6f6f8cce3f",
+  "model_id": "us.anthropic.claude-sonnet-4-6",
+  "output_tokens": 136695,
+  "planned_calls": 56,
+  "price_per_1k_input_usd": 0.003,
+  "price_per_1k_output_usd": 0.015,
+  "prompt_content_hash": "821e48ea5d98049b9d7e058ca543463467c3d94ad6f46255f68bb7b2d933509c",
+  "remaining_under_ceiling_usd": 4.9074,
+  "retries": 0,
+  "retry_policy": "ZERO retries; retry semantics were not frozen.",
+  "schema_content_hash": "7879c6ad5a2ba9265f69a4e7e808d6bfd53144a7348d5788d2676b8135e86077",
+  "schema_invalid_calls": 0,
+  "schema_invalid_rate": 0.0,
+  "spend_ceiling_reached": false,
+  "stop_rule": {
+    "checkpoints_after_call_number": [
+      12,
+      24,
+      36,
+      48,
+      56
+    ],
+    "denominator_definition": "completed calls so far, in frozen seq order, across every control arm",
+    "metric": "n_schema_rejected / n_completed",
+    "minimum_n_before_evaluation": 12,
+    "name": "WHOLE_RESPONSE_SCHEMA_REJECTION_STOP",
+    "numerator_definition": "completed calls whose whole-response failure is EXACTLY 'SCHEMA_INVALID'. A NUMERICAL_AUTHORITY_VIOLATION, a LATENT_GRADING_VIOLATION or a per-hypothesis rejection does NOT count: those are discipline results the experiment exists to measure, and halting on them would destroy the measurement.",
+    "on_trip": [
+      "STOP inference immediately; issue no further calls",
+      "PRESERVE every completed call, its raw response and its provenance",
+      "WRITE the execution ledger with stop_triggered=true and the tripping checkpoint",
+      "DECLARE SONNET46_HYPOTHESIS_V3 = INFRASTRUCTURE_OR_PROMPT_FAILURE",
+      "DO NOT salvage, repair or partially accept any malformed response",
+      "DO NOT compute a PASS/MIXED/FAIL verdict from the partial battery",
+      "DO NOT alter the schema, prompt or contract and resume under this experiment id; a changed contract is a different experiment and requires a new experiment id"
+    ],
+    "threshold": 0.25,
+    "threshold_direction": ">=",
+    "threshold_rationale": "0.25 is the documented historical base rate: 16 of the 64 frozen V2 responses carry at least one contract-invalid condition and would be whole-rejected under schema-v2. V3's model is SHOWN the closed enum in its tool spec, so 0.25 is exactly the 'no better than V2' line. Reaching it means contract exposure did not work, which is an infrastructure/prompt failure rather than a result about the model's research ability."
+  },
+  "stop_rule_detail": null,
+  "stop_rule_triggered": false,
+  "total_tokens": 1273888
+}
