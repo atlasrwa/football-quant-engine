@@ -1,0 +1,63 @@
+{
+ "attrition_ladder_llm": {
+  "adequate_support": null,
+  "attrition_reasons_preserved": true,
+  "canonical": 132,
+  "measurable": 53,
+  "oos_stage_computed": false,
+  "oos_survives": null
+ },
+ "attrition_ladder_null": {
+  "adequate_support": null,
+  "attrition_reasons_preserved": true,
+  "canonical": 1980,
+  "measurable": 1167,
+  "oos_stage_computed": false,
+  "oos_survives": null
+ },
+ "comparability_verdict": {
+  "control_b_comparable": true,
+  "depends_on_effect": false,
+  "evaluated_before_oos": true,
+  "reasons": [
+   "structural comparability defensible"
+  ],
+  "thresholds_frozen_before_crosstab": true
+ },
+ "confirmatory_oos_computed": false,
+ "definition": {
+  "denominator": "families passing BOTH gates, on both sides, by the same frozen rules",
+  "design": "frozen outcome-blind covariate matching/weighting (see matching.py); one LLM family <-> weighted control set with total control weight 1",
+  "eligibility": [
+   "MEASURABLE",
+   "ADEQUATE_SUPPORT"
+  ],
+  "eligibility_applied_symmetrically": true,
+  "endpoint_id": "CONDITIONAL_SIGNAL_QUALITY",
+  "excludes_unmeasurable": true,
+  "no_comparable_control_handling": "families with no credible control analogue are reported as NO_COMPARABLE_CONTROL and excluded from the matched statistic, never force-matched",
+  "primary_statistic": "OOS_QUALITY_SCORE_DIFFERENCE",
+  "primary_statistic_definition": "mean difference in the continuous, pre-specified OOS_QUALITY_SCORE between each LLM family and its weighted control set, averaged over matched LLM families with equal weight per family. Continuous is preferred to a binary survival indicator so no information is discarded at an arbitrary threshold.",
+  "question": "Conditional on being measurable and adequately supported, do the LLM's hypotheses carry better OOS football information than a structurally comparable generic null?",
+  "secondary_statistics": [
+   "OOS_SURVIVES_RATE_DIFFERENCE",
+   "FOLD_DIRECTION_STABILITY",
+   "SHRINKAGE_ADJUSTED_EFFECT_QUALITY"
+  ],
+  "uncertainty": "cluster bootstrap over matched sets, clustered additionally by (metric_family, primary_metric); never naive binomial SEs over the pooled control count"
+ },
+ "n_llm_eligible": 53,
+ "n_null_eligible": 6056,
+ "primary_statistic_definition": {
+  "components": [
+   "shrinkage_adjusted_standardized_effect_per_fold",
+   "fold_direction_agreement_rate"
+  ],
+  "computed_by": "deterministic statistical engine",
+  "definition": "mean over confirmatory folds of the sign-consistent, shrinkage-adjusted standardized effect, multiplied by the fold direction-agreement rate; a family whose sign reverses across folds is pulled toward 0 by construction rather than by a post-hoc rule",
+  "frozen_before_oos": true,
+  "llm_involvement": "none",
+  "name": "OOS_QUALITY_SCORE",
+  "range": "[-1, 1]"
+ }
+}

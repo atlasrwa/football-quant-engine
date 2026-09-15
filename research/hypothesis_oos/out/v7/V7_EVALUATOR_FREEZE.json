@@ -1,0 +1,609 @@
+{
+ "computes_confirmatory_oos": false,
+ "evaluator_version": "v7_evaluator_v1",
+ "frozen_before_confirmatory_oos": true,
+ "module_hashes": {
+  "src/research/hypothesis_v7/__init__.py": "5b10f6016ed4099085c10d0ecf46334252b99553b18382314f9b8b9c389c5729",
+  "src/research/hypothesis_v7/analysis_spec.py": "a75922900f172f7b5823562b5da786279068e9e28480918bfbf9ed61a4963e80",
+  "src/research/hypothesis_v7/canonical.py": "9f51883fd812609fc402727960745dcdf8349a21c60c9fd98ce29257f35ae14e",
+  "src/research/hypothesis_v7/covariates.py": "985464b1e4af517b80586a92e519caccd7d966fa35513810310804d1dc1d90dd",
+  "src/research/hypothesis_v7/coverage.py": "4680dab9a4b8486f3e2aab17fcaf2ec60124b57aad1c8809a5b49ed01465b37c",
+  "src/research/hypothesis_v7/endpoints.py": "a5d7b7643601252564d2edbe8a0ca2b1f482cd345a8cb36339af9c752591e5e5",
+  "src/research/hypothesis_v7/leakage.py": "c62834c030364ec9d161a0efe6146b1d6dee5d6bfd68f8e721e5f8f1e095165a",
+  "src/research/hypothesis_v7/matching.py": "4da1a88496929ecbf539b1d28e6362354121a1c4d5cca8da8dd3797a8ab93857",
+  "src/research/hypothesis_v7/null_benchmark.py": "195e73793e8c9dba5e10195ffb6df01ad2cf87dc4147f9d5b4c5e23e12271650",
+  "src/research/hypothesis_v7/outcomes.py": "e0d37bbfc28b42268999c26917bc74b2d4b1d0a34cb7c67dc77727b71f2daa83",
+  "src/research/hypothesis_v7/pit.py": "384a58f648a07a1674d7caacb7c06fd1eef4fac330d178ec38a96acf10ca3045",
+  "src/research/hypothesis_v7/provider.py": "f9eed5ddda0c4357547e0cc8859b813db14d93e8d9b26bba4e8b403e7ced1af0",
+  "src/research/hypothesis_v7/similarity.py": "223a5fab51ceab01a047284a02a6c58861e66f8d6474a02427db6cae10490ad8",
+  "src/research/hypothesis_v7/universe.py": "3d43a0b0ffb3c46950a1667fc300077046a93f45457a4d14ef1b6acd409b722e",
+  "src/research/hypothesis_v7/walkforward.py": "eafac71959a95f10193d1df9a00522d36942c4695726bd7b76203e498a3e4c88"
+ },
+ "version_stamps": {
+  "analysis": {
+   "allowed_confounders": [
+    "venue",
+    "competition",
+    "season_regime",
+    "opponent_strength",
+    "opponent_profile",
+    "score_state",
+    "cards",
+    "formation",
+    "team_baseline_quality"
+   ],
+   "analysis_version": "v7_analysis_v1",
+   "comparator_reject_flags": [
+    "BASELINE_ABSORPTION",
+    "SELF_COMPARISON",
+    "STRUCTURALLY_IMPLIED_EFFECT",
+    "TAUTOLOGICAL_COMPARATOR"
+   ],
+   "confounder_plan_families": [
+    "ATTACK_QUALITY",
+    "ATTACK_VOLUME",
+    "DEFENSIVE_CONCESSION",
+    "DEFENSIVE_SUPPRESSION",
+    "DISCIPLINE",
+    "FORM_VS_BASELINE",
+    "OPPONENT_PROFILE_INTERACTION",
+    "SET_PIECE_GENERATION",
+    "TEMPO_AND_TERRITORY",
+    "VENUE_EFFECT"
+   ],
+   "fdr_q": 0.1,
+   "frozen_before_confirmatory": true,
+   "model_confounders_are_metadata_only": true,
+   "multiplicity_families": {
+    "attack_quality": [
+     "ATTACK_QUALITY"
+    ],
+    "attacking_volume": [
+     "ATTACK_VOLUME",
+     "TEMPO_AND_TERRITORY"
+    ],
+    "defensive": [
+     "DEFENSIVE_CONCESSION",
+     "DEFENSIVE_SUPPRESSION"
+    ],
+    "discipline": [
+     "DISCIPLINE"
+    ],
+    "form_baseline": [
+     "FORM_VS_BASELINE",
+     "VENUE_EFFECT"
+    ],
+    "opponent_interaction": [
+     "OPPONENT_PROFILE_INTERACTION"
+    ],
+    "set_piece": [
+     "SET_PIECE_GENERATION"
+    ]
+   },
+   "multiplicity_method": "BENJAMINI_HOCHBERG_FDR_per_family + EMPIRICAL_BAYES_SHRINKAGE",
+   "promotion_rule": "promotion requires: OOS survival (direction-stable across folds) AND FDR-adjusted family significance at q=0.10 AND a shrinkage-adjusted effect that remains non-trivial. Nominal p<0.05 is NEVER sufficient alone.",
+   "reweighting_comparators": [
+    "SUBJECT_RECENT_VS_LONG_BASELINE"
+   ],
+   "valid_comparators": [
+    "LEAGUE_ENVIRONMENT_BASELINE",
+    "OPPONENT_OVERALL_BASELINE",
+    "OPPONENT_VENUE_BASELINE",
+    "SIMILAR_OPPONENT_COHORT",
+    "SUBJECT_COMPETITION_BASELINE",
+    "SUBJECT_CONDITIONAL_VS_BASELINE",
+    "SUBJECT_OVERALL_BASELINE",
+    "SUBJECT_RECENT_VS_LONG_BASELINE",
+    "SUBJECT_VENUE_BASELINE"
+   ]
+  },
+  "canonical": {
+   "canonical_version": "v7_canonical_v1",
+   "metric_synonyms_frozen": 29,
+   "reads_outcomes": false,
+   "structural_only": true,
+   "uses_llm": false
+  },
+  "covariates": {
+   "baseline_types": {
+    "LEAGUE_ENVIRONMENT_BASELINE": "LEAGUE_SEASON_MEAN",
+    "OPPONENT_OVERALL_BASELINE": "OPPONENT_ALL_PRIOR_CONCESSION",
+    "OPPONENT_VENUE_BASELINE": "OPPONENT_VENUE_CONCESSION",
+    "SIMILAR_OPPONENT_COHORT": "DISSIMILAR_OPPONENT_VENUE_MEAN",
+    "SUBJECT_COMPETITION_BASELINE": "SUBJECT_CROSS_COMPETITION_MEAN",
+    "SUBJECT_CONDITIONAL_VS_BASELINE": "SUBJECT_UNCONDITIONED_MEAN",
+    "SUBJECT_OVERALL_BASELINE": "SUBJECT_ALL_PRIOR_MEAN",
+    "SUBJECT_RECENT_VS_LONG_BASELINE": "SUBJECT_LONG_RUN_UNDECAYED_MEAN",
+    "SUBJECT_VENUE_BASELINE": "SUBJECT_VENUE_MEAN"
+   },
+   "covariates_version": "v7_covariates_v1",
+   "descriptive_only_covariates": {
+    "primary_metric": "high-cardinality; matched via metric_group + target_band",
+    "research_family_label": "the model's own semantic family label; the deterministic null has no equivalent labelling process, and identical structure carries FORM_VS_BASELINE 22x vs six other families 16x in the V6.1 universe. Matched on `metric_group` instead."
+   },
+   "excluded_raw_provider_requirements": true,
+   "exclusion_rationale": "canonical_spec.PROVIDER_REQUIREMENTS is the model's self-description, not a property of the statistical question: measured against the V6.1 universe, xg capability vs xg target is 53 agree / 5 / 5, target_fixture_venue_context vs a venue comparator is 0 agree / 30 / 17, and match_level_observations appears in only 65 of 132 families. Only opponent_profile <-> opponent_profile condition is deterministic (33/33), and that is carried explicitly as USES_SIMILARITY. canonical.py is unchanged, so canonical ids and the candidate lock are untouched.",
+   "forbidden_sources": [
+    "historical_effect",
+    "oos_effect",
+    "effect_size",
+    "p_value",
+    "significance",
+    "fold_effect",
+    "fold_performance",
+    "outcome_direction",
+    "survives",
+    "oos_survives",
+    "shrunk_effect",
+    "confirmatory"
+   ],
+   "frozen_before_oos": true,
+   "matching_covariates": [
+    "uses_similarity",
+    "comparator",
+    "target_band",
+    "time_scope",
+    "metric_group",
+    "measurability_status",
+    "subject",
+    "side",
+    "n_conditions",
+    "support_risk_class",
+    "coverage_class",
+    "requires_half_resolution"
+   ],
+   "metric_groups": {
+    "accurate_crosses": "SET_PIECE",
+    "ball_recoveries": "DEFENSIVE_ACTION",
+    "big_chances": "SCORING",
+    "blocked_shots": "DEFENSIVE_ACTION",
+    "cards": "DISCIPLINE",
+    "cards_2h": "DISCIPLINE",
+    "clearances": "DEFENSIVE_ACTION",
+    "corner_kicks": "SET_PIECE",
+    "final_third_entries": "TERRITORY",
+    "fouls": "DISCIPLINE",
+    "goals": "SCORING",
+    "interceptions": "DEFENSIVE_ACTION",
+    "np_xg": "SCORING",
+    "offsides": "TERRITORY",
+    "possession": "TERRITORY",
+    "red_cards": "DISCIPLINE",
+    "saves": "GOALKEEPING",
+    "shots": "SHOT_VOLUME",
+    "shots_inside_box": "SHOT_VOLUME",
+    "shots_off_target": "SHOT_VOLUME",
+    "shots_on_target": "SHOT_VOLUME",
+    "shots_outside_box": "SHOT_VOLUME",
+    "tackles": "DEFENSIVE_ACTION",
+    "touches_in_penalty_area": "TERRITORY",
+    "xg": "SCORING",
+    "yellow_cards": "DISCIPLINE"
+   },
+   "outcome_blind": true,
+   "target_bands": [
+    [
+     1,
+     1,
+     "T1"
+    ],
+    [
+     2,
+     2,
+     "T2"
+    ],
+    [
+     3,
+     3,
+     "T3"
+    ],
+    [
+     4,
+     5,
+     "T4_5"
+    ]
+   ]
+  },
+  "coverage": {
+   "coverage_version": "v7_coverage_v1",
+   "depends_on_effect": false,
+   "measured_from_real_corpus": true,
+   "min_admissible_competitions": 6,
+   "min_competition_coverage_rate": 0.95,
+   "min_overall_coverage_rate": 0.95,
+   "silent_league_dropping_prevented": true
+  },
+  "endpoints": {
+   "arm_contrast_is_descriptive_only": true,
+   "collapsed_into_one_number": false,
+   "conditional_signal": {
+    "denominator": "families passing BOTH gates, on both sides, by the same frozen rules",
+    "design": "frozen outcome-blind covariate matching/weighting (see matching.py); one LLM family <-> weighted control set with total control weight 1",
+    "eligibility": [
+     "MEASURABLE",
+     "ADEQUATE_SUPPORT"
+    ],
+    "eligibility_applied_symmetrically": true,
+    "endpoint_id": "CONDITIONAL_SIGNAL_QUALITY",
+    "excludes_unmeasurable": true,
+    "no_comparable_control_handling": "families with no credible control analogue are reported as NO_COMPARABLE_CONTROL and excluded from the matched statistic, never force-matched",
+    "primary_statistic": "OOS_QUALITY_SCORE_DIFFERENCE",
+    "primary_statistic_definition": "mean difference in the continuous, pre-specified OOS_QUALITY_SCORE between each LLM family and its weighted control set, averaged over matched LLM families with equal weight per family. Continuous is preferred to a binary survival indicator so no information is discarded at an arbitrary threshold.",
+    "question": "Conditional on being measurable and adequately supported, do the LLM's hypotheses carry better OOS football information than a structurally comparable generic null?",
+    "secondary_statistics": [
+     "OOS_SURVIVES_RATE_DIFFERENCE",
+     "FOLD_DIRECTION_STABILITY",
+     "SHRINKAGE_ADJUSTED_EFFECT_QUALITY"
+    ],
+    "uncertainty": "cluster bootstrap over matched sets, clustered additionally by (metric_family, primary_metric); never naive binomial SEs over the pooled control count"
+   },
+   "data_compatibility": {
+    "definition": "n_measurable / n_canonical per origin, reported alongside the fraction naming at least one coverage-failing metric and the per-metric drivers",
+    "endpoint_id": "DATA_COMPATIBILITY_RATE",
+    "is_football_evidence": false,
+    "is_predictive_evidence": false,
+    "kind": "DESCRIPTIVE_RESEARCH_SYSTEM_PROPERTY",
+    "question": "What fraction of an origin's canonical families can the current corpus actually measure?",
+    "rationale": "the LLM may generate more contextually interesting but less corpus-compatible questions; that is a real property of the research system and must not be hidden by restricting all conclusions to the measurable subset, nor promoted to football evidence",
+    "reported_separately_from_oos": true
+   },
+   "end_to_end": {
+    "comparison": "LLM origin vs DETERMINISTIC_NULL origin from the identical canonical starting point; NOT matched, because matching on measurability would condition away the very failure this endpoint measures",
+    "denominator": "ALL frozen canonical families (measurable and unmeasurable alike)",
+    "endpoint_id": "END_TO_END_RESEARCH_YIELD",
+    "includes_unmeasurable": true,
+    "note": "a control is not credited for producing easy generic ideas, and the LLM is not credited for sophisticated but unmeasurable ones -- both are scored from the same denominator",
+    "progression": [
+     "canonical",
+     "measurable",
+     "adequate_support",
+     "oos_survives"
+    ],
+    "question": "Does the LLM generate research ideas that are actually usable by the current quant data stack, end to end?",
+    "statistic": "proportion of canonical families reaching OOS_SURVIVES, per origin, with the full attrition ladder reported at every stage and reasons preserved",
+    "uncertainty": "cluster bootstrap over (metric_family, primary_metric) blocks; the control contributes at its matched weight, never at raw pool size"
+   },
+   "endpoints_are_distinct": true,
+   "endpoints_version": "v7_endpoints_v1",
+   "oos_quality_score": {
+    "components": [
+     "shrinkage_adjusted_standardized_effect_per_fold",
+     "fold_direction_agreement_rate"
+    ],
+    "computed_by": "deterministic statistical engine",
+    "definition": "mean over confirmatory folds of the sign-consistent, shrinkage-adjusted standardized effect, multiplied by the fold direction-agreement rate; a family whose sign reverses across folds is pulled toward 0 by construction rather than by a post-hoc rule",
+    "frozen_before_oos": true,
+    "llm_involvement": "none",
+    "name": "OOS_QUALITY_SCORE",
+    "range": "[-1, 1]"
+   },
+   "primary_statistic_chosen_before_oos": true
+  },
+  "leakage": {
+   "forbidden_feature_fields": [
+    "closing_line",
+    "closing_odds",
+    "over_odds",
+    "under_odds",
+    "settlement",
+    "settled_result",
+    "future_match",
+    "future_lineup",
+    "future_injury",
+    "final_season_table",
+    "post_match_only",
+    "target_fixture_stat"
+   ],
+   "guards": [
+    "assert_obs_before_reference",
+    "assert_target_not_in_baseline",
+    "assert_no_future_in_profile",
+    "assert_scaler_fit_past_only",
+    "assert_similarity_past_only",
+    "assert_no_forbidden_fields",
+    "assert_hyperparams_fit_past_only",
+    "assert_target_stat_absent"
+   ],
+   "leakage_version": "v7_leakage_v2"
+  },
+  "matching": {
+   "control_pool_buys_flexibility_not_n": true,
+   "core_key": [
+    "uses_similarity",
+    "comparator",
+    "n_conditions",
+    "measurability_status",
+    "requires_half_resolution",
+    "support_risk_class",
+    "coverage_class"
+   ],
+   "frozen_before_oos": true,
+   "inferential_unit": "one LLM family <-> weighted control set, total weight 1",
+   "matching_version": "v7_matching_v1",
+   "max_control_weight_share": 0.25,
+   "max_no_comparable_fraction": 0.25,
+   "max_standardized_diff": 0.25,
+   "min_effective_n": 20.0,
+   "min_null_per_stratum": 3,
+   "objective_reads_outcomes": false,
+   "selection_provenance": "thresholds frozen before any cross-tabulation; tier keys and control-pool size then selected to satisfy them against structural balance only; no outcome consulted",
+   "tier_keys": {
+    "TIER_1_EXACT": [
+     "uses_similarity",
+     "comparator",
+     "n_conditions",
+     "measurability_status",
+     "requires_half_resolution",
+     "support_risk_class",
+     "coverage_class",
+     "metric_group",
+     "target_band",
+     "time_scope",
+     "subject",
+     "side"
+    ],
+    "TIER_2_CEM": [
+     "uses_similarity",
+     "comparator",
+     "n_conditions",
+     "measurability_status",
+     "requires_half_resolution",
+     "support_risk_class",
+     "coverage_class",
+     "metric_group",
+     "target_band",
+     "subject",
+     "side"
+    ],
+    "TIER_3_COARSE": [
+     "uses_similarity",
+     "comparator",
+     "n_conditions",
+     "measurability_status",
+     "requires_half_resolution",
+     "support_risk_class",
+     "coverage_class",
+     "metric_group",
+     "subject",
+     "side"
+    ]
+   }
+  },
+  "null_benchmark": {
+   "can_inhabit_similarity_slot": true,
+   "deterministic_capability_rule": "opponent_profile capability iff an opponent_profile condition is present (33/33 in the V6.1 universe)",
+   "draws_coverage_failing_metrics_too": true,
+   "emits_structured_conditions": true,
+   "fabricates_non_deterministic_capabilities": false,
+   "fixture_specific_reasoning": false,
+   "matched_pool_size": 24000,
+   "null_seed": "V7_DETERMINISTIC_NULL_BENCHMARK_v2",
+   "null_version": "v7_null_v2",
+   "pool_size": 2000,
+   "reads_outcomes": false,
+   "rng": "sha256 counter stream (PYTHONHASHSEED-independent)",
+   "same_pipeline_as_v6_1": true,
+   "slot_vocabularies_restricted_to_v6_1_inhabited": true,
+   "two_pools": {
+    "MARGINAL": "endpoint B (conditional signal quality)",
+    "UNIFORM": "endpoint A (end-to-end yield + data compatibility)"
+   },
+   "uses_llm": false
+  },
+  "outcomes": {
+   "acceptable_null_results": [
+    "most hypotheses UNMEASURABLE",
+    "effects shrink toward zero",
+    "historical relationships disappear OOS",
+    "Base and Research perform similarly",
+    "zero candidate features survive"
+   ],
+   "ends_at": "CANDIDATE_FEATURE_ELIGIBLE (no model promotion in V7)",
+   "outcomes_version": "v7_outcomes_v1",
+   "pass_fail_forced": false,
+   "primary_endpoints": [
+    "measurability_rate",
+    "adequate_support_rate",
+    "confounder_survival_rate",
+    "oos_survival_rate",
+    "effect_direction_stability",
+    "fold_stability",
+    "competition_stability",
+    "shrinkage_behavior",
+    "failure_mode_composition"
+   ],
+   "primary_scientific_question": "Do V6.1-qualified hypotheses yield OOS-stable, PIT-safe, measurable relationships at a rate/strength exceeding the frozen control benchmark, and does the richer-evidence RESEARCH arm exceed the BASE arm on the matched fixture/family/metric endpoint?",
+   "terminal_states": [
+    "UNMEASURABLE",
+    "INSUFFICIENT_SUPPORT",
+    "TAUTOLOGICAL",
+    "CONFOUNDED_UNRESOLVED",
+    "HISTORICAL_EFFECT_ONLY",
+    "OOS_DIRECTION_UNSTABLE",
+    "OOS_NO_EFFECT",
+    "OOS_FAIL",
+    "OOS_SURVIVES",
+    "CANDIDATE_FEATURE_ELIGIBLE"
+   ]
+  },
+  "pit": {
+   "clustering": "team/fixture clustering + block bootstrap required for uncertainty",
+   "max_weight_concentration": 0.25,
+   "min_effective_n": 10.0,
+   "min_raw_n": 20,
+   "min_unique_fixtures": 15,
+   "min_unique_teams": 6,
+   "pit_rule": "team profiles/similarity/cohorts use ONLY fixtures strictly before the target kickoff_unix; target is the fixture's own observed stat",
+   "pit_version": "v7_pit_v1",
+   "shrinkage_k": 10.0,
+   "shrinkage_prior": "TEAM_COMPETITION_BASELINE",
+   "thresholds_frozen_before_effects": true,
+   "time_decay_halflives_days": [
+    180,
+    365
+   ]
+  },
+  "provider": {
+   "audited_metrics": [
+    "accurate_crosses",
+    "ball_recoveries",
+    "big_chances",
+    "blocked_shots",
+    "cards_2h",
+    "clearances",
+    "corner_kicks",
+    "final_third_entries",
+    "fouls",
+    "goals",
+    "interceptions",
+    "offsides",
+    "possession",
+    "red_cards",
+    "saves",
+    "shots",
+    "shots_inside_box",
+    "shots_off_target",
+    "shots_on_target",
+    "shots_outside_box",
+    "tackles",
+    "touches_in_penalty_area",
+    "xg",
+    "yellow_cards"
+   ],
+   "compilable_comparators": [
+    "LEAGUE_ENVIRONMENT_BASELINE",
+    "OPPONENT_OVERALL_BASELINE",
+    "OPPONENT_VENUE_BASELINE",
+    "SIMILAR_OPPONENT_COHORT",
+    "SUBJECT_COMPETITION_BASELINE",
+    "SUBJECT_CONDITIONAL_VS_BASELINE",
+    "SUBJECT_OVERALL_BASELINE",
+    "SUBJECT_RECENT_VS_LONG_BASELINE",
+    "SUBJECT_VENUE_BASELINE"
+   ],
+   "corpus_provider": "thestatsapi",
+   "excluded_metrics": [
+    "cards",
+    "np_xg"
+   ],
+   "measurability_depends_on_effect": false,
+   "n_audited_metrics": 24,
+   "n_contracted_metrics": 26,
+   "no_cross_provider_pooling": true,
+   "provenance_correction": "v1 mislabelled base=footystats/rich=thestatsapi; the corpus is single-provider (thestatsapi) and v1's phantom cross-provider rule rejected 33 families",
+   "provider_version": "v7_provider_v2",
+   "storage_blocks": [
+    "base",
+    "rich",
+    "extra"
+   ]
+  },
+  "similarity": {
+   "cohort_rule": "K_NEAREST",
+   "coverage_claim_is_verified_not_asserted": true,
+   "dimension_bindings": {
+    "fouls_committed_per_match": [
+     "rich",
+     "fouls",
+     "SELF"
+    ],
+    "goals_conceded_per_match": [
+     "base",
+     "GoalCount",
+     "OPP"
+    ],
+    "shots_inside_box_conceded_per_match": [
+     "rich",
+     "shots_inside_box",
+     "OPP"
+    ],
+    "shots_on_target_conceded_per_match": [
+     "rich",
+     "shots_on_target",
+     "OPP"
+    ],
+    "yellow_cards_per_match": [
+     "base",
+     "yellow_cards",
+     "SELF"
+    ]
+   },
+   "dimension_metrics": {
+    "fouls_committed_per_match": "fouls",
+    "goals_conceded_per_match": "goals",
+    "shots_inside_box_conceded_per_match": "shots_inside_box",
+    "shots_on_target_conceded_per_match": "shots_on_target",
+    "yellow_cards_per_match": "yellow_cards"
+   },
+   "dimensions": [
+    "goals_conceded_per_match",
+    "shots_on_target_conceded_per_match",
+    "shots_inside_box_conceded_per_match",
+    "fouls_committed_per_match",
+    "yellow_cards_per_match"
+   ],
+   "distance_metrics_family": [
+    "euclidean_z",
+    "manhattan_z"
+   ],
+   "k_neighbors": 8,
+   "llm_produces_similarity_score": false,
+   "max_missing_dims": 1,
+   "min_profile_history_matches": 6,
+   "missing_imputation": "COHORT_MEAN_Z0",
+   "pit_safe": true,
+   "primary_distance": "euclidean_z",
+   "profile_shrinkage_applied": true,
+   "profile_shrinkage_k": 8.0,
+   "restrict_same_competition": true,
+   "scaling": "ZSCORE_PIT_TRAIN_ONLY",
+   "scaling_fit": "PIT training profiles only",
+   "similarity_version": "v7_similarity_v2",
+   "thresholds_tuned_per_hypothesis": false,
+   "tie_break": "kickoff_unix_asc_then_fixture_id",
+   "xg_dimension_removed_for_coverage": true
+  },
+  "universe": {
+   "mechanical": true,
+   "outcome_blind": true,
+   "reads_only_immutable_v6_1_execution": true,
+   "spec_fields": [
+    "target_metrics",
+    "subject",
+    "side",
+    "comparison",
+    "conditions",
+    "window",
+    "research_family",
+    "required_capabilities",
+    "evidence_refs",
+    "candidate_confounders",
+    "evidence_summary",
+    "priority",
+    "sufficiency",
+    "question"
+   ],
+   "universe_version": "v7_universe_v1"
+  },
+  "walkforward": {
+   "candidate_lock": "SHA-256 over canonical candidate specs before OOS; post-OOS change invalidates confirmatory status",
+   "confirmatory_start": "2025-01-01",
+   "control_arm_endpoint_demoted": "rate at which a canonical hypothesis-family reaches OOS_SURVIVES, compared between BASE-origin and RESEARCH-origin families, matched within (originating fixture, multiplicity family, canonical metric, measurability class), with fixture/family clustering. Raw hypothesis counts are NEVER the endpoint; an arm is not rewarded for producing more hypotheses.",
+   "control_primary_endpoint": "rate at which a canonical hypothesis-family reaches OOS_SURVIVES, compared between V6.1-ORIGIN families and DETERMINISTIC_NULL families, on count-balanced measurable sets, with family/metric clustering. Both origins pass through the identical canonicalization, deduplication, measurability, support, fold and outcome-class pipeline; the ONLY difference is where the question came from. If V6.1 hypotheses do not exceed the mechanically enumerated null, the LLM added no football information.",
+   "control_secondary": "continuous OOS-quality score (shrinkage-adjusted, fold-direction-stable) compared arm-vs-arm with clustered inference.",
+   "development_end": "2024-12-31",
+   "fallback_endpoint": "If and only if the matched design is declared INFEASIBLE here -- before any OOS -- the arm comparison is DEMOTED to descriptive reporting (per-arm survival profiles with fixture/family clustering and explicit opportunity-structure accounting) and is NEVER reported as a confirmatory arm effect. The V7 hypothesis-level endpoints (measurability, support, confounder survival, OOS survival, stability) remain confirmatory in their own right because they do not require an arm contrast. This substitution rule is frozen NOW, outcome-blind; it may not be invoked after inspecting any OOS result.",
+   "fold_validation_months": 3,
+   "max_origin_measurability_rate_gap": 0.25,
+   "min_families_per_arm_in_matched": 12,
+   "min_matched_cells": 12,
+   "min_matched_fixtures": 5,
+   "min_null_measurable_families": 30,
+   "primary_is_temporal": true,
+   "random_split_allowed_as_primary": false,
+   "retrain_schedule": "EACH_FOLD_FROM_PAST_ONLY",
+   "verbosity_neutral": true,
+   "walkforward_version": "v7_walkforward_v3"
+  }
+ }
+}

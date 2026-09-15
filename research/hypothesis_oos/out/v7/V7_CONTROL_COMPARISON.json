@@ -1,0 +1,154 @@
+{
+ "arm_endpoint_demoted_to_descriptive": true,
+ "arm_endpoint_feasibility": {
+  "consequence": "V7_PRE_OOS_BLOCKED for the arm-comparison endpoint: confirmatory OOS may not be authorized against an endpoint the design cannot answer",
+  "depends_on_effect": false,
+  "evaluated_before_oos": true,
+  "fallback_if_infeasible": "If and only if the matched design is declared INFEASIBLE here -- before any OOS -- the arm comparison is DEMOTED to descriptive reporting (per-arm survival profiles with fixture/family clustering and explicit opportunity-structure accounting) and is NEVER reported as a confirmatory arm effect. The V7 hypothesis-level endpoints (measurability, support, confounder survival, OOS survival, stability) remain confirmatory in their own right because they do not require an arm contrast. This substitution rule is frozen NOW, outcome-blind; it may not be invoked after inspecting any OOS result.",
+  "primary_endpoint_feasible": false,
+  "reasons": [
+   "n_matched_cells=5 < 12",
+   "n_matched_fixtures=3 < 5",
+   "n_base_families_in_matched=6 < 12",
+   "n_research_families_in_matched=7 < 12"
+  ],
+  "thresholds": {
+   "min_families_per_arm_in_matched": 12,
+   "min_matched_cells": 12,
+   "min_matched_fixtures": 5
+  }
+ },
+ "arm_matched_cells": {
+  "matched_cells": [
+   {
+    "base": 1,
+    "cell": "mt_191506144|attacking_volume|final_third_entries,possession",
+    "fixture": "mt_191506144",
+    "research": 2
+   },
+   {
+    "base": 1,
+    "cell": "mt_191506144|discipline|fouls,yellow_cards",
+    "fixture": "mt_191506144",
+    "research": 1
+   },
+   {
+    "base": 1,
+    "cell": "mt_361806675|attacking_volume|final_third_entries,possession",
+    "fixture": "mt_361806675",
+    "research": 1
+   },
+   {
+    "base": 2,
+    "cell": "mt_361806675|set_piece|corner_kicks",
+    "fixture": "mt_361806675",
+    "research": 2
+   },
+   {
+    "base": 1,
+    "cell": "mt_626435889|set_piece|corner_kicks",
+    "fixture": "mt_626435889",
+    "research": 1
+   }
+  ],
+  "n_base_families_in_matched": 6,
+  "n_base_only_cells": 24,
+  "n_cells": 44,
+  "n_matched_cells": 5,
+  "n_matched_fixtures": 3,
+  "n_research_families_in_matched": 7,
+  "n_research_only_cells": 15,
+  "note": "matched cells drive the primary arm comparison; single-arm cells are opportunity structure, reported separately, never counted as arm wins",
+  "restricted_to_measurable": true
+ },
+ "arm_matched_cells_all_families_unrestricted": {
+  "matched_cells": [
+   {
+    "base": 1,
+    "cell": "mt_191506144|attacking_volume|final_third_entries,possession",
+    "fixture": "mt_191506144",
+    "research": 2
+   },
+   {
+    "base": 1,
+    "cell": "mt_191506144|discipline|fouls,yellow_cards",
+    "fixture": "mt_191506144",
+    "research": 1
+   },
+   {
+    "base": 1,
+    "cell": "mt_361806675|attacking_volume|final_third_entries,possession",
+    "fixture": "mt_361806675",
+    "research": 1
+   },
+   {
+    "base": 2,
+    "cell": "mt_361806675|set_piece|corner_kicks",
+    "fixture": "mt_361806675",
+    "research": 2
+   },
+   {
+    "base": 1,
+    "cell": "mt_626435889|set_piece|corner_kicks",
+    "fixture": "mt_626435889",
+    "research": 1
+   }
+  ],
+  "n_base_families_in_matched": 6,
+  "n_base_only_cells": 40,
+  "n_cells": 114,
+  "n_matched_cells": 5,
+  "n_matched_fixtures": 3,
+  "n_research_families_in_matched": 7,
+  "n_research_only_cells": 69,
+  "note": "matched cells drive the primary arm comparison; single-arm cells are opportunity structure, reported separately, never counted as arm wins",
+  "restricted_to_measurable": false
+ },
+ "balanced_null_family_count": 53,
+ "n_canonical_families_in_both_arms": 0,
+ "null_endpoint_feasibility": {
+  "comparator_reject_rate_gap": 0.043,
+  "depends_on_effect": false,
+  "evaluated_before_oos": true,
+  "measurability_rate_gap": 0.1879,
+  "n_null_measurable": 1167,
+  "null_comparator_reject_rate": 0.1268,
+  "null_endpoint_feasible": true,
+  "null_measurability_rate": 0.5894,
+  "reasons": [
+   "null benchmark supports the primary endpoint"
+  ],
+  "thresholds": {
+   "max_origin_comparator_reject_gap": 0.25,
+   "max_origin_measurability_rate_gap": 0.25,
+   "min_null_measurable_families": 30
+  },
+  "v61_comparator_reject_rate": 0.1698,
+  "v61_measurability_rate": 0.4015
+ },
+ "primary_control": "DETERMINISTIC_NULL_BENCHMARK (Phase 20 Control B)",
+ "primary_endpoint": "rate at which a canonical hypothesis-family reaches OOS_SURVIVES, compared between BASE-origin and RESEARCH-origin families, matched within (originating fixture, multiplicity family, canonical metric, measurability class), with fixture/family clustering. Raw hypothesis counts are NEVER the endpoint; an arm is not rewarded for producing more hypotheses.",
+ "primary_null_endpoint": "rate at which a canonical hypothesis-family reaches OOS_SURVIVES, compared between V6.1-ORIGIN families and DETERMINISTIC_NULL families, on count-balanced measurable sets, with family/metric clustering. Both origins pass through the identical canonicalization, deduplication, measurability, support, fold and outcome-class pipeline; the ONLY difference is where the question came from. If V6.1 hypotheses do not exceed the mechanically enumerated null, the LLM added no football information.",
+ "secondary": "continuous OOS-quality score (shrinkage-adjusted, fold-direction-stable) compared arm-vs-arm with clustered inference.",
+ "v61_measurable_family_count": 53,
+ "walkforward_version_stamp": {
+  "candidate_lock": "SHA-256 over canonical candidate specs before OOS; post-OOS change invalidates confirmatory status",
+  "confirmatory_start": "2025-01-01",
+  "control_arm_endpoint_demoted": "rate at which a canonical hypothesis-family reaches OOS_SURVIVES, compared between BASE-origin and RESEARCH-origin families, matched within (originating fixture, multiplicity family, canonical metric, measurability class), with fixture/family clustering. Raw hypothesis counts are NEVER the endpoint; an arm is not rewarded for producing more hypotheses.",
+  "control_primary_endpoint": "rate at which a canonical hypothesis-family reaches OOS_SURVIVES, compared between V6.1-ORIGIN families and DETERMINISTIC_NULL families, on count-balanced measurable sets, with family/metric clustering. Both origins pass through the identical canonicalization, deduplication, measurability, support, fold and outcome-class pipeline; the ONLY difference is where the question came from. If V6.1 hypotheses do not exceed the mechanically enumerated null, the LLM added no football information.",
+  "control_secondary": "continuous OOS-quality score (shrinkage-adjusted, fold-direction-stable) compared arm-vs-arm with clustered inference.",
+  "development_end": "2024-12-31",
+  "fallback_endpoint": "If and only if the matched design is declared INFEASIBLE here -- before any OOS -- the arm comparison is DEMOTED to descriptive reporting (per-arm survival profiles with fixture/family clustering and explicit opportunity-structure accounting) and is NEVER reported as a confirmatory arm effect. The V7 hypothesis-level endpoints (measurability, support, confounder survival, OOS survival, stability) remain confirmatory in their own right because they do not require an arm contrast. This substitution rule is frozen NOW, outcome-blind; it may not be invoked after inspecting any OOS result.",
+  "fold_validation_months": 3,
+  "max_origin_measurability_rate_gap": 0.25,
+  "min_families_per_arm_in_matched": 12,
+  "min_matched_cells": 12,
+  "min_matched_fixtures": 5,
+  "min_null_measurable_families": 30,
+  "primary_is_temporal": true,
+  "random_split_allowed_as_primary": false,
+  "retrain_schedule": "EACH_FOLD_FROM_PAST_ONLY",
+  "verbosity_neutral": true,
+  "walkforward_version": "v7_walkforward_v3"
+ }
+}

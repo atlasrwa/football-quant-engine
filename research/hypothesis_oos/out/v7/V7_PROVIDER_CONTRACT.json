@@ -1,0 +1,289 @@
+{
+ "cross_provider_invariant": {
+  "corpus_provider": "thestatsapi",
+  "evidence": "multisrc_corpus._to_adapter_shape maps a TheStatsAPI fixture and championship_adapter.adapt_match reads every stat from the same TheStatsAPI /stats payload; base/rich/extra are storage blocks of one provider, not two providers",
+  "footystats_values_loaded": 0,
+  "known_cross_provider_hazards_not_triggered": [
+   "xg@footystats~xg@thestatsapi (DO_NOT_MERGE, corr 0.55)",
+   "total_shots@footystats~total_shots@thestatsapi (DO_NOT_MERGE, corr 0.80)"
+  ],
+  "n_distinct_providers": 1,
+  "pooling_guard_armed": true,
+  "pooling_guard_fires_on_this_corpus": false,
+  "storage_blocks": [
+   "base",
+   "extra",
+   "rich"
+  ]
+ },
+ "provider_contract": {
+  "accurate_crosses": {
+   "audited": true,
+   "block": "rich",
+   "field": "accurate_crosses",
+   "resolution": "match",
+   "semantic": "ACCURATE crosses only (completed); cross ATTEMPTS are not available from any provider",
+   "unit": "count"
+  },
+  "ball_recoveries": {
+   "audited": true,
+   "block": "rich",
+   "field": "ball_recoveries",
+   "resolution": "match",
+   "semantic": "ball recoveries by side",
+   "unit": "count"
+  },
+  "big_chances": {
+   "audited": true,
+   "block": "rich",
+   "field": "big_chances",
+   "resolution": "match",
+   "semantic": "big chances created by side",
+   "unit": "count"
+  },
+  "blocked_shots": {
+   "audited": true,
+   "block": "rich",
+   "field": "blocked_shots",
+   "resolution": "match",
+   "semantic": "blocked shots for side",
+   "unit": "count"
+  },
+  "cards": {
+   "audited": false,
+   "block": null,
+   "field": null,
+   "resolution": "match",
+   "semantic": "ambiguous (yellow vs total); must resolve to yellow_cards or red_cards explicitly",
+   "unit": "count"
+  },
+  "cards_2h": {
+   "audited": true,
+   "block": "base",
+   "field": "team_a_2h_cards",
+   "field_away": "team_b_2h_cards",
+   "resolution": "half",
+   "semantic": "2nd-half yellow cards for side",
+   "unit": "count"
+  },
+  "clearances": {
+   "audited": true,
+   "block": "rich",
+   "field": "clearances",
+   "resolution": "match",
+   "semantic": "clearances by side",
+   "unit": "count"
+  },
+  "corner_kicks": {
+   "audited": true,
+   "block": "rich",
+   "field": "corner_kicks",
+   "resolution": "match",
+   "semantic": "corners won by side",
+   "unit": "count"
+  },
+  "final_third_entries": {
+   "audited": true,
+   "block": "rich",
+   "field": "final_third_entries",
+   "resolution": "match",
+   "semantic": "final-third entries by side",
+   "unit": "count"
+  },
+  "fouls": {
+   "audited": true,
+   "block": "rich",
+   "field": "fouls",
+   "resolution": "match",
+   "semantic": "fouls committed by side",
+   "unit": "count"
+  },
+  "goals": {
+   "audited": true,
+   "block": "base",
+   "field": "homeGoalCount",
+   "field_away": "awayGoalCount",
+   "resolution": "match",
+   "semantic": "full-time goals scored by side",
+   "unit": "count"
+  },
+  "interceptions": {
+   "audited": true,
+   "block": "rich",
+   "field": "interceptions",
+   "resolution": "match",
+   "semantic": "interceptions by side",
+   "unit": "count"
+  },
+  "np_xg": {
+   "audited": false,
+   "block": "rich",
+   "field": "np_expected_goals",
+   "resolution": "match",
+   "semantic": "non-penalty xG; EXCLUDED -- per-side home/away split semantics NOT audited, and 0.381 coverage in laliga2",
+   "unit": "xg"
+  },
+  "offsides": {
+   "audited": true,
+   "block": "extra",
+   "field": "offsides",
+   "resolution": "match",
+   "semantic": "offsides committed by side",
+   "unit": "count"
+  },
+  "possession": {
+   "audited": true,
+   "block": "extra",
+   "field": "possession",
+   "resolution": "match",
+   "semantic": "ball possession percentage for side",
+   "unit": "pct"
+  },
+  "red_cards": {
+   "audited": true,
+   "block": "base",
+   "field": "team_a_red_cards",
+   "field_away": "team_b_red_cards",
+   "resolution": "match",
+   "semantic": "red cards for side (null rendered 0 by adapter)",
+   "unit": "count"
+  },
+  "saves": {
+   "audited": true,
+   "block": "rich",
+   "field": "saves",
+   "resolution": "match",
+   "semantic": "goalkeeper saves by side",
+   "unit": "count"
+  },
+  "shots": {
+   "audited": true,
+   "block": "extra",
+   "field": "total_shots",
+   "resolution": "match",
+   "semantic": "ALL shots by side (overview/total_shots), the provider's own total -- never summed from the inside/outside-box split",
+   "unit": "count"
+  },
+  "shots_inside_box": {
+   "audited": true,
+   "block": "rich",
+   "field": "shots_inside_box",
+   "resolution": "match",
+   "semantic": "shots from inside box for side",
+   "unit": "count"
+  },
+  "shots_off_target": {
+   "audited": true,
+   "block": "extra",
+   "field": "shots_off_target",
+   "resolution": "match",
+   "semantic": "shots off target for side",
+   "unit": "count"
+  },
+  "shots_on_target": {
+   "audited": true,
+   "block": "rich",
+   "field": "shots_on_target",
+   "resolution": "match",
+   "semantic": "shots on target for side",
+   "unit": "count"
+  },
+  "shots_outside_box": {
+   "audited": true,
+   "block": "rich",
+   "field": "shots_outside_box",
+   "resolution": "match",
+   "semantic": "shots from outside box for side",
+   "unit": "count"
+  },
+  "tackles": {
+   "audited": true,
+   "block": "rich",
+   "field": "tackles",
+   "resolution": "match",
+   "semantic": "tackles by side",
+   "unit": "count"
+  },
+  "touches_in_penalty_area": {
+   "audited": true,
+   "block": "rich",
+   "field": "touches_in_penalty_area",
+   "resolution": "match",
+   "semantic": "touches in opposition penalty area; per-side semantics are fine but measured coverage is 0.673 in champ, so the COVERAGE gate rejects it",
+   "unit": "count"
+  },
+  "xg": {
+   "audited": true,
+   "block": "base",
+   "field": "team_a_xg",
+   "field_away": "team_b_xg",
+   "resolution": "match",
+   "semantic": "TheStatsAPI expected goals; per-side semantics are fine but measured coverage is 0.000 in ligue2 and 0.452 in laliga2, so the COVERAGE gate rejects it -- testing it would silently restrict the universe to the easy leagues",
+   "unit": "xg"
+  },
+  "yellow_cards": {
+   "audited": true,
+   "block": "base",
+   "field": "team_a_yellow_cards",
+   "field_away": "team_b_yellow_cards",
+   "resolution": "match",
+   "semantic": "yellow cards for side",
+   "unit": "count"
+  }
+ },
+ "version_stamp": {
+  "audited_metrics": [
+   "accurate_crosses",
+   "ball_recoveries",
+   "big_chances",
+   "blocked_shots",
+   "cards_2h",
+   "clearances",
+   "corner_kicks",
+   "final_third_entries",
+   "fouls",
+   "goals",
+   "interceptions",
+   "offsides",
+   "possession",
+   "red_cards",
+   "saves",
+   "shots",
+   "shots_inside_box",
+   "shots_off_target",
+   "shots_on_target",
+   "shots_outside_box",
+   "tackles",
+   "touches_in_penalty_area",
+   "xg",
+   "yellow_cards"
+  ],
+  "compilable_comparators": [
+   "LEAGUE_ENVIRONMENT_BASELINE",
+   "OPPONENT_OVERALL_BASELINE",
+   "OPPONENT_VENUE_BASELINE",
+   "SIMILAR_OPPONENT_COHORT",
+   "SUBJECT_COMPETITION_BASELINE",
+   "SUBJECT_CONDITIONAL_VS_BASELINE",
+   "SUBJECT_OVERALL_BASELINE",
+   "SUBJECT_RECENT_VS_LONG_BASELINE",
+   "SUBJECT_VENUE_BASELINE"
+  ],
+  "corpus_provider": "thestatsapi",
+  "excluded_metrics": [
+   "cards",
+   "np_xg"
+  ],
+  "measurability_depends_on_effect": false,
+  "n_audited_metrics": 24,
+  "n_contracted_metrics": 26,
+  "no_cross_provider_pooling": true,
+  "provenance_correction": "v1 mislabelled base=footystats/rich=thestatsapi; the corpus is single-provider (thestatsapi) and v1's phantom cross-provider rule rejected 33 families",
+  "provider_version": "v7_provider_v2",
+  "storage_blocks": [
+   "base",
+   "rich",
+   "extra"
+  ]
+ }
+}
