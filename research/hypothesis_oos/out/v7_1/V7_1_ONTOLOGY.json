@@ -1,0 +1,241 @@
+{
+ "comparators": {
+  "LEAGUE_ENVIRONMENT_BASELINE": {
+   "baseline": {
+    "filters": "NONE",
+    "perspective": "SPEC",
+    "role": "COMPETITION_ENVIRONMENT",
+    "weighting": "UNIFORM",
+    "window": "ALL_PRIOR"
+   },
+   "cohort": {
+    "filters": "SPEC_CONDITIONS",
+    "perspective": "SPEC",
+    "role": "SUBJECT",
+    "weighting": "UNIFORM",
+    "window": "SPEC_WINDOW"
+   },
+   "reads": "the subject under the stated conditions, against the competition-season environment mean of the same metric"
+  },
+  "OPPONENT_OVERALL_BASELINE": {
+   "baseline": {
+    "filters": "NONE",
+    "perspective": "SPEC",
+    "role": "FIXTURE_OPPONENT",
+    "weighting": "UNIFORM",
+    "window": "ALL_PRIOR"
+   },
+   "cohort": {
+    "filters": "SPEC_CONDITIONS",
+    "perspective": "SPEC",
+    "role": "FIXTURE_OPPONENT",
+    "weighting": "UNIFORM",
+    "window": "SPEC_WINDOW"
+   },
+   "reads": "the fixture opponent under the stated conditions, against the opponent's unrestricted all-prior mean"
+  },
+  "OPPONENT_VENUE_BASELINE": {
+   "baseline": {
+    "filters": "VENUE_OF_TARGET_OPPONENT",
+    "perspective": "SPEC",
+    "role": "FIXTURE_OPPONENT",
+    "weighting": "UNIFORM",
+    "window": "ALL_PRIOR"
+   },
+   "cohort": {
+    "filters": "SPEC_CONDITIONS",
+    "perspective": "SPEC",
+    "role": "FIXTURE_OPPONENT",
+    "weighting": "UNIFORM",
+    "window": "SPEC_WINDOW"
+   },
+   "reads": "the fixture opponent under the stated conditions, against its mean at the venue it occupies in the target fixture"
+  },
+  "SIMILAR_OPPONENT_COHORT": {
+   "baseline": {
+    "filters": "DISSIMILAR_TO_FIXTURE_OPPONENT",
+    "perspective": "SPEC",
+    "role": "SUBJECT",
+    "weighting": "UNIFORM",
+    "window": "ALL_PRIOR"
+   },
+   "cohort": {
+    "filters": "SIMILAR_TO_FIXTURE_OPPONENT",
+    "perspective": "SPEC",
+    "role": "SUBJECT",
+    "weighting": "UNIFORM",
+    "window": "SPEC_WINDOW"
+   },
+   "reads": "the subject against opponents deterministically similar to the fixture opponent, versus the subject against the remaining opponents"
+  },
+  "SUBJECT_COMPETITION_BASELINE": {
+   "baseline": {
+    "filters": "NONE",
+    "perspective": "SPEC",
+    "role": "SUBJECT",
+    "weighting": "UNIFORM",
+    "window": "ALL_PRIOR"
+   },
+   "cohort": {
+    "filters": "SPEC_CONDITIONS",
+    "perspective": "SPEC",
+    "role": "SUBJECT",
+    "weighting": "UNIFORM",
+    "window": "SPEC_WINDOW"
+   },
+   "reads": "the subject inside the target competition, against its cross-competition all-prior mean"
+  },
+  "SUBJECT_CONDITIONAL_VS_BASELINE": {
+   "baseline": {
+    "filters": "COMPLEMENT_OF_SPEC_CONDITIONS",
+    "perspective": "SPEC",
+    "role": "SUBJECT",
+    "weighting": "UNIFORM",
+    "window": "ALL_PRIOR"
+   },
+   "cohort": {
+    "filters": "SPEC_CONDITIONS",
+    "perspective": "SPEC",
+    "role": "SUBJECT",
+    "weighting": "UNIFORM",
+    "window": "SPEC_WINDOW"
+   },
+   "reads": "the subject under the stated conditions, against the subject when those conditions do NOT hold"
+  },
+  "SUBJECT_OVERALL_BASELINE": {
+   "baseline": {
+    "filters": "NONE",
+    "perspective": "SPEC",
+    "role": "SUBJECT",
+    "weighting": "UNIFORM",
+    "window": "ALL_PRIOR"
+   },
+   "cohort": {
+    "filters": "SPEC_CONDITIONS",
+    "perspective": "SPEC",
+    "role": "SUBJECT",
+    "weighting": "UNIFORM",
+    "window": "SPEC_WINDOW"
+   },
+   "reads": "the subject under its own stated conditions, against the subject's unrestricted all-prior mean"
+  },
+  "SUBJECT_RECENT_VS_LONG_BASELINE": {
+   "baseline": {
+    "filters": "SPEC_CONDITIONS",
+    "perspective": "SPEC",
+    "role": "SUBJECT",
+    "weighting": "UNIFORM",
+    "window": "ALL_PRIOR"
+   },
+   "cohort": {
+    "filters": "SPEC_CONDITIONS",
+    "perspective": "SPEC",
+    "role": "SUBJECT",
+    "weighting": "TIME_DECAY",
+    "window": "SPEC_WINDOW"
+   },
+   "reads": "the subject's time-decayed recent weighting of its prior matches, against the un-decayed long-run mean of its whole prior history"
+  },
+  "SUBJECT_VENUE_BASELINE": {
+   "baseline": {
+    "filters": "VENUE_OF_TARGET",
+    "perspective": "SPEC",
+    "role": "SUBJECT",
+    "weighting": "UNIFORM",
+    "window": "ALL_PRIOR"
+   },
+   "cohort": {
+    "filters": "SPEC_CONDITIONS",
+    "perspective": "SPEC",
+    "role": "SUBJECT",
+    "weighting": "UNIFORM",
+    "window": "SPEC_WINDOW"
+   },
+   "reads": "the subject under its own stated conditions, against the subject's mean at the venue it occupies in the target fixture"
+  },
+  "SUBJECT_VS_FIXTURE_OPPONENT": {
+   "baseline": {
+    "filters": "SPEC_CONDITIONS",
+    "perspective": "SPEC",
+    "role": "FIXTURE_OPPONENT",
+    "weighting": "UNIFORM",
+    "window": "SPEC_WINDOW"
+   },
+   "cohort": {
+    "filters": "SPEC_CONDITIONS",
+    "perspective": "SPEC",
+    "role": "SUBJECT",
+    "weighting": "UNIFORM",
+    "window": "SPEC_WINDOW"
+   },
+   "reads": "the subject's own rate against the corresponding rate of the team it actually faces in the target fixture"
+  }
+ },
+ "entity_roles": [
+  "SUBJECT",
+  "FIXTURE_OPPONENT",
+  "COMPETITION_ENVIRONMENT"
+ ],
+ "filter_dimensions": {
+  "competition": {
+   "means": "restrict to prior matches played in the same competition as the target fixture",
+   "needs": [],
+   "values": [
+    "SAME"
+   ]
+  },
+  "historical_venue_conditioning": {
+   "means": "restrict the entity's prior matches to those played at that venue",
+   "needs": [],
+   "values": [
+    "HOME",
+    "AWAY"
+   ]
+  },
+  "opponent_profile": {
+   "means": "restrict to prior matches whose OPPONENT sat in that PIT tercile of the named profile axis, within the opponent's own competition",
+   "needs": [
+    "axis"
+   ],
+   "values": [
+    "HIGH",
+    "MID",
+    "LOW"
+   ]
+  }
+ },
+ "known_unsupported_dimensions": {
+  "opponent_formation_family": "formation is not resolvable per prior match in this corpus",
+  "own_formation_family": "formation is not resolvable per prior match in this corpus"
+ },
+ "non_restrictive_values": [
+  null,
+  "ANY",
+  "ALL"
+ ],
+ "ontology_version": "v71_ontology_v1",
+ "perspectives": [
+  "FOR",
+  "AGAINST"
+ ],
+ "reads_outcomes": false,
+ "reads_prose": false,
+ "reweighting_comparators": [
+  "SUBJECT_RECENT_VS_LONG_BASELINE"
+ ],
+ "temporal_resolutions": [
+  "MATCH",
+  "HALF",
+  "EVENT"
+ ],
+ "uses_llm": false,
+ "weightings": [
+  "UNIFORM",
+  "TIME_DECAY"
+ ],
+ "windows": [
+  "ALL_PRIOR",
+  "W5",
+  "W10"
+ ]
+}

@@ -82,7 +82,7 @@ def _estimates(ir, index, rec_i, metric, ctx, capability, weightings):
     for w in weightings:
         q = CO.compile_query(ir, index, rec_i, metric=metric, terciles=ctx.terciles,
                              axis_cache=ctx.axis_cache, similarity=ctx.similarity,
-                             recency=w, capability=capability)
+                             recency=w, capability=capability, collect_fixtures=False)
         if q.observed is None or q.environment_mean is None:
             raise CO.CompileRefused("observed value or environment mean unavailable")
         cw, bw = sum(q.cohort_weights), sum(q.baseline_weights)
@@ -90,8 +90,8 @@ def _estimates(ir, index, rec_i, metric, ctx, capability, weightings):
             raise CO.CompileRefused("degenerate weights")
         c_mean = sum(x * v for x, v in zip(q.cohort_weights, q.cohort_values)) / cw
         b_mean = sum(x * v for x, v in zip(q.baseline_weights, q.baseline_values)) / bw
-        cs.append(w.shrink(c_mean, len(q.cohort_values), q.environment_mean))
-        bs.append(w.shrink(b_mean, len(q.baseline_values), q.environment_mean))
+        cs.append(w.shrink(c_mean, q.cohort_n, q.environment_mean))
+        bs.append(w.shrink(b_mean, q.baseline_n, q.environment_mean))
         observed, read = q.observed, read | q.fixtures_read
     return (sum(cs) / len(cs), sum(bs) / len(bs), observed, read)
 

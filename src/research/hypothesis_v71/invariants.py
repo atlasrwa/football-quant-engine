@@ -121,8 +121,13 @@ def check(ir, *, capability=None) -> dict:
 
     # Baseline absorption: the baseline partition already equals the cohort's restriction, so
     # the contrast collapses (V6.1's venue-condition + venue-baseline pattern).
+    # A REWEIGHTING comparator's two selectors legitimately share their filters: the contrast
+    # is carried by the weighting, not by the restriction. Flagging that as absorption would
+    # reject every conditioned recency hypothesis.
+    _reweighting = ir.cohort.weighting != ir.baseline.weighting
     if (ir.cohort.entity_role == ir.baseline.entity_role
             and ir.cohort.perspective == ir.baseline.perspective
+            and not _reweighting
             and not ir.cohort.complement and not ir.baseline.complement):
         cvenue = {f.value for f in ir.cohort.filters
                   if f.dimension == "historical_venue_conditioning"}

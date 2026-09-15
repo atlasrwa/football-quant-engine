@@ -107,15 +107,20 @@ COMPARATOR_BINDINGS = {
                   "all-prior mean"),
         "requires_filter": {"dimension": "competition", "value": "SAME"},
     },
+    # The baseline is the LONG-RUN mean, as the comparator's own name and V7's frozen
+    # definition ("subject long-run un-decayed PIT baseline") both say. Binding it to the
+    # hypothesis' own window would compare a decayed five-match cohort against an un-decayed
+    # FIVE-MATCH baseline, where decay and uniform weighting barely differ -- a contrast that
+    # collapses toward zero by construction.
     "SUBJECT_RECENT_VS_LONG_BASELINE": {
         "cohort": {"role": "SUBJECT", "perspective": "SPEC",
                    "filters": "SPEC_CONDITIONS", "window": "SPEC_WINDOW",
                    "weighting": "TIME_DECAY"},
         "baseline": {"role": "SUBJECT", "perspective": "SPEC",
-                     "filters": "SPEC_CONDITIONS", "window": "SPEC_WINDOW",
+                     "filters": "SPEC_CONDITIONS", "window": "ALL_PRIOR",
                      "weighting": "UNIFORM"},
-        "reads": ("the subject's time-decayed recent weighting of a set of prior matches, "
-                  "against the un-decayed mean of the SAME matches"),
+        "reads": ("the subject's time-decayed recent weighting of its prior matches, against "
+                  "the un-decayed long-run mean of its whole prior history"),
     },
     "OPPONENT_OVERALL_BASELINE": {
         "cohort": {"role": "FIXTURE_OPPONENT", "perspective": "SPEC",

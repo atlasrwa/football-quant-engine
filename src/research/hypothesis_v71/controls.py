@@ -36,7 +36,9 @@ CONTROLS_VERSION = "v71_controls_v1"
 SEED = "V7_1_DETERMINISTIC_CONTROL_UNIVERSE_v1"
 
 UNIFORM_POOL_SIZE = 2000
-MARGINAL_POOL_SIZE = 24000
+#: The marginal pool is large because Endpoint-B matching is EXACT on every frozen
+#: covariate: flexibility has to come from pool size, not from coarsening the key.
+MARGINAL_POOL_SIZE = 200000
 
 SAMPLING_UNIFORM = "UNIFORM_GRAMMAR"
 SAMPLING_MARGINAL = "TREATED_ARM_STRUCTURAL_MARGINALS"

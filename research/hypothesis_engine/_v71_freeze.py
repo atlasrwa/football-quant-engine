@@ -27,7 +27,6 @@ sys.path.insert(0, "/home/ubuntu")
 sys.path.insert(0, "/home/ubuntu/src")
 
 from src.research.hypothesis_v7 import covariates as V7COV
-from src.research.hypothesis_v7 import matching as V7MATCH
 from src.research.hypothesis_v71 import bugledger as BUG
 from src.research.hypothesis_v71 import capability as CAP
 from src.research.hypothesis_v71 import compiler as CO
@@ -43,6 +42,7 @@ from src.research.hypothesis_v71 import golden as GOLD
 from src.research.hypothesis_v71 import invariants as INV
 from src.research.hypothesis_v71 import ir as IRM
 from src.research.hypothesis_v71 import leakage as LEAK
+from src.research.hypothesis_v71 import matching as MATCH
 from src.research.hypothesis_v71 import ontology as ONT
 from src.research.hypothesis_v71 import recency as REC
 from src.research.hypothesis_v71 import similarity as SIM
@@ -222,9 +222,8 @@ def main():
                                            else []),
                  "FAMILY": ir.research_family}
         c = V7COV.build(cspec, meas, CF.plan_for(ir.research_family))
-        c["canonical_hypothesis_id"] = cid
         c["n_admissible_competitions"] = len(adm)
-        return c
+        return {"canonical_hypothesis_id": cid, "covariates": c}
 
     llm_cov, null_cov = [], []
     for spec, row in zip(treated_specs, treated_rows):
@@ -240,19 +239,36 @@ def main():
         status, adm, _d = cap.classify_metrics(ir.target_metrics)
         null_cov.append(cov_row(p, ir, status, adm, f"null_{p['null_index']}"))
 
-    matched = V7MATCH.match(llm_cov, null_cov)
-    ess = V7MATCH.effective_sample(matched["control_weights"], len(null_cov))
-    bal = V7MATCH.balance(llm_cov, null_cov, matched["control_weights"],
-                          CB.MATCHING_COVARIATES)
-    verdict = V7MATCH.comparability_verdict(matched, ess, bal)
+    matched = MATCH.match(llm_cov, null_cov)
+    ess = MATCH.effective_sample(matched["control_weights"], len(null_cov))
+    # Balance is a property of the MATCHED sample. An unmatched treated family has no
+    # comparator to be balanced against; it is accounted for by the unmatched-fraction limit,
+    # not by dragging a zero-weight level into the standardized differences.
+    matched_ids = {a["canonical_hypothesis_id"] for a in matched["assignments"]
+                   if a["tier"] != MATCH.NO_MATCH}
+    matched_llm = [r for r in llm_cov if r["canonical_hypothesis_id"] in matched_ids]
+    bal = MATCH.balance(matched_llm, null_cov, matched["control_weights"],
+                        CB.MATCHING_COVARIATES)
+    bal["estimand"] = "MATCHED_TREATED_SAMPLE"
+    bal["n_treated_in_balance"] = len(matched_llm)
+    verdict = MATCH.comparability_verdict(matched, ess, bal)
     write("V7_1_MATCHING.json",
-          {"spec": V7MATCH.version_stamp(), "covariates": list(CB.MATCHING_COVARIATES),
+          {"spec": MATCH.version_stamp(), "covariates": list(CB.MATCHING_COVARIATES),
            "n_llm": len(llm_cov), "n_null_eligible": len(null_cov),
            "match": {k: v for k, v in matched.items() if k != "control_weights"},
            "effective_sample": ess, "balance": bal, "verdict": verdict}, manifest)
     write("V7_1_MATCHING_WEIGHTS.json", matched["control_weights"], manifest)
+    if not verdict.get("control_b_comparable"):
+        problems.append(f"Endpoint B is not comparable: {verdict.get('reasons')}")
+    if not bal.get("balance_ok"):
+        problems.append(f"balance fails: worst |SMD| {bal.get('worst_smd_weighted')}")
+    if matched.get("no_comparable_fraction", 1.0) > MATCH.MAX_NO_COMPARABLE_FRACTION:
+        problems.append(f"unmatched fraction {matched['no_comparable_fraction']}")
     print(f"matching: {matched.get('n_matched')}/{len(llm_cov)} matched, "
-          f"ESS {ess.get('effective_n')}, verdict {verdict.get('verdict')}", flush=True)
+          f"unmatched {matched.get('no_comparable_fraction')}, "
+          f"ESS {round(ess.get('effective_n', 0), 1)}, "
+          f"worst |SMD| {bal.get('worst_smd_weighted')}, "
+          f"comparable {verdict.get('control_b_comparable')}", flush=True)
 
     # ---- 6. leakage red team ------------------------------------------------------------
     guard = LEAK.run_guard_suite(1_700_000_000, "mt_target")
@@ -274,7 +290,7 @@ def main():
     struct["n_evaluable_families"] = n_eval_llm
     struct["expected_scored_pairs"] = matched.get("n_matched", 0)
     struct["expected_clusters"] = len({
-        c.get("research_family_label") for c in llm_cov})
+        c["covariates"].get("research_family_label") for c in llm_cov})
     struct["expected_effective_sample"] = ess.get("effective_n", 0.0)
 
     replay_path = f"{OUT}/V7_1_DIAGNOSTIC_REPLAY.json"
@@ -291,6 +307,18 @@ def main():
           manifest)
     print(f"fresh: {struct['n_fixtures']} fixtures, {struct['n_competitions']} competitions, "
           f"{struct['n_folds']} folds; gate {gate['verdict']}", flush=True)
+
+    # ---- 7b. diagnostics produced BEFORE the freeze are hashed into it ------------------
+    # The gate's precision input comes from the diagnostic replay, so the replay must be part
+    # of what the freeze pins. The reproducibility proof and the dry run are produced AFTER
+    # the manifest and reference it, so they are deliberately not hashed here.
+    for name in ("V7_1_SEMANTIC_TRACE.json", "V7_1_DIAGNOSTIC_REPLAY.json",
+                 "V7_1_BLAST_RADIUS.json", "V7_1_FRESH_ACQUISITION.json"):
+        path = f"{OUT}/{name}"
+        if os.path.exists(path):
+            manifest[name] = sha_file(path)
+        else:
+            problems.append(f"expected diagnostic artifact missing: {name}")
 
     # ---- 8. freeze manifest -------------------------------------------------------------
     doc = {"freeze_version": "v71_freeze_v1",
@@ -309,7 +337,8 @@ def main():
                "recency": REC.RECENCY_VERSION, "confounders": CF.CONFOUNDERS_VERSION,
                "estimator": ES.ESTIMATOR_VERSION, "controls": CTRL.CONTROLS_VERSION,
                "evaluability": EVAL.EVALUABILITY_VERSION, "fresh": FS.FRESH_VERSION,
-               "leakage": LEAK.LEAKAGE_VERSION, "engine": EN.ENGINE_VERSION},
+               "leakage": LEAK.LEAKAGE_VERSION, "engine": EN.ENGINE_VERSION,
+               "matching": MATCH.MATCHING_VERSION},
            "engine_spec_hash": EN.spec_hash(),
            "evaluability_verdict": gate["verdict"],
            "artifact_hashes": manifest,

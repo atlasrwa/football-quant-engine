@@ -1,0 +1,586 @@
+{
+ "case_names": [
+  "degenerate_subject_vs_itself",
+  "degenerate_masked_by_ANY_condition",
+  "venue_baseline_absorbs_venue_condition",
+  "shots_vs_high_possession_opponents",
+  "shots_on_target_recent_form",
+  "blocked_shots_last_five",
+  "corners_away_only",
+  "accurate_crosses_same_competition",
+  "possession_vs_league_environment",
+  "cards_conditional_vs_complement",
+  "tackles_vs_similar_opponents",
+  "fouls_opponent_baseline",
+  "cross_entity_subject_vs_opponent",
+  "attacking_profile_interaction",
+  "defensive_profile_interaction",
+  "xg_is_provider_safe_but_restricted",
+  "formation_condition_is_unsupported",
+  "half_level_state_requires_half_resolution",
+  "half_level_metric_answers_half_question",
+  "unknown_metric_is_not_unsupported",
+  "ambiguous_cards_metric_must_resolve"
+ ],
+ "cases": [
+  {
+   "expect_codes": [
+    "IDENTICAL_COHORT_BASELINE",
+    "SELF_COMPARISON"
+   ],
+   "expect_status": "OK",
+   "meaning": "A question with no restriction and no window: the subject's all-prior mean compared with the subject's all-prior mean. There is no contrast.",
+   "must_not_say": [],
+   "must_say": [],
+   "name": "degenerate_subject_vs_itself",
+   "spec": {
+    "comparison": "SUBJECT_OVERALL_BASELINE",
+    "conditions": [],
+    "required_capabilities": [],
+    "research_family": "ATTACK_VOLUME",
+    "side": "FOR",
+    "subject": "HOME_TEAM",
+    "target_metrics": [
+     "total_shots"
+    ],
+    "window": "ALL_PRIOR"
+   }
+  },
+  {
+   "expect_codes": [
+    "IDENTICAL_COHORT_BASELINE",
+    "SELF_COMPARISON"
+   ],
+   "expect_status": "OK",
+   "meaning": "The same non-question, but carrying a `competition: ANY` condition. ANY is not a restriction, so this must be caught by the SAME invariant and must not be mistaken for a conditioned hypothesis.",
+   "must_not_say": [],
+   "must_say": [],
+   "name": "degenerate_masked_by_ANY_condition",
+   "spec": {
+    "comparison": "SUBJECT_OVERALL_BASELINE",
+    "conditions": [
+     {
+      "dimension": "competition",
+      "value": "ANY"
+     }
+    ],
+    "required_capabilities": [],
+    "research_family": "ATTACK_VOLUME",
+    "side": "FOR",
+    "subject": "HOME_TEAM",
+    "target_metrics": [
+     "total_shots"
+    ],
+    "window": "ALL_PRIOR"
+   }
+  },
+  {
+   "expect_codes": [
+    "BASELINE_ABSORPTION"
+   ],
+   "expect_status": "OK",
+   "meaning": "The subject's home matches compared against the subject's home baseline. The baseline already contains the restriction, so the contrast collapses.",
+   "must_not_say": [],
+   "must_say": [],
+   "name": "venue_baseline_absorbs_venue_condition",
+   "spec": {
+    "comparison": "SUBJECT_VENUE_BASELINE",
+    "conditions": [
+     {
+      "dimension": "historical_venue_conditioning",
+      "value": "HOME"
+     }
+    ],
+    "required_capabilities": [],
+    "research_family": "SET_PIECE_GENERATION",
+    "side": "FOR",
+    "subject": "HOME_TEAM",
+    "target_metrics": [
+     "corners"
+    ],
+    "window": "ALL_PRIOR"
+   }
+  },
+  {
+   "expect_codes": [],
+   "expect_status": "OK",
+   "meaning": "Does the subject concede more shots when the opponent is a high-possession side, compared with the subject's overall concession baseline?",
+   "must_not_say": [
+    "the fixture opponent's"
+   ],
+   "must_say": [
+    "the subject's concession",
+    "the opponent was in the HIGH tercile of possession_for",
+    "differ from the subject's concession, over all prior matches"
+   ],
+   "name": "shots_vs_high_possession_opponents",
+   "spec": {
+    "comparison": "SUBJECT_OVERALL_BASELINE",
+    "conditions": [
+     {
+      "axis": "possession_for",
+      "dimension": "opponent_profile",
+      "value": "HIGH"
+     }
+    ],
+    "required_capabilities": [
+     "opponent_profile"
+    ],
+    "research_family": "DEFENSIVE_CONCESSION",
+    "side": "AGAINST",
+    "subject": "HOME_TEAM",
+    "target_metrics": [
+     "total_shots"
+    ],
+    "window": "ALL_PRIOR"
+   }
+  },
+  {
+   "expect_codes": [],
+   "expect_status": "OK",
+   "meaning": "Is the subject's recent shots-on-target production different from its long-run production over the same prior matches?",
+   "must_not_say": [],
+   "must_say": [
+    "weighted toward recent matches"
+   ],
+   "name": "shots_on_target_recent_form",
+   "spec": {
+    "comparison": "SUBJECT_RECENT_VS_LONG_BASELINE",
+    "conditions": [],
+    "required_capabilities": [],
+    "research_family": "FORM_VS_BASELINE",
+    "side": "FOR",
+    "subject": "HOME_TEAM",
+    "target_metrics": [
+     "shots_on_target"
+    ],
+    "window": "ALL_PRIOR"
+   }
+  },
+  {
+   "expect_codes": [],
+   "expect_status": "OK",
+   "meaning": "Does the subject's blocked-shots rate over its last five matches differ from its all-prior rate?",
+   "must_not_say": [],
+   "must_say": [
+    "over its last 5 prior matches",
+    "over all prior matches"
+   ],
+   "name": "blocked_shots_last_five",
+   "spec": {
+    "comparison": "SUBJECT_OVERALL_BASELINE",
+    "conditions": [],
+    "required_capabilities": [],
+    "research_family": "DEFENSIVE_SUPPRESSION",
+    "side": "FOR",
+    "subject": "HOME_TEAM",
+    "target_metrics": [
+     "blocked_shots"
+    ],
+    "window": "W5"
+   }
+  },
+  {
+   "expect_codes": [],
+   "expect_status": "OK",
+   "meaning": "Does the subject win more corners away than at its target venue baseline?",
+   "must_not_say": [],
+   "must_say": [
+    "the opponent was in the HIGH tercile of goals_against"
+   ],
+   "name": "corners_away_only",
+   "spec": {
+    "comparison": "SUBJECT_VENUE_BASELINE",
+    "conditions": [
+     {
+      "axis": "goals_against",
+      "dimension": "opponent_profile",
+      "value": "HIGH"
+     }
+    ],
+    "required_capabilities": [
+     "opponent_profile"
+    ],
+    "research_family": "SET_PIECE_GENERATION",
+    "side": "FOR",
+    "subject": "HOME_TEAM",
+    "target_metrics": [
+     "corners"
+    ],
+    "window": "ALL_PRIOR"
+   }
+  },
+  {
+   "expect_codes": [],
+   "expect_status": "OK",
+   "meaning": "Does the subject complete more crosses inside the target competition than across all competitions?",
+   "must_not_say": [],
+   "must_say": [
+    "the match was in the same competition as the target fixture"
+   ],
+   "name": "accurate_crosses_same_competition",
+   "spec": {
+    "comparison": "SUBJECT_COMPETITION_BASELINE",
+    "conditions": [
+     {
+      "dimension": "competition",
+      "value": "SAME"
+     }
+    ],
+    "required_capabilities": [],
+    "research_family": "TEMPO_AND_TERRITORY",
+    "side": "FOR",
+    "subject": "HOME_TEAM",
+    "target_metrics": [
+     "accurate_crosses"
+    ],
+    "window": "ALL_PRIOR"
+   }
+  },
+  {
+   "expect_codes": [],
+   "expect_status": "OK",
+   "meaning": "Does the subject hold more possession than the competition-season environment mean?",
+   "must_not_say": [],
+   "must_say": [
+    "the competition environment's production"
+   ],
+   "name": "possession_vs_league_environment",
+   "spec": {
+    "comparison": "LEAGUE_ENVIRONMENT_BASELINE",
+    "conditions": [],
+    "required_capabilities": [],
+    "research_family": "TEMPO_AND_TERRITORY",
+    "side": "FOR",
+    "subject": "HOME_TEAM",
+    "target_metrics": [
+     "possession"
+    ],
+    "window": "ALL_PRIOR"
+   }
+  },
+  {
+   "expect_codes": [],
+   "expect_status": "OK",
+   "meaning": "Does the subject collect more yellow cards against high-fouling opponents than when that condition does NOT hold?",
+   "must_not_say": [],
+   "must_say": [
+    "excluding matches where"
+   ],
+   "name": "cards_conditional_vs_complement",
+   "spec": {
+    "comparison": "SUBJECT_CONDITIONAL_VS_BASELINE",
+    "conditions": [
+     {
+      "axis": "goals_for",
+      "dimension": "opponent_profile",
+      "value": "HIGH"
+     }
+    ],
+    "required_capabilities": [
+     "opponent_profile"
+    ],
+    "research_family": "DISCIPLINE",
+    "side": "FOR",
+    "subject": "HOME_TEAM",
+    "target_metrics": [
+     "yellow_cards"
+    ],
+    "window": "ALL_PRIOR"
+   }
+  },
+  {
+   "expect_codes": [],
+   "expect_status": "OK",
+   "meaning": "Does the subject make more tackles against opponents deterministically similar to the fixture opponent than against the rest?",
+   "must_not_say": [],
+   "must_say": [
+    "against opponents similar to the fixture opponent",
+    "against opponents NOT similar to the fixture opponent"
+   ],
+   "name": "tackles_vs_similar_opponents",
+   "spec": {
+    "comparison": "SIMILAR_OPPONENT_COHORT",
+    "conditions": [],
+    "required_capabilities": [
+     "opponent_profile",
+     "similar_opponents"
+    ],
+    "research_family": "OPPONENT_PROFILE_INTERACTION",
+    "side": "FOR",
+    "subject": "HOME_TEAM",
+    "target_metrics": [
+     "tackles"
+    ],
+    "window": "ALL_PRIOR"
+   }
+  },
+  {
+   "expect_codes": [],
+   "expect_status": "OK",
+   "meaning": "Does the fixture opponent commit more fouls under a condition than in its own overall baseline?",
+   "must_not_say": [
+    "the subject's"
+   ],
+   "must_say": [
+    "the fixture opponent's production"
+   ],
+   "name": "fouls_opponent_baseline",
+   "spec": {
+    "comparison": "OPPONENT_OVERALL_BASELINE",
+    "conditions": [
+     {
+      "dimension": "historical_venue_conditioning",
+      "value": "AWAY"
+     }
+    ],
+    "required_capabilities": [],
+    "research_family": "DISCIPLINE",
+    "side": "FOR",
+    "subject": "HOME_TEAM",
+    "target_metrics": [
+     "fouls"
+    ],
+    "window": "ALL_PRIOR"
+   }
+  },
+  {
+   "expect_codes": [],
+   "expect_status": "OK",
+   "meaning": "Does the subject concede more shots than the team it actually faces concedes? This is a CROSS-ENTITY question; V6.1's schema had no token for it, so such questions arrived labelled SUBJECT_OVERALL_BASELINE with the real meaning left in prose.",
+   "must_not_say": [],
+   "must_say": [
+    "the subject's concession",
+    "the fixture opponent's concession"
+   ],
+   "name": "cross_entity_subject_vs_opponent",
+   "spec": {
+    "comparison": "SUBJECT_VS_FIXTURE_OPPONENT",
+    "conditions": [],
+    "required_capabilities": [],
+    "research_family": "DEFENSIVE_CONCESSION",
+    "side": "AGAINST",
+    "subject": "HOME_TEAM",
+    "target_metrics": [
+     "total_shots"
+    ],
+    "window": "ALL_PRIOR"
+   }
+  },
+  {
+   "expect_codes": [],
+   "expect_status": "OK",
+   "meaning": "Does the subject's shot production change against opponents with a weak defensive profile?",
+   "must_not_say": [
+    "concession"
+   ],
+   "must_say": [
+    "the subject's production",
+    "the opponent was in the HIGH tercile of shots_on_target_against"
+   ],
+   "name": "attacking_profile_interaction",
+   "spec": {
+    "comparison": "SUBJECT_OVERALL_BASELINE",
+    "conditions": [
+     {
+      "axis": "shots_on_target_against",
+      "dimension": "opponent_profile",
+      "value": "HIGH"
+     }
+    ],
+    "required_capabilities": [
+     "opponent_profile"
+    ],
+    "research_family": "OPPONENT_PROFILE_INTERACTION",
+    "side": "FOR",
+    "subject": "HOME_TEAM",
+    "target_metrics": [
+     "shots_on_target"
+    ],
+    "window": "ALL_PRIOR"
+   }
+  },
+  {
+   "expect_codes": [],
+   "expect_status": "OK",
+   "meaning": "Does the subject's concession change against opponents with a strong attacking profile? Same axis family as the previous case but the PERSPECTIVE is inverted, so it must be a different question.",
+   "must_not_say": [
+    "the subject's production"
+   ],
+   "must_say": [
+    "the subject's concession"
+   ],
+   "name": "defensive_profile_interaction",
+   "spec": {
+    "comparison": "SUBJECT_OVERALL_BASELINE",
+    "conditions": [
+     {
+      "axis": "shots_on_target_for",
+      "dimension": "opponent_profile",
+      "value": "HIGH"
+     }
+    ],
+    "required_capabilities": [
+     "opponent_profile"
+    ],
+    "research_family": "DEFENSIVE_CONCESSION",
+    "side": "AGAINST",
+    "subject": "HOME_TEAM",
+    "target_metrics": [
+     "shots_on_target"
+    ],
+    "window": "ALL_PRIOR"
+   }
+  },
+  {
+   "expect_capability": "RESTRICTED",
+   "expect_codes": [],
+   "expect_status": "OK",
+   "meaning": "An xG question. xG is contracted and audited, but is not covered in every competition, so it must compile to a RESTRICTED universe, never be silently measured on all six.",
+   "must_not_say": [],
+   "must_say": [],
+   "name": "xg_is_provider_safe_but_restricted",
+   "spec": {
+    "comparison": "SUBJECT_RECENT_VS_LONG_BASELINE",
+    "conditions": [],
+    "required_capabilities": [
+     "xg"
+    ],
+    "research_family": "ATTACK_QUALITY",
+    "side": "FOR",
+    "subject": "HOME_TEAM",
+    "target_metrics": [
+     "xg"
+    ],
+    "window": "ALL_PRIOR"
+   }
+  },
+  {
+   "expect_codes": [
+    "UNSUPPORTED_FILTER_DIMENSION"
+   ],
+   "expect_status": "UNSUPPORTED_FILTER_DIMENSION",
+   "meaning": "A formation-conditioned question. Formation is not resolvable per prior match in this corpus, so the hypothesis must fail CLOSED with a named capability gap -- never compile to an empty cohort.",
+   "must_not_say": [],
+   "must_say": [],
+   "name": "formation_condition_is_unsupported",
+   "spec": {
+    "comparison": "SUBJECT_OVERALL_BASELINE",
+    "conditions": [
+     {
+      "dimension": "opponent_formation_family",
+      "value": "BACK_FOUR"
+     }
+    ],
+    "required_capabilities": [
+     "formation_recorded_history"
+    ],
+    "research_family": "ATTACK_VOLUME",
+    "side": "FOR",
+    "subject": "HOME_TEAM",
+    "target_metrics": [
+     "total_shots"
+    ],
+    "window": "ALL_PRIOR"
+   }
+  },
+  {
+   "expect_codes": [
+    "IDENTICAL_COHORT_BASELINE",
+    "SELF_COMPARISON",
+    "TEMPORAL_RESOLUTION_UNSUPPORTED"
+   ],
+   "expect_half_resolution_refused": true,
+   "expect_status": "OK",
+   "meaning": "A trailing-at-half-time style question. The corpus resolves only 2nd-half cards at half level, so a half-resolution request for a match-level metric must be refused rather than answered with match aggregates.",
+   "must_not_say": [],
+   "must_say": [],
+   "name": "half_level_state_requires_half_resolution",
+   "spec": {
+    "comparison": "SUBJECT_OVERALL_BASELINE",
+    "conditions": [],
+    "required_capabilities": [],
+    "research_family": "ATTACK_VOLUME",
+    "side": "FOR",
+    "subject": "HOME_TEAM",
+    "target_metrics": [
+     "total_shots"
+    ],
+    "window": "ALL_PRIOR"
+   },
+   "temporal_resolution": "HALF"
+  },
+  {
+   "expect_codes": [],
+   "expect_status": "OK",
+   "meaning": "The positive control for the previous case: 2nd-half cards ARE held at half resolution, so a half-level question about them must be allowed. Without this case the resolution check could pass by refusing everything.",
+   "must_not_say": [],
+   "must_say": [],
+   "name": "half_level_metric_answers_half_question",
+   "spec": {
+    "comparison": "SUBJECT_RECENT_VS_LONG_BASELINE",
+    "conditions": [],
+    "required_capabilities": [],
+    "research_family": "DISCIPLINE",
+    "side": "FOR",
+    "subject": "HOME_TEAM",
+    "target_metrics": [
+     "cards_2h"
+    ],
+    "window": "ALL_PRIOR"
+   },
+   "temporal_resolution": "HALF"
+  },
+  {
+   "expect_capability": "UNKNOWN",
+   "expect_codes": [
+    "UNKNOWN_PROVIDER_SEMANTICS"
+   ],
+   "expect_status": "OK",
+   "meaning": "A metric this corpus has never characterised. It must be reported as UNKNOWN -- a named gap -- not silently treated as unsupported or zero.",
+   "must_not_say": [],
+   "must_say": [],
+   "name": "unknown_metric_is_not_unsupported",
+   "spec": {
+    "comparison": "SUBJECT_RECENT_VS_LONG_BASELINE",
+    "conditions": [],
+    "required_capabilities": [],
+    "research_family": "ATTACK_VOLUME",
+    "side": "FOR",
+    "subject": "HOME_TEAM",
+    "target_metrics": [
+     "progressive_carries"
+    ],
+    "window": "ALL_PRIOR"
+   }
+  },
+  {
+   "expect_capability": "UNSUPPORTED",
+   "expect_codes": [
+    "UNSUPPORTED_METRIC"
+   ],
+   "expect_status": "OK",
+   "meaning": "The bare token `cards` is ambiguous between yellow and total. It must be refused until it resolves explicitly.",
+   "must_not_say": [],
+   "must_say": [],
+   "name": "ambiguous_cards_metric_must_resolve",
+   "spec": {
+    "comparison": "SUBJECT_RECENT_VS_LONG_BASELINE",
+    "conditions": [],
+    "required_capabilities": [],
+    "research_family": "DISCIPLINE",
+    "side": "FOR",
+    "subject": "HOME_TEAM",
+    "target_metrics": [
+     "cards"
+    ],
+    "window": "ALL_PRIOR"
+   }
+  }
+ ],
+ "contains_effects": false,
+ "contains_outcomes": false,
+ "golden_version": "v71_golden_v1",
+ "n_cases": 21,
+ "n_negative_controls": 7
+}

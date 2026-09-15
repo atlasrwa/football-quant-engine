@@ -1,0 +1,123 @@
+{
+ "added_in_v7_1": [
+  "n_admissible_competitions"
+ ],
+ "bridge_version": "v71_covariate_bridge_v1",
+ "matching_covariates": [
+  "uses_similarity",
+  "comparator",
+  "target_band",
+  "time_scope",
+  "metric_group",
+  "measurability_status",
+  "subject",
+  "side",
+  "n_conditions",
+  "support_risk_class",
+  "coverage_class",
+  "requires_half_resolution",
+  "n_admissible_competitions"
+ ],
+ "rationale": "restricted universes make measurability OPPORTUNITY vary by family; matching must condition on it or the comparison inherits the imbalance",
+ "source": "v7_covariates_v1",
+ "v7_schema": {
+  "baseline_types": {
+   "LEAGUE_ENVIRONMENT_BASELINE": "LEAGUE_SEASON_MEAN",
+   "OPPONENT_OVERALL_BASELINE": "OPPONENT_ALL_PRIOR_CONCESSION",
+   "OPPONENT_VENUE_BASELINE": "OPPONENT_VENUE_CONCESSION",
+   "SIMILAR_OPPONENT_COHORT": "DISSIMILAR_OPPONENT_VENUE_MEAN",
+   "SUBJECT_COMPETITION_BASELINE": "SUBJECT_CROSS_COMPETITION_MEAN",
+   "SUBJECT_CONDITIONAL_VS_BASELINE": "SUBJECT_UNCONDITIONED_MEAN",
+   "SUBJECT_OVERALL_BASELINE": "SUBJECT_ALL_PRIOR_MEAN",
+   "SUBJECT_RECENT_VS_LONG_BASELINE": "SUBJECT_LONG_RUN_UNDECAYED_MEAN",
+   "SUBJECT_VENUE_BASELINE": "SUBJECT_VENUE_MEAN"
+  },
+  "covariates_version": "v7_covariates_v1",
+  "descriptive_only_covariates": {
+   "primary_metric": "high-cardinality; matched via metric_group + target_band",
+   "research_family_label": "the model's own semantic family label; the deterministic null has no equivalent labelling process, and identical structure carries FORM_VS_BASELINE 22x vs six other families 16x in the V6.1 universe. Matched on `metric_group` instead."
+  },
+  "excluded_raw_provider_requirements": true,
+  "exclusion_rationale": "canonical_spec.PROVIDER_REQUIREMENTS is the model's self-description, not a property of the statistical question: measured against the V6.1 universe, xg capability vs xg target is 53 agree / 5 / 5, target_fixture_venue_context vs a venue comparator is 0 agree / 30 / 17, and match_level_observations appears in only 65 of 132 families. Only opponent_profile <-> opponent_profile condition is deterministic (33/33), and that is carried explicitly as USES_SIMILARITY. canonical.py is unchanged, so canonical ids and the candidate lock are untouched.",
+  "forbidden_sources": [
+   "historical_effect",
+   "oos_effect",
+   "effect_size",
+   "p_value",
+   "significance",
+   "fold_effect",
+   "fold_performance",
+   "outcome_direction",
+   "survives",
+   "oos_survives",
+   "shrunk_effect",
+   "confirmatory"
+  ],
+  "frozen_before_oos": true,
+  "matching_covariates": [
+   "uses_similarity",
+   "comparator",
+   "target_band",
+   "time_scope",
+   "metric_group",
+   "measurability_status",
+   "subject",
+   "side",
+   "n_conditions",
+   "support_risk_class",
+   "coverage_class",
+   "requires_half_resolution"
+  ],
+  "metric_groups": {
+   "accurate_crosses": "SET_PIECE",
+   "ball_recoveries": "DEFENSIVE_ACTION",
+   "big_chances": "SCORING",
+   "blocked_shots": "DEFENSIVE_ACTION",
+   "cards": "DISCIPLINE",
+   "cards_2h": "DISCIPLINE",
+   "clearances": "DEFENSIVE_ACTION",
+   "corner_kicks": "SET_PIECE",
+   "final_third_entries": "TERRITORY",
+   "fouls": "DISCIPLINE",
+   "goals": "SCORING",
+   "interceptions": "DEFENSIVE_ACTION",
+   "np_xg": "SCORING",
+   "offsides": "TERRITORY",
+   "possession": "TERRITORY",
+   "red_cards": "DISCIPLINE",
+   "saves": "GOALKEEPING",
+   "shots": "SHOT_VOLUME",
+   "shots_inside_box": "SHOT_VOLUME",
+   "shots_off_target": "SHOT_VOLUME",
+   "shots_on_target": "SHOT_VOLUME",
+   "shots_outside_box": "SHOT_VOLUME",
+   "tackles": "DEFENSIVE_ACTION",
+   "touches_in_penalty_area": "TERRITORY",
+   "xg": "SCORING",
+   "yellow_cards": "DISCIPLINE"
+  },
+  "outcome_blind": true,
+  "target_bands": [
+   [
+    1,
+    1,
+    "T1"
+   ],
+   [
+    2,
+    2,
+    "T2"
+   ],
+   [
+    3,
+    3,
+    "T3"
+   ],
+   [
+    4,
+    5,
+    "T4_5"
+   ]
+  ]
+ }
+}

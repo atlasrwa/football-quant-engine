@@ -181,6 +181,66 @@ DEFECTS = [
         "regression_test": "test_11_similarity_refuses_rather_than_imputing",
     },
     {
+        "id": "D11",
+        "severity": "P1",
+        "title": "The recency comparator's 'long' baseline was bound to the hypothesis' window",
+        "root_cause": (
+            "V7.1's first ontology bound BOTH selectors of SUBJECT_RECENT_VS_LONG_BASELINE to "
+            "the hypothesis' own window, so a W5 hypothesis compared a decayed five-match "
+            "cohort against an UN-DECAYED FIVE-MATCH baseline. Over five matches, decay and "
+            "uniform weighting barely differ, so the contrast collapses toward zero by "
+            "construction. The comparator's own name, and V7's frozen definition ('subject "
+            "long-run un-decayed PIT baseline'), both say the baseline is long-run."),
+        "evidence": (
+            "On the development window the same canonical families V7 scored at |r| 0.09-0.18 "
+            "scored 0.000-0.044 under the mis-bound baseline"),
+        "affected_experiment": "V7.1 only (introduced and fixed during this mission)",
+        "changes_v7_interpretation": "No -- V7 never had this binding.",
+        "generic_fix": (
+            "The baseline selector is pinned to ALL_PRIOR. A golden round-trip case asserts "
+            "the reconstructed meaning contrasts a windowed cohort against the whole prior "
+            "history, so the binding cannot silently regress."),
+        "regression_test": "test_12_recency_baseline_is_long_run_not_the_spec_window",
+    },
+    {
+        "id": "D12",
+        "severity": "P1",
+        "title": "BASELINE_ABSORPTION fired on reweighting comparators",
+        "root_cause": (
+            "The absorption check compared the two selectors' venue filters without noticing "
+            "that a REWEIGHTING comparator's selectors legitimately share their filters -- the "
+            "contrast is carried by the weighting. Every venue-conditioned recency hypothesis "
+            "was rejected as absorbed."),
+        "evidence": "one of V7's seven survivors was classified STRUCTURALLY_INVALID",
+        "affected_experiment": "V7.1 only (introduced and fixed during this mission)",
+        "changes_v7_interpretation": "No.",
+        "generic_fix": (
+            "Absorption is only considered when the two selectors share a weighting. A "
+            "reweighting pair is judged on its weighting difference alone."),
+        "regression_test": "test_12_conditioned_recency_is_not_baseline_absorption",
+    },
+    {
+        "id": "D13",
+        "severity": "P2",
+        "title": "V7's executor ignored the declared window for reweighting comparators",
+        "root_cause": (
+            "In V7's `compile_signal`, the W5/W10 truncation lived in the non-recency branch "
+            "only, so every SUBJECT_RECENT_VS_LONG_BASELINE hypothesis decayed over the "
+            "team's whole prior history regardless of the window it declared. W5 and W10 "
+            "recency hypotheses were therefore the same query."),
+        "evidence": "V7 `_execute_v7_oos.compile_signal`; W5 and W10 recency families differ "
+                    "only in a field the compiler never read",
+        "affected_experiment": "V7",
+        "changes_v7_interpretation": (
+            "Mildly: V7's recency survivors are all-prior decay contrasts, not the W5/W10 "
+            "contrasts their specs declared. The measured effect is real; the label is wrong."),
+        "generic_fix": (
+            "The window is part of the Selector, so it applies wherever the binding says it "
+            "does. A W5 and a W10 recency hypothesis now compile to different queries and "
+            "therefore to different IR identities."),
+        "regression_test": "test_12_recency_window_changes_the_compiled_cohort",
+    },
+    {
         "id": "D9",
         "severity": "P3",
         "title": "The V7 apparatus and its evidence were never committed",

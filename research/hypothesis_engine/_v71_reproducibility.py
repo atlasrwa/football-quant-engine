@@ -1,8 +1,8 @@
 """V7.1 reproducibility proof. Section 20.
 
-Re-derives every deterministic V7.1 specification and control universe in a FRESH interpreter
-under several PYTHONHASHSEED values and compares the resulting SHA-256 digests with the frozen
-freeze manifest.
+Re-derives every deterministic V7.1 specification and control universe in a FRESH interpreter,
+under several PYTHONHASHSEED values AND under every compatible interpreter installed on this
+machine, and compares the resulting SHA-256 digests with the frozen freeze manifest.
 
 Anything built from Python's salted `hash()` or the `random` module would differ between seeds;
 everything here is built from sorted canonical JSON and a SHA-256 counter stream, so it must
@@ -21,6 +21,12 @@ ROOT = "/home/ubuntu"
 OUT = f"{ROOT}/research/hypothesis_oos/out/v7_1"
 
 SEEDS = ("0", "1", "42", "random")
+
+#: Compatible interpreters on this machine. The project's virtualenv is the environment the
+#: test suite and the confirmatory driver run under; the system interpreter is a genuinely
+#: separate environment with a different site-packages tree.
+INTERPRETERS = tuple(p for p in ("/home/ubuntu/.venv/bin/python", "/usr/bin/python3")
+                     if os.path.exists(p))
 
 CHILD = r'''
 import hashlib, json, sys
@@ -65,33 +71,44 @@ print(json.dumps(out, sort_keys=True))
 
 
 def main():
-    runs = {}
-    for seed in SEEDS:
-        env = dict(os.environ, PYTHONHASHSEED=seed)
-        proc = subprocess.run([sys.executable, "-c", CHILD], env=env,
-                              capture_output=True, text=True, cwd=ROOT)
-        if proc.returncode != 0:
-            print(proc.stderr[-2000:])
-            raise SystemExit(f"child failed under PYTHONHASHSEED={seed}")
-        runs[seed] = json.loads(proc.stdout)
+    runs, versions = {}, {}
+    for interp in INTERPRETERS:
+        for seed in SEEDS:
+            env = dict(os.environ, PYTHONHASHSEED=seed)
+            proc = subprocess.run([interp, "-c", CHILD], env=env,
+                                  capture_output=True, text=True, cwd=ROOT)
+            if proc.returncode != 0:
+                print(proc.stderr[-2000:])
+                raise SystemExit(f"child failed: {interp} PYTHONHASHSEED={seed}")
+            runs[(interp, seed)] = json.loads(proc.stdout)
+        v = subprocess.run([interp, "-c", "import sys;print(sys.version.split()[0])"],
+                           capture_output=True, text=True)
+        versions[interp] = v.stdout.strip()
 
-    keys = sorted(runs[SEEDS[0]])
-    unstable = [k for k in keys if len({runs[s][k] for s in SEEDS}) > 1]
+    cells = sorted(runs)
+    first = cells[0]
+    keys = sorted(runs[first])
+    unstable = [k for k in keys if len({runs[c][k] for c in cells}) > 1]
+    unstable_across_interpreters = [
+        k for k in keys
+        if len({runs[(i, SEEDS[0])][k] for i in INTERPRETERS}) > 1]
 
     manifest_path = f"{OUT}/V7_1_FREEZE_MANIFEST.json"
     engine_matches = None
     if os.path.exists(manifest_path):
         frozen = json.load(open(manifest_path))
-        engine_matches = frozen["engine_spec_hash"] == runs[SEEDS[0]]["engine_spec_hash"]
+        engine_matches = frozen["engine_spec_hash"] == runs[first]["engine_spec_hash"]
 
     doc = {"reproducibility_version": "v71_reproducibility_v1",
-           "interpreter": sys.version.split()[0],
            "seeds": list(SEEDS),
+           "interpreters": {i: versions[i] for i in INTERPRETERS},
+           "n_environments": len(cells),
            "n_quantities": len(keys),
            "unstable_quantities": unstable,
-           "byte_stable_across_seeds": not unstable,
+           "unstable_across_interpreters": unstable_across_interpreters,
+           "byte_stable_across_seeds_and_interpreters": not unstable,
            "engine_spec_hash_matches_freeze": engine_matches,
-           "digests": runs[SEEDS[0]],
+           "digests": runs[first],
            "method": ("each quantity is re-derived in a FRESH interpreter per seed; a value "
                       "built from Python's salted hash() or the random module would differ")}
     path = f"{OUT}/V7_1_REPRODUCIBILITY.json"

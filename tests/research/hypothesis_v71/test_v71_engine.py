@@ -490,3 +490,77 @@ def test_12_averaging_the_family_is_not_the_same_as_picking_one(index, ctx, cap)
                               (REC.Recency(REC.HALFLIVES_DAYS[0]),))
     assert full["effect"] is not None and single["effect"] is not None
     assert full["effect"] != single["effect"], "the decay family is not being averaged"
+
+
+def test_12_recency_baseline_is_long_run_not_the_spec_window():
+    """RECENT_VS_LONG: the baseline is the whole prior history. Binding it to the
+    hypothesis' own window would compare a decayed five-match cohort against an un-decayed
+    five-match baseline, where the two weightings barely differ."""
+    ir = IRM.build_ir(_spec(comparison="SUBJECT_RECENT_VS_LONG_BASELINE", window="W5"))
+    assert ir.cohort.window == "W5" and ir.cohort.weighting == "TIME_DECAY"
+    assert ir.baseline.window == "ALL_PRIOR" and ir.baseline.weighting == "UNIFORM"
+    desc = ir.describe()
+    assert "over its last 5 prior matches" in desc
+    assert "over all prior matches" in desc
+
+
+def test_12_recency_window_changes_the_compiled_cohort(index, ctx, cap):
+    """V7's executor applied W5/W10 only on the non-recency branch, so W5 and W10 recency
+    hypotheses were the same query. They must now differ."""
+    c, cut = ctx
+    out = {}
+    for window in ("W5", "W10", "ALL_PRIOR"):
+        ir = IRM.build_ir(_spec(comparison="SUBJECT_RECENT_VS_LONG_BASELINE", window=window))
+        out[window] = (ir.ir_id(), None)
+        for rec_i in _first_target(index, cut, 40):
+            try:
+                q = CO.compile_query(ir, index, rec_i, metric="shots", terciles=c.terciles,
+                                     axis_cache=c.axis_cache, similarity=c.similarity,
+                                     recency=EN.recency_family_for(ir)[0], capability=cap)
+            except CO.CompileRefused:
+                continue
+            out[window] = (ir.ir_id(), q.cohort_fixtures)
+            break
+    assert len({v[0] for v in out.values()}) == 3, "windows collapse to one identity"
+    assert out["W5"][1] != out["W10"][1] != out["ALL_PRIOR"][1]
+    assert len(out["W5"][1]) <= 5 and len(out["W10"][1]) <= 10
+
+
+def test_12_conditioned_recency_is_not_baseline_absorption(cap):
+    """A venue-conditioned recency hypothesis shares its filters between the two selectors by
+    design; the contrast is the weighting. It must not be rejected as absorbed."""
+    ir = IRM.build_ir(_spec(comparison="SUBJECT_RECENT_VS_LONG_BASELINE", window="W5",
+                            conditions=[{"dimension": "historical_venue_conditioning",
+                                         "value": "HOME"}]))
+    res = INV.check(ir, capability=cap)
+    assert INV.BASELINE_ABSORPTION not in res["codes"], res["codes"]
+    assert res["ok"], res["codes"]
+    # the negative control still fires where absorption is real
+    absorbed = IRM.build_ir(_spec(comparison="SUBJECT_VENUE_BASELINE",
+                                  conditions=[{"dimension": "historical_venue_conditioning",
+                                               "value": "HOME"}]))
+    assert INV.BASELINE_ABSORPTION in INV.check(absorbed, capability=cap)["codes"]
+
+
+def test_06_fast_path_and_full_path_agree(index, ctx, cap):
+    """The O(1) prefix path for a plain selector must produce the SAME estimate as the
+    explicit enumeration it replaces. A fast path that quietly disagreed would be a silent
+    change to every measurement."""
+    c, cut = ctx
+    ir = IRM.build_ir(_spec(comparison="SUBJECT_RECENT_VS_LONG_BASELINE", window="W5"))
+    assert CO.is_plain(ir.baseline) and not CO.is_plain(ir.cohort)
+    w = EN.recency_family_for(ir)[0]
+    compared = 0
+    for rec_i in _first_target(index, cut, 40):
+        kw = dict(metric="shots", terciles=c.terciles, axis_cache=c.axis_cache,
+                  similarity=c.similarity, recency=w, capability=cap)
+        try:
+            slow = CO.compile_query(ir, index, rec_i, collect_fixtures=True, **kw)
+            fast = CO.compile_query(ir, index, rec_i, collect_fixtures=False, **kw)
+        except CO.CompileRefused:
+            continue
+        assert fast.baseline_n == slow.baseline_n == len(slow.baseline_values)
+        assert abs(fast.mean("baseline") - slow.mean("baseline")) < 1e-9
+        assert abs(fast.mean("cohort") - slow.mean("cohort")) < 1e-12
+        compared += 1
+    assert compared > 0

@@ -1,0 +1,153 @@
+{
+ "allowed": [
+  "venue",
+  "competition",
+  "season_regime",
+  "opponent_strength",
+  "opponent_profile",
+  "score_state",
+  "cards",
+  "formation",
+  "team_baseline_quality"
+ ],
+ "availability": {
+  "cards": true,
+  "competition": true,
+  "formation": false,
+  "opponent_profile": true,
+  "opponent_strength": true,
+  "score_state": false,
+  "season_regime": true,
+  "team_baseline_quality": true,
+  "venue": true
+ },
+ "confounders_version": "v71_confounders_v1",
+ "degenerate_columns_dropped_with_named_reason": true,
+ "families": [
+  "ATTACK_QUALITY",
+  "ATTACK_VOLUME",
+  "DEFENSIVE_CONCESSION",
+  "DEFENSIVE_SUPPRESSION",
+  "DISCIPLINE",
+  "FORM_VS_BASELINE",
+  "OPPONENT_PROFILE_INTERACTION",
+  "SET_PIECE_GENERATION",
+  "TEMPO_AND_TERRITORY",
+  "VENUE_EFFECT"
+ ],
+ "frozen_by_family_no_per_hypothesis_tuning": true,
+ "never_adjust": {
+  "score_state": "running score is a consequence of attacking and defensive output, so conditioning on it absorbs the very effect under test"
+ },
+ "plan_source": "v7_analysis_v1",
+ "resolved": {
+  "ATTACK_QUALITY": {
+   "confounders": [
+    "venue",
+    "competition",
+    "opponent_strength",
+    "team_baseline_quality"
+   ],
+   "removed": [],
+   "research_family": "ATTACK_QUALITY",
+   "strategy": "regression_adjustment + partial_pooling(team)"
+  },
+  "ATTACK_VOLUME": {
+   "confounders": [
+    "venue",
+    "competition",
+    "opponent_strength",
+    "team_baseline_quality"
+   ],
+   "removed": [],
+   "research_family": "ATTACK_VOLUME",
+   "strategy": "regression_adjustment + partial_pooling(team)"
+  },
+  "DEFENSIVE_CONCESSION": {
+   "confounders": [
+    "venue",
+    "competition",
+    "opponent_strength",
+    "team_baseline_quality"
+   ],
+   "removed": [],
+   "research_family": "DEFENSIVE_CONCESSION",
+   "strategy": "regression_adjustment + partial_pooling(team)"
+  },
+  "DEFENSIVE_SUPPRESSION": {
+   "confounders": [
+    "venue",
+    "competition",
+    "opponent_strength",
+    "team_baseline_quality"
+   ],
+   "removed": [],
+   "research_family": "DEFENSIVE_SUPPRESSION",
+   "strategy": "regression_adjustment + partial_pooling(team)"
+  },
+  "DISCIPLINE": {
+   "confounders": [
+    "venue",
+    "competition",
+    "cards",
+    "opponent_profile"
+   ],
+   "removed": [],
+   "research_family": "DISCIPLINE",
+   "strategy": "stratification(venue,competition) + partial_pooling(team)"
+  },
+  "FORM_VS_BASELINE": {
+   "confounders": [
+    "venue",
+    "competition",
+    "opponent_strength",
+    "season_regime"
+   ],
+   "removed": [],
+   "research_family": "FORM_VS_BASELINE",
+   "strategy": "shrinkage_to_baseline + regression_adjustment"
+  },
+  "OPPONENT_PROFILE_INTERACTION": {
+   "confounders": [
+    "venue",
+    "competition",
+    "opponent_profile",
+    "opponent_strength",
+    "team_baseline_quality"
+   ],
+   "removed": [],
+   "research_family": "OPPONENT_PROFILE_INTERACTION",
+   "strategy": "matched_similar_cohort + residualization"
+  },
+  "SET_PIECE_GENERATION": {
+   "confounders": [
+    "venue",
+    "competition",
+    "opponent_profile",
+    "team_baseline_quality"
+   ],
+   "removed": [],
+   "research_family": "SET_PIECE_GENERATION",
+   "strategy": "stratification(venue) + partial_pooling(team)"
+  },
+  "TEMPO_AND_TERRITORY": {
+   "confounders": [
+    "venue",
+    "competition",
+    "opponent_strength"
+   ],
+   "removed": [],
+   "research_family": "TEMPO_AND_TERRITORY",
+   "strategy": "regression_adjustment"
+  },
+  "VENUE_EFFECT": {
+   "confounders": [
+    "competition",
+    "opponent_strength"
+   ],
+   "removed": [],
+   "research_family": "VENUE_EFFECT",
+   "strategy": "stratification(venue)"
+  }
+ }
+}
