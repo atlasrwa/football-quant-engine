@@ -317,7 +317,7 @@ def main():
     # the manifest and reference it, so they are deliberately not hashed here.
     for name in ("V7_1_SEMANTIC_TRACE.json", "V7_1_DIAGNOSTIC_REPLAY.json",
                  "V7_1_BLAST_RADIUS.json", "V7_1_FRESH_ACQUISITION.json",
-                 "V7_1_DEV_EXECUTION_EXERCISE.json"):
+                 "V7_1_DEV_EXECUTION_EXERCISE.json", "V7_1_RUNTIME_IMPORT_TRACE.json"):
         path = f"{OUT}/{name}"
         if os.path.exists(path):
             manifest[name] = sha_file(path)
@@ -345,10 +345,54 @@ def main():
            "historical_pit_snapshot": PV.content_commitment(
                development, CAP.METRIC_SEMANTICS)}, manifest)
 
-    # provenance: executable source graph + upstream V7 inputs, recomputed at execution time
+    # provenance: executable source graph + upstream V7 inputs, recomputed at execution time.
+    #
+    # The graph binds the UNION of two independent mechanisms (mission item 6):
+    #   * the STATIC repository-owned transitive import closure, resolved against the declared
+    #     import roots -- reachability only, never an experiment-name path prefix; and
+    #   * the RUNTIME `sys.modules` trace recorded by `_v71_runtime_trace.py` while actually
+    #     running the development execution path.
+    # `v71_provenance_v1` used a hard-coded prefix allowlist AND ignored relative imports, so it
+    # bound 17 of the 35 files that really execute -- omitting the corpus layer, the estimator,
+    # the matching and the confounders (defect D16). Neither mechanism is load-bearing alone.
+    runtime_trace_path = f"{OUT}/V7_1_RUNTIME_IMPORT_TRACE.json"
+    if not os.path.exists(runtime_trace_path):
+        problems.append("runtime import trace absent: run _v71_runtime_trace.py before freezing")
+        runtime_files = {}
+    else:
+        trace = json.load(open(runtime_trace_path))
+        runtime_files = trace["runtime_first_party_modules"]
+        # the trace must have been taken against the bytes now on disk
+        for f, h in sorted(trace["runtime_file_hashes"].items()):
+            ap = os.path.join(ROOT, f)
+            if not os.path.exists(ap):
+                problems.append(f"runtime-traced file no longer on disk: {f}")
+            elif sha_file(ap) != h:
+                problems.append(f"runtime-traced file changed since the trace was taken: {f} "
+                                "(re-run _v71_runtime_trace.py)")
+
     source_graph = PV.source_graph_commitment(
         ["research/hypothesis_engine/_v71_execute.py",
-         "src/research/hypothesis_v71/execution.py"], root=ROOT)
+         "src/research/hypothesis_v71/execution.py"],
+        root=ROOT, runtime_files=runtime_files)
+
+    # FAIL CLOSED (mission item 5): executed code that is not in the commit, or an import whose
+    # provenance cannot be established, blocks the freeze. A clean checkout could not run it.
+    counts = source_graph["counts"]
+    if counts["n_untracked"]:
+        problems.append(f"UNTRACKED_EXECUTABLE_DEPENDENCY x{counts['n_untracked']}: "
+                        f"{source_graph['untracked_executable_dependencies']}")
+    if counts["n_unresolved_first_party"]:
+        problems.append(f"UNRESOLVED_FIRST_PARTY_IMPORT x"
+                        f"{counts['n_unresolved_first_party']}: "
+                        f"{source_graph['unresolved_first_party_imports']}")
+    if counts["n_ambiguous"]:
+        problems.append(f"AMBIGUOUS_FIRST_PARTY_RESOLUTION x{counts['n_ambiguous']}: "
+                        f"{source_graph['ambiguous_resolutions']}")
+    problems += [p for p in source_graph["problems"]
+                 if p.startswith("executable dependency absent")
+                 or p.startswith("git tracking could not")]
+
     upstream_paths = [
         "research/hypothesis_oos/out/v7/V7_COVERAGE_MATRIX.json",
         "research/hypothesis_oos/out/v7/V7_DEDUPLICATION.json",
@@ -362,19 +406,62 @@ def main():
           {**PV.version_stamp(),
            "source_graph": source_graph,
            "upstream_v7": upstream}, manifest)
-    print(f"provenance: {source_graph['n_source_files']} source files, "
+
+    # ---- 7d. durable source-graph report (mission item 12) ------------------------------
+    # Every bound executable file, with its hash, tracked status, which mechanism found it and
+    # who imports it. A graph is not complete merely because it verifies against itself.
+    write("V7_1_SOURCE_GRAPH_REPORT.json",
+          {"classification": ["INPUT_ONLY", "NON_CONFIRMATORY"],
+           "provenance_version": PV.PROVENANCE_VERSION,
+           "entry_points": source_graph["entry_points"],
+           "import_roots": source_graph["import_roots"],
+           "sys_path_mutations": source_graph["sys_path_mutations"],
+           "relevance_rule": source_graph["relevance_rule"],
+           "git_ref": source_graph["git_ref"],
+           "counts": counts,
+           "required_at_freeze": {"n_untracked": 0, "n_unresolved_first_party": 0},
+           "files": source_graph["file_records"],
+           "static_only_files": source_graph["static_only_files"],
+           "runtime_only_files": source_graph["runtime_only_files"],
+           "source_graph_sha256": source_graph["source_graph_sha256"],
+           "superseded_v1_graph": {
+               "n_source_files": 17,
+               "source_graph_sha256": ("41faca707f4aaa65bb2ecd866e7f73f0c9f288fa"
+                                       "93976c24e93313c69f9ac8dc"),
+               "defect": "D16",
+               "why_incomplete": [
+                   "hard-coded experiment-name path allowlist "
+                   "(src/research/hypothesis_v7*, research/hypothesis_engine)",
+                   "relative imports ignored (node.level == 0), hiding the whole V7.1 "
+                   "package interior",
+                   "ancestor package __init__.py files never resolved"]}},
+          manifest)
+
+    print(f"provenance: {source_graph['n_source_files']} source files bound "
+          f"(static {counts['n_static']}, runtime {counts['n_runtime']}, "
+          f"untracked {counts['n_untracked']}, "
+          f"unresolved {counts['n_unresolved_first_party']}); "
           f"{upstream['n_upstream_inputs']} upstream inputs; "
           f"fresh content {fresh_content['n_records']} records", flush=True)
 
     # ---- 8. freeze manifest -------------------------------------------------------------
-    doc = {"freeze_version": "v71_freeze_v2",
-           "supersedes": {"previous_freeze_version": "v71_freeze_v1",
-                          "previous_pre_oos_apparatus_commit": "f9a3179dd",
-                          "reason": ("pre-OOS execution-closure: implemented and froze the "
-                                     "real confirmatory execution path, fixed the NULL!=ZERO "
-                                     "confounder coercion (D15), froze small-cluster "
-                                     "inference, and bound source graph, upstream inputs and "
-                                     "fresh content. No fresh outcome was computed or viewed.")},
+    doc = {"freeze_version": "v71_freeze_v3",
+           "supersedes": {"previous_freeze_version": "v71_freeze_v2",
+                          "previous_pre_oos_apparatus_commit": "916c3b08f",
+                          "status": "SUPERSEDED_PRE_OOS_DUE_TO_INCOMPLETE_EXECUTABLE_"
+                                    "DEPENDENCY_CLOSURE",
+                          "reason": "INCOMPLETE_EXECUTABLE_DEPENDENCY_CLOSURE_FOUND_BY_"
+                                    "CLEAN_CHECKOUT",
+                          "detail": ("v2's source graph bound 17 files while 35 actually "
+                                     "execute. Its closure was gated by a hard-coded "
+                                     "experiment-name path allowlist and ignored relative "
+                                     "imports, so the corpus layer, the estimator, the "
+                                     "matching, the confounders and the ancestor packages all "
+                                     "escaped; two corpus files were not committed at all, so "
+                                     "a clean checkout of 916c3b08f could not import the "
+                                     "apparatus. Defect D16. No fresh outcome was computed or "
+                                     "viewed under v2, so the repair is legitimately pre-OOS."),
+                          "historical_freezes_preserved": ["v71_freeze_v1", "v71_freeze_v2"]},
            "experiment": "V7_1_HARDENED_HYPOTHESIS_VALIDATION",
            "confirmatory_oos_computed": False,
            "confirmatory_oos_viewed": False,
@@ -397,6 +484,15 @@ def main():
            "engine_spec_hash": EN.spec_hash(),
            "executor_source_graph_sha256": source_graph["source_graph_sha256"],
            "executor_entry_points": source_graph["entry_points"],
+           "executable_graph": {
+               "n_static": counts["n_static"],
+               "n_runtime": counts["n_runtime"],
+               "n_union": counts["n_union"],
+               "n_untracked": counts["n_untracked"],
+               "n_unresolved_first_party": counts["n_unresolved_first_party"],
+               "import_roots": source_graph["import_roots"],
+               "mechanisms": ["static_import_closure", "runtime_sys_modules_trace"],
+               "binds": "UNION"},
            "fresh_content_sha256": fresh_content["content_sha256"],
            "upstream_v7_sha256": upstream["upstream_sha256"],
            # The apparatus is proven byte-identical across interpreters (section P), so this is
@@ -406,6 +502,16 @@ def main():
                            "version": sys.version.split()[0],
                            "implementation": sys.implementation.name},
            "evaluability_verdict": gate["verdict"],
+           # Item 10: hashing the working tree is not enough -- the frozen commit must be
+           # PROVEN to execute from a clean checkout. The proof is produced by
+           # `_v71_clean_checkout_proof.py` running inside an isolated checkout and binds the
+           # sha256 of THIS manifest, so proof and freeze cannot drift apart.
+           "clean_checkout_executability": {
+               "required": True,
+               "proof_artifact": "V7_1_CLEAN_CHECKOUT_PROOF.json",
+               "proof_binds": "freeze_manifest_sha256",
+               "why": ("v2 verified every hash it bound and still could not run: the freeze "
+                       "must demonstrate executability, not merely self-consistency")},
            "artifact_hashes": manifest,
            "problems": problems}
     path = f"{OUT}/V7_1_FREEZE_MANIFEST.json"

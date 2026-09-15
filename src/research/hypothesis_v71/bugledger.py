@@ -342,6 +342,70 @@ DEFECTS = [
                             "test_15_only_required_confounders_are_constructed, "
                             "test_15_row_missing_required_confounder_is_excluded_not_imputed"),
     },
+    {
+        "id": "D16",
+        "severity": "P0",
+        "title": "The executable dependency graph was computed by a mechanism narrower than "
+                 "the real Python import graph",
+        "root_cause": (
+            "`provenance.source_closure` claimed to derive the transitive first-party "
+            "executable closure MECHANICALLY, but gated it two ways that the real dependency "
+            "graph does not respect. (1) A hard-coded experiment-name path allowlist -- "
+            "`p.startswith('src/research/hypothesis_v7') or "
+            "p.startswith('research/hypothesis_engine')` -- so the corpus layer the entire "
+            "experiment reads its data through was excluded: `src/research/matchup/corpus.py` "
+            "and, through it, `scripts/multisrc_corpus.py` and "
+            "`scripts/championship_adapter.py`. (2) `if node.module and node.level == 0`, "
+            "which silently dropped every relative import; because the V7.1 package imports "
+            "its interior with `from . import x`, the estimator, matching, compiler, "
+            "confounders, invariants, ontology, recency and similarity modules -- the "
+            "scientific core, including the Endpoint-B sign-flip inference -- were never "
+            "bound. Ancestor package `__init__.py` files were never resolved either. The "
+            "result: 17 of the 35 files that actually execute were bound, and the freeze still "
+            "reported `source_graph_reverified=True`. Worse, two of the escaped files had "
+            "never been committed to any branch, so a clean checkout of the frozen commit "
+            "could not import the apparatus at all."),
+        "evidence": (
+            "an isolated clean checkout of 916c3b08f presented at /home/ubuntu -- empty "
+            "`git status --porcelain`, interpreter and all 32 frozen artifact hashes matching, "
+            "source graph, upstream V7 and CHAMPION all verifying -- nevertheless failed at "
+            "`_v71_execute.py` preflight with "
+            "`ModuleNotFoundError: No module named 'src.research.matchup'`, and could not even "
+            "collect tests/research/hypothesis_v71/"),
+        "affected_experiment": ("V7.1 apparatus provenance (found by the clean-checkout "
+                                "verification BEFORE any fresh confirmatory outcome was "
+                                "computed or viewed, so the repair is legitimately pre-OOS)"),
+        "changes_v7_interpretation": (
+            "No. V7 is immutable and is not patched. V7's own executor imported the same "
+            "corpus layer, so V7's measurements were produced by the code its artifacts "
+            "describe; what was defective is the V7.1 COMMITMENT over that code, not the code."),
+        "generic_fix": (
+            "Relevance is now decided by REACHABILITY ALONE and never by an experiment-name "
+            "prefix. `FIRST_PARTY_IMPORT_ROOTS` declares the repository's actual import roots "
+            "(`src`, repo root, `scripts` -- the last created by a documented `sys.path` "
+            "mutation recorded in `SYS_PATH_MUTATIONS`); `classify_import` places every "
+            "imported name as repository-owned, a symbol of a repository-owned module, stdlib, "
+            "installed third-party, or UNRESOLVED; relative imports and ancestor package "
+            "`__init__.py` files are resolved; and the freeze binds the UNION of the static "
+            "closure with an independent RUNTIME `sys.modules` trace of the development "
+            "execution path, so a dynamic or dynamically-pathed import cannot escape either. "
+            "The freeze FAILS CLOSED on `UNTRACKED_EXECUTABLE_DEPENDENCY`, "
+            "`UNRESOLVED_FIRST_PARTY_IMPORT` and `AMBIGUOUS_FIRST_PARTY_RESOLUTION`, and the "
+            "frozen commit must additionally be PROVEN to execute from an isolated clean "
+            "checkout rather than merely to hash consistently."),
+        "regression_test": ("test_16_untracked_executable_dependency_refuses_the_freeze, "
+                            "test_16_dependency_outside_the_experiment_prefix_is_bound, "
+                            "test_16_script_root_dependency_is_bound_and_hashed, "
+                            "test_16_relative_imports_are_followed, "
+                            "test_16_ancestor_packages_are_bound, "
+                            "test_16_runtime_only_dependency_is_caught_by_the_trace, "
+                            "test_16_removed_bound_dependency_refuses_preflight, "
+                            "test_16_changed_script_dependency_refuses_preflight, "
+                            "test_16_changed_corpus_loader_refuses_preflight, "
+                            "test_16_same_data_different_code_still_refuses, "
+                            "test_16_unresolvable_first_party_import_fails_closed, "
+                            "test_16_corpus_layer_and_scripts_are_bound_in_the_frozen_graph"),
+    },
 ]
 
 

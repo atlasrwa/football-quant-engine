@@ -19,7 +19,10 @@ Preflight, all fail-closed:
   * the fresh manifest's zero-overlap proof still holds at fixture-identifier level;
   * the fresh CONTENT commitment still holds (same ids AND same values), not only the ids;
   * every consumed upstream V7 artifact recomputes to its frozen hash (proof-independent);
-  * the executable SOURCE GRAPH recomputes -- a code change refuses even without a version bump;
+  * the executable SOURCE GRAPH recomputes -- a code change refuses even without a version bump.
+    The graph is the UNION of the static repository-owned import closure and the runtime
+    `sys.modules` trace, verified against BOTH mechanisms, and any executable dependency that is
+    untracked or unresolvable refuses the run (defect D16);
   * the evaluability gate says the apparatus can answer its own question;
   * the engine spec hash matches the frozen one;
   * CHAMPION is unchanged, and is never opened for writing;
@@ -133,19 +136,28 @@ def preflight():
     checks["fresh_content_reverified"] = content_ok
 
     # ---- upstream V7 inputs (item 6): recomputed, not trusted from the proof -----------
+    # The source graph is verified against BOTH mechanisms: the static closure recomputed from
+    # disk and the LIVE runtime trace. By this point `load_records` has already imported the
+    # corpus layer, so whatever this run actually executes is in `sys.modules` and any module
+    # that is executing but not bound by the freeze is caught here.
     prov_path = f"{OUT}/V7_1_PROVENANCE.json"
     upstream_ok = source_ok = True
+    live_runtime = PV.runtime_first_party_files(root=ROOT)
+    checks["runtime_first_party_modules"] = len(live_runtime)
     if os.path.exists(prov_path):
         prov = _load(prov_path)
         upstream_ok, up_problems, _l = PV.verify_upstream_v7(prov["upstream_v7"], root=ROOT)
-        source_ok, src_problems, _l2 = PV.verify_source_graph(prov["source_graph"], root=ROOT)
+        source_ok, src_problems, _l2 = PV.verify_source_graph(
+            prov["source_graph"], root=ROOT, runtime_files=live_runtime)
         problems += up_problems + src_problems
         checks["upstream_sha256"] = prov["upstream_v7"]["upstream_sha256"]
         checks["source_graph_sha256"] = prov["source_graph"]["source_graph_sha256"]
+        checks["source_graph_n_files"] = len(prov["source_graph"]["source_file_hashes"])
     else:
         upstream_ok = source_ok = False
         problems.append("provenance commitment absent: run _v71_freeze.py")
         checks["upstream_sha256"] = checks["source_graph_sha256"] = None
+        checks["source_graph_n_files"] = None
     checks["upstream_reverified"] = upstream_ok
     checks["source_graph_reverified"] = source_ok
 
@@ -269,7 +281,9 @@ def main(argv):
     print(f"  zero overlap          : {checks['zero_overlap_reverified']}")
     print(f"  fresh content bound   : {checks['fresh_content_reverified']}")
     print(f"  upstream V7 reverified: {checks['upstream_reverified']}")
-    print(f"  source graph reverif. : {checks['source_graph_reverified']}")
+    print(f"  source graph reverif. : {checks['source_graph_reverified']} "
+          f"({checks['source_graph_n_files']} files bound, "
+          f"{checks['runtime_first_party_modules']} imported live)")
     print(f"  evaluability          : {checks['evaluability_verdict']}")
     print(f"  engine spec           : {checks['engine_spec_hash'][:16]}")
     print(f"  CHAMPION              : {checks['champion_sha256'][:16]}")
