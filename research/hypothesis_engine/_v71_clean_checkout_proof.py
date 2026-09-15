@@ -241,7 +241,7 @@ def main():
         detail["development_execution"] = {
             k: dev_summary.get(k) for k in
             ("n_treated_evaluable", "n_controls", "n_uniform_evaluable",
-             "resume_is_deterministic_and_does_not_double_count", "seconds")}
+             "resume_is_deterministic_and_does_not_double_count")}
     except Exception as exc:                                        # noqa: BLE001
         detail["development_error"] = f"{type(exc).__name__}: {exc}"
     stage("development_execution_path_runs", dev_ok,
