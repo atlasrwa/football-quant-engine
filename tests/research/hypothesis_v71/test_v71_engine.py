@@ -564,3 +564,40 @@ def test_06_fast_path_and_full_path_agree(index, ctx, cap):
         assert abs(fast.mean("cohort") - slow.mean("cohort")) < 1e-12
         compared += 1
     assert compared > 0
+
+
+# --- section 23/25: the blast-radius declaration cannot drift from disk (D14) ---------------
+
+def test_15_blast_radius_declares_every_v71_module_on_disk():
+    """Guard the CLASS of D14, not the instance.
+
+    V7's frozen blast-radius artifact omitted one V7 module from its changed set, so the
+    conclusion "no pre-existing test reaches changed code" was never checked for that module.
+    A hand-maintained declaration will always drift. V7.1 derives it from disk and this test
+    proves the published artifact still equals the derived set.
+    """
+    import os
+
+    br = json.load(open(
+        "/home/ubuntu/research/hypothesis_oos/out/v7_1/V7_1_BLAST_RADIUS.json"))
+    pkg = "src/research/hypothesis_v71"
+    on_disk = {f"{pkg}/{f}" for f in os.listdir(f"/home/ubuntu/{pkg}") if f.endswith(".py")}
+    declared = set(br["changed_modules"])
+    assert on_disk == declared, (
+        f"blast-radius declaration has drifted from disk: "
+        f"missing={sorted(on_disk - declared)} stale={sorted(declared - on_disk)}")
+    assert br["n_changed_modules"] == len(declared)
+
+
+def test_15_v7_undeclared_module_claim_is_reverified_without_patching_v7():
+    """D14 in V7's own artifact: re-verified read-only, never repaired in place."""
+    br = json.load(open(
+        "/home/ubuntu/research/hypothesis_oos/out/v7_1/V7_1_BLAST_RADIUS.json"))
+    chk = br["v7_undeclared_module_check"]
+    assert chk["v7_artifact_patched"] is False
+    # Only V7.1's own new tests may reach a V7 module that V7's artifact failed to declare;
+    # if a PRE-EXISTING test module reached it, V7's published conclusion would be wrong.
+    for t in chk["test_modules_reaching_them"]:
+        assert t.startswith("tests/research/hypothesis_v71/"), (
+            f"a pre-existing test module reaches a V7 module V7's blast radius never "
+            f"declared: {t}")

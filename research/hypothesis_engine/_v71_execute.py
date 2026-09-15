@@ -105,6 +105,17 @@ def preflight():
         problems.append("engine spec hash does not match the freeze")
     checks["engine_spec_hash"] = EN.spec_hash()
 
+    frozen_interp = manifest.get("interpreter")
+    live_interp = {"executable": sys.executable, "version": sys.version.split()[0],
+                   "implementation": sys.implementation.name}
+    checks["interpreter"] = live_interp
+    checks["interpreter_matches_freeze"] = frozen_interp == live_interp
+    if frozen_interp is None:
+        problems.append("freeze manifest records no interpreter to pin against")
+    elif frozen_interp != live_interp:
+        problems.append(f"interpreter differs from the freeze: frozen={frozen_interp} "
+                        f"live={live_interp}")
+
     champ = sha_file(CHAMPION)
     checks["champion_sha256"] = champ
     if champ != manifest["champion_sha256"]:
@@ -134,6 +145,8 @@ def main(argv):
     print(f"  evaluability          : {checks['evaluability_verdict']}")
     print(f"  engine spec           : {checks['engine_spec_hash'][:16]}")
     print(f"  CHAMPION              : {checks['champion_sha256'][:16]}")
+    print(f"  interpreter pinned    : {checks['interpreter_matches_freeze']} "
+          f"({checks['interpreter']['executable']} {checks['interpreter']['version']})")
     print(f"  cloud modules loaded  : {checks['cloud_modules_loaded'] or 'none'}")
 
     # Construct everything a real run constructs, so the dry run exercises the real path.

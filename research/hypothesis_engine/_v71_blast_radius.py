@@ -14,26 +14,21 @@ import os
 import sys
 
 ROOT = "/home/ubuntu"
-CHANGED = {
-    "src/research/hypothesis_v71/__init__.py",
-    "src/research/hypothesis_v71/capability.py",
-    "src/research/hypothesis_v71/compiler.py",
-    "src/research/hypothesis_v71/confounders.py",
-    "src/research/hypothesis_v71/controls.py",
-    "src/research/hypothesis_v71/corpus_index.py",
-    "src/research/hypothesis_v71/covariate_bridge.py",
-    "src/research/hypothesis_v71/engine.py",
-    "src/research/hypothesis_v71/estimator.py",
-    "src/research/hypothesis_v71/evaluability.py",
-    "src/research/hypothesis_v71/freshsample.py",
-    "src/research/hypothesis_v71/golden.py",
-    "src/research/hypothesis_v71/invariants.py",
-    "src/research/hypothesis_v71/ir.py",
-    "src/research/hypothesis_v71/leakage.py",
-    "src/research/hypothesis_v71/ontology.py",
-    "src/research/hypothesis_v71/recency.py",
-    "src/research/hypothesis_v71/similarity.py",
-}
+# The declaration is DERIVED from disk, never hand-maintained.  A hand-written list is the
+# defect class D14 found in V7's own blast-radius artifact: a module added after the list was
+# written is silently excluded from the analysis, and the "no test reaches it" conclusion is
+# then unproven for that module.  `test_15_blast_radius_declares_every_v71_module_on_disk`
+# guards the class.
+V71_PACKAGE = "src/research/hypothesis_v71"
+
+
+def _declared_changed():
+    d = os.path.join(ROOT, V71_PACKAGE)
+    return {f"{V71_PACKAGE}/{f}" for f in sorted(os.listdir(d)) if f.endswith(".py")}
+
+
+CHANGED = _declared_changed()
+
 
 
 def _module_to_path(mod: str):
@@ -98,8 +93,28 @@ def main() -> int:
         (reaching if hit else not_reaching).append(
             {"test_module": t, "changed_modules_reached": hit})
 
+    # D14: V7's frozen blast-radius artifact omitted one V7 module from its changed set, so
+    # its "no pre-existing test reaches changed code" claim was never checked for that module.
+    # V7 is immutable and is NOT patched.  The claim is instead re-verified here, read-only.
+    v7_declared = set(json.load(open(
+        os.path.join(ROOT, "research/hypothesis_oos/out/v7/V7_BLAST_RADIUS.json")
+    ))["changed_modules"])
+    v7_dir = os.path.join(ROOT, "src/research/hypothesis_v7")
+    v7_on_disk = {f"src/research/hypothesis_v7/{f}" for f in sorted(os.listdir(v7_dir))
+                  if f.endswith(".py")}
+    v7_undeclared = v7_on_disk - v7_declared
+    v7_reaching = sorted(t for t in tests if closure(t, cache) & v7_undeclared)
+
     report = {
-        "blast_radius_version": "v71_blast_radius_v1",
+        "blast_radius_version": "v71_blast_radius_v2",
+        "v7_undeclared_module_check": {
+            "defect": "D14",
+            "v7_modules_omitted_from_v7_blast_radius": sorted(v7_undeclared),
+            "test_modules_reaching_them": v7_reaching,
+            "v7_artifact_patched": False,
+            "note": ("V7 is immutable, so its artifact is left exactly as frozen. This is an "
+                     "independent read-only re-verification of the claim it failed to cover."),
+        },
         "method": ("AST import analysis; transitive first-party closure per test module; a "
                    "test that cannot reach a changed module cannot be affected by the change"),
         "n_changed_modules": len(CHANGED),
@@ -118,6 +133,8 @@ def main() -> int:
     for r in reaching:
         print(f"      {r['test_module']}  -> {len(r['changed_modules_reached'])} modules")
     print(f"  cannot reach it       : {len(not_reaching)}")
+    print(f"  V7 modules undeclared in V7's own artifact : {sorted(v7_undeclared)}")
+    print(f"      test modules reaching them            : {v7_reaching or 'none'}")
     print(f"written: {out}")
     return 0
 

@@ -277,6 +277,35 @@ DEFECTS = [
         "regression_test": "test_11_similarity_spec_is_the_frozen_v7_spec, "
                            "test_12_decay_family_is_frozen_and_not_searchable",
     },
+    {
+        "id": "D14",
+        "severity": "P3",
+        "title": "A blast-radius declaration was hand-maintained and drifted from disk",
+        "root_cause": (
+            "V7's blast-radius artifact listed its changed modules by hand. A module added "
+            "after the list was written (`hypothesis_v7/measurement.py`) was silently excluded "
+            "from the analysis, so the published conclusion -- no pre-existing test module "
+            "reaches changed code -- was never actually checked for that module. V7.1's own "
+            "first blast-radius driver repeated the same pattern and had already drifted by "
+            "two modules (`matching.py`, `bugledger.py`). The defect is the hand-maintained "
+            "declaration, not either instance."),
+        "evidence": ("tests/research/hypothesis_oos/test_v7_control_b.py::"
+                     "test_blast_radius_proof_is_current_and_complete fails on the unchanged "
+                     "pre-V7.1 baseline commit 4c663a737"),
+        "affected_experiment": "V7 evidence integrity; V7.1 test discipline",
+        "changes_v7_interpretation": (
+            "No. V7 is immutable and is NOT patched. The uncovered claim was re-verified "
+            "read-only in V7_1_BLAST_RADIUS.json: the only test module that reaches "
+            "hypothesis_v7/measurement.py is one of V7.1's own new tests, so no PRE-EXISTING "
+            "test module reached it and V7's conclusion was correct although under-verified."),
+        "generic_fix": (
+            "V7.1's blast-radius driver DERIVES the changed set from the package directory on "
+            "disk instead of declaring it, and the artifact carries an explicit re-verification "
+            "of the module V7's artifact omitted."),
+        "regression_test": ("test_15_blast_radius_declares_every_v71_module_on_disk, "
+                            "test_15_v7_undeclared_module_claim_is_reverified_without_"
+                            "patching_v7"),
+    },
 ]
 
 

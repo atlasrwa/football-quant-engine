@@ -340,6 +340,12 @@ def main():
                "leakage": LEAK.LEAKAGE_VERSION, "engine": EN.ENGINE_VERSION,
                "matching": MATCH.MATCHING_VERSION},
            "engine_spec_hash": EN.spec_hash(),
+           # The apparatus is proven byte-identical across interpreters (section P), so this is
+           # not a correctness dependency.  It is a pin: the confirmatory run must declare the
+           # same interpreter the freeze was taken under, or re-freeze deliberately.
+           "interpreter": {"executable": sys.executable,
+                           "version": sys.version.split()[0],
+                           "implementation": sys.implementation.name},
            "evaluability_verdict": gate["verdict"],
            "artifact_hashes": manifest,
            "problems": problems}

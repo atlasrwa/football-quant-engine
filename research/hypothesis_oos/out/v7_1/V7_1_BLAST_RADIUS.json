@@ -1,7 +1,8 @@
 {
- "blast_radius_version": "v71_blast_radius_v1",
+ "blast_radius_version": "v71_blast_radius_v2",
  "changed_modules": [
   "src/research/hypothesis_v71/__init__.py",
+  "src/research/hypothesis_v71/bugledger.py",
   "src/research/hypothesis_v71/capability.py",
   "src/research/hypothesis_v71/compiler.py",
   "src/research/hypothesis_v71/confounders.py",
@@ -16,12 +17,13 @@
   "src/research/hypothesis_v71/invariants.py",
   "src/research/hypothesis_v71/ir.py",
   "src/research/hypothesis_v71/leakage.py",
+  "src/research/hypothesis_v71/matching.py",
   "src/research/hypothesis_v71/ontology.py",
   "src/research/hypothesis_v71/recency.py",
   "src/research/hypothesis_v71/similarity.py"
  ],
  "method": "AST import analysis; transitive first-party closure per test module; a test that cannot reach a changed module cannot be affected by the change",
- "n_changed_modules": 18,
+ "n_changed_modules": 20,
  "n_test_modules_not_reaching": 219,
  "n_test_modules_reaching_changed_code": 2,
  "n_test_modules_scanned": 221,
@@ -279,5 +281,16 @@
    ],
    "test_module": "tests/research/hypothesis_v71/test_v71_semantics.py"
   }
- ]
+ ],
+ "v7_undeclared_module_check": {
+  "defect": "D14",
+  "note": "V7 is immutable, so its artifact is left exactly as frozen. This is an independent read-only re-verification of the claim it failed to cover.",
+  "test_modules_reaching_them": [
+   "tests/research/hypothesis_v71/test_v71_engine.py"
+  ],
+  "v7_artifact_patched": false,
+  "v7_modules_omitted_from_v7_blast_radius": [
+   "src/research/hypothesis_v7/measurement.py"
+  ]
+ }
 }
