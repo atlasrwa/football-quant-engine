@@ -20,7 +20,7 @@ from __future__ import annotations
 
 from src.research.hypothesis_v7 import analysis_spec as V7A
 
-CONFOUNDERS_VERSION = "v71_confounders_v1"
+CONFOUNDERS_VERSION = "v71_confounders_v2"
 
 ALLOWED = tuple(V7A.ALLOWED_CONFOUNDERS)
 PLAN = {k: dict(v) for k, v in V7A.CONFOUNDER_PLAN.items()}
@@ -54,6 +54,37 @@ DROPPED_CONSTANT = "DROPPED_CONSTANT_COLUMN"
 DROPPED_COLLINEAR = "DROPPED_COLLINEAR_COLUMN"
 UNAVAILABLE = "UNAVAILABLE_IN_CORPUS"
 EXCLUDED_MEDIATOR = "EXCLUDED_AS_MEDIATOR"
+
+# ---- missing-confounder policy (D15) ---------------------------------------------------
+#: FROZEN, OUTCOME-BLIND policy for a required confounder that cannot be constructed for a
+#: particular observation ROW (e.g. an opponent with no prior match, so its point-in-time
+#: strength is genuinely absent -- NOT zero).
+#:
+#: The class of bug this closes: V7.1's engine coerced a missing point-in-time confounder to
+#: `0.0` (`index.pit_mean(...)[0] or 0.0`). A missing historical confounder is not a value of
+#: zero -- coercing it fabricates an observation, biases the adjustment, and additionally
+#: makes a genuine measured zero indistinguishable from "no data". A NULL is not a ZERO.
+#:
+#: The rule, applied identically to every family and every arm:
+#:   1. only the confounders the frozen family plan REQUIRES are ever constructed;
+#:   2. a required confounder that is absent for a row is represented as `None`, never 0;
+#:   3. a row with ANY missing required confounder is EXCLUDED from the adjusted design under
+#:      the reason `ROW_MISSING_REQUIRED_CONFOUNDER`, and the exclusion is counted;
+#:   4. if excluding those rows drops the cell below the frozen support minimum, the cell
+#:      fails as `INSUFFICIENT_SUPPORT_AFTER_MISSING_CONFOUNDER` rather than being adjusted on
+#:      a fabricated design.
+#: Nothing here reads an outcome; the decision is a function of data population only.
+MISSING_CONFOUNDER_POLICY = {
+    "policy": "EXCLUDE_ROW_NAMED_REASON",
+    "null_is_not_zero": True,
+    "only_required_confounders_constructed": True,
+    "row_exclusion_reason": "ROW_MISSING_REQUIRED_CONFOUNDER",
+    "cell_failure_reason": "INSUFFICIENT_SUPPORT_AFTER_MISSING_CONFOUNDER",
+    "fabricates_zero_for_missing": False,
+    "reads_outcomes": False,
+}
+ROW_MISSING_REQUIRED_CONFOUNDER = "ROW_MISSING_REQUIRED_CONFOUNDER"
+INSUFFICIENT_AFTER_MISSING = "INSUFFICIENT_SUPPORT_AFTER_MISSING_CONFOUNDER"
 
 
 def plan_for(research_family: str) -> dict:
@@ -115,4 +146,5 @@ def version_stamp() -> dict:
             "never_adjust": {k: v for k, v in NEVER_ADJUST.items()},
             "families": sorted(PLAN),
             "degenerate_columns_dropped_with_named_reason": True,
+            "missing_confounder_policy": MISSING_CONFOUNDER_POLICY,
             "frozen_by_family_no_per_hypothesis_tuning": True}

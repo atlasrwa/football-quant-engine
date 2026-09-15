@@ -2,21 +2,29 @@
 
 ## A. Executive state
 
-# `V7_1_READY_FOR_CONFIRMATORY_OOS`
+# `V7_1_EXECUTION_PATH_FROZEN_READY_FOR_AUTHORIZATION`
+
+*(supersedes `V7_1_READY_FOR_CONFIRMATORY_OOS`, which was downgraded: an experiment whose
+authorized execution branch was intentionally unimplemented was not execution-ready. The
+execution-closure amendment — §W — implemented, tested, hardened and froze that branch. No
+fresh confirmatory outcome was computed or viewed.)*
 
 | | |
 |---|---|
-| defects found | **14** — 2×P0, 6×P1, 3×P2, 2×P3, 1×P4. **Zero P0–P3 unresolved.** |
+| defects found | **15** — 3×P0, 6×P1, 3×P2, 2×P3, 1×P4. **Zero P0–P3 unresolved.** |
 | treated universe | 132 canonical V6.1 families → 61 `STRUCTURALLY_INVALID` (named, refused *before* measurement), 20 `UNMEASURABLE`, **51 evaluable** |
 | Endpoint B | 46/51 matched, 9.8% unmatched, ESS **428.1**, worst \|SMD\| **0.000**, `control_b_comparable = true` |
+| Endpoint B inference | frozen **exact enumerated cluster sign-flip** (small-G); normal-approx p-value is not primary |
+| execution path | frozen: `prepare_execution → evaluate_family_evidence → aggregate_endpoints → persist_evidence → finalize_result`, exercised end-to-end on synthetic + development folds |
+| one-way door | `--authorize` **and** a valid content-bound authorization token both required; token deliberately not created |
 | fresh confirmatory sample | **317 fixtures**, 6 competitions, 122 teams, 3 chronological folds, 2026-08-08 → 2026-09-14 |
+| fresh input binding | **content-level** (every consumable provider field + null representation), not only fixture ids |
 | zero overlap | proved at **fixture-identifier** level against 5,319 development and 3,606 V7-confirmatory fixtures — both empty intersections |
 | evaluability gate | **PASSED**, all 7 checks; 8 clusters against 4 required; smallest detectable difference **0.032** at the frozen MDE of 0.05 |
-| reproducibility | 19 quantities × 4 seeds × 2 interpreters = 8 environments, **0 unstable** |
 | leakage red team | 18/18 mutation classes rejected, legitimate observation accepted, three-way empirical probe with a live negative control |
-| frozen artifacts | **27**, SHA-256, `problems: []` |
+| frozen artifacts | **31**, SHA-256, `problems: []` |
 | CHAMPION | `0b8f5ff3dc4ddf15…` unchanged |
-| authorization | `CONFIRMATORY_OOS_COMPUTED = false`, `CONFIRMATORY_OOS_VIEWED = false` |
+| authorization | `CONFIRMATORY_OOS_COMPUTED = false`, `CONFIRMATORY_OOS_VIEWED = false`, `CANDIDATE_FEATURE_PROMOTION = false` |
 
 The standard of completion, stated as a claim I am willing to defend: *we have traced the
 LLM-to-measurement semantics, eliminated the known structural failure modes, created generic
@@ -173,15 +181,15 @@ Invariants rejected before any measurement: `IDENTICAL_COHORT_BASELINE`, `SELF_C
 
 | terminal structural state | n |
 |---|---|
-| `STRUCTURALLY_INVALID` | 63 |
+| `STRUCTURALLY_INVALID` | 61 |
 | — of which `IDENTICAL_COHORT_BASELINE` / `SELF_COMPARISON` | 44 |
-| — of which `BASELINE_ABSORPTION` | 19 |
+| — of which `BASELINE_ABSORPTION` | 17 |
 | `UNMEASURABLE` (capability) | 20 |
-| structurally valid **and** measurable | **49** |
+| structurally valid **and** measurable | **51** |
 
 Against V7's own accounting: V7 reached 53 measurable and 16 with a computable estimate. V7.1
-names 63 families as structurally invalid *before measuring them*, and lifts 56 families from
-`UNMEASURABLE` to a reported restricted universe. The net evaluable set is **49** — roughly
+names 61 families as structurally invalid *before measuring them*, and lifts families from
+`UNMEASURABLE` to a reported restricted universe. The net evaluable set is **51** — roughly
 three times V7's 16, and every one of them has a contrast that exists.
 
 ---
@@ -782,18 +790,98 @@ authorization is required.
 
 ---
 
+## W. Execution-closure amendment (pre-OOS)
+
+This section records the narrow execution-closure mission that superseded the previous freeze
+(`v71_freeze_v1`, commit `f9a3179dd`). Its purpose: an experiment whose authorized execution
+branch was intentionally unimplemented is not execution-ready, so the branch was implemented,
+tested, hardened and frozen — **without computing or viewing any fresh confirmatory outcome**.
+
+**W.1 The real execution path.** `src/research/hypothesis_v71/execution.py` decomposes the
+confirmatory run into five pure stages — `prepare_execution` → `evaluate_family_evidence` →
+`aggregate_endpoints` → `persist_evidence` → `finalize_result` — plus a single
+`run_experiment` orchestrator. Authorization lives *only* in the driver, never in these
+functions, so they are callable on synthetic and development folds; the future authorized run
+calls exactly the same code with the fresh fold positions and no edit. Endpoint A (end-to-end
+yield, per arm, unmatched, includes the unmeasurable) and Endpoint B (matched
+`OOS_QUALITY_SCORE` difference, one weighted control number per family) are both produced here;
+per-family evidence is flushed to disk (atomic temp+rename) before any aggregate, and a
+restart reuses a persisted record only if its content hash still matches — so an interruption
+never forces reconstruction and never double-counts.
+
+**W.2 Small-cluster inference (frozen).** Endpoint B has ~8 multiplicity-family clusters. A
+clustered SE referenced to a normal/t distribution is anti-conservative at that G. The frozen
+procedure is an **exact enumerated cluster sign-flip** test: the statistic is the cluster-mean
+of the per-cluster paired (treated − control) difference; the reference distribution is all
+2^G sign vectors (enumerated exactly for G ≤ 20); the two-sided p-value is exact in finite
+samples under the sharp null. The point estimate stays the frozen matched-treated estimand,
+raw control-pool N cannot enter (rows are reduced to G cluster means first), the normal-approx
+p-value is explicitly *not* the primary, and an impossible statistic fails closed. Synthetic
+type-I calibration holds at α (`test_v71_small_cluster.py`).
+
+**W.3 D15 — NULL is not ZERO (P0).** The engine coerced a missing point-in-time confounder to
+`0.0` (`pit_mean(...)[0] or 0.0`). The frozen `MISSING_CONFOUNDER_POLICY` now constructs only
+the confounders the family plan requires, represents a missing one as `None`, and excludes a
+row missing any required confounder under `ROW_MISSING_REQUIRED_CONFOUNDER` rather than
+imputing it; if that drops a cell below the support minimum it fails as
+`INSUFFICIENT_SUPPORT_AFTER_MISSING_CONFOUNDER`. A genuine measured zero is preserved.
+
+**W.4 The one-way door.** The confirmatory run requires BOTH `--authorize` AND a valid
+`V7_1_CONFIRMATORY_AUTHORIZATION.json` token whose bound hashes equal the live freeze manifest,
+executable source graph, upstream V7 inputs and fresh content. That token does not exist and
+was deliberately not created; `--authorize` alone refuses and computes nothing. Opening the
+door later requires no code change — only minting the (currently absent) token.
+
+**W.5 Four integrity commitments, recomputed at preflight.**
+
+| commitment | binds | negative control |
+|---|---|---|
+| executable **source graph** | AST transitive first-party closure of the driver + execution module (V7.1 package + reused V7 primitives + endpoint/estimator/engine/state code) | a byte change refuses even with no version bump; a new module on the closure is detected |
+| **upstream V7** | every consumed V7 artifact, re-hashed from the referenced file | a changed input refuses even if the immutability proof summary is unchanged |
+| **fresh content** | every consumable provider field + exact null representation, per fixture | the same 317 fixture ids carrying different values is refused |
+| **historical PIT snapshot** | content commitment over the development corpus | drift between freeze and execution is refused |
+
+**W.6 Full development execution exercise.** `_v71_synthetic_execution.py` ran the exact
+`run_experiment` machinery end to end over the historical walk-forward folds (a
+`DEVELOPMENT_ONLY` smoke; full-arm correctness is proven by the synthetic suite). It reached
+both endpoints, applied multiplicity FDR, produced a candidate set with
+`candidate_feature_promotion = false`, hashed the evidence bundle, and proved a resumed run
+byte-identical to the uninterrupted one. Endpoint B used the exact sign-flip inference.
+`confirmatory_oos_computed = false` throughout. Artifact:
+`V7_1_DEV_EXECUTION_EXERCISE.json`, stamped `DEVELOPMENT_ONLY / SYNTHETIC_ONLY /
+NON_CONFIRMATORY`.
+
+**W.7 Refreeze.** `v71_freeze_v2` records `f9a3179dd` (`v71_freeze_v1`) as its predecessor
+under `supersedes`, binds every module version stamp plus the source-graph, upstream and
+fresh-content hashes, and reproduces deterministically with `problems: []`. D15 raises the
+defect count to 15 (3×P0), zero P0–P3 unresolved.
+
+---
+
 ## Final machine states
 
 ```
-V7_FROZEN_IMMUTABLE                        V7_1_STATISTICAL_CONTRACTS_GREEN
-V7_1_SEMANTIC_IR_LOCKED                    V7_1_CONTROL_UNIVERSES_FROZEN
-V7_1_PROVIDER_CAPABILITY_CONTRACT_LOCKED   V7_1_MATCHING_WEIGHTS_FROZEN
-V7_1_COMPILER_INVARIANTS_GREEN             V7_1_EVALUABILITY_GATE_PASSED
-V7_1_SIMILARITY_ENGINE_GREEN               V7_1_FRESH_OOS_MANIFEST_FROZEN
-V7_1_PIT_RED_TEAM_GREEN                    V7_1_REPRODUCIBILITY_GREEN
-V7_1_EXECUTION_DRIVER_DRY_RUN_GREEN        V7_1_CHAMPION_UNCHANGED
-V7_1_CONFIRMATORY_OOS_NOT_OPENED           V7_1_READY_FOR_CONFIRMATORY_OOS
+V7_FROZEN_IMMUTABLE                          V7_1_STATISTICAL_CONTRACTS_GREEN
+V7_1_SEMANTIC_IR_LOCKED                      V7_1_CONTROL_UNIVERSES_FROZEN
+V7_1_PROVIDER_CAPABILITY_CONTRACT_LOCKED     V7_1_MATCHING_WEIGHTS_FROZEN
+V7_1_COMPILER_INVARIANTS_GREEN               V7_1_EVALUABILITY_GATE_PASSED
+V7_1_SIMILARITY_ENGINE_GREEN                 V7_1_FRESH_OOS_MANIFEST_FROZEN
+V7_1_PIT_RED_TEAM_GREEN                      V7_1_REPRODUCIBILITY_GREEN
+V7_1_CHAMPION_UNCHANGED                      V7_1_CONFIRMATORY_OOS_NOT_OPENED
+
+--- execution-closure amendment (§W) ---
+V7_1_PREVIOUS_FREEZE_SUPERSEDED_PRE_OOS      V7_1_NULL_ZERO_COERCION_FIXED
+V7_1_UPSTREAM_INPUTS_BOUND                   V7_1_FRESH_CORPUS_CONTENT_BOUND
+V7_1_EXECUTION_SOURCE_GRAPH_FROZEN           V7_1_ENDPOINT_A_EXECUTOR_EXERCISED
+V7_1_ENDPOINT_B_EXECUTOR_EXERCISED           V7_1_SMALL_CLUSTER_INFERENCE_FROZEN
+V7_1_MULTIPLICITY_EXECUTOR_EXERCISED         V7_1_FULL_DEVELOPMENT_EXECUTION_GREEN
+V7_1_EXECUTION_DRIVER_HASH_FROZEN            V7_1_EXECUTION_PATH_FROZEN_READY_FOR_AUTHORIZATION
+
+CONFIRMATORY_OOS_COMPUTED   = false
+CONFIRMATORY_OOS_VIEWED     = false
+CANDIDATE_FEATURE_PROMOTION = false
 ```
 
 **STOP.** Do not execute the confirmatory V7.1 run until a separate explicit authorization is
-issued.
+issued: the run requires both the `--authorize` flag and a `V7_1_CONFIRMATORY_AUTHORIZATION.json`
+token that does not exist and was deliberately not created.

@@ -2,6 +2,7 @@
  "blast_radius_version": "v71_blast_radius_v2",
  "changed_modules": [
   "src/research/hypothesis_v71/__init__.py",
+  "src/research/hypothesis_v71/authorization.py",
   "src/research/hypothesis_v71/bugledger.py",
   "src/research/hypothesis_v71/capability.py",
   "src/research/hypothesis_v71/compiler.py",
@@ -12,6 +13,7 @@
   "src/research/hypothesis_v71/engine.py",
   "src/research/hypothesis_v71/estimator.py",
   "src/research/hypothesis_v71/evaluability.py",
+  "src/research/hypothesis_v71/execution.py",
   "src/research/hypothesis_v71/freshsample.py",
   "src/research/hypothesis_v71/golden.py",
   "src/research/hypothesis_v71/invariants.py",
@@ -19,14 +21,15 @@
   "src/research/hypothesis_v71/leakage.py",
   "src/research/hypothesis_v71/matching.py",
   "src/research/hypothesis_v71/ontology.py",
+  "src/research/hypothesis_v71/provenance.py",
   "src/research/hypothesis_v71/recency.py",
   "src/research/hypothesis_v71/similarity.py"
  ],
  "method": "AST import analysis; transitive first-party closure per test module; a test that cannot reach a changed module cannot be affected by the change",
- "n_changed_modules": 20,
+ "n_changed_modules": 23,
  "n_test_modules_not_reaching": 219,
- "n_test_modules_reaching_changed_code": 2,
- "n_test_modules_scanned": 221,
+ "n_test_modules_reaching_changed_code": 6,
+ "n_test_modules_scanned": 225,
  "test_modules_not_reaching": [
   "tests/asymmetric/test_cli_caveat.py",
   "tests/asymmetric/test_cli_narrative.py",
@@ -273,6 +276,25 @@
   {
    "changed_modules_reached": [
     "src/research/hypothesis_v71/__init__.py",
+    "src/research/hypothesis_v71/confounders.py",
+    "src/research/hypothesis_v71/engine.py"
+   ],
+   "test_module": "tests/research/hypothesis_v71/test_v71_missing_confounder.py"
+  },
+  {
+   "changed_modules_reached": [
+    "src/research/hypothesis_v71/__init__.py",
+    "src/research/hypothesis_v71/authorization.py",
+    "src/research/hypothesis_v71/capability.py",
+    "src/research/hypothesis_v71/corpus_index.py",
+    "src/research/hypothesis_v71/freshsample.py",
+    "src/research/hypothesis_v71/provenance.py"
+   ],
+   "test_module": "tests/research/hypothesis_v71/test_v71_provenance_authorization.py"
+  },
+  {
+   "changed_modules_reached": [
+    "src/research/hypothesis_v71/__init__.py",
     "src/research/hypothesis_v71/capability.py",
     "src/research/hypothesis_v71/golden.py",
     "src/research/hypothesis_v71/invariants.py",
@@ -280,13 +302,34 @@
     "src/research/hypothesis_v71/ontology.py"
    ],
    "test_module": "tests/research/hypothesis_v71/test_v71_semantics.py"
+  },
+  {
+   "changed_modules_reached": [
+    "src/research/hypothesis_v71/__init__.py",
+    "src/research/hypothesis_v71/estimator.py"
+   ],
+   "test_module": "tests/research/hypothesis_v71/test_v71_small_cluster.py"
+  },
+  {
+   "changed_modules_reached": [
+    "src/research/hypothesis_v71/__init__.py",
+    "src/research/hypothesis_v71/capability.py",
+    "src/research/hypothesis_v71/corpus_index.py",
+    "src/research/hypothesis_v71/engine.py",
+    "src/research/hypothesis_v71/estimator.py",
+    "src/research/hypothesis_v71/execution.py",
+    "src/research/hypothesis_v71/matching.py"
+   ],
+   "test_module": "tests/research/hypothesis_v71/test_v71_synthetic_execution.py"
   }
  ],
  "v7_undeclared_module_check": {
   "defect": "D14",
   "note": "V7 is immutable, so its artifact is left exactly as frozen. This is an independent read-only re-verification of the claim it failed to cover.",
   "test_modules_reaching_them": [
-   "tests/research/hypothesis_v71/test_v71_engine.py"
+   "tests/research/hypothesis_v71/test_v71_engine.py",
+   "tests/research/hypothesis_v71/test_v71_small_cluster.py",
+   "tests/research/hypothesis_v71/test_v71_synthetic_execution.py"
   ],
   "v7_artifact_patched": false,
   "v7_modules_omitted_from_v7_blast_radius": [

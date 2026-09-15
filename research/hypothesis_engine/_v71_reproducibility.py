@@ -36,7 +36,9 @@ from src.research.hypothesis_v71 import (ontology as O, ir as I, invariants as V
                                           recency as R, confounders as F, estimator as E,
                                           controls as T, evaluability as B, freshsample as X,
                                           leakage as L, engine as G, golden as D,
-                                          bugledger as U, covariate_bridge as CB)
+                                          bugledger as U, covariate_bridge as CB,
+                                          execution as EX, provenance as PV,
+                                          authorization as AZ)
 
 def h(o):
     return hashlib.sha256(json.dumps(o, sort_keys=True, separators=(",", ":"),
@@ -47,6 +49,10 @@ cap = C.CapabilityContract(cov)
 vocab = sorted(m for m, r in C.METRIC_SEMANTICS.items() if r.get("block"))
 uniform = T.enumerate_pool(vocab, T.UNIFORM_POOL_SIZE, sampling=T.SAMPLING_UNIFORM)
 
+# a small deterministic sign-flip inference digest: exercises the frozen small-G procedure
+sflip = E.sign_flip_test([0.2, 0.25, 0.18, 0.22, 0.3, 0.19, 0.21, 0.24],
+                         [str(i) for i in range(8)])
+
 out = {
     "ontology": h(O.version_stamp()), "ir": h(I.version_stamp()),
     "invariants": h(V.version_stamp()), "capability": h(cap.spec()),
@@ -56,8 +62,12 @@ out = {
     "evaluability": h(B.version_stamp()), "fresh": h(X.version_stamp()),
     "leakage": h(L.version_stamp()), "golden": h(D.version_stamp()),
     "bugledger": h(U.version_stamp()), "covariate_bridge": h(CB.version_stamp()),
+    "execution": h(EX.version_stamp()), "provenance": h(PV.version_stamp()),
+    "authorization": h(AZ.version_stamp()),
     "engine_spec_hash": G.spec_hash(),
     "uniform_pool_hash": T.pool_hash(uniform),
+    "sign_flip_p_value": sflip["p_value"],
+    "sign_flip_n_sign_vectors": sflip["n_sign_vectors"],
     "ir_id_sample": I.build_ir({"target_metrics": ["total_shots", "corners"],
                                 "subject": "HOME_TEAM", "side": "AGAINST",
                                 "comparison": "SUBJECT_VS_FIXTURE_OPPONENT",

@@ -27,6 +27,7 @@ sys.path.insert(0, "/home/ubuntu")
 sys.path.insert(0, "/home/ubuntu/src")
 
 from src.research.hypothesis_v7 import covariates as V7COV
+from src.research.hypothesis_v71 import authorization as AUTHZ
 from src.research.hypothesis_v71 import bugledger as BUG
 from src.research.hypothesis_v71 import capability as CAP
 from src.research.hypothesis_v71 import compiler as CO
@@ -37,6 +38,7 @@ from src.research.hypothesis_v71 import covariate_bridge as CB
 from src.research.hypothesis_v71 import engine as EN
 from src.research.hypothesis_v71 import estimator as ES
 from src.research.hypothesis_v71 import evaluability as EVAL
+from src.research.hypothesis_v71 import execution as EX
 from src.research.hypothesis_v71 import freshsample as FS
 from src.research.hypothesis_v71 import golden as GOLD
 from src.research.hypothesis_v71 import invariants as INV
@@ -44,6 +46,7 @@ from src.research.hypothesis_v71 import ir as IRM
 from src.research.hypothesis_v71 import leakage as LEAK
 from src.research.hypothesis_v71 import matching as MATCH
 from src.research.hypothesis_v71 import ontology as ONT
+from src.research.hypothesis_v71 import provenance as PV
 from src.research.hypothesis_v71 import recency as REC
 from src.research.hypothesis_v71 import similarity as SIM
 
@@ -313,15 +316,65 @@ def main():
     # of what the freeze pins. The reproducibility proof and the dry run are produced AFTER
     # the manifest and reference it, so they are deliberately not hashed here.
     for name in ("V7_1_SEMANTIC_TRACE.json", "V7_1_DIAGNOSTIC_REPLAY.json",
-                 "V7_1_BLAST_RADIUS.json", "V7_1_FRESH_ACQUISITION.json"):
+                 "V7_1_BLAST_RADIUS.json", "V7_1_FRESH_ACQUISITION.json",
+                 "V7_1_DEV_EXECUTION_EXERCISE.json"):
         path = f"{OUT}/{name}"
         if os.path.exists(path):
             manifest[name] = sha_file(path)
         else:
             problems.append(f"expected diagnostic artifact missing: {name}")
 
+    # ---- 7c. execution-path apparatus: specs, content commitment, provenance ------------
+    # The confirmatory execution machinery is itself frozen so a real run cannot silently use
+    # different code, different fresh content, or different upstream inputs than were reviewed.
+    write("V7_1_EXECUTION_SPEC.json",
+          {**EX.version_stamp(),
+           "endpoint_a": {"id": "END_TO_END_RESEARCH_YIELD", "matched": False},
+           "endpoint_b": {"id": "CONDITIONAL_SIGNAL_QUALITY", "matched": True,
+                          "primary_statistic": "OOS_QUALITY_SCORE_DIFFERENCE",
+                          "inference": ES.SMALL_CLUSTER_METHOD,
+                          "cluster_unit": ES.CLUSTER_UNIT}}, manifest)
+    write("V7_1_AUTHORIZATION_SPEC.json", AUTHZ.version_stamp(), manifest)
+
+    # fresh CONTENT commitment (item 7): binds every consumable provider field + nulls, not
+    # only fixture ids. Reads NO outcome.
+    fresh_content = PV.content_commitment(confirmatory, CAP.METRIC_SEMANTICS)
+    write("V7_1_FRESH_CONTENT_COMMITMENT.json",
+          {"classification": ["INPUT_ONLY", "NON_CONFIRMATORY"],
+           "fresh_content": fresh_content,
+           "historical_pit_snapshot": PV.content_commitment(
+               development, CAP.METRIC_SEMANTICS)}, manifest)
+
+    # provenance: executable source graph + upstream V7 inputs, recomputed at execution time
+    source_graph = PV.source_graph_commitment(
+        ["research/hypothesis_engine/_v71_execute.py",
+         "src/research/hypothesis_v71/execution.py"], root=ROOT)
+    upstream_paths = [
+        "research/hypothesis_oos/out/v7/V7_COVERAGE_MATRIX.json",
+        "research/hypothesis_oos/out/v7/V7_DEDUPLICATION.json",
+        "research/hypothesis_oos/out/v7/V7_HYPOTHESIS_UNIVERSE.json",
+        "research/hypothesis_oos/out/v7/V7_PREREGISTRATION.json",
+        "research/hypothesis_oos/out/v7/V7_WALKFORWARD_FOLDS.json",
+        "research/hypothesis_oos/out/v7/V7_BLAST_RADIUS.json",
+    ]
+    upstream = PV.upstream_v7_commitment(upstream_paths, root=ROOT)
+    write("V7_1_PROVENANCE.json",
+          {**PV.version_stamp(),
+           "source_graph": source_graph,
+           "upstream_v7": upstream}, manifest)
+    print(f"provenance: {source_graph['n_source_files']} source files, "
+          f"{upstream['n_upstream_inputs']} upstream inputs; "
+          f"fresh content {fresh_content['n_records']} records", flush=True)
+
     # ---- 8. freeze manifest -------------------------------------------------------------
-    doc = {"freeze_version": "v71_freeze_v1",
+    doc = {"freeze_version": "v71_freeze_v2",
+           "supersedes": {"previous_freeze_version": "v71_freeze_v1",
+                          "previous_pre_oos_apparatus_commit": "f9a3179dd",
+                          "reason": ("pre-OOS execution-closure: implemented and froze the "
+                                     "real confirmatory execution path, fixed the NULL!=ZERO "
+                                     "confounder coercion (D15), froze small-cluster "
+                                     "inference, and bound source graph, upstream inputs and "
+                                     "fresh content. No fresh outcome was computed or viewed.")},
            "experiment": "V7_1_HARDENED_HYPOTHESIS_VALIDATION",
            "confirmatory_oos_computed": False,
            "confirmatory_oos_viewed": False,
@@ -338,8 +391,14 @@ def main():
                "estimator": ES.ESTIMATOR_VERSION, "controls": CTRL.CONTROLS_VERSION,
                "evaluability": EVAL.EVALUABILITY_VERSION, "fresh": FS.FRESH_VERSION,
                "leakage": LEAK.LEAKAGE_VERSION, "engine": EN.ENGINE_VERSION,
-               "matching": MATCH.MATCHING_VERSION},
+               "matching": MATCH.MATCHING_VERSION, "execution": EX.EXECUTION_VERSION,
+               "provenance": PV.PROVENANCE_VERSION,
+               "authorization": AUTHZ.AUTHORIZATION_VERSION},
            "engine_spec_hash": EN.spec_hash(),
+           "executor_source_graph_sha256": source_graph["source_graph_sha256"],
+           "executor_entry_points": source_graph["entry_points"],
+           "fresh_content_sha256": fresh_content["content_sha256"],
+           "upstream_v7_sha256": upstream["upstream_sha256"],
            # The apparatus is proven byte-identical across interpreters (section P), so this is
            # not a correctness dependency.  It is a pin: the confirmatory run must declare the
            # same interpreter the freeze was taken under, or re-freeze deliberately.

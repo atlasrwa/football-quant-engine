@@ -306,6 +306,42 @@ DEFECTS = [
                             "test_15_v7_undeclared_module_claim_is_reverified_without_"
                             "patching_v7"),
     },
+    {
+        "id": "D15",
+        "severity": "P0",
+        "title": "A missing point-in-time confounder was coerced to zero (NULL != ZERO)",
+        "root_cause": (
+            "`engine.evaluate_cell` built its confounder design with "
+            "`index.pit_mean(...)[0] or 0.0` for opponent_strength and cards. `pit_mean` "
+            "returns `(None, 0)` when the entity has no strictly-prior observation, so a "
+            "genuinely ABSENT historical confounder was fabricated as a value of 0.0. That "
+            "biases the OLS adjustment toward the zero point, and additionally makes a "
+            "genuine measured zero indistinguishable from missing. The engine also computed "
+            "every confounder speculatively rather than only those the frozen family plan "
+            "requires."),
+        "evidence": ("engine.evaluate_cell rows: opponent_strength and cards used "
+                     "`pit_mean(...)[0] or 0.0`; an opponent playing its first match in the "
+                     "corpus, or a subject with no prior yellow-card record, contributed a "
+                     "fabricated 0.0 to the design"),
+        "affected_experiment": ("V7.1 confirmatory execution path (found and fixed during "
+                                "the execution-closure mission, before any fresh outcome)"),
+        "changes_v7_interpretation": (
+            "No. V7's executor is immutable and used its own frozen covariate construction; "
+            "this defect is in V7.1's engine and is fixed before V7.1 computes anything."),
+        "generic_fix": (
+            "`confounders.MISSING_CONFOUNDER_POLICY` is frozen and outcome-blind: only the "
+            "confounders the family plan REQUIRES are constructed; a required confounder "
+            "absent for a row is `None`, never 0.0; a row missing any required confounder is "
+            "EXCLUDED from the adjusted design under the named reason "
+            "`ROW_MISSING_REQUIRED_CONFOUNDER`; and if that drops the cell below the frozen "
+            "support minimum the cell fails as "
+            "`INSUFFICIENT_SUPPORT_AFTER_MISSING_CONFOUNDER` rather than being adjusted on a "
+            "fabricated design. A genuine measured zero is preserved as 0.0."),
+        "regression_test": ("test_15_missing_confounder_is_not_coerced_to_zero, "
+                            "test_15_genuine_zero_confounder_is_preserved, "
+                            "test_15_only_required_confounders_are_constructed, "
+                            "test_15_row_missing_required_confounder_is_excluded_not_imputed"),
+    },
 ]
 
 

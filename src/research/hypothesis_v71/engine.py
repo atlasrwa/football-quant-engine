@@ -101,8 +101,15 @@ def evaluate_cell(ir, metric, index, positions, ctx, plan, capability, recency):
 
     `recency` is the weighting FAMILY (a tuple) or a single weighting; a reweighting cohort is
     always evaluated across the whole frozen family.
+
+    Confounders obey the frozen missing-data policy (`confounders.MISSING_CONFOUNDER_POLICY`,
+    defect D15): only the confounders the family plan REQUIRES are constructed, a required
+    confounder absent for a row is `None` (never a fabricated 0.0), and a row missing any
+    required confounder is EXCLUDED from the adjusted design under a named reason rather than
+    imputed. A genuine measured zero is preserved as 0.0 and is never treated as missing.
     """
     weightings = tuple(recency) if isinstance(recency, (tuple, list)) else (recency,)
+    required = _required_confounder_names(plan)
     sig, res, rows, teams, fixtures = [], [], [], set(), set()
     refused = 0
     for rec_i in positions:
@@ -114,24 +121,17 @@ def evaluate_cell(ir, metric, index, positions, ctx, plan, capability, recency):
             continue
         rec = index.recs[rec_i]
         subject = str(rec.home_id) if ir.subject == "HOME_TEAM" else str(rec.away_id)
-        opp = str(rec.away_id) if str(rec.home_id) == subject else str(rec.home_id)
         sig.append(c - b)
         res.append(observed - b)
-        rows.append({
-            "venue": 1.0 if str(rec.home_id) == subject else 0.0,
-            "competition": rec.competition,
-            "opponent_strength": index.pit_mean(opp, metric, "FOR", rec_i)[0] or 0.0,
-            "team_baseline_quality": b,
-            "cards": index.pit_mean(subject, "yellow_cards", "FOR", rec_i)[0] or 0.0,
-            "season_regime": float(abs(hash_free_season(rec.season_id))),
-        })
+        rows.append(_row_confounders(ir, index, rec_i, rec, subject, b, metric, required))
         teams.add(subject)
         fixtures.add(str(rec.fixture_id))
 
     n = len(sig)
     out = {"n": n, "n_refused": refused, "unique_teams": len(teams),
            "unique_fixtures": len(fixtures), "effect": None, "adjusted": False,
-           "signal_variance": None, "support": V7PIT.SUPPORT_NOT_EVALUABLE}
+           "signal_variance": None, "support": V7PIT.SUPPORT_NOT_EVALUABLE,
+           "n_rows_missing_required_confounder": 0}
     if n == 0:
         return out
     weights = [1.0] * n
@@ -151,25 +151,52 @@ def evaluate_cell(ir, metric, index, positions, ctx, plan, capability, recency):
         out["contrastless"] = True
         return out
 
+    # ---- missing-confounder policy (D15): NULL is not ZERO --------------------------
+    # A row is COMPLETE iff every REQUIRED confounder is present for it. A row missing any
+    # required confounder is excluded under a named reason, never imputed to zero. Only
+    # complete rows enter the design, the signal and the residual.
+    complete = [i for i in range(n) if _row_is_complete(rows[i], required)]
+    n_missing = n - len(complete)
+    out["n_rows_missing_required_confounder"] = n_missing
+    if n_missing:
+        out["missing_confounder_row_exclusion"] = {
+            "reason": CF.ROW_MISSING_REQUIRED_CONFOUNDER,
+            "n_excluded": n_missing,
+            "required_confounders": sorted(required),
+        }
+    if len(complete) < MIN_CELL_OBSERVATIONS:
+        # Excluding fabricated-zero rows dropped the cell below support. Fail closed under a
+        # named reason rather than adjusting on an imputed design.
+        out["insufficient_after_missing_confounder"] = True
+        out["support"] = V7PIT.SUPPORT_NOT_EVALUABLE
+        out["cell_failure_reason"] = CF.INSUFFICIENT_AFTER_MISSING
+        return out
+
+    csig = [sig[i] for i in complete]
+    cres = [res[i] for i in complete]
+    crows = [rows[i] for i in complete]
+    nc = len(complete)
+
     columns = {}
     for name in plan["confounders"]:
         if name == "competition":
-            levels = sorted({r["competition"] for r in rows})[1:]
+            levels = sorted({r["competition"] for r in crows})[1:]
             for lv in levels:
                 columns[f"competition={lv}"] = [
-                    1.0 if r["competition"] == lv else 0.0 for r in rows]
+                    1.0 if r["competition"] == lv else 0.0 for r in crows]
         elif name in ("opponent_strength", "opponent_profile"):
-            columns["opponent_strength"] = [r["opponent_strength"] for r in rows]
-        elif name in rows[0]:
-            columns[name] = [r[name] for r in rows]
+            columns["opponent_strength"] = [r["opponent_strength"] for r in crows]
+        elif name in crows[0]:
+            columns[name] = [r[name] for r in crows]
     screened = CF.screen_design(columns)
     out["confounders_applied"] = sorted(screened["kept"])
     out["confounders_dropped"] = screened["dropped"]
     out["confounders_removed_from_plan"] = plan["removed"]
+    out["n_rows_in_design"] = nc
 
-    X = [[screened["kept"][k][i] for k in sorted(screened["kept"])] for i in range(n)]
-    rs = ES.ols_residualize(sig, X) if X and X[0] else sig
-    rr = ES.ols_residualize(res, X) if X and X[0] else res
+    X = [[screened["kept"][k][i] for k in sorted(screened["kept"])] for i in range(nc)]
+    rs = ES.ols_residualize(csig, X) if X and X[0] else csig
+    rr = ES.ols_residualize(cres, X) if X and X[0] else cres
     if rs is None or rr is None:
         out["confounded_unresolved"] = True
         return out
@@ -178,6 +205,47 @@ def evaluate_cell(ir, metric, index, positions, ctx, plan, capability, recency):
     ES.assert_in_range("correlation", effect, where="cell effect")
     out["effect"] = effect
     return out
+
+
+#: The confounder VALUES the design may ever need, computed per row. A value of `None` means
+#: the confounder is genuinely absent for that row (e.g. no prior match for the opponent), and
+#: is NEVER coerced to 0.0. `venue`, `team_baseline_quality`, `season_regime` and
+#: `competition` are structural and always present; `opponent_strength` and `cards` are
+#: point-in-time reads that can legitimately be missing.
+def _required_confounder_names(plan) -> frozenset:
+    """The plan's confounders that translate to a constructed row value whose absence must be
+    treated as missing rather than zero. `competition` is structural (always present)."""
+    missing_prone = {"opponent_strength", "opponent_profile", "cards"}
+    return frozenset(c for c in plan["confounders"] if c in missing_prone)
+
+
+def _row_confounders(ir, index, rec_i, rec, subject, b, metric, required):
+    """One observation's confounder values. Missing required point-in-time confounders are
+    `None`, never a fabricated 0.0. Only what the plan needs is read."""
+    opp = str(rec.away_id) if str(rec.home_id) == subject else str(rec.home_id)
+    row = {
+        "venue": 1.0 if str(rec.home_id) == subject else 0.0,
+        "competition": rec.competition,
+        "team_baseline_quality": b,
+        "season_regime": float(abs(hash_free_season(rec.season_id))),
+    }
+    if "opponent_strength" in required or "opponent_profile" in required:
+        m, _n = index.pit_mean(opp, metric, "FOR", rec_i)
+        row["opponent_strength"] = m          # None when the opponent has no prior match
+    if "cards" in required:
+        m, _n = index.pit_mean(subject, "yellow_cards", "FOR", rec_i)
+        row["cards"] = m                      # None when the subject has no prior yellow-card
+    return row
+
+
+def _row_is_complete(row, required) -> bool:
+    """True iff every required confounder is present (not None) for this row. A genuine 0.0 is
+    present; only `None` is missing."""
+    for name in required:
+        key = "opponent_strength" if name == "opponent_profile" else name
+        if row.get(key) is None:
+            return False
+    return True
 
 
 def hash_free_season(season_id):
@@ -301,6 +369,8 @@ def spec() -> dict:
             "multi_metric_aggregation": "EQUAL_WEIGHT_MEAN_OVER_METRICS",
             "pvalue_method": "TWO_SIDED_T_ON_FOLD_EFFECTS",
             "adjustment": "OLS_RESIDUALIZATION_ON_SCREENED_FROZEN_PLAN",
+            "missing_confounder_policy": CF.MISSING_CONFOUNDER_POLICY["policy"],
+            "missing_confounder_fabricates_zero": False,
             "shrinkage": {"prior": REC.SHRINKAGE_PRIOR, "k": REC.SHRINKAGE_STRENGTH_K},
             "decay_family_days": list(REC.HALFLIVES_DAYS),
             "decay_family_aggregation": "EQUAL_WEIGHT_MEAN_OVER_HALFLIVES (never selected)",
