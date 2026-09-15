@@ -198,7 +198,10 @@ def main():
             "n_clusters": len(cluster_means),
             "cluster_sigma": sigma,
         },
-        "seconds": round(time.time() - t0, 1),
+        # NOTE: no wall-clock field. This artifact is HASHED INTO THE FREEZE MANIFEST (the
+        # evaluability gate reads its precision input from here), so a duration would make a
+        # bound artifact differ on every run and refuse preflight although nothing scientific
+        # moved. Duration goes to stdout only.
     }
     doc = {"replay_version": "v71_diagnostic_replay_v1",
            "classification": CLASSIFICATION,
@@ -207,6 +210,7 @@ def main():
     path = f"{OUT}/V7_1_DIAGNOSTIC_REPLAY.json"
     json.dump(doc, open(path, "w"), indent=1, sort_keys=True)
     print(json.dumps(summary, indent=1))
+    print(f"elapsed: {round(time.time() - t0, 1)}s (not recorded in the frozen artifact)")
     print(f"\nwritten: {path}")
 
 

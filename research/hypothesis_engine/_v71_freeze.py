@@ -324,6 +324,28 @@ def main():
         else:
             problems.append(f"expected diagnostic artifact missing: {name}")
 
+    # ---- 7b-ii. bound diagnostics must be REPRODUCIBLE UNDER THE FROZEN CODE (D17) ------
+    # v2 bound a diagnostic replay carrying engine_spec_hash 4138f90b while the freeze itself
+    # recorded 25527df6: the artifact had been generated under a DIFFERENT engine spec and was
+    # never regenerated, so the value the evaluability gate consumed as its precision input
+    # (cluster_sigma) could not be reproduced from the code v2 froze. Nothing checked it,
+    # because the artifact hashed consistently with itself. Any bound artifact that declares
+    # which engine spec produced it must now agree with the live spec, or the freeze refuses.
+    live_spec = EN.spec_hash()
+    for name in sorted(manifest):
+        path = f"{OUT}/{name}"
+        if not name.endswith(".json") or not os.path.exists(path):
+            continue
+        try:
+            doc = json.load(open(path))
+        except (ValueError, UnicodeDecodeError):
+            continue
+        declared = doc.get("engine_spec_hash") if isinstance(doc, dict) else None
+        if declared is not None and declared != live_spec:
+            problems.append(
+                f"STALE_BOUND_ARTIFACT: {name} was generated under engine spec "
+                f"{declared[:16]} but the freeze pins {live_spec[:16]}; regenerate it")
+
     # ---- 7c. execution-path apparatus: specs, content commitment, provenance ------------
     # The confirmatory execution machinery is itself frozen so a real run cannot silently use
     # different code, different fresh content, or different upstream inputs than were reviewed.

@@ -428,7 +428,96 @@ def test_16_sys_path_mutation_is_declared_and_its_root_is_understood():
 
 
 # ======================================================================================
-# 9. clean-checkout executability must be PROVEN, not assumed
+# 10. artifacts the freeze BINDS must be reproducible
+# ======================================================================================
+#: keys whose values are wall-clock or environment noise rather than scientific content
+NONDETERMINISTIC_KEYS = ("seconds", "elapsed", "elapsed_seconds", "duration", "timestamp",
+                         "created_at", "created_utc", "generated_at", "run_at", "started_at",
+                         "finished_at", "now")
+
+
+def _keys_recursively(obj, out=None):
+    out = [] if out is None else out
+    if isinstance(obj, dict):
+        for k, v in obj.items():
+            out.append(k)
+            _keys_recursively(v, out)
+    elif isinstance(obj, list):
+        for v in obj:
+            _keys_recursively(v, out)
+    return out
+
+
+def test_16_bound_artifacts_carry_no_wall_clock_fields():
+    """A hashed artifact containing a duration changes on every run.
+
+    That would make the freeze self-invalidating: re-running a harness would refuse preflight
+    although nothing scientific moved, and the freeze would be binding a value that cannot be
+    reproduced. Found on `V7_1_DEV_EXECUTION_EXERCISE.json` ("seconds") during the D16 repair.
+    """
+    manifest_path = f"{OUT}/V7_1_FREEZE_MANIFEST.json"
+    if not os.path.exists(manifest_path):
+        pytest.skip("freeze manifest absent")
+    manifest = json.load(open(manifest_path))
+    offenders = {}
+    for name in sorted(manifest["artifact_hashes"]):
+        path = f"{OUT}/{name}"
+        if not os.path.exists(path) or not name.endswith(".json"):
+            continue
+        try:
+            doc = json.load(open(path))
+        except (ValueError, UnicodeDecodeError):
+            continue
+        bad = sorted({k for k in _keys_recursively(doc) if k in NONDETERMINISTIC_KEYS})
+        if bad:
+            offenders[name] = bad
+    assert not offenders, f"bound artifacts carry non-reproducible fields: {offenders}"
+
+
+def test_16_bound_artifacts_declare_the_frozen_engine_spec():
+    """D17: a bound diagnostic generated under superseded code must not be freezable.
+
+    v2 froze a replay carrying engine_spec_hash 4138f90b while pinning 25527df6, so the
+    evaluability gate's precision input could not be reproduced from the committed source.
+    """
+    manifest_path = f"{OUT}/V7_1_FREEZE_MANIFEST.json"
+    if not os.path.exists(manifest_path):
+        pytest.skip("freeze manifest absent")
+    manifest = json.load(open(manifest_path))
+    pinned = manifest["engine_spec_hash"]
+    stale = {}
+    for name in sorted(manifest["artifact_hashes"]):
+        path = f"{OUT}/{name}"
+        if not name.endswith(".json") or not os.path.exists(path):
+            continue
+        try:
+            doc = json.load(open(path))
+        except (ValueError, UnicodeDecodeError):
+            continue
+        declared = doc.get("engine_spec_hash") if isinstance(doc, dict) else None
+        if declared is not None and declared != pinned:
+            stale[name] = declared
+    assert not stale, f"bound artifacts produced under a superseded engine spec: {stale}"
+
+
+def test_16_bound_artifact_hashes_all_recompute():
+    """Every artifact the manifest binds must still hash to its frozen value."""
+    manifest_path = f"{OUT}/V7_1_FREEZE_MANIFEST.json"
+    if not os.path.exists(manifest_path):
+        pytest.skip("freeze manifest absent")
+    manifest = json.load(open(manifest_path))
+    bad = []
+    for name, expected in sorted(manifest["artifact_hashes"].items()):
+        path = f"{OUT}/{name}"
+        if not os.path.exists(path):
+            bad.append(f"{name}: missing")
+        elif PV.sha_file(path) != expected:
+            bad.append(f"{name}: hash differs")
+    assert not bad, bad
+
+
+# ======================================================================================
+# 11. clean-checkout executability must be PROVEN, not assumed
 # ======================================================================================
 def test_16_clean_checkout_proof_exists_and_binds_the_freeze_manifest():
     """v2 verified every hash it bound and still could not run. Executability is now proven."""

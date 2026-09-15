@@ -406,6 +406,47 @@ DEFECTS = [
                             "test_16_unresolvable_first_party_import_fails_closed, "
                             "test_16_corpus_layer_and_scripts_are_bound_in_the_frozen_graph"),
     },
+    {
+        "id": "D17",
+        "severity": "P1",
+        "title": "The freeze bound a diagnostic artifact that its own frozen code could not "
+                 "reproduce",
+        "root_cause": (
+            "`V7_1_DIAGNOSTIC_REPLAY.json` was hashed into the v2 freeze manifest and supplies "
+            "the evaluability gate's precision input (`cluster_sigma`). The artifact itself "
+            "recorded `engine_spec_hash = 4138f90b`, while the freeze manifest pinned "
+            "`25527df6`: the replay had been generated under an EARLIER engine spec during the "
+            "same mission and was never regenerated after the engine changed. Re-running the "
+            "frozen replay driver under the frozen code yields cluster_sigma "
+            "0.03052062945008663, not the bound 0.029808027369281072. The artifact hashed "
+            "consistently with itself, so every integrity check passed while the value could "
+            "not be derived from the committed source. Two bound artifacts additionally carried "
+            "a wall-clock `seconds` field, which made re-running a harness break the freeze "
+            "even when nothing scientific moved -- the same reproducibility flaw in the "
+            "opposite direction."),
+        "evidence": ("V7_1_DIAGNOSTIC_REPLAY.json@916c3b08f declares engine_spec_hash "
+                     "4138f90bbf73c959 while V7_1_FREEZE_MANIFEST.json@916c3b08f pins "
+                     "25527df61eb93e38; re-running the driver is deterministic across repeated "
+                     "runs (0.03052062945008663 three times) so the discrepancy is staleness, "
+                     "not randomness"),
+        "affected_experiment": ("V7.1 evaluability-gate precision input (found during the D16 "
+                                "repair, before any fresh confirmatory outcome; the gate "
+                                "verdict is PASSED under both the stale and the reproducible "
+                                "value, so no decision turned on it)"),
+        "changes_v7_interpretation": (
+            "No. The quantity is a DEVELOPMENT-window diagnostic used to size precision, not an "
+            "effect, and V7 does not consume it."),
+        "generic_fix": (
+            "The freeze now REFUSES on `STALE_BOUND_ARTIFACT`: any bound artifact that declares "
+            "the engine spec it was produced under must agree with the spec the freeze pins, so "
+            "a diagnostic generated under superseded code can no longer be frozen. Wall-clock "
+            "durations were removed from every artifact the manifest hashes (they are printed "
+            "instead), so a bound artifact is byte-reproducible across runs; this is asserted "
+            "directly by a test that walks every bound artifact."),
+        "regression_test": ("test_16_bound_artifacts_carry_no_wall_clock_fields, "
+                            "test_16_bound_artifacts_declare_the_frozen_engine_spec, "
+                            "test_16_bound_artifact_hashes_all_recompute"),
+    },
 ]
 
 

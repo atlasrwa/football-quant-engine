@@ -150,10 +150,14 @@ def development_exercise(*, max_uniform=25, max_controls=60):
 
     ea = result["endpoint_a"]
     eb = result["endpoint_b"]
+    elapsed = round(time.time() - t0, 1)
     summary = {
         "classification": [EX.CLASS_DEVELOPMENT, EX.NON_CONFIRMATORY],
         "experiment": EXPERIMENT_ID,
-        "seconds": round(time.time() - t0, 1),
+        # NOTE: wall-clock duration is deliberately NOT recorded here. This artifact is HASHED
+        # INTO THE FREEZE MANIFEST, so a timing field would make a bound artifact change on
+        # every run: re-running this harness would break the freeze and refuse preflight even
+        # though nothing scientific moved. Duration is printed to stdout instead.
         "deterministic_cap": {"max_uniform": max_uniform, "max_controls": max_controls,
                               "max_treated": 20,
                               "treated_arm_run_in_full": False,
@@ -177,6 +181,8 @@ def development_exercise(*, max_uniform=25, max_controls=60):
         "evidence_bundle_sha256": result["evidence_bundle_sha256"],
         "confirmatory_oos_computed": result["confirmatory_oos_computed"],
     }
+    print(f"development exercise complete in {elapsed}s "
+          f"(duration is not recorded in the frozen artifact)", flush=True)
     return summary, result, work
 
 

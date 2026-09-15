@@ -109,9 +109,11 @@ def main():
         "development_exercise_summary": {
             k: dev.get(k) for k in
             ("n_treated_evaluable", "n_controls", "n_uniform_evaluable",
-             "resume_is_deterministic_and_does_not_double_count", "seconds")
+             "resume_is_deterministic_and_does_not_double_count")
         },
-        "seconds": round(time.time() - t0, 1),
+        # NOTE: no wall-clock field. This artifact is HASHED INTO THE FREEZE MANIFEST, so a
+        # timing value would make a bound artifact differ on every run and refuse preflight
+        # although nothing scientific changed. Duration goes to stdout only.
     }
     path = f"{OUT}/{TRACE_ARTIFACT}"
     json.dump(doc, open(path, "w"), indent=1, sort_keys=True)
@@ -123,6 +125,8 @@ def main():
     for f in runtime_not_static:
         print(f"     ! {f}  (module {runtime[f]})")
     print(f"  fresh sample opened               : False")
+    print(f"  elapsed                           : {round(time.time() - t0, 1)}s "
+          f"(not recorded in the frozen artifact)")
     print(f"  wrote {path}")
     return 0
 
