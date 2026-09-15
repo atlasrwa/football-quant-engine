@@ -194,6 +194,14 @@ def compile_query(ir, index, rec_i, *, metric, terciles, axis_cache, similarity,
 
     cv, cw, cf = out["cohort"]
     bv, bw, bf = out["baseline"]
+    # A comparator can be structurally sound in the IR and still COLLAPSE at a particular
+    # fixture -- e.g. SUBJECT_COMPETITION_BASELINE when the subject's entire prior history
+    # happens to sit in one competition, so the same-competition cohort IS the all-prior
+    # baseline. That fixture carries no contrast, and emitting a zero-valued feature for it
+    # would put a structural zero into an out-of-sample distribution. Refuse instead.
+    if cf == bf and cw == bw:
+        raise CompileRefused(
+            "cohort and baseline coincide at this fixture: no contrast exists here")
     return CompiledQuery(cohort_values=cv, baseline_values=bv,
                          cohort_weights=cw, baseline_weights=bw,
                          environment_mean=env, observed=observed,
