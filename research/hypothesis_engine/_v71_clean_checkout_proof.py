@@ -51,6 +51,12 @@ ARTIFACT = "V7_1_CLEAN_CHECKOUT_PROOF.json"
 #: copied into the checkout, which would invalidate the whole point of the exercise.
 CODE_ROOTS = ("src", "scripts", "research", "tests")
 
+#: Data roots that legitimately hold content supplied to the checkout: provider caches and
+#: corpus files that are NOT in the commit (they are working-tree data, ignored or merely
+#: untracked). Supplying them is allowed; supplying CODE is not, so the proof asserts that no
+#: Python whatsoever lives under them and that they are hashed where load-bearing.
+SUPPLIED_DATA_ROOTS = ("data",)
+
 #: every module of the V7.1 package must import from the clean commit
 V71_MODULES = (
     "authorization", "bugledger", "capability", "compiler", "confounders", "controls",
@@ -103,6 +109,18 @@ def main():
                   if p.endswith(".py")]
     stage("no_untracked_executable_py", not untracked_py, str(untracked_py or "none"))
     stage("no_ignored_executable_py", not ignored_py, str(ignored_py or "none"))
+
+    # Supplied data may not smuggle code in. The corpus caches are working-tree data that is not
+    # in the commit, so they are copied into the checkout; if any Python lived under those roots
+    # it could change behaviour while `git status` stayed quiet, so that is checked directly
+    # rather than assumed.
+    data_py = []
+    for root in SUPPLIED_DATA_ROOTS:
+        for dirpath, _dirs, names in os.walk(os.path.join(ROOT, root)):
+            data_py += [os.path.relpath(os.path.join(dirpath, n), ROOT)
+                        for n in names if n.endswith(".py")]
+    stage("no_python_under_supplied_data_roots", not data_py, str(data_py[:5] or "none"))
+    detail["supplied_data_roots"] = list(SUPPLIED_DATA_ROOTS)
 
     # ---- 3. every V7.1 module imports from the clean commit ---------------------------
     import_failures = []
