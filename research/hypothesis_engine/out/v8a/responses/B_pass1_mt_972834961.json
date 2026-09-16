@@ -1,0 +1,681 @@
+{
+ "arm": "B",
+ "elapsed_s": 126.98,
+ "error": null,
+ "fixture_id": "mt_972834961",
+ "max_tokens": 24576,
+ "model_id": "us.anthropic.claude-sonnet-4-6",
+ "pass": 1,
+ "prompt_version": "v8a_prompt_v1",
+ "provenance": {
+  "input_tokens": 41029,
+  "output_tokens": 11369,
+  "request_sha256": "b79232f150559b9c260faf0ef83ead4d0df2dc5e8161faa828d52977747b1729",
+  "resolved_model_id": "us.anthropic.claude-sonnet-4-6",
+  "response_sha256": "d65a2032640b86e547eecfafb8dca749df2807a1922868593cc32b2a721a08e0",
+  "stop_reason": "tool_use"
+ },
+ "record_sha256": "bd0ab44df5a0b08181bdded3795c3b3fa592a08239ac5212b8331370b5a36fa9",
+ "response": {
+  "candidates": [
+   {
+    "behavioral_observations": [
+     {
+      "evidence_refs": [
+       "TEAM_A.blocks.long_run_home.metrics.shots_inside_box_for",
+       "TEAM_A.blocks.long_run_away.metrics.shots_inside_box_for"
+      ],
+      "observation": "Amiens generates 9.6 shots inside box per game at home (long-run_home) vs 4.9 away (long_run_away) \u2014 a near-doubling of inside-box shot volume by venue."
+     },
+     {
+      "evidence_refs": [
+       "TEAM_B.blocks.long_run_all.metrics.touches_in_penalty_area_against",
+       "TEAM_B.blocks.recent_last_10.metrics.touches_in_penalty_area_against"
+      ],
+      "observation": "Lavallois concedes 24.1 touches in penalty area per game long-run (26.4 last 10), consistently among the higher values in the dataset, indicating opponents regularly penetrate their box."
+     }
+    ],
+    "candidate_id": "C1",
+    "comparison": "SUBJECT_VENUE_BASELINE",
+    "conditions": [
+     {
+      "dimension": "historical_venue_conditioning",
+      "value": "HOME"
+     }
+    ],
+    "coverage_risk": "NONE",
+    "falsifiable_question": "Does Amiens generate more shots inside the box and touches in the penalty area in home matches than in their overall baseline across all prior ligue2 matches?",
+    "falsifier": "If Amiens' home shots_inside_box and touches_in_penalty_area are not meaningfully higher than their overall baseline, the venue-driven inside-box attack mechanism is unsupported.",
+    "football_mechanism": "A home team with a strong inside-box shot tendency meeting a defense that structurally concedes high penalty area touches may produce elevated box shot volume, because the defensive shape allows opponents to receive the ball in dangerous positions rather than forcing play to the periphery.",
+    "metric_perspective": "FOR",
+    "opponent": "TEAM_B",
+    "provider_requirements": [
+     "shots_inside_box",
+     "touches_in_penalty_area"
+    ],
+    "research_family": "ATTACK_VOLUME",
+    "self_critique": {
+     "cohort_equals_baseline": false,
+     "condition_equals_target": false,
+     "could_opponent_strength_explain_it": false,
+     "is_just_home_vs_away": true,
+     "is_just_recent_vs_long_run": false,
+     "is_overconditioned": false,
+     "likely_generic_enumeration_would_generate_this": true,
+     "notes": "This is a home vs away split question. The home/away difference is large and directly observable from descriptive stats. Discarding in favour of more conditional questions."
+    },
+    "subject": "TEAM_A",
+    "support_risk": "NONE",
+    "target_metric": [
+     "shots_inside_box",
+     "touches_in_penalty_area"
+    ],
+    "window": "ALL_PRIOR"
+   },
+   {
+    "behavioral_observations": [
+     {
+      "evidence_refs": [
+       "TEAM_B.blocks.long_run_all.metrics.final_third_entries_against",
+       "TEAM_B.blocks.recent_last_10.metrics.final_third_entries_against"
+      ],
+      "observation": "Lavallois concedes 73.3 final third entries/game long-run, rising to 78.4 last 10 \u2014 opponents penetrate their defensive third at a high and increasing rate."
+     },
+     {
+      "evidence_refs": [
+       "TEAM_B.blocks.long_run_all.metrics.touches_in_penalty_area_against",
+       "TEAM_B.blocks.recent_last_10.metrics.touches_in_penalty_area_against",
+       "TEAM_B.blocks.recent_last_10.metrics.shots_inside_box_against"
+      ],
+      "observation": "Lavallois concedes 24.1 touches in penalty area long-run (26.4 last 10), and 8.3 shots inside box against last 10 \u2014 all three metrics show opponents getting into dangerous positions frequently and increasingly."
+     }
+    ],
+    "candidate_id": "C2",
+    "comparison": "SUBJECT_RECENT_VS_LONG_BASELINE",
+    "conditions": [],
+    "coverage_risk": "NONE",
+    "falsifiable_question": "Are Lavallois' last-10 defensive concession metrics (final_third_entries, touches_in_penalty_area, shots_inside_box conceded) higher than their long-run baseline, indicating a worsening defensive trend?",
+    "falsifier": "If Lavallois' last-10 values for these metrics are not higher than their long-run baseline, the worsening defensive trend is unsupported.",
+    "football_mechanism": "A defense that consistently allows high final third entries and penalty area touches may be structurally unable to compress space in the middle third, allowing opponents to progress the ball into dangerous zones. If this pattern holds against opponents with high attacking profiles, it represents a systematic defensive vulnerability rather than a sample artifact.",
+    "metric_perspective": "AGAINST",
+    "opponent": "TEAM_A",
+    "provider_requirements": [
+     "final_third_entries",
+     "touches_in_penalty_area",
+     "shots_inside_box"
+    ],
+    "research_family": "DEFENSIVE_CONCESSION",
+    "self_critique": {
+     "cohort_equals_baseline": false,
+     "condition_equals_target": false,
+     "could_opponent_strength_explain_it": true,
+     "is_just_home_vs_away": false,
+     "is_just_recent_vs_long_run": true,
+     "is_overconditioned": false,
+     "likely_generic_enumeration_would_generate_this": true,
+     "notes": "This is a recent vs long-run question and could be explained by opponent strength. Discarding."
+    },
+    "subject": "TEAM_B",
+    "support_risk": "NONE",
+    "target_metric": [
+     "final_third_entries",
+     "touches_in_penalty_area",
+     "shots_inside_box"
+    ],
+    "window": "W10"
+   },
+   {
+    "behavioral_observations": [
+     {
+      "evidence_refs": [
+       "TEAM_A.blocks.long_run_home.metrics.corner_kicks_for",
+       "TEAM_A.blocks.long_run_away.metrics.corner_kicks_for"
+      ],
+      "observation": "Amiens generates 6.4 corners/game at home (long_run_home) vs 3.6 away (long_run_away) \u2014 a large venue-driven split in corner generation."
+     },
+     {
+      "evidence_refs": [
+       "TEAM_B.blocks.long_run_all.metrics.corner_kicks_against",
+       "TEAM_B.blocks.long_run_away.metrics.corner_kicks_against"
+      ],
+      "observation": "Lavallois concedes 4.7 corners/game long-run overall, but 5.25 away (long_run_away) \u2014 opponents generate more corners against Lavallois when playing at home."
+     }
+    ],
+    "candidate_id": "C3",
+    "comparison": "SUBJECT_VENUE_BASELINE",
+    "conditions": [
+     {
+      "dimension": "historical_venue_conditioning",
+      "value": "HOME"
+     }
+    ],
+    "coverage_risk": "NONE",
+    "falsifiable_question": "Does Amiens generate more corner kicks in home matches than in their overall prior ligue2 baseline?",
+    "falsifier": "If Amiens' home corner_kicks_for is not higher than their overall baseline, the home-driven corner generation mechanism is unsupported.",
+    "football_mechanism": "Amiens' home attacking pressure (high inside-box shots, high final third entries at home) naturally generates corners when shots are deflected wide or saved. Lavallois' away defensive posture \u2014 high clearances, deep shape \u2014 may increase the frequency of corner-generating defensive actions. The combination of Amiens' home corner generation tendency and Lavallois' away corner concession tendency creates a structural interaction.",
+    "metric_perspective": "FOR",
+    "opponent": "TEAM_B",
+    "provider_requirements": [
+     "corner_kicks"
+    ],
+    "research_family": "SET_PIECE_GENERATION",
+    "self_critique": {
+     "cohort_equals_baseline": false,
+     "condition_equals_target": false,
+     "could_opponent_strength_explain_it": false,
+     "is_just_home_vs_away": true,
+     "is_just_recent_vs_long_run": false,
+     "is_overconditioned": false,
+     "likely_generic_enumeration_would_generate_this": true,
+     "notes": "Straightforward home vs away corner split \u2014 directly readable from descriptive stats. Discarding."
+    },
+    "subject": "TEAM_A",
+    "support_risk": "NONE",
+    "target_metric": [
+     "corner_kicks"
+    ],
+    "window": "ALL_PRIOR"
+   },
+   {
+    "behavioral_observations": [
+     {
+      "evidence_refs": [
+       "TEAM_B.blocks.recent_last_10.metrics.shots_on_target_against",
+       "TEAM_B.blocks.long_run_all.metrics.shots_on_target_against",
+       "TEAM_B.blocks.recent_last_10.metrics.touches_in_penalty_area_against"
+      ],
+      "observation": "Lavallois concedes 5.1 shots on target/game in last 10 (vs 4.47 long-run), and 26.4 touches in penalty area against last 10 \u2014 the defensive concession profile is worsening against opponents who attack with volume."
+     },
+     {
+      "evidence_refs": [
+       "TEAM_A.blocks.long_run_home.metrics.shots_on_target_for",
+       "TEAM_B.blocks.long_run_all.metrics.shots_on_target_against"
+      ],
+      "observation": "Amiens generates 6.6 shots on target/game at home (long_run_home) \u2014 above Lavallois' long-run concession rate of 4.47 \u2014 suggesting Amiens' home attack profile is in the HIGH tier for shot-on-target generation."
+     }
+    ],
+    "candidate_id": "C4",
+    "comparison": "SIMILAR_OPPONENT_COHORT",
+    "conditions": [],
+    "coverage_risk": "NONE",
+    "falsifiable_question": "Does Lavallois concede more shots_on_target, final_third_entries, and touches_in_penalty_area against opponents whose attacking profile resembles Amiens' home attacking output, compared to Lavallois' overall baseline?",
+    "falsifier": "If Lavallois' defensive concession metrics against similar-profile opponents are not higher than their overall baseline, the profile-conditional defensive vulnerability is unsupported.",
+    "football_mechanism": "A defense that concedes high final third entries and penalty area touches may be particularly exposed against opponents with HIGH attacking output profiles (shots on target, final third entries). If Lavallois' defensive concessions are systematically higher against high-attack opponents, this reveals a profile-conditional vulnerability rather than a uniform defensive weakness.",
+    "metric_perspective": "AGAINST",
+    "opponent": "TEAM_A",
+    "provider_requirements": [
+     "shots_on_target",
+     "final_third_entries",
+     "touches_in_penalty_area"
+    ],
+    "research_family": "OPPONENT_PROFILE_INTERACTION",
+    "self_critique": {
+     "cohort_equals_baseline": false,
+     "condition_equals_target": false,
+     "could_opponent_strength_explain_it": false,
+     "is_just_home_vs_away": false,
+     "is_just_recent_vs_long_run": false,
+     "is_overconditioned": false,
+     "likely_generic_enumeration_would_generate_this": false,
+     "notes": "The similar-opponent cohort is the right tool here: we want to know if Lavallois' defensive concessions are specifically elevated against high-attack opponents, not just in general. The mechanism is a two-variable interaction (opponent attack profile \u00d7 Lavallois defensive shape). Retaining."
+    },
+    "similar_opponent_rationale": "Amiens at home is a high-volume attacking side (shots on target, shots inside box, final third entries all above median). The similar-opponent cohort identifies prior Lavallois opponents with a comparable attacking profile, allowing measurement of whether Lavallois' defensive concessions are systematically higher against such opponents.",
+    "subject": "TEAM_B",
+    "support_risk": "LOW",
+    "target_metric": [
+     "shots_on_target",
+     "final_third_entries",
+     "touches_in_penalty_area"
+    ],
+    "window": "ALL_PRIOR"
+   },
+   {
+    "behavioral_observations": [
+     {
+      "evidence_refs": [
+       "TEAM_B.blocks.recent_last_5.metrics.big_chances_for",
+       "TEAM_B.blocks.long_run_all.metrics.big_chances_for",
+       "TEAM_B.blocks.recent_last_5.metrics.shots_inside_box_for",
+       "TEAM_B.blocks.long_run_all.metrics.shots_inside_box_for"
+      ],
+      "observation": "Lavallois generates 2.5 big chances/game in last 5 (vs 2.07 long-run) and 8.8 shots inside box last 5 (vs 7.5 long-run) \u2014 a recent uptick in attacking quality and box presence."
+     },
+     {
+      "evidence_refs": [
+       "TEAM_B.blocks.recent_last_5.metrics.shots_outside_box_for",
+       "TEAM_B.blocks.long_run_all.metrics.shots_outside_box_for"
+      ],
+      "observation": "Lavallois' shots outside box are very low (2.2 last 5, 2.5 long-run), confirming their attack is almost entirely box-concentrated. Their big chance creation is therefore not diluted by peripheral attempts."
+     }
+    ],
+    "candidate_id": "C5",
+    "comparison": "SUBJECT_RECENT_VS_LONG_BASELINE",
+    "conditions": [],
+    "coverage_risk": "NONE",
+    "falsifiable_question": "Does Lavallois generate more big_chances and shots_inside_box in their last 5 matches compared to their long-run baseline?",
+    "falsifier": "If Lavallois' last-5 big_chances_for and shots_inside_box_for are not higher than their long-run baseline, the recent attacking quality improvement is unsupported.",
+    "football_mechanism": "A team that concentrates its attacking play inside the box with low outside-box shot volume may generate big chances at a higher rate per shot than average, because their attempts are more positionally concentrated. Against a home defense (Amiens) that concedes 1.3 big chances/game at home, Lavallois' recent big chance generation rate may exceed that baseline if their box-concentrated style is effective against Amiens' defensive shape.",
+    "metric_perspective": "FOR",
+    "opponent": "TEAM_A",
+    "provider_requirements": [
+     "big_chances",
+     "shots_inside_box"
+    ],
+    "research_family": "ATTACK_QUALITY",
+    "self_critique": {
+     "cohort_equals_baseline": false,
+     "condition_equals_target": false,
+     "could_opponent_strength_explain_it": true,
+     "is_just_home_vs_away": false,
+     "is_just_recent_vs_long_run": true,
+     "is_overconditioned": false,
+     "likely_generic_enumeration_would_generate_this": true,
+     "notes": "This is a recent vs long-run question and directly readable from descriptive stats. Discarding."
+    },
+    "subject": "TEAM_B",
+    "support_risk": "NONE",
+    "target_metric": [
+     "big_chances",
+     "shots_inside_box"
+    ],
+    "window": "W5"
+   },
+   {
+    "behavioral_observations": [
+     {
+      "evidence_refs": [
+       "TEAM_A.blocks.long_run_home.metrics.goals_against",
+       "TEAM_A.blocks.long_run_away.metrics.goals_against",
+       "TEAM_A.blocks.long_run_home.metrics.shots_on_target_against",
+       "TEAM_A.blocks.long_run_away.metrics.shots_on_target_against"
+      ],
+      "observation": "Amiens concedes only 0.43 goals/game at home (long_run_home) vs 1.88 away \u2014 a dramatic home defensive advantage. Shots on target conceded at home: 4.0 vs 4.25 away \u2014 similar, yet goals conceded are very different."
+     },
+     {
+      "evidence_refs": [
+       "TEAM_A.blocks.long_run_home.metrics.big_chances_against",
+       "TEAM_A.blocks.long_run_away.metrics.big_chances_against"
+      ],
+      "observation": "Amiens concedes 1.3 big chances/game at home vs 2.6 away (long-run) \u2014 the home defense suppresses big chance creation much more effectively than away."
+     }
+    ],
+    "candidate_id": "C6",
+    "comparison": "SUBJECT_VENUE_BASELINE",
+    "conditions": [
+     {
+      "dimension": "historical_venue_conditioning",
+      "value": "HOME"
+     }
+    ],
+    "coverage_risk": "NONE",
+    "falsifiable_question": "Does Amiens concede fewer big_chances and shots_on_target in home matches compared to their overall prior ligue2 baseline?",
+    "falsifier": "If Amiens' home big_chances_against and shots_on_target_against are not lower than their overall baseline, the home defensive suppression mechanism is unsupported.",
+    "football_mechanism": "Amiens' home defensive record suppresses big chances (1.3/game) despite allowing similar shots on target to away matches. This suggests the home defense is particularly effective at preventing high-quality chances \u2014 possibly through defensive organisation that forces opponents into lower-quality positions. Against Lavallois, whose attack is box-concentrated and generates big chances, this home suppression mechanism is directly tested.",
+    "metric_perspective": "AGAINST",
+    "opponent": "TEAM_B",
+    "provider_requirements": [
+     "shots_on_target",
+     "big_chances"
+    ],
+    "research_family": "DEFENSIVE_SUPPRESSION",
+    "self_critique": {
+     "cohort_equals_baseline": false,
+     "condition_equals_target": false,
+     "could_opponent_strength_explain_it": true,
+     "is_just_home_vs_away": true,
+     "is_just_recent_vs_long_run": false,
+     "is_overconditioned": false,
+     "likely_generic_enumeration_would_generate_this": true,
+     "notes": "Home vs away split directly readable from descriptive stats. However, the tension between similar shots_on_target conceded but very different goals and big chances is genuinely interesting. Still, this is a basic home/away question. Discarding in favour of more conditional candidates."
+    },
+    "subject": "TEAM_A",
+    "support_risk": "NONE",
+    "target_metric": [
+     "shots_on_target",
+     "big_chances"
+    ],
+    "window": "ALL_PRIOR"
+   },
+   {
+    "behavioral_observations": [
+     {
+      "evidence_refs": [
+       "TEAM_B.blocks.long_run_all.metrics.possession_for",
+       "TEAM_B.blocks.recent_last_10.metrics.possession_for",
+       "TEAM_B.blocks.long_run_away.metrics.possession_for"
+      ],
+      "observation": "Lavallois averages only 40.7% possession long-run (40.6 last 10, 42.0 last 5) \u2014 consistently a low-possession side. Away possession: 41.0 long-run."
+     },
+     {
+      "evidence_refs": [
+       "TEAM_B.blocks.long_run_all.metrics.final_third_entries_for",
+       "TEAM_B.blocks.long_run_away.metrics.final_third_entries_for"
+      ],
+      "observation": "Despite low possession, Lavallois generates 56.2 final third entries/game long-run (54.5 away) \u2014 a reasonable territorial penetration rate relative to their possession share, suggesting efficient ball progression."
+     }
+    ],
+    "candidate_id": "C7",
+    "comparison": "OPPONENT_PROFILE_INTERACTION",
+    "conditions": [
+     {
+      "axis": "possession_for_per_match",
+      "dimension": "opponent_profile",
+      "value": "HIGH"
+     }
+    ],
+    "coverage_risk": "NONE",
+    "falsifiable_question": "Does Lavallois generate more final_third_entries and maintain higher possession against opponents with HIGH possession profiles compared to their overall baseline?",
+    "falsifier": "If Lavallois' final_third_entries_for and possession_for against high-possession opponents are not different from their overall baseline, the possession-profile interaction is unsupported.",
+    "football_mechanism": "A low-possession team that still generates meaningful final third entries may rely on direct or transition-based ball progression rather than sustained build-up. Against a home side (Amiens) that also operates below 50% possession (45.3 long-run), the territorial battle may be more balanced than possession figures suggest, with both teams capable of final third penetration on limited ball.",
+    "metric_perspective": "FOR",
+    "opponent": "TEAM_A",
+    "provider_requirements": [
+     "possession",
+     "final_third_entries"
+    ],
+    "research_family": "TEMPO_AND_TERRITORY",
+    "self_critique": {
+     "cohort_equals_baseline": false,
+     "condition_equals_target": false,
+     "could_opponent_strength_explain_it": false,
+     "is_just_home_vs_away": false,
+     "is_just_recent_vs_long_run": false,
+     "is_overconditioned": false,
+     "likely_generic_enumeration_would_generate_this": false,
+     "notes": "Amiens is actually a LOW possession side (45.3%), so conditioning on HIGH possession opponents is not the right cohort for this fixture. The question does not map to the actual matchup. Discarding."
+    },
+    "subject": "TEAM_B",
+    "support_risk": "LOW",
+    "target_metric": [
+     "possession",
+     "final_third_entries"
+    ],
+    "window": "ALL_PRIOR"
+   },
+   {
+    "behavioral_observations": [
+     {
+      "evidence_refs": [
+       "TEAM_A.blocks.long_run_home.metrics.shots_for",
+       "TEAM_A.blocks.long_run_home.metrics.shots_on_target_for",
+       "TEAM_A.blocks.long_run_away.metrics.shots_for",
+       "TEAM_A.blocks.long_run_away.metrics.shots_on_target_for"
+      ],
+      "observation": "Amiens generates 15.4 shots and 6.6 shots on target at home (long_run_home) vs 11.0 shots and 4.1 on target away \u2014 a large home attack volume advantage."
+     },
+     {
+      "evidence_refs": [
+       "TEAM_B.blocks.long_run_all.metrics.shots_against",
+       "TEAM_B.blocks.long_run_away.metrics.shots_against",
+       "TEAM_B.blocks.long_run_all.metrics.shots_on_target_against",
+       "TEAM_B.blocks.long_run_away.metrics.shots_on_target_against"
+      ],
+      "observation": "Lavallois concedes 12.1 shots/game long-run (13.25 away), 4.47 shots on target against long-run (4.25 away) \u2014 their defensive concession of shots is moderate, not extreme."
+     }
+    ],
+    "candidate_id": "C8",
+    "comparison": "SIMILAR_OPPONENT_COHORT",
+    "conditions": [
+     {
+      "dimension": "historical_venue_conditioning",
+      "value": "HOME"
+     }
+    ],
+    "coverage_risk": "NONE",
+    "falsifiable_question": "Does Amiens generate more shots, shots_on_target, and corner_kicks at home against opponents whose defensive profile (shots conceded, shots on target conceded) resembles Lavallois', compared to Amiens' overall home baseline?",
+    "falsifier": "If Amiens' shots, shots_on_target, and corner_kicks at home against similar-profile opponents are not higher than their overall home baseline, the profile-conditional attack volume mechanism is unsupported.",
+    "football_mechanism": "Amiens' home shot volume (15.4) substantially exceeds what Lavallois typically concedes away (13.25). If Amiens' home attack volume is systematically higher against opponents with LOW defensive shot-suppression profiles (i.e., opponents who concede many shots), this would confirm a profile-conditional attack volume effect rather than a generic home advantage.",
+    "metric_perspective": "FOR",
+    "opponent": "TEAM_B",
+    "provider_requirements": [
+     "shots",
+     "shots_on_target",
+     "corner_kicks"
+    ],
+    "research_family": "ATTACK_VOLUME",
+    "self_critique": {
+     "cohort_equals_baseline": false,
+     "condition_equals_target": false,
+     "could_opponent_strength_explain_it": false,
+     "is_just_home_vs_away": false,
+     "is_just_recent_vs_long_run": false,
+     "is_overconditioned": false,
+     "likely_generic_enumeration_would_generate_this": false,
+     "notes": "This combines venue conditioning with similar-opponent cohort \u2014 two dimensions that together test whether Amiens' home attack volume is specifically elevated against permissive defenses like Lavallois. The mechanism requires both conditions. Retaining."
+    },
+    "subject": "TEAM_A",
+    "support_risk": "LOW",
+    "target_metric": [
+     "shots",
+     "shots_on_target",
+     "corner_kicks"
+    ],
+    "window": "ALL_PRIOR"
+   },
+   {
+    "behavioral_observations": [
+     {
+      "evidence_refs": [
+       "TEAM_B.blocks.long_run_all.metrics.clearances_for",
+       "TEAM_B.blocks.recent_last_10.metrics.clearances_for",
+       "TEAM_B.blocks.recent_last_5.metrics.clearances_for"
+      ],
+      "observation": "Lavallois' clearances_for have risen from 25.3 long-run to 28.2 last 10 and 28.8 last 5 \u2014 a consistent upward trend indicating increasing defensive pressure absorbed."
+     },
+     {
+      "evidence_refs": [
+       "TEAM_B.blocks.long_run_all.metrics.saves_for",
+       "TEAM_B.blocks.recent_last_10.metrics.saves_for",
+       "TEAM_B.blocks.recent_last_5.metrics.saves_for",
+       "TEAM_B.blocks.recent_last_10.metrics.shots_on_target_against"
+      ],
+      "observation": "Lavallois' saves_for have risen from 3.53 long-run to 4.2 last 10 and 4.4 last 5 \u2014 keeper increasingly busy, consistent with more shots on target conceded (5.1 last 10 vs 4.47 long-run)."
+     }
+    ],
+    "candidate_id": "C9",
+    "comparison": "SIMILAR_OPPONENT_COHORT",
+    "conditions": [],
+    "coverage_risk": "NONE",
+    "falsifiable_question": "Does Lavallois make more clearances and saves against opponents whose attacking profile resembles Amiens' home attacking output, compared to Lavallois' overall baseline?",
+    "falsifier": "If Lavallois' clearances_for and saves_for against similar-profile opponents are not higher than their overall baseline, the profile-conditional defensive workload mechanism is unsupported.",
+    "football_mechanism": "Rising clearances and saves together suggest Lavallois is absorbing more sustained attacking pressure in recent matches \u2014 opponents are getting more shots on target and forcing more defensive clearances. If this pattern is specifically associated with opponents who have HIGH attacking output profiles (high shots, high final third entries), it would indicate a structural vulnerability against attack-heavy sides like Amiens at home.",
+    "metric_perspective": "FOR",
+    "opponent": "TEAM_A",
+    "provider_requirements": [
+     "clearances",
+     "saves"
+    ],
+    "research_family": "DEFENSIVE_CONCESSION",
+    "self_critique": {
+     "cohort_equals_baseline": false,
+     "condition_equals_target": false,
+     "could_opponent_strength_explain_it": false,
+     "is_just_home_vs_away": false,
+     "is_just_recent_vs_long_run": false,
+     "is_overconditioned": false,
+     "likely_generic_enumeration_would_generate_this": false,
+     "notes": "The similar-opponent cohort is appropriate: we want to know if Lavallois' defensive workload is specifically elevated against high-attack opponents. Clearances and saves are the measurable defensive workload metrics. The recent trend provides motivation but the question is about the cohort comparison. Retaining."
+    },
+    "similar_opponent_rationale": "Amiens at home is a high-volume attacking side. The similar-opponent cohort identifies prior Lavallois opponents with comparable attacking profiles (shots, shots on target, final third entries), allowing measurement of whether Lavallois' defensive workload (clearances, saves) is systematically higher against such opponents.",
+    "subject": "TEAM_B",
+    "support_risk": "LOW",
+    "target_metric": [
+     "clearances",
+     "saves"
+    ],
+    "window": "ALL_PRIOR"
+   },
+   {
+    "behavioral_observations": [
+     {
+      "evidence_refs": [
+       "TEAM_B.blocks.long_run_all.metrics.fouls_for",
+       "TEAM_B.blocks.recent_last_10.metrics.fouls_for",
+       "TEAM_B.blocks.long_run_away.metrics.fouls_for",
+       "TEAM_B.blocks.long_run_all.metrics.yellow_cards_for",
+       "TEAM_B.blocks.long_run_away.metrics.yellow_cards_for"
+      ],
+      "observation": "Lavallois commits 15.1 fouls/game last 10 (15.07 long-run) \u2014 consistently high foul rate. Away fouls: 13.9 long-run. Yellow cards: 1.73 long-run, 1.0 away long-run \u2014 notably lower away."
+     },
+     {
+      "evidence_refs": [
+       "TEAM_B.blocks.long_run_home.metrics.fouls_for",
+       "TEAM_B.blocks.long_run_home.metrics.yellow_cards_for",
+       "TEAM_B.blocks.long_run_away.metrics.yellow_cards_for"
+      ],
+      "observation": "Lavallois commits many fouls at home (16.4 long_run_home) but receives fewer yellow cards away (1.0 long_run_away vs 2.57 at home) \u2014 a tension between foul volume and card rate by venue."
+     }
+    ],
+    "candidate_id": "C10",
+    "comparison": "SUBJECT_VENUE_BASELINE",
+    "conditions": [
+     {
+      "dimension": "historical_venue_conditioning",
+      "value": "AWAY"
+     }
+    ],
+    "coverage_risk": "NONE",
+    "falsifiable_question": "Does Lavallois commit more fouls and receive more yellow_cards in away matches compared to their overall prior ligue2 baseline?",
+    "falsifier": "If Lavallois' fouls_for and yellow_cards_for in away matches are not higher than their overall baseline, the away discipline mechanism is unsupported.",
+    "football_mechanism": "A team that commits many fouls but receives fewer yellow cards away may be committing less dangerous or less cynical fouls in away matches, or referees may apply different thresholds. Against a home side (Amiens) that generates high final third entries and forces opponents into defensive actions, Lavallois' foul rate may be elevated if they resort to tactical fouling to disrupt Amiens' transitions.",
+    "metric_perspective": "FOR",
+    "opponent": "TEAM_A",
+    "provider_requirements": [
+     "fouls",
+     "yellow_cards"
+    ],
+    "research_family": "DISCIPLINE",
+    "self_critique": {
+     "cohort_equals_baseline": false,
+     "condition_equals_target": false,
+     "could_opponent_strength_explain_it": false,
+     "is_just_home_vs_away": true,
+     "is_just_recent_vs_long_run": false,
+     "is_overconditioned": false,
+     "likely_generic_enumeration_would_generate_this": true,
+     "notes": "The yellow card away split (1.0 vs 2.57 home) is interesting but the fouls are actually lower away too (13.9 vs 16.4). This is a straightforward home/away split. Discarding."
+    },
+    "subject": "TEAM_B",
+    "support_risk": "NONE",
+    "target_metric": [
+     "fouls",
+     "yellow_cards"
+    ],
+    "window": "ALL_PRIOR"
+   },
+   {
+    "behavioral_observations": [
+     {
+      "evidence_refs": [
+       "TEAM_A.blocks.long_run_home.metrics.big_chances_for",
+       "TEAM_A.blocks.long_run_away.metrics.big_chances_for",
+       "TEAM_A.blocks.recent_last_5.metrics.big_chances_for"
+      ],
+      "observation": "Amiens generates 2.4 big chances/game at home (long_run_home) vs 1.0 away (long_run_away) \u2014 a large home quality advantage. Recent last 5 shows only 1.4 big chances/game (all venues), but last 5 includes away matches."
+     },
+     {
+      "evidence_refs": [
+       "TEAM_B.blocks.long_run_all.metrics.big_chances_against",
+       "TEAM_B.blocks.long_run_away.metrics.big_chances_against"
+      ],
+      "observation": "Lavallois concedes 2.21 big chances/game long-run (2.43 away) \u2014 above Amiens' home generation rate of 2.4, suggesting Lavallois is not a particularly tight defense in terms of big chance suppression."
+     }
+    ],
+    "candidate_id": "C11",
+    "comparison": "SIMILAR_OPPONENT_COHORT",
+    "conditions": [
+     {
+      "dimension": "historical_venue_conditioning",
+      "value": "HOME"
+     }
+    ],
+    "coverage_risk": "LOW",
+    "falsifiable_question": "Does Amiens generate more big_chances and shots_on_target at home against opponents whose defensive profile resembles Lavallois' away defensive output, compared to Amiens' overall home baseline?",
+    "falsifier": "If Amiens' big_chances_for and shots_on_target_for at home against similar-profile opponents are not higher than their overall home baseline, the profile-conditional attack quality mechanism is unsupported.",
+    "football_mechanism": "Amiens' home big chance generation (2.4/game) meets Lavallois' away big chance concession (2.43/game) \u2014 both figures are aligned, suggesting the matchup may produce a normal or above-normal big chance environment for Amiens. The question is whether Amiens' home big chance generation is specifically elevated against opponents who concede big chances at a HIGH rate, which would confirm a profile-conditional quality effect.",
+    "metric_perspective": "FOR",
+    "opponent": "TEAM_B",
+    "provider_requirements": [
+     "big_chances",
+     "shots_on_target"
+    ],
+    "research_family": "ATTACK_QUALITY",
+    "self_critique": {
+     "cohort_equals_baseline": false,
+     "condition_equals_target": false,
+     "could_opponent_strength_explain_it": false,
+     "is_just_home_vs_away": false,
+     "is_just_recent_vs_long_run": false,
+     "is_overconditioned": false,
+     "likely_generic_enumeration_would_generate_this": false,
+     "notes": "Combines venue conditioning with similar-opponent cohort to test whether Amiens' home attack quality is specifically elevated against permissive defenses. The mechanism requires both conditions. Retaining."
+    },
+    "similar_opponent_rationale": "Lavallois away concedes big chances at a rate above the median. The similar-opponent cohort identifies prior Amiens home opponents with a comparable defensive profile (big chances conceded, shots on target conceded), allowing measurement of whether Amiens' home big chance and shots on target generation is elevated against such opponents.",
+    "subject": "TEAM_A",
+    "support_risk": "LOW",
+    "target_metric": [
+     "big_chances",
+     "shots_on_target"
+    ],
+    "window": "ALL_PRIOR"
+   }
+  ],
+  "fixture_id": "mt_972834961",
+  "interaction_map": {
+   "a_attack_vs_b_defense": [
+    "Amiens generates high shot volume at home (15.4 shots, 9.6 inside box long-run home) against a Lavallois defense that concedes 73+ final third entries and 24+ touches in penalty area per game \u2014 the volume-permissive defense meets a high-volume home attacker.",
+    "Amiens' home corner generation (6.4/game) meets a Lavallois defense that concedes 4.7 corners/game long-run (5.25 away) \u2014 Amiens' set-piece generation advantage is meaningful.",
+    "Amiens' blocked shots have risen sharply recently (5.4 last 5 vs 3.5 long-run), but Lavallois concedes few blocked shots (2.3 long-run against), suggesting Lavallois does not typically force many blocks \u2014 a potential tension if Amiens' recent blocking pattern is opponent-driven.",
+    "Lavallois' keeper has been increasingly busy (4.4 saves last 5), consistent with facing high shot-on-target opponents. Amiens' shots on target at home (6.6 long-run) would stress this further."
+   ],
+   "asymmetries": [
+    "Lavallois attacks almost exclusively inside the box (shots_outside_box: 2.5 long-run) while Amiens' home defense concedes a mix of inside and outside box shots \u2014 Lavallois' attack profile is unusually box-concentrated.",
+    "Amiens' home vs away split is extreme: 0.43 goals conceded at home vs 1.88 away, while Lavallois' home vs away goal concession is more balanced (1.29 home, 0.88 away) \u2014 Amiens is a very different team by venue."
+   ],
+   "b_attack_vs_a_defense": [
+    "Lavallois' very low outside-box shot volume (2.5/game) meets Amiens' home defense that concedes 6.0 outside-box shots/game \u2014 Lavallois is unlikely to contribute to that pattern, suggesting Amiens' home defensive exposure is primarily from inside-box threats.",
+    "Lavallois' final third entries (54.5 away) vs Amiens' home final third entries conceded (59.6) \u2014 Lavallois' penetration rate is below what Amiens typically allows at home, suggesting Amiens' home defense may face less territorial pressure than usual.",
+    "Amiens concedes 1.3 big chances/game at home (long-run) but Lavallois generates 2.1 big chances/game long-run (2.5 last 5) \u2014 Lavallois' big chance creation recently exceeds Amiens' typical home concession rate."
+   ],
+   "regime_changes": [
+    "Amiens' clearances_against (opponents clearing) spiked to 24.0 in last 5 vs 17.7 long-run \u2014 may indicate Amiens pressing higher and forcing more clearances from opponents recently.",
+    "Lavallois' clearances_for rose from 25.3 long-run to 28.8 last 5, and saves_for from 3.53 to 4.4 last 5 \u2014 increasing defensive pressure absorbed in recent matches.",
+    "Amiens' corner_kicks_against dropped sharply: 1.8 last 5 vs 4.6 long-run \u2014 opponents have been generating far fewer corners against Amiens recently."
+   ],
+   "tensions": [
+    "Amiens at home: saves_for (keeper) averages 4.7/game despite only 0.43 goals conceded \u2014 high save rate with low goals conceded suggests either high shot quality faced or strong goalkeeping.",
+    "Lavallois: shots on target conceded rising (5.1 last 10) while goals conceded falling (1.1 last 10 vs 1.07 long-run) \u2014 more shots on target faced but fewer goals, suggesting improved goalkeeping or shot quality reduction."
+   ]
+  },
+  "reconnaissance": {
+   "team_a_attack": [
+    "Amiens (HOME) averages 15.4 shots and 6.6 shots on target at home (long-run), rising to 16.4 shots and 5.4 on target in the last 5 (all venues). Home shots inside box average 9.6 vs 4.9 away \u2014 a pronounced venue split in shot location.",
+    "Corner generation is markedly higher at home: 6.4 corners/game (home long-run) vs 3.6 (away long-run). Last 5 games show 5.8 corners/game, consistent with home-heavy recent schedule.",
+    "Blocked shots spike in recent matches: 5.4 blocked shots/game in last 5 vs 3.5 long-run all, suggesting opponents are defending deeper against Amiens recently.",
+    "Shots outside box have risen sharply in last 5 (8.0/game) vs long-run all (6.0/game), while shots inside box also rose (8.4 vs 7.1 last 10). This suggests increased volume but with more peripheral attempts.",
+    "Big chances for are lower recently (1.4 last 5 vs 2.4 home long-run), indicating shot volume is up but quality of chance creation has dipped."
+   ],
+   "team_a_defense": [
+    "Amiens concedes significantly more final third entries away (66.6) than at home (59.6), and opponents generate more big chances away (2.6 vs 1.3 at home). Home defensive record is notably stronger: 0.43 goals conceded/game at home vs 1.88 away.",
+    "Opponents' shots on target against Amiens are similar home/away (4.0 home, 4.25 away), but saves required are higher at home (4.7 vs 3.25), suggesting home keeper is busier despite fewer goals \u2014 a tension.",
+    "Clearances by Amiens are higher away (23.5) than home (20.0), consistent with deeper defensive posture away. Recent last 5 shows clearances_against spiking to 24.0 (opponents clearing more), suggesting Amiens is pressing higher recently.",
+    "Fouls conceded by opponents (fouls_against) are consistent ~14.9 long-run; Amiens commits only 10.8 fouls/game, one of the lower rates, suggesting a less physical defensive style."
+   ],
+   "team_b_attack": [
+    "Stade Lavallois averages only 10.0 shots/game long-run (9.3 last 10), well below Amiens' 13.1. Shot volume is low and declining. Away shots average 10.9/game long-run.",
+    "Shots inside box are reasonable (7.5 long-run, 6.8 last 10, 8.8 last 5) \u2014 the last-5 spike is notable given overall shot volume is low, suggesting more concentrated box attempts recently.",
+    "Shots outside box are very low: 2.5 long-run, 2.5 last 10, 2.2 last 5. Lavallois almost exclusively attacks from inside the box.",
+    "Final third entries allowed against Lavallois are very high (73.3 long-run, 78.4 last 10, 75.4 last 5), indicating opponents penetrate their half freely \u2014 but this is a defensive metric.",
+    "Lavallois' own final third entries: 56.2 long-run, 58.0 last 10, 56.2 last 5 \u2014 moderate and stable. Away: 54.5. Corner generation is decent: 5.1 long-run, 6.0 last 5."
+   ],
+   "team_b_defense": [
+    "Lavallois concedes 73.3 final third entries/game long-run (78.4 last 10, 75.4 last 5) \u2014 consistently high, indicating opponents penetrate their defensive third frequently.",
+    "Shots on target conceded: 4.47 long-run, 5.1 last 10, 5.0 last 5 \u2014 rising trend. Saves made by Lavallois keeper: 3.53 long-run, 4.2 last 10, 4.4 last 5 \u2014 keeper increasingly busy.",
+    "Touches in penalty area conceded: 24.1 long-run, 26.4 last 10, 23.4 last 5 \u2014 consistently high, opponents get into the box frequently against Lavallois.",
+    "Tackles by Lavallois are low: 17.5 long-run, 18.6 last 10, 18.0 last 5. Opponents' tackles against Lavallois are even lower (11.7 long-run), suggesting Lavallois does not face heavy pressing.",
+    "Clearances by Lavallois are high: 25.3 long-run, 28.2 last 10, 28.8 last 5 \u2014 rising, indicating increasing defensive pressure absorbed. Away clearances: 26.5."
+   ]
+  }
+ },
+ "temperature": 0.0
+}

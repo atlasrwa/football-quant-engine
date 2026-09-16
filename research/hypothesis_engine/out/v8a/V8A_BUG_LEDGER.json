@@ -1,26 +1,48 @@
 {
-  "bugledger_version": "v8a_bugledger_v1",
-  "defects": [
-    {
-      "arm_a_not_rerun": "The 8192 ceiling never bound for Arm A: all 12 responses stopped naturally at tool_use with at most 6730 output tokens. At temperature 0, max_tokens is purely a stopping condition, so a ceiling that never binds cannot alter the emitted tokens. Re-running Arm A would spend money to reproduce identical output.",
-      "evidence": "2 of 2 executed Arm B pass-1 responses: stop_reason=max_tokens, output_tokens=8192/8192, response keys = [fixture_id, interaction_map, reconnaissance]. Arm A on the same ceiling: 12 of 12 stop_reason=tool_use, max 6730 output tokens.",
-      "fix": "max_tokens_pass1 8192 -> 24576 and max_tokens_pass2 2048 -> 8192. These are EXECUTION parameters. The prompt, the schema, the fixture sample and the packets are byte-identical -- proved by seven unchanged hashes.",
-      "found_when": "BEFORE the run completed and BEFORE any structural result was computed or viewed. No outcome existed that could have informed the fix. This is a stronger position than the V6 -> V6.1 precedent, where the evaluator defect was found post-run.",
-      "generic_fix": "`load_ok` now REJECTS any cached record whose stop_reason is max_tokens -- a truncated record is perfectly self-consistent and would otherwise cache forever. The driver records a max_tokens stop as an error that counts toward the three-consecutive fail-fast. The scorer keeps ABSTENTION, TRUNCATED and ERROR as three distinct states and excludes truncation from every abstention count.",
-      "id": "V8A-D1",
-      "llm_determinism_note": "max_tokens is a stopping condition, not prompt content. It cannot change what the model reads; it changes only where generation halts.",
-      "regression_evidence": "A byte-identical-prefix diff was attempted and is NOT available on this provider: `v6_selfnoise_v1` records that four byte-identical requests at temperature 0.0, with the same serialized_request_sha256, produced qualified_rate 0.75 / 0.00 / 0.70 / 0.00. Claude via Bedrock is not bitwise deterministic at temperature 0, and this repository measured that before V8A. The re-run duly returned a non-identical prefix, which is documented generator self-noise rather than apparatus drift. The available -- and stronger -- proof that the model read exactly the same bytes is: (a) seven frozen artifact hashes unchanged; (b) `inferenceConfig` is the ONLY differing top-level key of the canonical request; (c) the tokenized input (system + messages + toolConfig) is byte-identical at sha256 290d85ffb7dbaf980e7717764aa81aaf, and maxTokens is provably not part of it. The discarded truncated responses are retained under out/v8a/truncated_prefix_evidence/ as the record of what the defect looked like.",
-      "root_cause": "The V8A protocol requires behavioural reconnaissance and an attack x defense interaction map to be emitted BEFORE any candidate, and the schema orders them that way on purpose. Both sections are substantial. At max_tokens=8192 Arm B spent the entire output budget on them and generation stopped with the `candidates` key absent from the response object entirely.",
-      "severity": "P1",
-      "title": "The pass-1 output ceiling bound for Arm B, truncating every response before the candidates array",
-      "why_this_is_not_a_result": "A truncated response is structurally incapable of containing the quantity being measured. Reading it as an abstention would have inverted a headline metric, because brief section 21 scores abstention as SUCCESSFUL behaviour."
-    }
-  ],
-  "spend": {
-    "billed_before_amendment_usd": "3.4309",
-    "n_responses_retained": 12,
-    "new_ceiling_usd": "25.72",
-    "of_which_discarded_truncated_usd": "0.4994",
-    "old_ceiling_usd": "11.23"
+ "bugledger_version": "v8a_bugledger_v1",
+ "defects": [
+  {
+   "arm_a_not_rerun": "The 8192 ceiling never bound for Arm A: all 12 responses stopped naturally at tool_use with at most 6730 output tokens. At temperature 0, max_tokens is purely a stopping condition, so a ceiling that never binds cannot alter the emitted tokens. Re-running Arm A would spend money to reproduce identical output.",
+   "evidence": "2 of 2 executed Arm B pass-1 responses: stop_reason=max_tokens, output_tokens=8192/8192, response keys = [fixture_id, interaction_map, reconnaissance]. Arm A on the same ceiling: 12 of 12 stop_reason=tool_use, max 6730 output tokens.",
+   "fix": "max_tokens_pass1 8192 -> 24576 and max_tokens_pass2 2048 -> 8192. These are EXECUTION parameters. The prompt, the schema, the fixture sample and the packets are byte-identical -- proved by seven unchanged hashes.",
+   "found_when": "BEFORE the run completed and BEFORE any structural result was computed or viewed. No outcome existed that could have informed the fix. This is a stronger position than the V6 -> V6.1 precedent, where the evaluator defect was found post-run.",
+   "generic_fix": "`load_ok` now REJECTS any cached record whose stop_reason is max_tokens -- a truncated record is perfectly self-consistent and would otherwise cache forever. The driver records a max_tokens stop as an error that counts toward the three-consecutive fail-fast. The scorer keeps ABSTENTION, TRUNCATED and ERROR as three distinct states and excludes truncation from every abstention count.",
+   "id": "V8A-D1",
+   "llm_determinism_note": "max_tokens is a stopping condition, not prompt content. It cannot change what the model reads; it changes only where generation halts.",
+   "regression_evidence": "A byte-identical-prefix diff was attempted and is NOT available on this provider: `v6_selfnoise_v1` records that four byte-identical requests at temperature 0.0, with the same serialized_request_sha256, produced qualified_rate 0.75 / 0.00 / 0.70 / 0.00. Claude via Bedrock is not bitwise deterministic at temperature 0, and this repository measured that before V8A. The re-run duly returned a non-identical prefix, which is documented generator self-noise rather than apparatus drift. The available -- and stronger -- proof that the model read exactly the same bytes is: (a) seven frozen artifact hashes unchanged; (b) `inferenceConfig` is the ONLY differing top-level key of the canonical request; (c) the tokenized input (system + messages + toolConfig) is byte-identical at sha256 290d85ffb7dbaf980e7717764aa81aaf, and maxTokens is provably not part of it. The discarded truncated responses are retained under out/v8a/truncated_prefix_evidence/ as the record of what the defect looked like.",
+   "root_cause": "The V8A protocol requires behavioural reconnaissance and an attack x defense interaction map to be emitted BEFORE any candidate, and the schema orders them that way on purpose. Both sections are substantial. At max_tokens=8192 Arm B spent the entire output budget on them and generation stopped with the `candidates` key absent from the response object entirely.",
+   "severity": "P1",
+   "title": "The pass-1 output ceiling bound for Arm B, truncating every response before the candidates array",
+   "why_this_is_not_a_result": "A truncated response is structurally incapable of containing the quantity being measured. Reading it as an abstention would have inverted a headline metric, because brief section 21 scores abstention as SUCCESSFUL behaviour."
+  },
+  {
+   "arms_rescored": "Both arms were rescored in a single run from one committed code state after the fix; the scorer scores A, B and D in one pass, so no arm carries a stale audit.",
+   "effect_on_the_comparison": "It RAISED Arm B's grounding score, and Arm B is the arm under test. The corrected figure is 11 unresolvable references of 705 (1.6% of candidates), and the 6 offending candidates are named in the development report so the correction can be checked rather than trusted.",
+   "evidence": "evidence_ref_index emitted the shorthand `TEAM_A.long_run_home.shots_for`. The model cited the genuine dotted path `TEAM_A.blocks.long_run_home.metrics.shots_for`. Every Arm B reference therefore scored as hallucinated: 705/705.",
+   "fix": "evidence_ref_index now WALKS the packet and emits the real dotted path of every node, accepting common equivalent spellings of the same real node. A citation is grounded if it points at something the packet contains; the test is existence, not a preferred notation.",
+   "found_when": "AFTER the model responses were on disk, while reading the first scored output. No historical effect existed at any point -- V8A computes none -- so the fix could not have been steered by an outcome, but it WAS made with the model's text in view and is recorded as such.",
+   "generic_fix": "A reference index must be derived from the artifact it indexes, never restated by hand alongside it. Restating is how the index and the artifact drift apart silently.",
+   "id": "V8A-D2",
+   "severity": "P1",
+   "title": "The evidence-reference index hand-wrote an abbreviated citation form the packet never uses"
+  },
+  {
+   "asymmetry_disclosed": "The mask is wired into Arm B's firewall_scan only; Arm A keeps FW.scan_hypothesis verbatim. The scorer therefore MEASURES both arms under both mask states and publishes the 2x2 (scorer_amendment_audit). Arm A: 641 blocking findings either way, predictive intent 1 either way -- the mask is immaterial for Arm A because its terse prose rarely triggers the collision. Arm B: 416 -> 379 findings, predictive intent 41 -> 25. The mask does NOT flip the direction of the A-vs-B comparison on this axis; Arm B carries more predictive-intent findings than Arm A both with it and without it.",
+   "evidence": "63 sentences were classified MODEL_AUTHORED_PREDICTIVE_QUANTIFICATION solely because they contained the prose spelling 'big chances' plus a number. All 63 were inspected individually; every one reproduced an exact packet value for the `big_chances` metric and none was a claim about the upcoming fixture.",
+   "fix": "normalise_metric_prose rewrites the space-separated spelling of APPROVED metric names to their underscore form before scanning, so firewall_v2's existing mask_metric_lexicon handles it. This extends the lexicon to a second spelling of the same approved names; it relaxes no rule, and a masked term carrying a numeric literal is still examined.",
+   "found_when": "AFTER the model responses were on disk. Same standing as V8A-D2: no effect existed, but the model's text was in view.",
+   "generic_fix": "A firewall's marker lexicon and a corpus's metric vocabulary are two namespaces that can collide. Any marker word that is also a substring of an approved metric name must be resolved against the metric lexicon BEFORE intent classification, in every spelling the prose surface permits.",
+   "id": "V8A-D3",
+   "independent_check": "The breach counts actually reported (Arm A 1 candidate, Arm B 4) come from adjudicate_numeric_sentence, a SYMMETRIC classifier applied to both arms with no masking on either, which quotes every flagged sentence verbatim. That figure is independent of this fix.",
+   "severity": "P2",
+   "title": "firewall_v5's predictive marker 'chance' collides with this corpus's `big_chances` metric name"
   }
+ ],
+ "spend": {
+  "billed_before_amendment_usd": "3.4309",
+  "n_responses_retained": 12,
+  "new_ceiling_usd": "25.72",
+  "of_which_discarded_truncated_usd": "0.4994",
+  "old_ceiling_usd": "11.23"
+ }
 }

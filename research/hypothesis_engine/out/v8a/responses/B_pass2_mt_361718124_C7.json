@@ -1,0 +1,124 @@
+{
+ "arm": "B",
+ "candidate_id": "C7",
+ "elapsed_s": 13.71,
+ "error": null,
+ "fixture_id": "mt_361718124",
+ "max_tokens": 8192,
+ "model_id": "us.anthropic.claude-sonnet-4-6",
+ "pass": 2,
+ "provenance": {
+  "input_tokens": 4509,
+  "output_tokens": 1508,
+  "request_sha256": "3de22fecd10de98575c64df2cc0910097b383f1b90e596c3f331338d7735d894",
+  "resolved_model_id": "us.anthropic.claude-sonnet-4-6",
+  "response_sha256": "d4fe3629c4b5cf630b20cf034a3ded3969c801f9343cdb5f204ff1e06cb43a09",
+  "stop_reason": "tool_use"
+ },
+ "record_sha256": "e4172cf06897fe5a42110c74ab215826a41165ef300a70eafb523b00963ae69d",
+ "response": {
+  "action": "KEEP",
+  "candidate_id": "C7",
+  "closest_generic_structures": [
+   "GEN_0006408",
+   "GEN_0006409",
+   "GEN_0006410"
+  ],
+  "final_candidate": {
+   "behavioral_observations": [
+    {
+     "evidence_refs": [
+      "TEAM_A.blocks.long_run_all.metrics.big_chances_against",
+      "TEAM_A.blocks.recent_last_10.metrics.big_chances_against",
+      "TEAM_A.blocks.recent_last_5.metrics.big_chances_against",
+      "TEAM_A.blocks.long_run_all.metrics.shots_against",
+      "TEAM_A.blocks.recent_last_5.metrics.shots_against"
+     ],
+     "observation": "Newcastle's big chances conceded have risen from 2.2 (long-run) to 2.1 (W10) to 2.6 (W5), while shots conceded have fallen (13.6 \u2192 11.8 \u2192 11.4) \u2014 a tension between improving shot suppression and worsening big chance concession."
+    },
+    {
+     "evidence_refs": [
+      "TEAM_A.blocks.long_run_all.metrics.xg_against",
+      "TEAM_A.blocks.recent_last_10.metrics.xg_against",
+      "TEAM_A.blocks.recent_last_5.metrics.xg_against"
+     ],
+     "observation": "xG against has fallen from 1.26 (long-run) to 1.11 (W10) to 1.18 (W5) \u2014 broadly improving, but the W5 uptick alongside rising big chances against is a mild tension."
+    },
+    {
+     "evidence_refs": [
+      "TEAM_A.blocks.long_run_home.metrics.xg_against",
+      "TEAM_A.blocks.long_run_away.metrics.xg_against"
+     ],
+     "observation": "At home, Newcastle concede 1.14 xG against (long-run home) vs 1.38 away \u2014 they are defensively tighter at home, but home big chances against is not separately broken out in the navigation."
+    }
+   ],
+   "candidate_id": "C7",
+   "comparison": "OPPONENT_PROFILE_INTERACTION",
+   "conditions": [
+    {
+     "axis": "shots_on_target_conceded_per_match",
+     "dimension": "opponent_profile",
+     "value": "HIGH"
+    },
+    {
+     "dimension": "competition",
+     "value": "SAME"
+    }
+   ],
+   "coverage_risk": "NONE",
+   "falsifiable_question": "Against EPL opponents with a HIGH shots-on-target-conceded profile (attacking opponents who generate many shots on target), does Newcastle concede more big_chances_against and higher xg_against than against their overall EPL baseline?",
+   "falsifier": "If Newcastle's big_chances_against and xg_against against HIGH shots-on-target-conceded opponents are not higher than their overall baseline, the opponent-profile-conditional defensive vulnerability is unsupported.",
+   "football_mechanism": "A defense that suppresses shot volume by sitting deep may inadvertently create space for opponents to build higher-quality chances when they do penetrate. Against a team like Villa that generates big chances at a high rate (3.5 long-run FOR), this structural vulnerability \u2014 fewer shots but more dangerous ones \u2014 is worth measuring specifically against high-chance-creating opponents.",
+   "metric_perspective": "AGAINST",
+   "opponent": "TEAM_B",
+   "provider_requirements": [
+    "big_chances_against",
+    "xg_against"
+   ],
+   "research_family": "DEFENSIVE_CONCESSION",
+   "self_critique": {
+    "cohort_equals_baseline": false,
+    "condition_equals_target": false,
+    "could_opponent_strength_explain_it": false,
+    "is_just_home_vs_away": false,
+    "is_just_recent_vs_long_run": false,
+    "is_overconditioned": false,
+    "likely_generic_enumeration_would_generate_this": false,
+    "notes": "The opponent profile axis (shots_on_target_conceded_per_match, i.e. attacking opponents) is appropriate for Villa. The mechanism \u2014 deep-sitting defense vulnerable to quality chances from attacking opponents \u2014 is grounded in the observed tension between falling shot volume and rising big chances against. Not overconditioned."
+   },
+   "subject": "TEAM_A",
+   "support_risk": "LOW",
+   "target_metric": [
+    "big_chances_against",
+    "xg_against"
+   ],
+   "window": "ALL_PRIOR"
+  },
+  "incremental_structure": [
+   "comparison: OPPONENT_PROFILE_INTERACTION vs LEAGUE_ENVIRONMENT_BASELINE in generics",
+   "opponent_profile axis: shots_on_target_conceded_per_match (attacking quality proxy) vs goals_for+goals_against dual-axis in generics",
+   "target_metrics: big_chances_against + xg_against jointly (dual metric) vs single metrics in generics",
+   "additional competition=SAME condition not present in generics",
+   "mechanism requires JOINT elevation of two AGAINST metrics simultaneously, not one at a time"
+  ],
+  "reason": "The three generic structures all use LEAGUE_ENVIRONMENT_BASELINE with a dual goals_for/goals_against opponent profile axis and test a single metric each (accurate_crosses, ball_recoveries, big_chances). The candidate differs on three structural dimensions simultaneously: (1) the comparison is OPPONENT_PROFILE_INTERACTION rather than LEAGUE_ENVIRONMENT_BASELINE \u2014 it asks whether Newcastle's own defensive metrics shift conditional on opponent profile, not how the league environment distributes; (2) the opponent profile axis is shots_on_target_conceded_per_match (a single attacking-quality axis) rather than the dual goals_for+goals_against axis used in the generics; (3) the candidate tests two AGAINST metrics jointly (big_chances_against AND xg_against) with a competition=SAME filter added. The joint dual-metric test under a distinct profile axis and a different comparison type is not reproduced by any of the three generics individually or in combination.",
+  "shared_structure": [
+   "subject: HOME_TEAM (TEAM_A)",
+   "metric_perspective: AGAINST",
+   "window: ALL_PRIOR",
+   "opponent_profile condition present",
+   "DEFENSIVE_CONCESSION family"
+  ]
+ },
+ "retrieved_distances": [
+  15,
+  15,
+  15
+ ],
+ "retrieved_generic_ids": [
+  "GEN_0006408",
+  "GEN_0006409",
+  "GEN_0006410"
+ ],
+ "temperature": 0.0
+}

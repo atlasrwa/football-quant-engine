@@ -1,0 +1,53 @@
+{
+ "arm": "B",
+ "candidate_id": "C2",
+ "elapsed_s": 7.4,
+ "error": null,
+ "fixture_id": "mt_257018027",
+ "max_tokens": 8192,
+ "model_id": "us.anthropic.claude-sonnet-4-6",
+ "pass": 2,
+ "provenance": {
+  "input_tokens": 4146,
+  "output_tokens": 512,
+  "request_sha256": "e395f1ff1a522e63c441ba8112d5ed78f5680463d046389884cb5977481b0beb",
+  "resolved_model_id": "us.anthropic.claude-sonnet-4-6",
+  "response_sha256": "67a234f9a50a6829b658ab8b73a09230920fbf06710fcd916e372d5bb170adc4",
+  "stop_reason": "tool_use"
+ },
+ "record_sha256": "4e8f4d4fab3cf04eab9708745cf4c84b0186ef880e8a91183edcd2af883c6cb8",
+ "response": {
+  "action": "ABSTAIN",
+  "candidate_id": "C2",
+  "closest_generic_structures": [
+   "GEN_0317306",
+   "GEN_0317320",
+   "GEN_0317326"
+  ],
+  "incremental_structure": [
+   "candidate bundles three metrics into one question rather than one metric per question",
+   "self_critique already flags is_just_home_vs_away=true and likely_generic_enumeration_would_generate_this=true"
+  ],
+  "reason": "The candidate is structurally identical to the three nearest generic structures taken together. Each generic covers one of the three metrics (big_chances AGAINST, shots_inside_box AGAINST, xg AGAINST) for the away team under SUBJECT_VENUE_BASELINE / AWAY / ALL_PRIOR. The candidate bundles all three into a single question, but bundling is a presentational choice, not a structural one \u2014 the canonicaliser will decompose it into the same three (subject, metric, perspective, comparison, window, condition) tuples that the generics already represent. There is no additional condition, no cross-metric interaction requirement, no different window, no opponent-profile filter, and no competition filter that would make any of the three sub-questions structurally distinct. The self-critique correctly flags is_just_home_vs_away=true and likely_generic_enumeration_would_generate_this=true. The magnitude of the observed split is an empirical observation, not a structural differentiator. Nothing material remains after the comparison.",
+  "shared_structure": [
+   "subject=AWAY_TEAM (TEAM_B)",
+   "metric_perspective=AGAINST",
+   "comparison=SUBJECT_VENUE_BASELINE",
+   "condition=historical_venue_conditioning:AWAY",
+   "window=ALL_PRIOR",
+   "research_family=DEFENSIVE_CONCESSION",
+   "target_metrics overlap exactly: big_chances, shots_inside_box, xg"
+  ]
+ },
+ "retrieved_distances": [
+  1,
+  1,
+  1
+ ],
+ "retrieved_generic_ids": [
+  "GEN_0317306",
+  "GEN_0317320",
+  "GEN_0317326"
+ ],
+ "temperature": 0.0
+}

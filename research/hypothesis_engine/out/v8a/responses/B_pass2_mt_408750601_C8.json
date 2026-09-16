@@ -1,0 +1,118 @@
+{
+ "arm": "B",
+ "candidate_id": "C8",
+ "elapsed_s": 16.67,
+ "error": null,
+ "fixture_id": "mt_408750601",
+ "max_tokens": 8192,
+ "model_id": "us.anthropic.claude-sonnet-4-6",
+ "pass": 2,
+ "provenance": {
+  "input_tokens": 4206,
+  "output_tokens": 1688,
+  "request_sha256": "d5c4770f69bdcc891239a2cc80bfe9f98ee307568a2e4a81198c881020437fe4",
+  "resolved_model_id": "us.anthropic.claude-sonnet-4-6",
+  "response_sha256": "3e2d82f894b16d7be953dd15213a72735c1bc42446f1cb1ebe053f5f8e61a001",
+  "stop_reason": "tool_use"
+ },
+ "record_sha256": "7f753a25896ac8462b032b588b432159d86e3139ff4b2d9ea404e72958f49b7f",
+ "response": {
+  "action": "KEEP",
+  "candidate_id": "C8",
+  "closest_generic_structures": [
+   "GEN_0136008",
+   "GEN_0136010",
+   "GEN_0136032"
+  ],
+  "final_candidate": {
+   "behavioral_observations": [
+    {
+     "evidence_refs": [
+      "TEAM_A.blocks.long_run_away.accurate_crosses_against",
+      "TEAM_A.blocks.long_run_home.accurate_crosses_against",
+      "TEAM_A.blocks.long_run_away.big_chances_against",
+      "TEAM_A.blocks.long_run_home.big_chances_against"
+     ],
+     "observation": "TEAM_A concedes 6.6 accurate crosses away (long-run) vs 2.6 at home. Big chances conceded: 2.7 away vs 0.6 at home. TEAM_A's home defense is dramatically tighter on crosses and big chances."
+    },
+    {
+     "evidence_refs": [
+      "TEAM_B.blocks.long_run_all.accurate_crosses_for",
+      "TEAM_B.blocks.long_run_home.accurate_crosses_for",
+      "TEAM_B.blocks.long_run_away.accurate_crosses_for",
+      "TEAM_A.blocks.long_run_home.accurate_crosses_against"
+     ],
+     "observation": "TEAM_B generates 5.6 accurate crosses long-run (7.25 at home, 3.3 away). As the away team, TEAM_B's crossing output is reduced, which aligns with TEAM_A's home defensive record of conceding only 2.6 accurate crosses."
+    }
+   ],
+   "candidate_id": "C8",
+   "comparison": "SIMILAR_OPPONENT_COHORT",
+   "conditions": [
+    {
+     "dimension": "historical_venue_conditioning",
+     "value": "HOME"
+    },
+    {
+     "axis": "crossing_attack_intensity",
+     "dimension": "opponent_profile",
+     "value": "HIGH"
+    }
+   ],
+   "coverage_risk": "HIGH",
+   "falsifiable_question": "Does TEAM_A concede fewer accurate_crosses and big_chances at HOME against opponents with a similar attacking/discipline profile to TEAM_B, compared to TEAM_A's overall HOME baseline?",
+   "falsifier": "If TEAM_A's HOME accurate_crosses_against and big_chances_against against similar-profile opponents are not lower than its overall HOME baseline, the suppression mechanism against this opponent type is unsupported.",
+   "football_mechanism": "TEAM_A's home defense suppresses accurate crosses and big chances dramatically compared to away. This may reflect TEAM_A's home defensive shape being more compact and wide-channel-closing. Measuring whether TEAM_A concedes fewer accurate crosses and big chances at home against opponents with TEAM_B's attacking profile (possession-based, crossing-oriented) tests whether this suppression holds against this specific type of visitor.",
+   "metric_perspective": "AGAINST",
+   "opponent": "TEAM_B",
+   "provider_requirements": [
+    "accurate_crosses",
+    "big_chances"
+   ],
+   "research_family": "DEFENSIVE_CONCESSION",
+   "self_critique": {
+    "cohort_equals_baseline": false,
+    "condition_equals_target": false,
+    "could_opponent_strength_explain_it": false,
+    "is_just_home_vs_away": false,
+    "is_just_recent_vs_long_run": false,
+    "is_overconditioned": false,
+    "likely_generic_enumeration_would_generate_this": false,
+    "notes": "This combines HOME venue conditioning with similar-opponent cohort conditioned on crossing-attack profile \u2014 two conditions. The HOME condition is necessary because TEAM_A's home/away defensive split is extreme and the fixture is at home. The similar-opponent cohort tests whether the suppression holds specifically against TEAM_B's type. With only 7 home rows, the cohort within similar opponents at home may be very thin \u2014 coverage risk is HIGH. The joint testing of both metrics as a coupled signal is the key structural increment over the generics."
+   },
+   "similar_opponent_rationale": "The cohort is restricted to opponents sharing TEAM_B's crossing-oriented attacking profile. TEAM_B's own away crossing output (3.3) is substantially lower than its home output (7.25), confirming the profile is relevant to the suppression question. The engine computes similarity; the axis motivating the cohort is crossing attack intensity.",
+   "subject": "TEAM_A",
+   "support_risk": "HIGH",
+   "target_metric": [
+    "accurate_crosses",
+    "big_chances"
+   ],
+   "window": "ALL_PRIOR"
+  },
+  "incremental_structure": [
+   "Two target metrics tested jointly (accurate_crosses AND big_chances) rather than each in isolation",
+   "Mechanism requires BOTH metrics to move together as a coupled suppression signal, not independently",
+   "Opponent-side behavioral anchor: TEAM_B's away crossing output reduction is explicitly linked to TEAM_A's home defensive record, creating a two-sided interaction rather than a one-sided concession measure",
+   "Similar-opponent cohort is motivated by TEAM_B's specific attacking profile (possession-based, crossing-oriented), not generic opponent strength tier"
+  ],
+  "reason": "The three generic structures each test a single metric (accurate_crosses or big_chances) in isolation under HOME + SIMILAR_OPPONENT_COHORT. Candidate C8 is structurally distinct in two ways: (1) it tests accurate_crosses and big_chances jointly as a coupled defensive suppression signal \u2014 the mechanism requires both to move together, not either one alone; (2) it introduces a two-sided interaction by anchoring the similar-opponent cohort to TEAM_B's own away crossing output, making the cohort definition opponent-profile-motivated rather than generic. GEN_0136008 and GEN_0136010 cover the individual metrics at ALL_PRIOR; GEN_0136032 covers accurate_crosses at W5. None of the three generics combine both metrics nor condition the cohort on the opponent's own attacking profile axis. The joint-metric coupling and the opponent-profile motivation together constitute incremental structure beyond what the generics test.",
+  "shared_structure": [
+   "subject=TEAM_A (HOME_TEAM)",
+   "metric_perspective=AGAINST",
+   "comparison=SIMILAR_OPPONENT_COHORT",
+   "condition: historical_venue_conditioning=HOME",
+   "window=ALL_PRIOR",
+   "target_metrics include accurate_crosses and big_chances"
+  ]
+ },
+ "retrieved_distances": [
+  1,
+  1,
+  3
+ ],
+ "retrieved_generic_ids": [
+  "GEN_0136008",
+  "GEN_0136010",
+  "GEN_0136032"
+ ],
+ "temperature": 0.0
+}

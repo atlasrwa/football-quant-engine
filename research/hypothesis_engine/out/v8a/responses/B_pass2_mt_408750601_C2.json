@@ -1,0 +1,52 @@
+{
+ "arm": "B",
+ "candidate_id": "C2",
+ "elapsed_s": 8.27,
+ "error": null,
+ "fixture_id": "mt_408750601",
+ "max_tokens": 8192,
+ "model_id": "us.anthropic.claude-sonnet-4-6",
+ "pass": 2,
+ "provenance": {
+  "input_tokens": 4116,
+  "output_tokens": 516,
+  "request_sha256": "6349496137cdcbd241dc44725529ff12db5b6fc40bad361e1cf65960e98717d4",
+  "resolved_model_id": "us.anthropic.claude-sonnet-4-6",
+  "response_sha256": "012af43c928a77c58c55727e23dea00cddd4fc524600f9866b49646b354f9d9a",
+  "stop_reason": "tool_use"
+ },
+ "record_sha256": "bf66ae0e8a36e9b6e56e0d4b38b106897865323753aebc5142d6a3605ce95ae9",
+ "response": {
+  "action": "ABSTAIN",
+  "candidate_id": "C2",
+  "closest_generic_structures": [
+   "GEN_0272058",
+   "GEN_0272042",
+   "GEN_0271754"
+  ],
+  "incremental_structure": [
+   "dual-metric framing (shots_on_target + big_chances together)",
+   "explicit motivation: testing whether recent overall improvement is home-inflated vs venue-independent"
+  ],
+  "reason": "The candidate's statistical structure is fully covered by the nearest generic structures. GEN_0272058 tests AWAY_TEAM shots_on_target FOR, W5, SUBJECT_RECENT_VS_LONG_BASELINE, AWAY-conditioned. GEN_0272042 tests the identical structure for big_chances. The candidate combines both metrics, but combining two metrics that each individually match a generic structure does not produce a new statistical question \u2014 it is the union of two already-enumerated contrasts. The football narrative about 'home-inflation' is a prose motivation, not a structural difference: the cohort (W5 AWAY), the baseline (long-run AWAY), the comparison type, the perspective (FOR), and the subject are all identical to the generics. No additional condition, no interaction term, and no different window or baseline distinguishes the candidate. The self-critique flag 'likely_generic_enumeration_would_generate_this = false' is incorrect given the direct structural matches in GEN_0272058 and GEN_0272042. ABSTAIN is the correct outcome.",
+  "shared_structure": [
+   "subject: AWAY_TEAM (TEAM_B)",
+   "comparison: SUBJECT_RECENT_VS_LONG_BASELINE",
+   "window: W5",
+   "condition: historical_venue_conditioning = AWAY",
+   "metric_perspective: FOR",
+   "target_metrics: shots_on_target (GEN_0272058), big_chances (GEN_0272042)"
+  ]
+ },
+ "retrieved_distances": [
+  1,
+  1,
+  3
+ ],
+ "retrieved_generic_ids": [
+  "GEN_0272042",
+  "GEN_0272058",
+  "GEN_0271754"
+ ],
+ "temperature": 0.0
+}

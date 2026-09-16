@@ -1,0 +1,57 @@
+{
+ "arm": "B",
+ "candidate_id": "C1",
+ "elapsed_s": 12.3,
+ "error": null,
+ "fixture_id": "mt_257018027",
+ "max_tokens": 8192,
+ "model_id": "us.anthropic.claude-sonnet-4-6",
+ "pass": 2,
+ "provenance": {
+  "input_tokens": 4186,
+  "output_tokens": 800,
+  "request_sha256": "3e57ea476e601c978621b502b267ef9a84cd8d967216a75120ea361636a40732",
+  "resolved_model_id": "us.anthropic.claude-sonnet-4-6",
+  "response_sha256": "43f3217f4eab081004358a637dfae7144fea13763ceabe518cbd23433c99984b",
+  "stop_reason": "tool_use"
+ },
+ "record_sha256": "a476ae5bb2e95ea8e3d3f479004e7948fd56ef414da315918181fdbc9f34a288",
+ "response": {
+  "action": "ABSTAIN",
+  "candidate_id": "C1",
+  "closest_generic_structures": [
+   "GEN_0316802",
+   "GEN_0316816",
+   "GEN_0316821"
+  ],
+  "incremental_structure": [
+   "Candidate bundles three metrics (big_chances, shots_inside_box, touches_in_penalty_area) \u2014 but each is individually covered by a distinct generic",
+   "Opponent-side venue split (TEAM_B away big_chances_against) appears in behavioral_observations but is NOT encoded as a structural condition (no opponent_profile or SIMILAR_OPPONENT_COHORT comparison)",
+   "No joint/interaction condition is specified: the cohort is simply TEAM_A home, not TEAM_A home AND opponent concedes high away \u2014 so no cross-team structural novelty exists",
+   "Self_critique explicitly acknowledges the candidate is generic and flags it for discard"
+  ],
+  "reason": "The candidate is structurally identical to the union of GEN_0316802, GEN_0316816, and GEN_0316821. All three target metrics (big_chances, shots_inside_box, touches_in_penalty_area) are tested FOR the home subject against a SUBJECT_VENUE_BASELINE under the HOME venue condition over ALL_PRIOR \u2014 exactly the structure each generic encodes. Bundling them into one candidate does not produce a new statistical question. The opponent-side evidence (Nantes conceding more big chances away) is referenced in prose but is never encoded as a structural cohort condition; the comparison remains a simple home-vs-overall split for TEAM_A. The candidate's own self_critique correctly identifies it as is_just_home_vs_away=true and likely_generic_enumeration_would_generate_this=true, and explicitly recommends discarding. No residual incremental structure survives that would justify KEEP or REFINE.",
+  "shared_structure": [
+   "subject=TEAM_A (home team), metric_perspective=FOR, comparison=SUBJECT_VENUE_BASELINE, condition=historical_venue_conditioning:HOME, window=ALL_PRIOR",
+   "target_metric big_chances FOR home subject vs overall baseline \u2014 identical to GEN_0316802",
+   "target_metric shots_inside_box FOR home subject vs overall baseline \u2014 identical to GEN_0316816",
+   "target_metric touches_in_penalty_area FOR home subject vs overall baseline \u2014 identical to GEN_0316821",
+   "All three generics together cover every metric in the candidate's target_metric list",
+   "The candidate's comparison, condition, window, subject, and perspective are all matched by the generic set",
+   "Bundling three metrics into one candidate does not create a new statistical structure \u2014 each metric arm is independently covered",
+   "The opponent-side evidence (Nantes away big_chances_against) is used only as narrative motivation, not as a structural condition in the cohort definition",
+   "The self_critique already flags is_just_home_vs_away=true and likely_generic_enumeration_would_generate_this=true"
+  ]
+ },
+ "retrieved_distances": [
+  1,
+  1,
+  1
+ ],
+ "retrieved_generic_ids": [
+  "GEN_0316802",
+  "GEN_0316816",
+  "GEN_0316821"
+ ],
+ "temperature": 0.0
+}

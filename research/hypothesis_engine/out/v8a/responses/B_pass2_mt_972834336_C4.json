@@ -1,0 +1,54 @@
+{
+ "arm": "B",
+ "candidate_id": "C4",
+ "elapsed_s": 8.99,
+ "error": null,
+ "fixture_id": "mt_972834336",
+ "max_tokens": 8192,
+ "model_id": "us.anthropic.claude-sonnet-4-6",
+ "pass": 2,
+ "provenance": {
+  "input_tokens": 4301,
+  "output_tokens": 547,
+  "request_sha256": "847df82fa38b532a1c750a93f1d683bb1acccab4622694fe3c75fbed95423034",
+  "resolved_model_id": "us.anthropic.claude-sonnet-4-6",
+  "response_sha256": "9969b592a7420cc383c59ea2d2f78c1fd1be7c6596a7b298b8bd7a130b851282",
+  "stop_reason": "tool_use"
+ },
+ "record_sha256": "e936d00e84d53deb008eaa77ca8502ef78beecde5d63a41e47c91a2fa83ffcc1",
+ "response": {
+  "action": "ABSTAIN",
+  "candidate_id": "C4",
+  "closest_generic_structures": [
+   "GEN_0136086",
+   "GEN_0136110",
+   "GEN_0136134"
+  ],
+  "incremental_structure": [
+   "candidate frames subject as TEAM_B but measures TEAM_A's corner generation FOR (metric_perspective=FOR, subject=TEAM_B is internally inconsistent)",
+   "football mechanism references a two-team interaction (TEAM_A wide play + TEAM_B high-clearance defence), but the statistical question reduces to TEAM_A corner_kicks FOR vs similar-opponent cohort at home",
+   "no additional condition beyond HOME + SIMILAR_OPPONENT_COHORT is encoded in the structure",
+   "window=ALL_PRIOR matches GEN_0136086 exactly on all structural axes"
+  ],
+  "reason": "Despite the richer football narrative (two-team interaction, clearance-driven corner mechanism), the statistical structure of C4 is identical to GEN_0136086: corner_kicks FOR, AWAY_TEAM perspective, SIMILAR_OPPONENT_COHORT comparison, HOME venue conditioning, ALL_PRIOR window. The candidate's subject/opponent fields are also internally inconsistent \u2014 the falsifiable question and provider requirements measure TEAM_A's corner generation FOR, yet subject is declared as TEAM_B. Resolving that inconsistency either way still lands on a structure already covered by GEN_0136086 (if subject=TEAM_A as home side) or produces a structurally identical away-team corner-FOR question. The dual-team narrative does not add a second measurable axis: no second metric, no opponent_profile condition, no competition filter, and no window difference distinguishes this from the generic enumeration. Nothing structurally novel remains.",
+  "shared_structure": [
+   "subject=AWAY_TEAM (TEAM_B)",
+   "metric=corner_kicks",
+   "perspective=FOR",
+   "comparison=SIMILAR_OPPONENT_COHORT",
+   "condition=historical_venue_conditioning:HOME",
+   "window=ALL_PRIOR"
+  ]
+ },
+ "retrieved_distances": [
+  0,
+  2,
+  2
+ ],
+ "retrieved_generic_ids": [
+  "GEN_0136086",
+  "GEN_0136110",
+  "GEN_0136134"
+ ],
+ "temperature": 0.0
+}

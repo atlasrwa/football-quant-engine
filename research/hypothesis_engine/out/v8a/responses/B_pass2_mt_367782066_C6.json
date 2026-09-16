@@ -1,0 +1,117 @@
+{
+ "arm": "B",
+ "candidate_id": "C6",
+ "elapsed_s": 11.79,
+ "error": null,
+ "fixture_id": "mt_367782066",
+ "max_tokens": 8192,
+ "model_id": "us.anthropic.claude-sonnet-4-6",
+ "pass": 2,
+ "provenance": {
+  "input_tokens": 4282,
+  "output_tokens": 1263,
+  "request_sha256": "ebf17431bd1ec1d06915aa16ac54cf6dad86ce412f74477cc2c2796b2cf6e725",
+  "resolved_model_id": "us.anthropic.claude-sonnet-4-6",
+  "response_sha256": "faa6d706d6b23b459fc4e1169a696639a9d06fc83fef569369a96e40aede5130",
+  "stop_reason": "tool_use"
+ },
+ "record_sha256": "2058027f8b1a2c539e337cc28cc97c12308ce7f5a5d3a4108707a91123759834",
+ "response": {
+  "action": "KEEP",
+  "candidate_id": "C6",
+  "closest_generic_structures": [
+   "GEN_0187351",
+   "GEN_0187359",
+   "GEN_0187360"
+  ],
+  "final_candidate": {
+   "behavioral_observations": [
+    {
+     "evidence_refs": [
+      "TEAM_B.blocks.long_run_all.metrics.final_third_entries_for",
+      "TEAM_B.blocks.recent_last_5.metrics.final_third_entries_for",
+      "TEAM_B.blocks.long_run_all.metrics.shots_for",
+      "TEAM_B.blocks.recent_last_5.metrics.shots_for"
+     ],
+     "observation": "Preston's final third entries FOR long-run is 65.2, recent-5 is 59.4 \u2014 they enter the final third frequently but their shots FOR is only 9.42 long-run and 8.6 recent-5. The entry-to-shot gap is large."
+    },
+    {
+     "evidence_refs": [
+      "TEAM_A.blocks.long_run_all.metrics.ball_recoveries_for",
+      "TEAM_A.blocks.long_run_all.metrics.tackles_for"
+     ],
+     "observation": "West Brom's ball recoveries FOR long-run is 49.5, and their tackles FOR long-run is 12.82 \u2014 they are an active ball-winning team that may suppress shot conversion from final third entries."
+    }
+   ],
+   "candidate_id": "C6",
+   "comparison": "SUBJECT_CONDITIONAL_VS_BASELINE",
+   "conditions": [
+    {
+     "axis": "possession",
+     "dimension": "opponent_profile",
+     "value": "HIGH"
+    },
+    {
+     "dimension": "competition",
+     "value": "SAME"
+    }
+   ],
+   "coverage_risk": "NONE",
+   "falsifiable_question": "When Preston face Championship opponents with high possession, are their final third entries FOR and shots FOR lower than their overall Championship baseline?",
+   "falsifier": "If Preston's final third entries FOR and shots FOR against high-possession opponents are at or above their overall Championship average, the possession-suppression mechanism on Preston's attack volume is not supported.",
+   "football_mechanism": "A team that enters the final third frequently but converts to shots at a low rate may be doing so against opponents who allow territorial access but defend the box tightly. When Preston face a possession-dominant, high-ball-recovery opponent like West Brom, their final third entry volume may be suppressed further, and their already-low shot conversion from entries may worsen.",
+   "metric_perspective": "FOR",
+   "opponent": "TEAM_A",
+   "provider_requirements": [
+    "final_third_entries",
+    "shots",
+    "shots_inside_box",
+    "possession"
+   ],
+   "research_family": "TEMPO_AND_TERRITORY",
+   "self_critique": {
+    "cohort_equals_baseline": false,
+    "condition_equals_target": false,
+    "could_opponent_strength_explain_it": false,
+    "is_just_home_vs_away": false,
+    "is_just_recent_vs_long_run": false,
+    "is_overconditioned": false,
+    "likely_generic_enumeration_would_generate_this": false,
+    "notes": "The mechanism is specific: possession dominance by the opponent reduces Preston's territorial access. The entry-to-shot gap is the observable behaviour that motivates the question. Not redundant with C4 (which is about discipline) or C5 (which is about West Brom's attack)."
+   },
+   "subject": "TEAM_B",
+   "support_risk": "LOW",
+   "target_metric": [
+    "final_third_entries",
+    "shots",
+    "shots_inside_box"
+   ],
+   "window": "ALL_PRIOR"
+  },
+  "incremental_structure": [
+   "opponent_profile axis is 'possession' (HIGH), not 'goals_for'/'goals_against' as in all three generics",
+   "adds competition=SAME condition, absent from all three generics",
+   "multi-metric joint question (final_third_entries + shots + shots_inside_box together, not individually)",
+   "mechanism is entry-to-shot conversion gap under possession-dominant opponent, not raw attack volume vs high-scoring opponent"
+  ],
+  "reason": "All three generic structures condition on opponent_profile axes of goals_for=HIGH AND goals_against=HIGH \u2014 i.e., a high-scoring, open opponent. The candidate conditions instead on opponent_profile axis possession=HIGH, which is a structurally distinct cohort: a possession-dominant opponent is not the same as a high-scoring one and will select a different set of matches. Additionally, the candidate adds a competition=SAME filter absent from all generics, and its mechanism is specifically about the entry-to-shot conversion gap under possession suppression rather than raw attack volume against open opponents. These differences in the conditioning axis and the joint multi-metric framing (entries + shots + shots_inside_box as a conversion-gap question) constitute genuine structural novelty beyond rewording.",
+  "shared_structure": [
+   "subject: AWAY_TEAM (TEAM_B)",
+   "comparison: SUBJECT_CONDITIONAL_VS_BASELINE",
+   "metric_perspective: FOR",
+   "window: ALL_PRIOR",
+   "target_metrics overlap: final_third_entries, shots, shots_inside_box"
+  ]
+ },
+ "retrieved_distances": [
+  6,
+  6,
+  6
+ ],
+ "retrieved_generic_ids": [
+  "GEN_0187351",
+  "GEN_0187359",
+  "GEN_0187360"
+ ],
+ "temperature": 0.0
+}

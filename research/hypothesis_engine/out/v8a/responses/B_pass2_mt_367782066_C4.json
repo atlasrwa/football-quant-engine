@@ -1,0 +1,124 @@
+{
+ "arm": "B",
+ "candidate_id": "C4",
+ "elapsed_s": 12.81,
+ "error": null,
+ "fixture_id": "mt_367782066",
+ "max_tokens": 8192,
+ "model_id": "us.anthropic.claude-sonnet-4-6",
+ "pass": 2,
+ "provenance": {
+  "input_tokens": 4356,
+  "output_tokens": 1340,
+  "request_sha256": "ee5b409c24f08543cf2f35beace5e999022cf8963dff51b3ef35f8ab40d457d4",
+  "resolved_model_id": "us.anthropic.claude-sonnet-4-6",
+  "response_sha256": "d563514353ca9328462aec616f7372dc417cee53d99342ccc9e5df0d221c02b2",
+  "stop_reason": "tool_use"
+ },
+ "record_sha256": "4b0aeb520722eb40fa384e986471e1410cd013c51c78ea5cbe00e9bec9a9c96d",
+ "response": {
+  "action": "KEEP",
+  "candidate_id": "C4",
+  "closest_generic_structures": [
+   "GEN_0187352",
+   "GEN_0187367",
+   "GEN_0187640"
+  ],
+  "final_candidate": {
+   "behavioral_observations": [
+    {
+     "evidence_refs": [
+      "TEAM_B.blocks.long_run_all.metrics.yellow_cards_for",
+      "TEAM_B.blocks.recent_last_5.metrics.yellow_cards_for",
+      "TEAM_B.blocks.long_run_all.metrics.fouls_for",
+      "TEAM_B.blocks.recent_last_5.metrics.fouls_for"
+     ],
+     "observation": "Preston's yellow cards FOR long-run is 2.56, rising to 3.2 in the last 5 matches. Their fouls FOR long-run is 12.62, recent-5 is 11.6."
+    },
+    {
+     "evidence_refs": [
+      "TEAM_B.blocks.long_run_all.metrics.cards_2h_for",
+      "TEAM_B.blocks.recent_last_5.metrics.cards_2h_for"
+     ],
+     "observation": "Preston's cards_2h FOR long-run is 1.72, recent-5 is 2.2 \u2014 second-half card accumulation is elevated recently."
+    },
+    {
+     "evidence_refs": [
+      "TEAM_A.blocks.long_run_all.metrics.fouls_against",
+      "TEAM_B.blocks.long_run_all.metrics.fouls_for"
+     ],
+     "observation": "West Brom draws fouls at 10.44 per match long-run (opponents foul them), which is above Preston's foul rate of 12.62 \u2014 West Brom is a team that draws fouls, meeting a team that commits many."
+    }
+   ],
+   "candidate_id": "C4",
+   "comparison": "SUBJECT_CONDITIONAL_VS_BASELINE",
+   "conditions": [
+    {
+     "axis": "possession",
+     "dimension": "opponent_profile",
+     "value": "HIGH"
+    },
+    {
+     "dimension": "competition",
+     "value": "SAME"
+    }
+   ],
+   "coverage_risk": "NONE",
+   "falsifiable_question": "When Preston face Championship opponents with high possession (HIGH on possession profile axis), do their yellow cards FOR and fouls FOR differ from their overall Championship baseline?",
+   "falsifier": "If Preston's yellow cards FOR and fouls FOR against high-possession opponents are at or below their overall Championship average, the possession-driven discipline mechanism is not supported.",
+   "football_mechanism": "A team that commits many fouls and earns many yellow cards, playing against a possession-dominant side that draws fouls, may face escalating discipline pressure \u2014 particularly in the second half when fatigue and frustration compound. Preston's high foul and card rate meeting West Brom's foul-drawing style creates a specific discipline interaction.",
+   "metric_perspective": "FOR",
+   "opponent": "TEAM_A",
+   "provider_requirements": [
+    "yellow_cards",
+    "fouls",
+    "possession"
+   ],
+   "research_family": "DISCIPLINE",
+   "self_critique": {
+    "cohort_equals_baseline": false,
+    "condition_equals_target": false,
+    "could_opponent_strength_explain_it": false,
+    "is_just_home_vs_away": false,
+    "is_just_recent_vs_long_run": false,
+    "is_overconditioned": false,
+    "likely_generic_enumeration_would_generate_this": false,
+    "notes": "The mechanism requires two measurable characteristics: Preston's foul/card rate AND opponent possession profile. West Brom's possession dominance (52.2% long-run, 55.8% last 5) is the specific trigger. This is a genuine interaction question, not just a discipline enumeration."
+   },
+   "subject": "TEAM_B",
+   "support_risk": "LOW",
+   "target_metric": [
+    "yellow_cards",
+    "fouls"
+   ],
+   "window": "ALL_PRIOR"
+  },
+  "incremental_structure": [
+   "opponent_profile axis is 'possession' (HIGH), not 'goals_for'/'goals_against'",
+   "additional competition=SAME condition layered on top of opponent_profile",
+   "mechanism requires joint observation: subject's foul/card rate AND opponent's possession dominance together",
+   "cards_2h_for as supporting second-half escalation dimension (not present in generics)",
+   "opponent foul-drawing rate (TEAM_A fouls_against) explicitly paired with subject foul-committing rate"
+  ],
+  "reason": "The three generic structures all condition on opponent_profile axes of goals_for and goals_against (HIGH/MID combinations). The candidate conditions on opponent_profile axis 'possession' (HIGH), which is a structurally distinct profile axis \u2014 it is not a rewording of the goals-based axes. The cohort is therefore different: high-possession opponents vs. high-scoring/high-conceding opponents are not the same set of teams. Additionally, the candidate adds a competition=SAME filter and grounds the mechanism in a two-characteristic interaction (Preston's foul/card rate jointly with opponent possession dominance), which none of the generics require. The incremental structure is real: a different profile axis produces a different cohort, and the joint mechanism is not decomposable into either generic alone.",
+  "shared_structure": [
+   "subject: AWAY_TEAM (TEAM_B)",
+   "comparison: SUBJECT_CONDITIONAL_VS_BASELINE",
+   "target_metrics: fouls, yellow_cards",
+   "metric_perspective: FOR",
+   "window: ALL_PRIOR",
+   "opponent_profile condition present"
+  ]
+ },
+ "retrieved_distances": [
+  6,
+  6,
+  6
+ ],
+ "retrieved_generic_ids": [
+  "GEN_0187352",
+  "GEN_0187367",
+  "GEN_0187640"
+ ],
+ "temperature": 0.0
+}

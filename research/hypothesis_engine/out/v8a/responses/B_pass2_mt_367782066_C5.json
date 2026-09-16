@@ -1,0 +1,55 @@
+{
+ "arm": "B",
+ "candidate_id": "C5",
+ "elapsed_s": 9.5,
+ "error": null,
+ "fixture_id": "mt_367782066",
+ "max_tokens": 8192,
+ "model_id": "us.anthropic.claude-sonnet-4-6",
+ "pass": 2,
+ "provenance": {
+  "input_tokens": 4385,
+  "output_tokens": 604,
+  "request_sha256": "a09261b7aac6e4fc54cc04f8b2e67e7d916291d42f1d1bb96037be0b54ad3070",
+  "resolved_model_id": "us.anthropic.claude-sonnet-4-6",
+  "response_sha256": "2965e3fbe430de42e56a611f54452c42f8fbec4e4438e0de392f7f25aacca0a3",
+  "stop_reason": "tool_use"
+ },
+ "record_sha256": "eeeca6b7d7f33e5dd4f70d5341dc1fcbf1ee84c24e89a1a424dfbc98c32e326e",
+ "response": {
+  "action": "ABSTAIN",
+  "candidate_id": "C5",
+  "closest_generic_structures": [
+   "GEN_0141991",
+   "GEN_0141999",
+   "GEN_0142000"
+  ],
+  "incremental_structure": [
+   "Candidate adds explicit competition=SAME condition",
+   "Candidate uses shots-conceded axis rather than goals_against axis for opponent profile",
+   "Candidate omits goals_for axis from opponent profile (generics use HIGH goals_for + HIGH goals_against together)",
+   "Candidate bundles all three metrics into one question rather than one metric per question"
+  ],
+  "reason": "The candidate's statistical structure is materially identical to the union of GEN_0141991, GEN_0141999, and GEN_0142000. All three generics already test TEAM_A (HOME_TEAM) FOR-side attack-volume metrics \u2014 final_third_entries, shots, and shots_inside_box \u2014 against a SIMILAR_OPPONENT_COHORT defined by a HIGH defensive-weakness profile, over ALL_PRIOR, at home. The candidate's incremental claims do not survive scrutiny: (1) the competition=SAME filter is a standard conditioning layer that does not change the cohort-vs-baseline contrast; (2) substituting a shots-conceded axis for goals_against is a re-labelling of the same defensive-weakness dimension, not a structurally different cohort; (3) dropping the goals_for axis from the opponent profile makes the cohort looser, not different; (4) bundling three metrics into one question is presentational, not structural. No measurable interaction is introduced that the three generics do not already cover. ABSTAIN is the correct outcome.",
+  "shared_structure": [
+   "subject: HOME_TEAM (TEAM_A)",
+   "comparison: SIMILAR_OPPONENT_COHORT",
+   "metric_perspective: FOR",
+   "window: ALL_PRIOR",
+   "opponent_profile condition: HIGH goals_against (maps to high shot-conceding profile)",
+   "target_metrics: shots, shots_inside_box, final_third_entries \u2014 all three appear across the three generics",
+   "venue conditioning: HOME (implicit in HOME_TEAM subject in generics)"
+  ]
+ },
+ "retrieved_distances": [
+  6,
+  6,
+  6
+ ],
+ "retrieved_generic_ids": [
+  "GEN_0141991",
+  "GEN_0141999",
+  "GEN_0142000"
+ ],
+ "temperature": 0.0
+}

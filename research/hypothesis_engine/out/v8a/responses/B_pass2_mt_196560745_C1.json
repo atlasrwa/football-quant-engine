@@ -1,0 +1,52 @@
+{
+ "arm": "B",
+ "candidate_id": "C1",
+ "elapsed_s": 8.15,
+ "error": null,
+ "fixture_id": "mt_196560745",
+ "max_tokens": 8192,
+ "model_id": "us.anthropic.claude-sonnet-4-6",
+ "pass": 2,
+ "provenance": {
+  "input_tokens": 4123,
+  "output_tokens": 543,
+  "request_sha256": "6180be8595054a2a0f21b71819c1a00a542a30f195e2d9346a785c55ed1e1f56",
+  "resolved_model_id": "us.anthropic.claude-sonnet-4-6",
+  "response_sha256": "56e0353ab1c1b1d8554a1bc89ad0a82e99fcaad6c976109262b81a5af9558745",
+  "stop_reason": "tool_use"
+ },
+ "record_sha256": "6519cde549341d9a34d44ceb1758f9c65ab0b65bdd7d3ef2f3b26bd36af6997c",
+ "response": {
+  "action": "ABSTAIN",
+  "candidate_id": "C1",
+  "closest_generic_structures": [
+   "GEN_0316802",
+   "GEN_0316818",
+   "GEN_0316822"
+  ],
+  "incremental_structure": [
+   "Second observation references TEAM_B recent defensive deterioration (big_chances_against W10/W5 vs long-run)",
+   "Football mechanism frames a two-team interaction: TEAM_A home attack \u00d7 TEAM_B recent defensive fragility"
+  ],
+  "reason": "The candidate's statistical structure is identical to the union of GEN_0316802, GEN_0316818, and GEN_0316822: it measures TEAM_A's attacking metrics (big_chances, shots_on_target, xg) FOR, under HOME venue conditioning, against SUBJECT_VENUE_BASELINE, over ALL_PRIOR. The only incremental element is the narrative reference to TEAM_B's recent defensive deterioration \u2014 but that is not encoded as a structural condition on the cohort or baseline. The comparison remains SUBJECT_VENUE_BASELINE (not OPPONENT_PROFILE_INTERACTION or SIMILAR_OPPONENT_COHORT), no opponent_profile condition is added, and the window is unchanged. The self-critique itself flags is_just_home_vs_away=true and likely_generic_enumeration_would_generate_this=true. Bundling three metrics that each have their own generic structure does not create structural novelty. A REFINE path would require encoding the opponent's defensive state as a formal condition (e.g., opponent_profile axis), but the evidence supplied does not support a different comparison type or window that would make the structure genuinely distinct. Nothing material remains after the comparison.",
+  "shared_structure": [
+   "subject=TEAM_A (home team)",
+   "metric_perspective=FOR",
+   "comparison=SUBJECT_VENUE_BASELINE",
+   "condition=historical_venue_conditioning:HOME",
+   "window=ALL_PRIOR",
+   "target_metrics overlap: big_chances, shots_on_target, xg"
+  ]
+ },
+ "retrieved_distances": [
+  1,
+  1,
+  1
+ ],
+ "retrieved_generic_ids": [
+  "GEN_0316802",
+  "GEN_0316818",
+  "GEN_0316822"
+ ],
+ "temperature": 0.0
+}

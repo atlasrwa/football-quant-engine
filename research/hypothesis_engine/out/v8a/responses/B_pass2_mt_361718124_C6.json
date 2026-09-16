@@ -1,0 +1,118 @@
+{
+ "arm": "B",
+ "candidate_id": "C6",
+ "elapsed_s": 14.73,
+ "error": null,
+ "fixture_id": "mt_361718124",
+ "max_tokens": 8192,
+ "model_id": "us.anthropic.claude-sonnet-4-6",
+ "pass": 2,
+ "provenance": {
+  "input_tokens": 4338,
+  "output_tokens": 1498,
+  "request_sha256": "d87e094f25922417264b2276663bfb6c26fd12dcbd0285eb3525f1f9a6fc2005",
+  "resolved_model_id": "us.anthropic.claude-sonnet-4-6",
+  "response_sha256": "239182fa598e7b1b35a900f10407bbaf00637f44d0e6e4cccf72ec14f4c39476",
+  "stop_reason": "tool_use"
+ },
+ "record_sha256": "592cf592cbbf07b9ddc2abc13fecccbb081370740d84742decd13290d557295c",
+ "response": {
+  "action": "KEEP",
+  "candidate_id": "C6",
+  "closest_generic_structures": [
+   "GEN_0006480",
+   "GEN_0006481",
+   "GEN_0006482"
+  ],
+  "final_candidate": {
+   "behavioral_observations": [
+    {
+     "evidence_refs": [
+      "TEAM_B.blocks.long_run_all.metrics.corner_kicks_for",
+      "TEAM_B.blocks.recent_last_10.metrics.corner_kicks_for",
+      "TEAM_B.blocks.recent_last_5.metrics.corner_kicks_for",
+      "TEAM_B.blocks.long_run_all.metrics.accurate_crosses_for",
+      "TEAM_B.blocks.recent_last_10.metrics.accurate_crosses_for"
+     ],
+     "observation": "Villa's corner kicks FOR are 7.9 W10 and 7.2 W5, well above their long-run of 6.4. Their accurate crosses FOR are 4.7 W10 and 4.4 W5 vs 4.1 long-run \u2014 both elevated recently."
+    },
+    {
+     "evidence_refs": [
+      "TEAM_B.blocks.long_run_home.metrics.corner_kicks_for",
+      "TEAM_B.blocks.long_run_away.metrics.corner_kicks_for",
+      "TEAM_B.blocks.recent_last_10.metrics.corner_kicks_for"
+     ],
+     "observation": "Villa's home corner generation (7.8) is much higher than away (4.75), but their recent W10 average of 7.9 exceeds even their home baseline, suggesting the recent elevation is not purely venue-driven."
+    }
+   ],
+   "candidate_id": "C6",
+   "comparison": "OPPONENT_PROFILE_INTERACTION",
+   "conditions": [
+    {
+     "axis": "goals_conceded_per_match",
+     "dimension": "opponent_profile",
+     "value": "LOW"
+    },
+    {
+     "dimension": "competition",
+     "value": "SAME"
+    }
+   ],
+   "coverage_risk": "LOW",
+   "falsifiable_question": "Against EPL opponents with a LOW goals-conceded profile (defensively tight opponents), does Aston Villa generate more corner_kicks_for and accurate_crosses_for than against their overall EPL baseline?",
+   "falsifier": "If Villa's corner_kicks_for and accurate_crosses_for against LOW goals-conceded opponents are not higher than their overall baseline, the compact-defense interaction is unsupported.",
+   "football_mechanism": "Against defensively compact opponents (HIGH defensive profile \u2014 low goals conceded, low shots on target conceded), attacking teams may generate more corners as their shots are blocked or deflected behind rather than resulting in goals or saves. If Villa's elevated corner generation is concentrated against defensively organised opponents, it would reflect a structural interaction between Villa's wide delivery and compact defensive blocks.",
+   "metric_perspective": "FOR",
+   "opponent": "TEAM_A",
+   "provider_requirements": [
+    "corner_kicks_for",
+    "accurate_crosses_for"
+   ],
+   "research_family": "OPPONENT_PROFILE_INTERACTION",
+   "self_critique": {
+    "cohort_equals_baseline": false,
+    "condition_equals_target": false,
+    "could_opponent_strength_explain_it": false,
+    "is_just_home_vs_away": false,
+    "is_just_recent_vs_long_run": false,
+    "is_overconditioned": false,
+    "likely_generic_enumeration_would_generate_this": false,
+    "notes": "The opponent profile condition (LOW goals conceded) is the right axis because Newcastle are a defensively organised side. The mechanism \u2014 compact defenses deflecting shots into corners \u2014 is a genuine football interaction. The recent elevation in Villa's corners adds motivation. Not overconditioned."
+   },
+   "subject": "TEAM_B",
+   "support_risk": "LOW",
+   "target_metric": [
+    "corner_kicks_for",
+    "accurate_crosses_for"
+   ],
+   "window": "ALL_PRIOR"
+  },
+  "incremental_structure": [
+   "comparison = OPPONENT_PROFILE_INTERACTION (not LEAGUE_ENVIRONMENT_BASELINE)",
+   "opponent_profile axis = goals_conceded_per_match LOW (not goals_for HIGH / goals_against HIGH)",
+   "second condition = competition SAME (adds same-competition filter)",
+   "dual target metrics: corner_kicks_for AND accurate_crosses_for tested jointly under same condition",
+   "mechanism requires BOTH metrics to co-move under compact-defense condition, not independently",
+   "subject is HOME team (TEAM_B) not AWAY team"
+  ],
+  "reason": "The three generic structures all use LEAGUE_ENVIRONMENT_BASELINE as the comparison and condition on opponents that are HIGH on both goals_for and goals_against \u2014 i.e. open, high-scoring opponents. The candidate uses OPPONENT_PROFILE_INTERACTION as the comparison and conditions on opponents that are LOW on goals_conceded_per_match \u2014 defensively tight opponents. This is a structurally opposite opponent-profile axis (defensive compactness rather than offensive openness). Additionally, the candidate adds a competition=SAME filter absent from all three generics, tests corner_kicks_for (not present in any generic), and requires the two metrics (corners + accurate crosses) to co-move under the same compact-defense condition as a joint mechanism. The subject is also TEAM_B (the home side), whereas all generics specify AWAY_TEAM. These differences \u2014 comparison type, opponent-profile axis direction, metric set, venue side, and joint-metric mechanism \u2014 are collectively structural, not cosmetic.",
+  "shared_structure": [
+   "subject = AWAY_TEAM / TEAM_B",
+   "metric_perspective = FOR",
+   "window = ALL_PRIOR",
+   "opponent_profile condition present",
+   "target metrics include accurate_crosses_for"
+  ]
+ },
+ "retrieved_distances": [
+  15,
+  15,
+  15
+ ],
+ "retrieved_generic_ids": [
+  "GEN_0006480",
+  "GEN_0006481",
+  "GEN_0006482"
+ ],
+ "temperature": 0.0
+}

@@ -1,0 +1,52 @@
+{
+ "arm": "B",
+ "candidate_id": "C8",
+ "elapsed_s": 10.15,
+ "error": null,
+ "fixture_id": "mt_972834961",
+ "max_tokens": 8192,
+ "model_id": "us.anthropic.claude-sonnet-4-6",
+ "pass": 2,
+ "provenance": {
+  "input_tokens": 4175,
+  "output_tokens": 652,
+  "request_sha256": "f30faf6538e6f4d4c821726fad824d1929d8e0d6dcb85917a51aaa8af928ea62",
+  "resolved_model_id": "us.anthropic.claude-sonnet-4-6",
+  "response_sha256": "40fef4cc2a9038f15ccb821940bf373fd14b49a86003e632b5c836397e677906",
+  "stop_reason": "tool_use"
+ },
+ "record_sha256": "e15d34038f274a27ffd87eec60b8cb72cc1f69fd260301cb7ea5e5aef00ebd36",
+ "response": {
+  "action": "ABSTAIN",
+  "candidate_id": "C8",
+  "closest_generic_structures": [
+   "GEN_0135942",
+   "GEN_0135951",
+   "GEN_0135954"
+  ],
+  "incremental_structure": [
+   "Candidate bundles three metrics (shots, shots_on_target, corner_kicks) into one question, but each metric individually is already covered by a distinct generic structure",
+   "The football mechanism references opponent defensive permissiveness (LOW shot-suppression profile), but this is expressed only through the SIMILAR_OPPONENT_COHORT comparison \u2014 which is already the comparison in all three generics",
+   "No additional condition dimension (e.g., opponent_profile:LOW) is formally added to the conditions array beyond historical_venue_conditioning:HOME, which is identical to all three generics",
+   "Bundling three already-covered metrics does not create a new statistical structure; it is three identical structures presented as one"
+  ],
+  "reason": "The candidate's structure decomposes into exactly three generic structures already enumerated: TEAM_A FOR shots vs SIMILAR_OPPONENT_COHORT at HOME (GEN_0135951), TEAM_A FOR shots_on_target vs SIMILAR_OPPONENT_COHORT at HOME (GEN_0135954), and TEAM_A FOR corner_kicks vs SIMILAR_OPPONENT_COHORT at HOME (GEN_0135942). The football narrative about opponent defensive permissiveness is compelling prose, but it is not encoded as an additional structural condition \u2014 the conditions array contains only historical_venue_conditioning:HOME, identical to all three generics. The SIMILAR_OPPONENT_COHORT comparison already implies similarity is defined by the engine (which may or may not use shot-concession profile), so the mechanism does not add a measurable second dimension. Bundling three already-covered metrics into one candidate does not constitute structural novelty. Nothing material remains after the comparison.",
+  "shared_structure": [
+   "subject=TEAM_A (HOME_TEAM), metric_perspective=FOR, comparison=SIMILAR_OPPONENT_COHORT, condition=historical_venue_conditioning:HOME, window=ALL_PRIOR",
+   "target_metric=shots matches GEN_0135951 exactly on all structural axes",
+   "target_metric=shots_on_target matches GEN_0135954 exactly on all structural axes",
+   "target_metric=corner_kicks matches GEN_0135942 exactly on all structural axes"
+  ]
+ },
+ "retrieved_distances": [
+  1,
+  1,
+  1
+ ],
+ "retrieved_generic_ids": [
+  "GEN_0135942",
+  "GEN_0135951",
+  "GEN_0135954"
+ ],
+ "temperature": 0.0
+}

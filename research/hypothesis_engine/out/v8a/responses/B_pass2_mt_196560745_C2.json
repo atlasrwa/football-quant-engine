@@ -1,0 +1,53 @@
+{
+ "arm": "B",
+ "candidate_id": "C2",
+ "elapsed_s": 10.13,
+ "error": null,
+ "fixture_id": "mt_196560745",
+ "max_tokens": 8192,
+ "model_id": "us.anthropic.claude-sonnet-4-6",
+ "pass": 2,
+ "provenance": {
+  "input_tokens": 4258,
+  "output_tokens": 550,
+  "request_sha256": "32fdbddda96aa0336b7e36ac99bc4f38e61ef678eb558e20216aaea0295c4631",
+  "resolved_model_id": "us.anthropic.claude-sonnet-4-6",
+  "response_sha256": "9c0385da990663c0e6743e99470ed2de869ba6223bb53be8cbd6eb96ec2a1659",
+  "stop_reason": "tool_use"
+ },
+ "record_sha256": "29502a8436b9717c9a78890ee40b5769acbf8c3a491dc70e090b36b0c2a4cadd",
+ "response": {
+  "action": "ABSTAIN",
+  "candidate_id": "C2",
+  "closest_generic_structures": [
+   "GEN_0272426",
+   "GEN_0272439",
+   "GEN_0272440"
+  ],
+  "incremental_structure": [
+   "candidate bundles three metrics together rather than testing each individually",
+   "football_mechanism references cross-competition contamination (Championship vs EPL) as a structural driver of the baseline divergence",
+   "magnitude framing (regime change) is narrative, not a structural dimension the schema can encode"
+  ],
+  "reason": "The candidate's statistical structure is fully covered by the three nearest generic structures taken together. Each of the three target metrics (shots, shots_inside_box, big_chances) is individually enumerated as AWAY_TEAM AGAINST, SUBJECT_RECENT_VS_LONG_BASELINE, W10, competition=SAME. Bundling all three into one candidate does not create a new structural contrast \u2014 the schema has no joint-metric interaction term, so the bundle resolves to the same three independent comparisons the generics already represent. The candidate's self-critique correctly flags is_just_recent_vs_long_run=true and likely_generic_enumeration_would_generate_this=true. The cross-competition contamination argument (Championship vs EPL in the long-run baseline) is a narrative motivation for why the recent window might differ, but it is not a structural condition the corpus can encode \u2014 the only available competition filter is SAME, which is already applied in all three generics. The magnitude of the observed change is evidence content, not structural novelty. No REFINE path is available because there is no additional structural dimension in the supplied evidence that would differentiate this from the generics without inventing a new mechanism.",
+  "shared_structure": [
+   "subject: AWAY_TEAM (TEAM_B)",
+   "comparison: SUBJECT_RECENT_VS_LONG_BASELINE",
+   "window: W10",
+   "perspective: AGAINST",
+   "condition: competition=SAME",
+   "target_metrics: shots, shots_inside_box, big_chances \u2014 all three individually covered by the generic set"
+  ]
+ },
+ "retrieved_distances": [
+  1,
+  1,
+  1
+ ],
+ "retrieved_generic_ids": [
+  "GEN_0272426",
+  "GEN_0272439",
+  "GEN_0272440"
+ ],
+ "temperature": 0.0
+}

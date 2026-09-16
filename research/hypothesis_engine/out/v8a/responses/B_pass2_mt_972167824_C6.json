@@ -1,0 +1,54 @@
+{
+ "arm": "B",
+ "candidate_id": "C6",
+ "elapsed_s": 8.06,
+ "error": null,
+ "fixture_id": "mt_972167824",
+ "max_tokens": 8192,
+ "model_id": "us.anthropic.claude-sonnet-4-6",
+ "pass": 2,
+ "provenance": {
+  "input_tokens": 4330,
+  "output_tokens": 563,
+  "request_sha256": "6870332e008db8aa2d3c118e0792c67d2ef543850186650ab374601af0553262",
+  "resolved_model_id": "us.anthropic.claude-sonnet-4-6",
+  "response_sha256": "f7545ae30df23c47fdd0513566987dafefd76bc3c90153e559291e3f50f94a70",
+  "stop_reason": "tool_use"
+ },
+ "record_sha256": "3770a0081f5ef82aca747a145b2491a4a54be93cdbb758f4cdfecb556093e474",
+ "response": {
+  "action": "ABSTAIN",
+  "candidate_id": "C6",
+  "closest_generic_structures": [
+   "GEN_0316874",
+   "GEN_0316887",
+   "GEN_0316888"
+  ],
+  "incremental_structure": [
+   "Candidate bundles three metrics (shots, shots_inside_box, big_chances) into a single question rather than testing each separately",
+   "Candidate references opponent (TEAM_B) declining attack quality as a contextual modifier \u2014 but this is narrative framing, not a structural condition in the cohort/baseline contrast",
+   "No additional filter dimension (e.g. competition=SAME, opponent_profile) is applied that would differentiate the cohort from the generics"
+  ],
+  "reason": "The candidate's statistical structure is fully covered by the three nearest generics. All three share: subject=HOME_TEAM (TEAM_A), perspective=AGAINST, comparison=SUBJECT_VENUE_BASELINE, condition=historical_venue_conditioning:HOME, window=ALL_PRIOR. The candidate's three target metrics (shots, shots_inside_box, big_chances) map exactly onto GEN_0316887, GEN_0316888, and GEN_0316874 respectively. Bundling them into one question does not create a new structural contrast \u2014 it is the union of three already-enumerated generics. The candidate's self_critique correctly flags is_just_home_vs_away=true and likely_generic_enumeration_would_generate_this=true. The mention of TEAM_B's declining attack quality is narrative context, not a structural cohort condition (no opponent_profile dimension is applied). No incremental structure survives canonicalisation. ABSTAIN is the correct outcome.",
+  "shared_structure": [
+   "subject=TEAM_A (HOME_TEAM)",
+   "metric_perspective=AGAINST",
+   "comparison=SUBJECT_VENUE_BASELINE",
+   "condition=historical_venue_conditioning:HOME",
+   "window=ALL_PRIOR",
+   "target_metrics overlap: shots, shots_inside_box, big_chances all present across the three generics",
+   "research_family=DEFENSIVE_SUPPRESSION"
+  ]
+ },
+ "retrieved_distances": [
+  1,
+  1,
+  1
+ ],
+ "retrieved_generic_ids": [
+  "GEN_0316874",
+  "GEN_0316887",
+  "GEN_0316888"
+ ],
+ "temperature": 0.0
+}

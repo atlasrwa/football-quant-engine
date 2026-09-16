@@ -1,0 +1,118 @@
+{
+ "arm": "B",
+ "candidate_id": "C7",
+ "elapsed_s": 13.57,
+ "error": null,
+ "fixture_id": "mt_972834336",
+ "max_tokens": 8192,
+ "model_id": "us.anthropic.claude-sonnet-4-6",
+ "pass": 2,
+ "provenance": {
+  "input_tokens": 4489,
+  "output_tokens": 1481,
+  "request_sha256": "887d56bcbe1f3bede74e6f9ccc83e51a0af944951f95a4d119157548a0890a91",
+  "resolved_model_id": "us.anthropic.claude-sonnet-4-6",
+  "response_sha256": "84fa415b901d8eaa63d736582adae364858008a09587f68ea07599f60cdb66c8",
+  "stop_reason": "tool_use"
+ },
+ "record_sha256": "e966f9fedb40a10b4ac798aac609e24bfa6e0c4d7dbe368b6fba21aecce0f25a",
+ "response": {
+  "action": "KEEP",
+  "candidate_id": "C7",
+  "closest_generic_structures": [
+   "GEN_0187208",
+   "GEN_0187223",
+   "GEN_0187496"
+  ],
+  "final_candidate": {
+   "behavioral_observations": [
+    {
+     "evidence_refs": [
+      "TEAM_A.blocks.long_run_all.metrics.fouls_for",
+      "TEAM_A.blocks.long_run_home.metrics.fouls_for",
+      "TEAM_A.blocks.long_run_away.metrics.fouls_for",
+      "TEAM_A.blocks.long_run_home.metrics.yellow_cards_for",
+      "TEAM_A.blocks.long_run_away.metrics.yellow_cards_for"
+     ],
+     "observation": "TEAM_A commits 15.1 fouls/match long-run and 14.8 last 5. At home TEAM_A commits 16.8 fouls and 2.67 yellow cards vs 13.9 fouls and 1.0 yellow cards away \u2014 a pronounced home discipline asymmetry."
+    },
+    {
+     "evidence_refs": [
+      "TEAM_B.blocks.long_run_all.metrics.red_cards_against",
+      "TEAM_B.blocks.recent_last_5.metrics.red_cards_against",
+      "TEAM_B.blocks.long_run_all.metrics.red_cards_for"
+     ],
+     "observation": "TEAM_B's opponents receive red cards at 0.29/match long-run (0.4 last 5) \u2014 the highest opponent red card rate in the packet. TEAM_B itself has zero red cards in 14 matches. This suggests TEAM_B's style provokes disciplinary responses from opponents."
+    }
+   ],
+   "candidate_id": "C7",
+   "comparison": "SUBJECT_CONDITIONAL_VS_BASELINE",
+   "conditions": [
+    {
+     "dimension": "historical_venue_conditioning",
+     "value": "HOME"
+    },
+    {
+     "axis": "possession_for",
+     "dimension": "opponent_profile",
+     "value": "HIGH"
+    }
+   ],
+   "coverage_risk": "HIGH",
+   "falsifiable_question": "In TEAM_A's home matches against opponents ranked HIGH on possession_for, are TEAM_A's fouls_for and yellow_cards_for materially higher than TEAM_A's home baseline?",
+   "falsifier": "If TEAM_A's fouls_for and yellow_cards_for at home against HIGH-possession opponents are at or below TEAM_A's home baseline, the mechanism that possession-dominant opponents amplify TEAM_A's disciplinary output is unsupported.",
+   "football_mechanism": "TEAM_B's possession-dominant style forces opponents into repeated fouling to disrupt build-up play. TEAM_A's home profile shows elevated fouls and yellow cards (2.67 home vs 1.0 away), and TEAM_B's opponents receive red cards at a notable rate. The combination of TEAM_A's home fouling tendency and TEAM_B's ability to draw disciplinary responses may produce elevated card counts. The question is whether TEAM_A commits more fouls and yellow cards against possession-dominant opponents at home.",
+   "metric_perspective": "FOR",
+   "opponent": "TEAM_B",
+   "provider_requirements": [
+    "fouls FOR HOME ALL_PRIOR opponent_profile=HIGH(possession_for)",
+    "yellow_cards FOR HOME ALL_PRIOR opponent_profile=HIGH(possession_for)",
+    "fouls FOR HOME ALL_PRIOR baseline",
+    "yellow_cards FOR HOME ALL_PRIOR baseline"
+   ],
+   "research_family": "DISCIPLINE",
+   "self_critique": {
+    "cohort_equals_baseline": false,
+    "condition_equals_target": false,
+    "could_opponent_strength_explain_it": true,
+    "is_just_home_vs_away": false,
+    "is_just_recent_vs_long_run": false,
+    "is_overconditioned": false,
+    "likely_generic_enumeration_would_generate_this": false,
+    "notes": "Two conditions (home + HIGH possession opponent) are both independently motivated: TEAM_A's home/away discipline asymmetry is large and specific, and TEAM_B's possession dominance is the mechanism. The cohort (home + HIGH possession opponent) is not the same as the baseline (home only). Opponent strength could explain some of the effect. Coverage risk is high given only 6 home matches in the sample."
+   },
+   "subject": "TEAM_A",
+   "support_risk": "HIGH",
+   "target_metric": [
+    "yellow_cards",
+    "fouls"
+   ],
+   "window": "ALL_PRIOR"
+  },
+  "incremental_structure": [
+   "opponent_profile axis is possession_for (not goals_for/goals_against as in all three generics)",
+   "venue condition is HOME (historical_venue_conditioning=HOME) combined with opponent_profile \u2014 generics use opponent_profile alone",
+   "subject is TEAM_A (AWAY team in this fixture), not HOME_TEAM as in all generics",
+   "mechanism requires two measurable characteristics together: TEAM_A's home fouling elevation AND TEAM_B's possession-dominant profile \u2014 neither alone defines the cohort"
+  ],
+  "reason": "All three generic structures condition on opponent_profile axes of goals_for and/or goals_against. The candidate conditions on possession_for \u2014 a structurally distinct axis that captures a different opponent characteristic (ball-retention style rather than scoring/conceding volume). Additionally, the candidate combines a venue filter (HOME) with the opponent_profile condition, whereas none of the generics include a venue dimension at all. The subject is also TEAM_A, which is the away side in this fixture, making the home-venue conditioning non-trivial and not equivalent to the generic HOME_TEAM framing. These three structural differences \u2014 possession axis, venue \u00d7 opponent_profile joint condition, and subject identity as the away team \u2014 collectively mean the candidate tests a cohort the generics do not enumerate.",
+  "shared_structure": [
+   "SUBJECT_CONDITIONAL_VS_BASELINE comparison",
+   "FOR perspective on discipline metrics (fouls, yellow_cards)",
+   "opponent_profile condition present",
+   "ALL_PRIOR window",
+   "dual metric target (fouls + yellow_cards)"
+  ]
+ },
+ "retrieved_distances": [
+  6,
+  6,
+  6
+ ],
+ "retrieved_generic_ids": [
+  "GEN_0187208",
+  "GEN_0187223",
+  "GEN_0187496"
+ ],
+ "temperature": 0.0
+}

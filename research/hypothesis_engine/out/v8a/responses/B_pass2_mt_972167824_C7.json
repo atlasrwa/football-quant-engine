@@ -1,0 +1,114 @@
+{
+ "arm": "B",
+ "candidate_id": "C7",
+ "elapsed_s": 14.75,
+ "error": null,
+ "fixture_id": "mt_972167824",
+ "max_tokens": 8192,
+ "model_id": "us.anthropic.claude-sonnet-4-6",
+ "pass": 2,
+ "provenance": {
+  "input_tokens": 4262,
+  "output_tokens": 1523,
+  "request_sha256": "bde02bf5562dd3f7ee296489aaf2b8c5297f561b8ccdcd32bfa9aa68d3477a3f",
+  "resolved_model_id": "us.anthropic.claude-sonnet-4-6",
+  "response_sha256": "6f6712aba1d98d68d59485f4d677e5843ad515252acd7958ad1a5bd65bd4660c",
+  "stop_reason": "tool_use"
+ },
+ "record_sha256": "a68091f3ee4eff1a1e4ed31a0f75ec597b2c6fa16f3129b637ef61296bdc2c40",
+ "response": {
+  "action": "KEEP",
+  "candidate_id": "C7",
+  "closest_generic_structures": [
+   "GEN_0271466",
+   "GEN_0271471",
+   "GEN_0271482"
+  ],
+  "final_candidate": {
+   "behavioral_observations": [
+    {
+     "evidence_refs": [
+      "TEAM_B.blocks.recent_last_5.metrics.final_third_entries_for",
+      "TEAM_B.blocks.long_run_all.metrics.final_third_entries_for"
+     ],
+     "observation": "TEAM_B final_third_entries_for W5 mean 66.0 vs long_run_all 58.2 \u2014 territory entries have increased sharply in recent matches."
+    },
+    {
+     "evidence_refs": [
+      "TEAM_B.blocks.recent_last_5.metrics.big_chances_for",
+      "TEAM_B.blocks.long_run_all.metrics.big_chances_for",
+      "TEAM_B.blocks.recent_last_5.metrics.goals_for"
+     ],
+     "observation": "Despite elevated final_third_entries_for in W5, TEAM_B big_chances_for W5 mean 0.8 (vs long_run_all 2.17) and goals_for W5 mean 0.2 \u2014 a stark disconnect between territory and output."
+    },
+    {
+     "evidence_refs": [
+      "TEAM_B.raw_historical_rows.ROW:10",
+      "TEAM_B.raw_historical_rows.ROW:11",
+      "TEAM_B.raw_historical_rows.ROW:12"
+     ],
+     "observation": "TEAM_B ROW:10 (away): final_third_entries_for 75, shots_on_target_for 2, goals_for 0. ROW:11 (home): final_third_entries_for 73, shots_on_target_for 2, goals_for 1. ROW:12 (away): final_third_entries_for 36, shots_on_target_for 3, goals_for 0 \u2014 the two high-territory matches produced minimal on-target output."
+    }
+   ],
+   "candidate_id": "C7",
+   "comparison": "SUBJECT_RECENT_VS_LONG_BASELINE",
+   "conditions": [],
+   "coverage_risk": "NONE",
+   "falsifiable_question": "In TEAM_B's (Burgos) most recent 5 matches, is the ratio of shots_on_target_for and big_chances_for to final_third_entries_for materially lower than in their full prior baseline, indicating a deterioration in final-third conversion quality?",
+   "falsifier": "If TEAM_B's shots_on_target_for and big_chances_for per final_third_entries_for in W5 are not lower than their long-run baseline, the territory-to-quality disconnect is unsupported.",
+   "football_mechanism": "Burgos is entering the final third at a high rate recently but converting those entries into shots on target and big chances at a much lower rate than their long-run baseline. This suggests a structural change in how they use possession in the final third \u2014 possibly more possession-based but less direct \u2014 rather than a simple finishing variance. Measuring whether this territory-to-quality conversion ratio has changed is a distinct question from simply measuring shot volume.",
+   "metric_perspective": "FOR",
+   "opponent": "TEAM_A",
+   "provider_requirements": [
+    "final_third_entries",
+    "shots_on_target",
+    "big_chances"
+   ],
+   "research_family": "TEMPO_AND_TERRITORY",
+   "self_critique": {
+    "cohort_equals_baseline": false,
+    "condition_equals_target": false,
+    "could_opponent_strength_explain_it": true,
+    "is_just_home_vs_away": false,
+    "is_just_recent_vs_long_run": true,
+    "is_overconditioned": false,
+    "likely_generic_enumeration_would_generate_this": false,
+    "notes": "This is a recent vs long-run question but the specific tension \u2014 more territory, fewer quality chances \u2014 is not a generic enumeration output. The mechanism (final-third conversion quality) requires two metrics together. The raw rows confirm the pattern in individual matches."
+   },
+   "subject": "TEAM_B",
+   "support_risk": "LOW",
+   "target_metric": [
+    "final_third_entries",
+    "shots_on_target",
+    "big_chances"
+   ],
+   "window": "W5"
+  },
+  "incremental_structure": [
+   "candidate tests a RATIO of two metrics together (shots_on_target_for / final_third_entries_for AND big_chances_for / final_third_entries_for) rather than any single metric in isolation",
+   "the falsifiable question is about the conversion rate between territory and quality output \u2014 a joint metric structure not present in any generic",
+   "no generic tests the interaction between a territory metric (final_third_entries) and a quality metric (big_chances or shots_on_target) as a ratio within the same comparison",
+   "the mechanism requires both metrics to move in opposite directions simultaneously \u2014 elevated entries, depressed quality \u2014 which is structurally distinct from measuring either metric alone vs baseline"
+  ],
+  "reason": "Each of the three nearest generics tests a single metric (big_chances, final_third_entries, or shots_on_target) in isolation against the recent-vs-long-run baseline. The candidate's structural novelty is that it tests the RATIO of quality-output metrics to a territory-entry metric \u2014 i.e., a joint two-metric interaction \u2014 within the same W5 vs ALL_PRIOR comparison. A generic enumeration over single metrics cannot produce this structure: it would need to enumerate cross-metric ratios as a distinct grammar element. The raw-row evidence (ROW:10, ROW:11) further anchors the divergence at the match level. The self-critique correctly flags is_just_recent_vs_long_run=true, but the ratio structure means the cohort and baseline are not the same as any single-metric generic. KEEP is warranted.",
+  "shared_structure": [
+   "subject: AWAY_TEAM (TEAM_B)",
+   "comparison: SUBJECT_RECENT_VS_LONG_BASELINE",
+   "window: W5",
+   "metric_perspective: FOR",
+   "conditions: none",
+   "metrics individually: final_third_entries, big_chances, shots_on_target"
+  ]
+ },
+ "retrieved_distances": [
+  1,
+  1,
+  1
+ ],
+ "retrieved_generic_ids": [
+  "GEN_0271466",
+  "GEN_0271471",
+  "GEN_0271482"
+ ],
+ "temperature": 0.0
+}

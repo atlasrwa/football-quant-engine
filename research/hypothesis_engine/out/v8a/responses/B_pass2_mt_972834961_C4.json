@@ -1,0 +1,114 @@
+{
+ "arm": "B",
+ "candidate_id": "C4",
+ "elapsed_s": 14.14,
+ "error": null,
+ "fixture_id": "mt_972834961",
+ "max_tokens": 8192,
+ "model_id": "us.anthropic.claude-sonnet-4-6",
+ "pass": 2,
+ "provenance": {
+  "input_tokens": 4125,
+  "output_tokens": 1440,
+  "request_sha256": "83a4029d2d2263d64d7f55bf88d8c7d918d6df8a407cec60575f2bc2ce7880f5",
+  "resolved_model_id": "us.anthropic.claude-sonnet-4-6",
+  "response_sha256": "8d872357aea0fe9bf611e2b4069e96a5535ed62190f723f258d645b48bcb068b",
+  "stop_reason": "tool_use"
+ },
+ "record_sha256": "e48a5c89572e0730a2d3e9204442462a8d10a0e58bc675473e56dfae0b08790a",
+ "response": {
+  "action": "KEEP",
+  "candidate_id": "C4",
+  "closest_generic_structures": [
+   "GEN_0135871",
+   "GEN_0135882",
+   "GEN_0135885"
+  ],
+  "final_candidate": {
+   "behavioral_observations": [
+    {
+     "evidence_refs": [
+      "TEAM_B.blocks.recent_last_10.metrics.shots_on_target_against",
+      "TEAM_B.blocks.long_run_all.metrics.shots_on_target_against",
+      "TEAM_B.blocks.recent_last_10.metrics.touches_in_penalty_area_against"
+     ],
+     "observation": "Lavallois concedes 5.1 shots on target/game in last 10 (vs 4.47 long-run), and 26.4 touches in penalty area against last 10 \u2014 the defensive concession profile is worsening against opponents who attack with volume."
+    },
+    {
+     "evidence_refs": [
+      "TEAM_A.blocks.long_run_home.metrics.shots_on_target_for",
+      "TEAM_B.blocks.long_run_all.metrics.shots_on_target_against"
+     ],
+     "observation": "Amiens generates 6.6 shots on target/game at home (long_run_home) \u2014 above Lavallois' long-run concession rate of 4.47 \u2014 suggesting Amiens' home attack profile is in the HIGH tier for shot-on-target generation."
+    }
+   ],
+   "candidate_id": "C4",
+   "comparison": "SIMILAR_OPPONENT_COHORT",
+   "conditions": [
+    {
+     "axis": "attacking_output_shots_on_target",
+     "dimension": "opponent_profile",
+     "value": "HIGH"
+    }
+   ],
+   "coverage_risk": "NONE",
+   "falsifiable_question": "Does Lavallois concede more shots_on_target, final_third_entries, and touches_in_penalty_area against opponents whose attacking profile resembles Amiens' home attacking output, compared to Lavallois' overall baseline?",
+   "falsifier": "If Lavallois' defensive concession metrics against similar-profile opponents are not higher than their overall baseline, the profile-conditional defensive vulnerability is unsupported.",
+   "football_mechanism": "A defense that concedes high final third entries and penalty area touches may be particularly exposed against opponents with HIGH attacking output profiles (shots on target, final third entries). If Lavallois' defensive concessions are systematically higher against high-attack opponents, this reveals a profile-conditional vulnerability rather than a uniform defensive weakness.",
+   "metric_perspective": "AGAINST",
+   "opponent": "TEAM_A",
+   "provider_requirements": [
+    "shots_on_target",
+    "final_third_entries",
+    "touches_in_penalty_area"
+   ],
+   "research_family": "OPPONENT_PROFILE_INTERACTION",
+   "self_critique": {
+    "cohort_equals_baseline": false,
+    "condition_equals_target": false,
+    "could_opponent_strength_explain_it": false,
+    "is_just_home_vs_away": false,
+    "is_just_recent_vs_long_run": false,
+    "is_overconditioned": false,
+    "likely_generic_enumeration_would_generate_this": false,
+    "notes": "The similar-opponent cohort is the right tool here: we want to know if Lavallois' defensive concessions are specifically elevated against high-attack opponents, not just in general. The mechanism is a two-variable interaction (opponent attack profile \u00d7 Lavallois defensive shape). Retaining."
+   },
+   "similar_opponent_rationale": "Amiens at home is a high-volume attacking side (shots on target, shots inside box, final third entries all above median). The similar-opponent cohort identifies prior Lavallois opponents with a comparable attacking profile, allowing measurement of whether Lavallois' defensive concessions are systematically higher against such opponents.",
+   "subject": "TEAM_B",
+   "support_risk": "LOW",
+   "target_metric": [
+    "shots_on_target",
+    "final_third_entries",
+    "touches_in_penalty_area"
+   ],
+   "window": "ALL_PRIOR"
+  },
+  "incremental_structure": [
+   "research_family: OPPONENT_PROFILE_INTERACTION (not DEFENSIVE_CONCESSION or DEFENSIVE_SUPPRESSION)",
+   "multi-metric bundle tested jointly as a coherent defensive concession profile rather than three independent single-metric queries",
+   "opponent_profile axis explicitly conditions the cohort on HIGH attacking output (shots on target, final third entries) \u2014 the generic structures carry no conditions at all",
+   "mechanism requires two measurable characteristics TOGETHER: Lavallois defensive shape \u00d7 opponent attack-volume profile, not either alone",
+   "similar_opponent_rationale anchors cohort to Amiens' specific home attacking tier, giving the cohort a defined profile axis absent from the generics"
+  ],
+  "reason": "The three generic structures each test a single AGAINST metric for the away team against a similar-opponent cohort with no conditions. The candidate is structurally distinct on two axes: (1) it bundles all three metrics into a single OPPONENT_PROFILE_INTERACTION question whose mechanism requires the joint presence of a high-attack opponent profile AND Lavallois' defensive concession pattern \u2014 neither alone is sufficient; (2) the cohort is explicitly conditioned on an opponent_profile axis (HIGH attacking output), whereas the generics carry zero conditions. A generic enumeration over SIMILAR_OPPONENT_COHORT with no conditions would produce GEN_0135871/82/85 individually but would not produce the profile-conditional, multi-metric interaction structure here. The self-critique correctly identifies this as a two-variable interaction rather than a uniform defensive weakness question. KEEP is warranted.",
+  "shared_structure": [
+   "subject: TEAM_B (away team)",
+   "comparison: SIMILAR_OPPONENT_COHORT",
+   "metric_perspective: AGAINST",
+   "window: ALL_PRIOR",
+   "conditions: []",
+   "target_metrics overlap: shots_on_target, final_third_entries, touches_in_penalty_area"
+  ]
+ },
+ "retrieved_distances": [
+  1,
+  1,
+  1
+ ],
+ "retrieved_generic_ids": [
+  "GEN_0135871",
+  "GEN_0135882",
+  "GEN_0135885"
+ ],
+ "temperature": 0.0
+}

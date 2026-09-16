@@ -1,0 +1,53 @@
+{
+ "arm": "B",
+ "candidate_id": "C4",
+ "elapsed_s": 8.41,
+ "error": null,
+ "fixture_id": "mt_629405468",
+ "max_tokens": 8192,
+ "model_id": "us.anthropic.claude-sonnet-4-6",
+ "pass": 2,
+ "provenance": {
+  "input_tokens": 4383,
+  "output_tokens": 538,
+  "request_sha256": "4a0d959de48171f737b1adc2349c832567fdecbf3a31a2b36ce70655177c94a5",
+  "resolved_model_id": "us.anthropic.claude-sonnet-4-6",
+  "response_sha256": "0e17873db7f654baecc13fe8e05acaa9f544565f5866a406af6d9bf62cbd30a3",
+  "stop_reason": "tool_use"
+ },
+ "record_sha256": "5477798715e4589da8db0b97025b8a56bf9725d8f6e74bb738574cd4aad57ab1",
+ "response": {
+  "action": "ABSTAIN",
+  "candidate_id": "C4",
+  "closest_generic_structures": [
+   "GEN_0323082",
+   "GEN_0323085",
+   "GEN_0323370"
+  ],
+  "incremental_structure": [
+   "additional condition: competition=SAME (Ligue 1 filter)",
+   "dual-metric joint question (shots_on_target AND touches_in_penalty_area together)",
+   "no opponent_profile condition applied"
+  ],
+  "reason": "The candidate's own self-critique flags `is_just_home_vs_away=true` and `likely_generic_enumeration_would_generate_this=true`, and that assessment is correct. Structurally, the candidate is TEAM_B (away team) AGAINST, SUBJECT_VENUE_BASELINE, ALL_PRIOR, for shots_on_target and touches_in_penalty_area \u2014 which is exactly what GEN_0323082 and GEN_0323085 test, differing only in that those generics carry an opponent_profile condition (HIGH/HIGH) while the candidate drops it. Removing a condition makes the structure strictly more generic, not more novel. The competition=SAME filter and the dual-metric framing are cosmetic: they do not change the cohort-vs-baseline contrast being tested. The candidate's own notes acknowledge the more interesting question would involve an opponent-profile interaction resembling TEAM_A, but that refinement is not supported by the evidence as written \u2014 the behavioral observations cite only raw away vs. all-sample figures with no opponent-profile breakdown. There is no incremental structure that survives scrutiny, so ABSTAIN is the correct outcome.",
+  "shared_structure": [
+   "subject=AWAY_TEAM (TEAM_B)",
+   "metric_perspective=AGAINST",
+   "comparison=SUBJECT_VENUE_BASELINE",
+   "window=ALL_PRIOR",
+   "target_metrics=[shots_on_target, touches_in_penalty_area]",
+   "condition=historical_venue_conditioning:AWAY vs home baseline"
+  ]
+ },
+ "retrieved_distances": [
+  6,
+  6,
+  6
+ ],
+ "retrieved_generic_ids": [
+  "GEN_0323082",
+  "GEN_0323085",
+  "GEN_0323370"
+ ],
+ "temperature": 0.0
+}

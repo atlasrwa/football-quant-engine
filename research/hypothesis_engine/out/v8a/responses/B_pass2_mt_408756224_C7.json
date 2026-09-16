@@ -1,0 +1,130 @@
+{
+ "arm": "B",
+ "candidate_id": "C7",
+ "elapsed_s": 12.83,
+ "error": null,
+ "fixture_id": "mt_408756224",
+ "max_tokens": 8192,
+ "model_id": "us.anthropic.claude-sonnet-4-6",
+ "pass": 2,
+ "provenance": {
+  "input_tokens": 4414,
+  "output_tokens": 1407,
+  "request_sha256": "039afd2767c40aa675b91fe86dc1150ca4d011311a813bdabf56a005c4a6fcb7",
+  "resolved_model_id": "us.anthropic.claude-sonnet-4-6",
+  "response_sha256": "e6acf1acb5fe036a1031431480e54b0345a98ee605137e2ab01f9176cf1bd6bb",
+  "stop_reason": "tool_use"
+ },
+ "record_sha256": "633965c699c00829eaeb4c92c5345c6251b43580164deed173307d94ae5f2f33",
+ "response": {
+  "action": "KEEP",
+  "candidate_id": "C7",
+  "closest_generic_structures": [
+   "GEN_0006488",
+   "GEN_0006503",
+   "GEN_0006776"
+  ],
+  "final_candidate": {
+   "behavioral_observations": [
+    {
+     "evidence_refs": [
+      "TEAM_B.blocks.long_run_all.metrics.fouls_for",
+      "TEAM_B.blocks.long_run_away.metrics.fouls_for",
+      "TEAM_B.blocks.long_run_all.metrics.yellow_cards_for",
+      "TEAM_B.blocks.long_run_away.metrics.yellow_cards_for",
+      "TEAM_B.blocks.long_run_all.metrics.fouls_against"
+     ],
+     "observation": "Derby commit 12.82 fouls per match long-run all and 12.5 away (long-run away), and accumulate 2.35 yellow cards long-run all and 2.5 away. Their fouls_for is consistently higher than their fouls_against (9.29 long-run all)."
+    },
+    {
+     "evidence_refs": [
+      "TEAM_B.blocks.recent_last_5.metrics.fouls_for",
+      "TEAM_B.blocks.recent_last_5.metrics.yellow_cards_for"
+     ],
+     "observation": "Derby's recent last-5 fouls_for is 13.5 and yellow_cards_for is 2.75 \u2014 both above their long-run averages, suggesting a recent uptick in disciplinary activity."
+    },
+    {
+     "evidence_refs": [
+      "TEAM_A.blocks.long_run_home.metrics.fouls_against"
+     ],
+     "observation": "Leeds draw 13.09 fouls against at home (long-run home) \u2014 opponents foul Leeds frequently at home, consistent with Leeds' high possession and pressing style forcing defensive fouls."
+    }
+   ],
+   "candidate_id": "C7",
+   "comparison": "OPPONENT_PROFILE_INTERACTION",
+   "conditions": [
+    {
+     "dimension": "historical_venue_conditioning",
+     "value": "AWAY"
+    },
+    {
+     "axis": "possession_for",
+     "dimension": "opponent_profile",
+     "value": "HIGH"
+    },
+    {
+     "dimension": "competition",
+     "value": "SAME"
+    }
+   ],
+   "coverage_risk": "LOW",
+   "falsifiable_question": "Does Derby County's fouls_for and yellow_cards_for in away Championship matches against HIGH-possession opponents exceed their overall away Championship baseline?",
+   "falsifier": "If Derby's fouls and yellow cards away against HIGH-possession opponents are at or below their overall away baseline, the opponent-possession interaction on Derby's discipline is unsupported.",
+   "football_mechanism": "Derby's structural tendency to commit more fouls than they draw (12.82 vs 9.29 long-run) combined with Leeds' home possession dominance (which forces opponents into defensive fouls) may produce elevated foul and card counts. When Derby face HIGH-possession opponents, their foul rate may increase further as they attempt to disrupt play.",
+   "metric_perspective": "FOR",
+   "opponent": "TEAM_A",
+   "provider_requirements": [
+    "fouls_for",
+    "yellow_cards_for",
+    "historical_venue_conditioning",
+    "opponent_profile",
+    "competition"
+   ],
+   "research_family": "DISCIPLINE",
+   "self_critique": {
+    "cohort_equals_baseline": false,
+    "condition_equals_target": false,
+    "could_opponent_strength_explain_it": false,
+    "is_just_home_vs_away": false,
+    "is_just_recent_vs_long_run": false,
+    "is_overconditioned": false,
+    "likely_generic_enumeration_would_generate_this": false,
+    "notes": "The opponent profile condition (HIGH possession) is directly motivated by Leeds' measured home possession profile. Derby's structural foul asymmetry (more fouls committed than drawn) is the behavioural anchor. Coverage risk is LOW given Derby only have 9 away matches, but the question is well-grounded."
+   },
+   "subject": "TEAM_B",
+   "support_risk": "LOW",
+   "target_metric": [
+    "fouls",
+    "yellow_cards"
+   ],
+   "window": "ALL_PRIOR"
+  },
+  "incremental_structure": [
+   "comparison: OPPONENT_PROFILE_INTERACTION vs LEAGUE_ENVIRONMENT_BASELINE in generics",
+   "opponent profile axis: possession_for (HIGH) vs goals_for/goals_against axes in generics",
+   "additional competition condition (SAME) not present in generics",
+   "mechanism requires two measurable characteristics together: Derby's structural foul asymmetry (fouls_for > fouls_against) AND opponent HIGH-possession profile, not either alone",
+   "baseline is subject's own away Championship baseline, not league environment"
+  ],
+  "reason": "The three generic structures all use LEAGUE_ENVIRONMENT_BASELINE and condition on opponent_profile axes of goals_for/goals_against (HIGH/MID). The candidate differs on three structural dimensions simultaneously: (1) the comparison is OPPONENT_PROFILE_INTERACTION rather than LEAGUE_ENVIRONMENT_BASELINE \u2014 the cohort is Derby's own away baseline, not the league environment; (2) the opponent profile axis is possession_for (HIGH), not goals_for or goals_against \u2014 this is a distinct profiling axis that the generics do not cover; (3) the mechanism requires the joint presence of Derby's measured foul asymmetry (fouls_for materially exceeds fouls_against) AND the opponent's possession dominance, making it a two-characteristic interaction rather than a single-axis conditioning. These three differences together constitute genuine structural novelty beyond rewording.",
+  "shared_structure": [
+   "subject: AWAY_TEAM (TEAM_B)",
+   "metric perspective: FOR",
+   "target metrics: fouls, yellow_cards",
+   "window: ALL_PRIOR",
+   "discipline research family",
+   "venue conditioning: AWAY"
+  ]
+ },
+ "retrieved_distances": [
+  11,
+  11,
+  11
+ ],
+ "retrieved_generic_ids": [
+  "GEN_0006488",
+  "GEN_0006503",
+  "GEN_0006776"
+ ],
+ "temperature": 0.0
+}

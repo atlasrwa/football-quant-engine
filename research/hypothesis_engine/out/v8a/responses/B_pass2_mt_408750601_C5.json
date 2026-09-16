@@ -1,0 +1,53 @@
+{
+ "arm": "B",
+ "candidate_id": "C5",
+ "elapsed_s": 7.83,
+ "error": null,
+ "fixture_id": "mt_408750601",
+ "max_tokens": 8192,
+ "model_id": "us.anthropic.claude-sonnet-4-6",
+ "pass": 2,
+ "provenance": {
+  "input_tokens": 4116,
+  "output_tokens": 500,
+  "request_sha256": "84e61b245ef5d44c92a5be07a95eac076b1039365c11c155d784c54782205ea5",
+  "resolved_model_id": "us.anthropic.claude-sonnet-4-6",
+  "response_sha256": "44a1b122cf6e5da2b987db49f978e6bbf0d1cdca03f085a4c2bb944fa102887e",
+  "stop_reason": "tool_use"
+ },
+ "record_sha256": "10dd9278e154152fdef42277aa5c4aaead5d82a060bc32b3c56db96addab99c7",
+ "response": {
+  "action": "ABSTAIN",
+  "candidate_id": "C5",
+  "closest_generic_structures": [
+   "GEN_0317232",
+   "GEN_0317248",
+   "GEN_0316944"
+  ],
+  "incremental_structure": [
+   "Two metrics bundled together (accurate_crosses + shots_inside_box) rather than one at a time",
+   "Candidate frames a joint crossing-and-box-entry mechanism rather than two independent venue questions"
+  ],
+  "reason": "The candidate's statistical structure is fully covered by the nearest generic structures. GEN_0317232 tests accurate_crosses FOR the away team vs SUBJECT_VENUE_BASELINE under AWAY conditioning over ALL_PRIOR, and GEN_0317248 tests shots_inside_box under the identical spine. The only claimed increment is that the two metrics are bundled into a single candidate to tell a joint 'wide-delivery mechanism' story. However, bundling two metrics that each already exist as independent generic structures does not constitute a new statistical question: the cohort, baseline, perspective, window, and conditions are identical for both metrics individually. The self-critique correctly flags is_just_home_vs_away=true, and the football mechanism (venue suppresses crossing and box entries) is a direct restatement of what both generic structures already test. No genuinely different measurable interaction \u2014 such as a second conditioning dimension, a different comparison type, or a metric not covered by the enumeration \u2014 is present. ABSTAIN is the correct outcome.",
+  "shared_structure": [
+   "subject=AWAY_TEAM (TEAM_B)",
+   "comparison=SUBJECT_VENUE_BASELINE",
+   "condition=historical_venue_conditioning:AWAY",
+   "metric_perspective=FOR",
+   "window=ALL_PRIOR",
+   "accurate_crosses tested in GEN_0317232",
+   "shots_inside_box tested in GEN_0317248"
+  ]
+ },
+ "retrieved_distances": [
+  1,
+  1,
+  3
+ ],
+ "retrieved_generic_ids": [
+  "GEN_0317232",
+  "GEN_0317248",
+  "GEN_0316944"
+ ],
+ "temperature": 0.0
+}

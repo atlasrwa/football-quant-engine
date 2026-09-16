@@ -1,0 +1,112 @@
+{
+ "arm": "B",
+ "candidate_id": "C4",
+ "elapsed_s": 13.06,
+ "error": null,
+ "fixture_id": "mt_257018027",
+ "max_tokens": 8192,
+ "model_id": "us.anthropic.claude-sonnet-4-6",
+ "pass": 2,
+ "provenance": {
+  "input_tokens": 4167,
+  "output_tokens": 1416,
+  "request_sha256": "e7d399ada1e49aa7c3581c016989b1b97b928f450a6bef23bcc089548ba52f59",
+  "resolved_model_id": "us.anthropic.claude-sonnet-4-6",
+  "response_sha256": "f057c4cb35f12c85f15ea10b5ef7d7350670b674e9dbcc713bd04d2445243772",
+  "stop_reason": "tool_use"
+ },
+ "record_sha256": "8cd34e22e92c44a04a1056a16ed4c784d109f2ea92f71bf4455731764ce0bc30",
+ "response": {
+  "action": "KEEP",
+  "candidate_id": "C4",
+  "closest_generic_structures": [
+   "GEN_0001158",
+   "GEN_0001160",
+   "GEN_0001446"
+  ],
+  "final_candidate": {
+   "behavioral_observations": [
+    {
+     "evidence_refs": [
+      "TEAM_A.blocks.long_run_all.metrics.corner_kicks_for",
+      "TEAM_A.blocks.recent_last_5.metrics.corner_kicks_for",
+      "TEAM_B.blocks.long_run_all.metrics.corner_kicks_against",
+      "TEAM_B.blocks.recent_last_5.metrics.corner_kicks_against"
+     ],
+     "observation": "PSG corner_kicks_for long-run mean 6.92, W5 5.8. Nantes corner_kicks_against long-run 6.0, W5 5.2 \u2014 Nantes concedes corners at a rate consistent with PSG's generation rate."
+    },
+    {
+     "evidence_refs": [
+      "TEAM_B.blocks.long_run_all.metrics.fouls_for",
+      "TEAM_B.blocks.recent_last_5.metrics.fouls_for",
+      "TEAM_A.blocks.long_run_all.metrics.possession_for"
+     ],
+     "observation": "Nantes fouls_for long-run 12.25, W5 13.4 \u2014 rising foul rate. PSG possession dominance (68.7%) means Nantes must foul frequently to disrupt play, generating free kicks for PSG."
+    }
+   ],
+   "candidate_id": "C4",
+   "comparison": "OPPONENT_PROFILE_INTERACTION",
+   "conditions": [
+    {
+     "axis": "fouls_committed_per_match",
+     "dimension": "opponent_profile",
+     "value": "HIGH"
+    }
+   ],
+   "coverage_risk": "NONE",
+   "falsifiable_question": "Does PSG's corner_kicks_for in matches against opponents with a HIGH fouls_committed_per_match profile exceed PSG's overall corner_kicks_for baseline?",
+   "falsifier": "If PSG's corner_kicks_for against high-fouling opponents is at or below its overall baseline, the mechanism linking opponent foul rate to PSG set-piece generation is unsupported.",
+   "football_mechanism": "A high-possession team that generates wide pressure and crosses forces corner kicks when deliveries are blocked or deflected. When the opponent commits fouls at an elevated rate (Nantes W5 13.4), the possession team also accumulates free kicks in dangerous areas. Together these two set-piece sources may be elevated when PSG faces foul-prone, low-possession opponents.",
+   "metric_perspective": "FOR",
+   "opponent": "TEAM_B",
+   "provider_requirements": [
+    "corner_kicks",
+    "fouls"
+   ],
+   "research_family": "SET_PIECE_GENERATION",
+   "self_critique": {
+    "cohort_equals_baseline": false,
+    "condition_equals_target": false,
+    "could_opponent_strength_explain_it": false,
+    "is_just_home_vs_away": false,
+    "is_just_recent_vs_long_run": false,
+    "is_overconditioned": false,
+    "likely_generic_enumeration_would_generate_this": false,
+    "notes": "The mechanism requires two measurable characteristics together: PSG's crossing/wide pressure AND opponent's foul rate. The opponent_profile axis (fouls_committed_per_match) is one of the frozen dimensions. The question is specific and not derivable from a single metric scan."
+   },
+   "subject": "TEAM_A",
+   "support_risk": "LOW",
+   "target_metric": [
+    "corner_kicks",
+    "fouls"
+   ],
+   "window": "ALL_PRIOR"
+  },
+  "incremental_structure": [
+   "comparison: OPPONENT_PROFILE_INTERACTION vs LEAGUE_ENVIRONMENT_BASELINE in generics",
+   "opponent_profile axis: fouls_committed_per_match (not goals_for as in all three generics)",
+   "dual-metric target: corner_kicks AND fouls together as a joint set-piece generation mechanism",
+   "mechanism requires two measurable characteristics simultaneously: subject's wide-pressure/crossing tendency AND opponent's foul rate",
+   "no venue conditioning in candidate (not restricted to HOME_TEAM role)"
+  ],
+  "reason": "The three generic structures all use LEAGUE_ENVIRONMENT_BASELINE as the comparison and condition on opponent_profile axis=goals_for (HIGH or MID). The candidate differs on three structural axes simultaneously: (1) the comparison is OPPONENT_PROFILE_INTERACTION, not LEAGUE_ENVIRONMENT_BASELINE \u2014 it asks whether PSG's own baseline shifts when facing a specific opponent profile, not how PSG compares to the league; (2) the opponent_profile conditioning axis is fouls_committed_per_match, not goals_for \u2014 a categorically different profiling dimension; (3) the target is a dual-metric joint question (corner_kicks AND fouls together as co-elevated set-piece sources), not a single-metric scan. The football mechanism explicitly requires both characteristics to be present simultaneously, which is not captured by any single-metric generic. These three differences together constitute genuine structural novelty beyond rewording.",
+  "shared_structure": [
+   "subject: HOME_TEAM (TEAM_A)",
+   "metric_perspective: FOR",
+   "target_metrics include corner_kicks and fouls",
+   "window: ALL_PRIOR",
+   "opponent_profile condition present"
+  ]
+ },
+ "retrieved_distances": [
+  7,
+  7,
+  7
+ ],
+ "retrieved_generic_ids": [
+  "GEN_0001158",
+  "GEN_0001160",
+  "GEN_0001446"
+ ],
+ "temperature": 0.0
+}

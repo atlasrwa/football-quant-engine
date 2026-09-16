@@ -1,0 +1,119 @@
+{
+ "arm": "B",
+ "candidate_id": "C8",
+ "elapsed_s": 18.25,
+ "error": null,
+ "fixture_id": "mt_196560745",
+ "max_tokens": 8192,
+ "model_id": "us.anthropic.claude-sonnet-4-6",
+ "pass": 2,
+ "provenance": {
+  "input_tokens": 4219,
+  "output_tokens": 1548,
+  "request_sha256": "1c98ab8d650dfb107937f2086535a741ca56b17ee25ac97398b0fe85ea73ce64",
+  "resolved_model_id": "us.anthropic.claude-sonnet-4-6",
+  "response_sha256": "019b3bee568b801108670fe251854f02dca9650cd73c0f4028c2e90c0dbf249f",
+  "stop_reason": "tool_use"
+ },
+ "record_sha256": "9bc949c235eb8bdb323b0e3c1e5191453ce8e402d3be7d0b4063586ad02fa421",
+ "response": {
+  "action": "REFINE",
+  "candidate_id": "C8",
+  "closest_generic_structures": [
+   "GEN_0272375",
+   "GEN_0272360",
+   "GEN_0272312"
+  ],
+  "final_candidate": {
+   "behavioral_observations": [
+    {
+     "evidence_refs": [
+      "TEAM_B.blocks.long_run_all.metrics.yellow_cards_for",
+      "TEAM_B.blocks.recent_last_10.metrics.yellow_cards_for",
+      "TEAM_B.blocks.recent_last_5.metrics.yellow_cards_for"
+     ],
+     "observation": "Leicester's yellow_cards_for long-run all is 2.07 but rises to 3.1 in W10 and 3.0 in W5 \u2014 a sustained increase in yellow cards received recently."
+    },
+    {
+     "evidence_refs": [
+      "TEAM_B.blocks.long_run_all.metrics.fouls_for",
+      "TEAM_B.blocks.recent_last_10.metrics.fouls_for",
+      "TEAM_B.blocks.recent_last_5.metrics.fouls_for"
+     ],
+     "observation": "Leicester's fouls_for long-run all is 10.5 but rises to 11.3 in W10 and 11.2 in W5 \u2014 a modest but consistent increase in fouls committed, co-moving with the yellow card increase."
+    },
+    {
+     "evidence_refs": [
+      "TEAM_B.blocks.long_run_all.metrics.tackles_for",
+      "TEAM_B.blocks.recent_last_10.metrics.tackles_for",
+      "TEAM_B.blocks.recent_last_5.metrics.tackles_for"
+     ],
+     "observation": "Leicester's tackles_for has risen from 17.5 long-run to 20.8 in W10 and 21.0 in W5 \u2014 elevated tackling activity that co-varies with the foul and card increases, consistent with a shift to more physical defending."
+    }
+   ],
+   "candidate_id": "C8",
+   "comparison": "SUBJECT_RECENT_VS_LONG_BASELINE",
+   "conditions": [
+    {
+     "dimension": "competition",
+     "value": "SAME"
+    }
+   ],
+   "coverage_risk": "NONE",
+   "falsifiable_question": "Do Leicester's tackles_for, fouls_for, and yellow_cards_for in the last 10 EPL matches all exceed their overall long-run EPL baseline simultaneously, consistent with a joint physical-defending shift rather than isolated metric noise?",
+   "falsifier": "If Leicester's recent W10 tackles are not elevated above their long-run baseline, or if fouls and yellow cards are elevated without a corresponding tackling increase, the joint physical-defending mechanism is unsupported.",
+   "football_mechanism": "When a team's tackling rate rises materially above its own long-run baseline, the increased physical contest volume tends to produce a proportional rise in fouls and yellow cards. The mechanism requires both the tackling elevation AND the discipline elevation to be present simultaneously: a rise in tackles without a corresponding foul/card rise would indicate improved tackling efficiency, not a discipline deterioration. The joint co-movement of all three metrics in Leicester's recent W10 window is the testable structure.",
+   "metric_perspective": "FOR",
+   "opponent": "TEAM_A",
+   "provider_requirements": [
+    "yellow_cards",
+    "fouls",
+    "tackles"
+   ],
+   "research_family": "DISCIPLINE",
+   "self_critique": {
+    "cohort_equals_baseline": false,
+    "condition_equals_target": false,
+    "could_opponent_strength_explain_it": true,
+    "is_just_home_vs_away": false,
+    "is_just_recent_vs_long_run": true,
+    "is_overconditioned": false,
+    "likely_generic_enumeration_would_generate_this": false,
+    "notes": "The single-metric versions of this question (yellow_cards alone, fouls alone) are fully generic. The incremental structure is the joint co-movement requirement across tackles + fouls + yellow_cards as a mechanically linked cluster. Opponent strength could partly explain elevated tackling, but the joint co-movement pattern across all three metrics in the same window is the distinguishing test."
+   },
+   "subject": "TEAM_B",
+   "support_risk": "LOW",
+   "target_metric": [
+    "yellow_cards",
+    "fouls",
+    "tackles"
+   ],
+   "window": "W10"
+  },
+  "incremental_structure": [
+   "third metric: tackles_for used as a co-varying behavioural driver (not just a standalone discipline metric)",
+   "multi-metric joint observation: yellow_cards + fouls + tackles treated as a mechanically linked cluster rather than independent signals",
+   "football_mechanism requires TWO measurable characteristics together: elevated tackling rate AND elevated discipline metrics, not either alone"
+  ],
+  "reason": "The candidate's core statistical structure \u2014 SUBJECT_RECENT_VS_LONG_BASELINE, FOR, W10, competition=SAME \u2014 is fully shared with GEN_0272375 (yellow_cards) and GEN_0272360 (fouls). The football story (possession loss \u2192 more physical defending \u2192 cards) does not change the structure. However, the candidate does contain one genuinely incremental element: it uses tackles_for as a co-varying behavioural driver to mechanically link the discipline deterioration, requiring that BOTH elevated tackling rate AND elevated discipline metrics are observed together. That joint-metric structure is not present in any of the three generic comparators, which each test a single metric in isolation. A REFINE is warranted to make this joint-metric dependency explicit in the candidate structure rather than leaving it buried in prose, while stripping the parts that are purely generic rewording.",
+  "shared_structure": [
+   "subject=TEAM_B (away team)",
+   "comparison=SUBJECT_RECENT_VS_LONG_BASELINE",
+   "window=W10",
+   "conditions=[competition=SAME]",
+   "metric_perspective=FOR",
+   "target_metrics include yellow_cards and fouls"
+  ]
+ },
+ "retrieved_distances": [
+  1,
+  1,
+  3
+ ],
+ "retrieved_generic_ids": [
+  "GEN_0272360",
+  "GEN_0272375",
+  "GEN_0272312"
+ ],
+ "temperature": 0.0
+}

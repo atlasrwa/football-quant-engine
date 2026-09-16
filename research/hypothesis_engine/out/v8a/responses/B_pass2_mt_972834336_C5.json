@@ -1,0 +1,117 @@
+{
+ "arm": "B",
+ "candidate_id": "C5",
+ "elapsed_s": 16.29,
+ "error": null,
+ "fixture_id": "mt_972834336",
+ "max_tokens": 8192,
+ "model_id": "us.anthropic.claude-sonnet-4-6",
+ "pass": 2,
+ "provenance": {
+  "input_tokens": 4517,
+  "output_tokens": 1801,
+  "request_sha256": "b925aadd908ea17657c48ade481cf737198e12605b5fd08484781514865c01a2",
+  "resolved_model_id": "us.anthropic.claude-sonnet-4-6",
+  "response_sha256": "d2fbf712b77c54790c82b4963403386451872a5baddad3ac5f16c6c40da7dab0",
+  "stop_reason": "tool_use"
+ },
+ "record_sha256": "7443301a2ad92b21124891fc92a7b9278161d5a90c6a8e433ec8abbbefc8cc1c",
+ "response": {
+  "action": "KEEP",
+  "candidate_id": "C5",
+  "closest_generic_structures": [
+   "GEN_0135882",
+   "GEN_0135880",
+   "GEN_0135904"
+  ],
+  "final_candidate": {
+   "behavioral_observations": [
+    {
+     "evidence_refs": [
+      "TEAM_B.blocks.long_run_all.metrics.shots_inside_box_against",
+      "TEAM_B.blocks.recent_last_5.metrics.shots_inside_box_against",
+      "TEAM_B.blocks.long_run_all.metrics.shots_against"
+     ],
+     "observation": "TEAM_B concedes only 6.6 shots inside the box long-run (6.8 last 5) despite conceding 11.7 total shots \u2014 a low inside-box concession rate relative to total shots. This suggests TEAM_B pushes opponents to shoot from outside the box."
+    },
+    {
+     "evidence_refs": [
+      "TEAM_B.blocks.long_run_all.metrics.shots_on_target_against",
+      "TEAM_B.blocks.recent_last_5.metrics.shots_on_target_against",
+      "TEAM_B.blocks.long_run_all.metrics.corner_kicks_against",
+      "TEAM_B.blocks.recent_last_5.metrics.corner_kicks_against"
+     ],
+     "observation": "TEAM_B's shots on target conceded has fallen from 4.4 long-run to 3.4 last 5, while corners conceded rose from 4.9 to 6.6 \u2014 a tension suggesting opponents are generating wide/set-piece pressure but not converting it into on-target shots."
+    },
+    {
+     "evidence_refs": [
+      "TEAM_A.blocks.long_run_all.metrics.shots_for",
+      "TEAM_A.blocks.long_run_all.metrics.shots_on_target_for",
+      "TEAM_A.blocks.long_run_all.metrics.shots_inside_box_for",
+      "TEAM_A.blocks.recent_last_5.metrics.shots_inside_box_for"
+     ],
+     "observation": "TEAM_A generates 10.2 shots long-run with only 3.7 on target \u2014 a low on-target conversion rate. TEAM_A's shots inside box are 7.6 long-run, rising to 9.2 last 5."
+    }
+   ],
+   "candidate_id": "C5",
+   "comparison": "SIMILAR_OPPONENT_COHORT",
+   "conditions": [],
+   "coverage_risk": "LOW",
+   "falsifiable_question": "Against opponents whose pre-fixture defensive profile is similar to TEAM_A's (low possession, high fouls, moderate goals conceded), does TEAM_B concede fewer shots_on_target and shots_inside_box than its overall baseline?",
+   "falsifier": "If TEAM_B's shots_on_target_against and shots_inside_box_against against similar-profile opponents are at or above its overall baseline, the mechanism that TEAM_A's attacking profile is suppressed by TEAM_B's defensive structure is unsupported.",
+   "football_mechanism": "TEAM_B's defensive structure appears to suppress inside-box shots and shots on target even when conceding high corner and wide-pressure volumes. Against TEAM_A \u2014 a side with a historically low shots-on-target rate (3.7 long-run) \u2014 TEAM_B's defensive suppression may be particularly effective. The question is whether TEAM_B concedes fewer shots on target and inside-box shots against opponents with a similar attacking profile to TEAM_A (low shot quality, high shot volume, low possession).",
+   "metric_perspective": "AGAINST",
+   "opponent": "TEAM_A",
+   "provider_requirements": [
+    "shots_on_target AGAINST ALL_PRIOR SIMILAR_OPPONENT_COHORT",
+    "shots_inside_box AGAINST ALL_PRIOR SIMILAR_OPPONENT_COHORT",
+    "shots_on_target AGAINST ALL_PRIOR baseline",
+    "shots_inside_box AGAINST ALL_PRIOR baseline"
+   ],
+   "research_family": "DEFENSIVE_SUPPRESSION",
+   "self_critique": {
+    "cohort_equals_baseline": false,
+    "condition_equals_target": false,
+    "could_opponent_strength_explain_it": true,
+    "is_just_home_vs_away": false,
+    "is_just_recent_vs_long_run": false,
+    "is_overconditioned": false,
+    "likely_generic_enumeration_would_generate_this": false,
+    "notes": "Opponent strength is a confounder \u2014 weaker opponents generate fewer shots on target. The similar-opponent cohort partially controls for this. The specific mechanism (TEAM_B suppresses inside-box shots even under wide pressure) is grounded in the tension between TEAM_B's rising corners conceded and falling shots on target conceded."
+   },
+   "similar_opponent_rationale": "TEAM_A is a low-possession, high-foul, high-clearance side with moderate goals conceded. The frozen similarity dimensions (goals conceded, shots on target conceded, shots inside box conceded, fouls, yellow cards) will capture opponents with a similar defensive profile, which correlates with TEAM_A's low-possession, physically engaged style. This tests whether TEAM_B's defensive suppression is amplified against this opponent type.",
+   "subject": "TEAM_B",
+   "support_risk": "LOW",
+   "target_metric": [
+    "shots_on_target",
+    "shots_inside_box"
+   ],
+   "window": "ALL_PRIOR"
+  },
+  "incremental_structure": [
+   "dual-metric joint test (shots_on_target AND shots_inside_box together, not separately)",
+   "mechanism grounded in tension between rising corners_against and falling shots_on_target_against \u2014 a two-signal interaction not present in any generic structure",
+   "opponent profile rationale explicitly tied to TEAM_A's low shot-quality / high-volume / low-possession attacking fingerprint as the cohort-defining axis",
+   "falsifiable question requires both metrics to move below baseline simultaneously, not either in isolation"
+  ],
+  "reason": "The three generic structures each test a single metric (shots_inside_box or shots_on_target) in isolation under SIMILAR_OPPONENT_COHORT / AGAINST / AWAY_TEAM. Candidate C5 is structurally distinct in two ways: (1) it jointly tests both metrics together, with the mechanism requiring the co-movement of shots_on_target_against AND shots_inside_box_against relative to baseline \u2014 a two-signal interaction that none of the generics capture; (2) the cohort-defining rationale is anchored to a specific opponent-profile axis (low possession, high fouls, low shot quality) derived from observed TEAM_A characteristics, whereas the generics carry no conditions at all. The additional signal \u2014 the tension between TEAM_B's rising corners_against and falling shots_on_target_against \u2014 is a behavioural interaction that motivates why the cohort contrast is non-trivial and is not present in any of the retrieved structures. The subject mapping (TEAM_B = away team) is consistent with the generics, so that dimension is shared, but the joint-metric mechanism and the opponent-profile-conditioned cohort rationale constitute genuine incremental structure.",
+  "shared_structure": [
+   "subject: AWAY_TEAM (TEAM_B)",
+   "comparison: SIMILAR_OPPONENT_COHORT",
+   "metric_perspective: AGAINST",
+   "target_metrics: shots_inside_box, shots_on_target",
+   "window: ALL_PRIOR"
+  ]
+ },
+ "retrieved_distances": [
+  1,
+  1,
+  3
+ ],
+ "retrieved_generic_ids": [
+  "GEN_0135880",
+  "GEN_0135882",
+  "GEN_0135904"
+ ],
+ "temperature": 0.0
+}

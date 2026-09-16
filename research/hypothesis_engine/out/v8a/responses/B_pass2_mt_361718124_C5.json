@@ -1,0 +1,114 @@
+{
+ "arm": "B",
+ "candidate_id": "C5",
+ "elapsed_s": 13.1,
+ "error": null,
+ "fixture_id": "mt_361718124",
+ "max_tokens": 8192,
+ "model_id": "us.anthropic.claude-sonnet-4-6",
+ "pass": 2,
+ "provenance": {
+  "input_tokens": 4200,
+  "output_tokens": 1406,
+  "request_sha256": "3132b9d9ffc09c276cf68db205335139050a21115f85bd9ba958ca499e4ab123",
+  "resolved_model_id": "us.anthropic.claude-sonnet-4-6",
+  "response_sha256": "131dc2c3876d4c3802d987ed681e29d07cb6bb5c6fb47f675a3ba6d06588291f",
+  "stop_reason": "tool_use"
+ },
+ "record_sha256": "393c729e92f1274b52a1e3dc4ca22f04b8c7e48be0cf0213e70c1a28c3a08faa",
+ "response": {
+  "action": "KEEP",
+  "candidate_id": "C5",
+  "closest_generic_structures": [
+   "GEN_0272352",
+   "GEN_0272353",
+   "GEN_0272354"
+  ],
+  "final_candidate": {
+   "behavioral_observations": [
+    {
+     "evidence_refs": [
+      "TEAM_B.blocks.long_run_all.metrics.final_third_entries_for",
+      "TEAM_B.blocks.recent_last_10.metrics.final_third_entries_for",
+      "TEAM_B.blocks.recent_last_5.metrics.final_third_entries_for",
+      "TEAM_B.blocks.long_run_all.metrics.shots_inside_box_for",
+      "TEAM_B.blocks.recent_last_5.metrics.shots_inside_box_for"
+     ],
+     "observation": "Villa's final third entries FOR have declined from 48.6 (long-run) to 43.6 (W10) to 40.4 (W5), while shots inside box FOR remain stable at 10.6 (W5) vs 9.5 (long-run) \u2014 territorial access is declining but box shots are not."
+    },
+    {
+     "evidence_refs": [
+      "TEAM_B.blocks.long_run_all.metrics.possession_for",
+      "TEAM_B.blocks.recent_last_10.metrics.possession_for",
+      "TEAM_B.blocks.recent_last_5.metrics.possession_for"
+     ],
+     "observation": "Villa's possession FOR has dropped from 50.2 (long-run) to 48.8 (W10) to 45.2 (W5), suggesting a recent shift toward less possession-based play."
+    }
+   ],
+   "candidate_id": "C5",
+   "comparison": "SUBJECT_RECENT_VS_LONG_BASELINE",
+   "conditions": [
+    {
+     "dimension": "competition",
+     "value": "SAME"
+    }
+   ],
+   "coverage_risk": "NONE",
+   "falsifiable_question": "In Aston Villa's last 10 EPL matches, are final_third_entries_for and possession_for measurably lower than their long-run EPL baseline, while shots_inside_box_for remains at or above baseline?",
+   "falsifier": "If final_third_entries_for and possession_for in W10 are not lower than the long-run baseline, or if shots_inside_box_for has also declined, the regime change hypothesis is unsupported.",
+   "football_mechanism": "A team that is generating fewer final-third entries and holding less possession but maintaining box shot volume may be transitioning to a more direct, counter-attacking style \u2014 bypassing territorial build-up to reach the box more efficiently. This regime change in Villa's recent play is worth measuring against opponents with a similar defensive profile to Newcastle.",
+   "metric_perspective": "FOR",
+   "opponent": "TEAM_A",
+   "provider_requirements": [
+    "final_third_entries_for",
+    "possession_for",
+    "shots_inside_box_for"
+   ],
+   "research_family": "TEMPO_AND_TERRITORY",
+   "self_critique": {
+    "cohort_equals_baseline": false,
+    "condition_equals_target": false,
+    "could_opponent_strength_explain_it": true,
+    "is_just_home_vs_away": false,
+    "is_just_recent_vs_long_run": true,
+    "is_overconditioned": false,
+    "likely_generic_enumeration_would_generate_this": false,
+    "notes": "The interesting feature here is the divergence between declining territorial metrics and stable box shot volume \u2014 this is not a simple recent vs long-run question about one metric. The tension between the two is the mechanism. Opponent strength could explain it but the joint pattern is distinctive."
+   },
+   "subject": "TEAM_B",
+   "support_risk": "LOW",
+   "target_metric": [
+    "final_third_entries_for",
+    "possession_for",
+    "shots_inside_box_for"
+   ],
+   "window": "W10"
+  },
+  "incremental_structure": [
+   "Multi-metric joint divergence pattern: two declining metrics (final_third_entries_for, possession_for) tested simultaneously against a third stable metric (shots_inside_box_for)",
+   "The falsifiable question requires BOTH a decline in territorial metrics AND stability in box shots \u2014 not a single-metric directional test",
+   "The mechanism is the TENSION between the two metric trajectories, not the direction of any one metric",
+   "Three-metric interaction: possession_for + final_third_entries_for declining while shots_inside_box_for holds \u2014 this joint pattern is structurally distinct from any single-metric SUBJECT_RECENT_VS_LONG_BASELINE enumeration"
+  ],
+  "reason": "All three nearest generic structures test a single metric (accurate_crosses, ball_recoveries, big_chances) on AWAY_TEAM via SUBJECT_RECENT_VS_LONG_BASELINE under competition=SAME at W10. Candidate C5 is structurally different in one critical way: it is a JOINT divergence test across three metrics simultaneously. The falsifiable question is not satisfied by any one metric moving in a direction \u2014 it requires final_third_entries_for AND possession_for to be lower than baseline WHILE shots_inside_box_for remains at or above baseline. This three-way conditional pattern (two declining, one stable) cannot be decomposed into any of the generic single-metric structures without losing the mechanism. The tension between territorial decline and box-shot stability is the structural novelty \u2014 it is not a restatement of any enumerated single-metric recent-vs-long test.",
+  "shared_structure": [
+   "SUBJECT_RECENT_VS_LONG_BASELINE comparison",
+   "AWAY_TEAM / TEAM_B as subject",
+   "competition=SAME condition",
+   "W10 window",
+   "FOR perspective",
+   "Single-metric recent-vs-long structure"
+  ]
+ },
+ "retrieved_distances": [
+  6,
+  6,
+  6
+ ],
+ "retrieved_generic_ids": [
+  "GEN_0272352",
+  "GEN_0272353",
+  "GEN_0272354"
+ ],
+ "temperature": 0.0
+}

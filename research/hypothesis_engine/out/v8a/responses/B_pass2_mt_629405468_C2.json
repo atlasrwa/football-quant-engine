@@ -1,0 +1,54 @@
+{
+ "arm": "B",
+ "candidate_id": "C2",
+ "elapsed_s": 8.8,
+ "error": null,
+ "fixture_id": "mt_629405468",
+ "max_tokens": 8192,
+ "model_id": "us.anthropic.claude-sonnet-4-6",
+ "pass": 2,
+ "provenance": {
+  "input_tokens": 4362,
+  "output_tokens": 553,
+  "request_sha256": "57bba8acd6bbbee48322cbd05986ad8183fbd545209b5c542ff2daf7f71d7d9d",
+  "resolved_model_id": "us.anthropic.claude-sonnet-4-6",
+  "response_sha256": "f8a109b5066c9ae219b92794a3949ba99dedc80e2d9db04b4d8e10a4e56928e4",
+  "stop_reason": "tool_use"
+ },
+ "record_sha256": "cdb8152126380d1aba2d1d89074c4fe8520f37fa1895492ccf8f1481d8d7d6eb",
+ "response": {
+  "action": "ABSTAIN",
+  "candidate_id": "C2",
+  "closest_generic_structures": [
+   "GEN_0141990",
+   "GEN_0142278",
+   "GEN_0142566"
+  ],
+  "incremental_structure": [
+   "candidate adds competition=SAME condition",
+   "candidate uses fouls+shots_inside_box as similarity axes rather than goals_for/goals_against",
+   "candidate does not specify a goals_for or goals_against axis on opponent_profile \u2014 uses a different profile axis (fouls, shots_inside_box_conceded)"
+  ],
+  "reason": "The candidate's core statistical structure is: TEAM_A (home) corner_kicks FOR, SIMILAR_OPPONENT_COHORT comparison, ALL_PRIOR window, with historical_venue_conditioning=HOME. This is exactly the structure of GEN_0141990/0142278/0142566. The only claimed incremental elements are (a) the competition=SAME filter and (b) the choice of similarity axes (fouls/shots_inside_box rather than goals_for/goals_against). However, the similarity axes are not a structural condition in this corpus \u2014 the engine computes similarity; the analyst does not specify which axes drive it. The candidate cannot claim a structurally distinct cohort by narrating different similarity dimensions. The competition=SAME filter is a minor additive condition that does not change the fundamental cohort-vs-baseline contrast. The football mechanism (foul-heavy, box-permissive defense elevates corner generation) is a different story, but it maps onto the same measurable contrast: subject home corner_kicks FOR vs similar-opponent cohort. Rewording the mechanism and relabelling the similarity axes does not constitute structural novelty. The candidate is therefore structurally coincident with the generic enumeration and should be abstained.",
+  "shared_structure": [
+   "subject: HOME_TEAM (TEAM_A)",
+   "metric: corner_kicks",
+   "perspective: FOR",
+   "comparison: SIMILAR_OPPONENT_COHORT",
+   "window: ALL_PRIOR",
+   "opponent_profile dimension present",
+   "home venue conditioning present"
+  ]
+ },
+ "retrieved_distances": [
+  5,
+  5,
+  5
+ ],
+ "retrieved_generic_ids": [
+  "GEN_0141990",
+  "GEN_0142278",
+  "GEN_0142566"
+ ],
+ "temperature": 0.0
+}

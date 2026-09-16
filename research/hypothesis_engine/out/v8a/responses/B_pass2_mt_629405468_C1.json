@@ -1,0 +1,128 @@
+{
+ "arm": "B",
+ "candidate_id": "C1",
+ "elapsed_s": 19.08,
+ "error": null,
+ "fixture_id": "mt_629405468",
+ "max_tokens": 8192,
+ "model_id": "us.anthropic.claude-sonnet-4-6",
+ "pass": 2,
+ "provenance": {
+  "input_tokens": 4540,
+  "output_tokens": 1836,
+  "request_sha256": "0f40aa10f0e173f118e6a26542498ff0f2fc1ec61acbfa0a66c567c7d15c375c",
+  "resolved_model_id": "us.anthropic.claude-sonnet-4-6",
+  "response_sha256": "5eea6e50ab244eafbbf24358c43f97b3c05f47891858f10c372ca0e3bd576d8f",
+  "stop_reason": "tool_use"
+ },
+ "record_sha256": "b5f8fd4f8bc608706bad5665bbf469a46ca37e59139a5defa9098db9994481cf",
+ "response": {
+  "action": "REFINE",
+  "candidate_id": "C1",
+  "closest_generic_structures": [
+   "GEN_0141986",
+   "GEN_0142005",
+   "GEN_0142274"
+  ],
+  "final_candidate": {
+   "behavioral_observations": [
+    {
+     "evidence_refs": [
+      "TEAM_A.blocks.long_run_home.metrics.big_chances_for",
+      "TEAM_A.blocks.long_run_home.metrics.touches_in_penalty_area_for",
+      "TEAM_A.blocks.recent_last_5.metrics.big_chances_for"
+     ],
+     "observation": "TEAM_A's big_chances_for at home is 0.83 long-run and 0.8 W5, despite touches_in_penalty_area_for of 29.5 at home (long-run) \u2014 high box presence does not translate to big chances at the same rate."
+    },
+    {
+     "evidence_refs": [
+      "TEAM_B.blocks.long_run_away.metrics.big_chances_against",
+      "TEAM_B.blocks.long_run_all.metrics.big_chances_against"
+     ],
+     "observation": "TEAM_B concedes big_chances_against at 4.5 away long-run and 3.42 long-run all \u2014 opponents create big chances against TEAM_B at a high rate, especially away."
+    },
+    {
+     "evidence_refs": [
+      "TEAM_B.blocks.long_run_away.metrics.touches_in_penalty_area_against",
+      "TEAM_B.blocks.long_run_all.metrics.touches_in_penalty_area_against"
+     ],
+     "observation": "TEAM_B concedes touches_in_penalty_area_against at 32.5 away long-run and 28.67 long-run all \u2014 opponents penetrate TEAM_B's box heavily, especially away."
+    }
+   ],
+   "candidate_id": "C1",
+   "comparison": "SIMILAR_OPPONENT_COHORT",
+   "conditions": [
+    {
+     "dimension": "historical_venue_conditioning",
+     "value": "HOME"
+    },
+    {
+     "dimension": "competition",
+     "value": "SAME"
+    },
+    {
+     "axis": "goals_against",
+     "dimension": "opponent_profile",
+     "value": "HIGH"
+    }
+   ],
+   "coverage_risk": "LOW",
+   "falsifiable_question": "Does TEAM_A record more big_chances_for and touches_in_penalty_area_for at home in the same competition when facing opponents whose pre-fixture defensive profile is HIGH on goals_against, compared to TEAM_A's unconditional home same-competition baseline?",
+   "falsifier": "If TEAM_A's big_chances_for and touches_in_penalty_area_for in the HIGH-goals_against similar-opponent cohort (home, same competition) are not systematically higher than in the home same-competition baseline, the mechanism is unsupported.",
+   "football_mechanism": "TEAM_A generates high box presence at home but converts it to big chances at a low rate against the field. TEAM_B's defensive structure concedes box touches and big chances at an elevated rate. The question is whether TEAM_A's big-chance creation and box-touch volume rise specifically when facing opponents whose defensive profile (high goals conceded) resembles TEAM_B's, in the same competition and at home, compared to TEAM_A's unconditional home same-competition baseline.",
+   "metric_perspective": "FOR",
+   "opponent": "TEAM_B",
+   "provider_requirements": [
+    "big_chances",
+    "touches_in_penalty_area",
+    "similar_opponent_cohort"
+   ],
+   "research_family": "ATTACK_QUALITY",
+   "self_critique": {
+    "cohort_equals_baseline": false,
+    "condition_equals_target": false,
+    "could_opponent_strength_explain_it": true,
+    "is_just_home_vs_away": false,
+    "is_just_recent_vs_long_run": false,
+    "is_overconditioned": false,
+    "likely_generic_enumeration_would_generate_this": false,
+    "notes": "Opponent defensive weakness is the mechanism variable, not a confound. The HOME + SAME competition conditioning is the structural addition over the generics. The opponent_profile axis (goals_against HIGH) is now explicitly declared, aligning cohort definition with the generics while the venue and competition conditions remain the differentiating structure."
+   },
+   "similar_opponent_rationale": "TEAM_B's defensive profile is characterised by a high rate of goals conceded (goals_against HIGH). The similar-opponent cohort is restricted to home fixtures in the same competition to isolate the opponent-profile effect from venue and competition variance.",
+   "subject": "TEAM_A",
+   "support_risk": "LOW",
+   "target_metric": [
+    "big_chances",
+    "touches_in_penalty_area"
+   ],
+   "window": "ALL_PRIOR"
+  },
+  "incremental_structure": [
+   "candidate adds historical_venue_conditioning=HOME as an explicit condition (generics do not)",
+   "candidate adds competition=SAME as an explicit condition (generics do not)",
+   "candidate uses DUAL metric target (big_chances + touches_in_penalty_area together) rather than single-metric",
+   "candidate's opponent_profile conditions are absent \u2014 no goals_for/goals_against axis declared on the opponent_profile dimension, unlike all three generics",
+   "the tension mechanism (high box presence but low big-chance conversion rate) is prose novelty only, not structural novelty vs generics that already test big_chances FOR against similar defensive opponents"
+  ],
+  "reason": "The candidate's core statistical structure \u2014 TEAM_A FOR, SIMILAR_OPPONENT_COHORT, big_chances and/or touches_in_penalty_area, ALL_PRIOR, opponent profiled on defensive weakness \u2014 is already fully covered by GEN_0141986 and GEN_0142005 (both HIGH/HIGH) and GEN_0142274 (HIGH/MID). The candidate adds HOME venue conditioning and SAME competition conditioning, which are genuine structural additions not present in the generics. However, the candidate omits the opponent_profile dimension conditions entirely (no goals_for/goals_against axis declared), which means as written it is actually less specified than the generics on the cohort-definition axis. To be structurally novel it must retain the venue and competition conditions AND declare the opponent_profile axis that defines the similar-opponent cohort. The dual-metric pairing (big_chances + touches_in_penalty_area together) is a minor structural addition but does not rescue the missing cohort specification. A REFINE is warranted to add the opponent_profile condition (HIGH goals_against, consistent with TEAM_B's observed defensive profile) while keeping the HOME venue and SAME competition conditions that the generics lack.",
+  "shared_structure": [
+   "subject=HOME_TEAM (TEAM_A)",
+   "comparison=SIMILAR_OPPONENT_COHORT",
+   "metric_perspective=FOR",
+   "window=ALL_PRIOR",
+   "target_metrics include big_chances and touches_in_penalty_area",
+   "opponent_profile conditions on defensive weakness (goals_against HIGH)"
+  ]
+ },
+ "retrieved_distances": [
+  6,
+  6,
+  6
+ ],
+ "retrieved_generic_ids": [
+  "GEN_0141986",
+  "GEN_0142005",
+  "GEN_0142274"
+ ],
+ "temperature": 0.0
+}

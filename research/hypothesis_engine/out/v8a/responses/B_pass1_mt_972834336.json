@@ -1,0 +1,502 @@
+{
+ "arm": "B",
+ "elapsed_s": 118.27,
+ "error": null,
+ "fixture_id": "mt_972834336",
+ "max_tokens": 24576,
+ "model_id": "us.anthropic.claude-sonnet-4-6",
+ "pass": 1,
+ "prompt_version": "v8a_prompt_v1",
+ "provenance": {
+  "input_tokens": 40301,
+  "output_tokens": 10288,
+  "request_sha256": "98238fa0e86562ba023e4b7a51bfadae353a8edda42fb97628e9a073510a107b",
+  "resolved_model_id": "us.anthropic.claude-sonnet-4-6",
+  "response_sha256": "7e27d1909df65fed7b821b78064b8f63e208494551b44da105844d76e3f39e9d",
+  "stop_reason": "tool_use"
+ },
+ "record_sha256": "6febdbc7fe98447aed922f6bc8a91a34cf427b502dd4ac4645389ed77f6e0b8b",
+ "response": {
+  "candidates": [
+   {
+    "behavioral_observations": [
+     {
+      "evidence_refs": [
+       "TEAM_B.blocks.long_run_all.metrics.shots_inside_box_for",
+       "TEAM_B.blocks.recent_last_5.metrics.shots_inside_box_for",
+       "TEAM_B.blocks.long_run_all.metrics.touches_in_penalty_area_for",
+       "TEAM_B.blocks.recent_last_5.metrics.touches_in_penalty_area_for"
+      ],
+      "observation": "TEAM_B's shots inside the box have risen from 8.8 long-run to 10.0 in the last 5 matches, and touches in penalty area from 23.4 to 25.0 last 5, indicating a recent increase in box penetration."
+     },
+     {
+      "evidence_refs": [
+       "TEAM_A.blocks.long_run_all.metrics.shots_inside_box_against",
+       "TEAM_A.blocks.recent_last_5.metrics.shots_inside_box_against",
+       "TEAM_A.blocks.long_run_all.metrics.touches_in_penalty_area_against",
+       "TEAM_A.blocks.recent_last_5.metrics.touches_in_penalty_area_against"
+      ],
+      "observation": "TEAM_A concedes 8.1 shots inside the box long-run and 7.2 last 5, and 24.1 touches in penalty area against long-run rising to 23.4 last 5 \u2014 a side that allows significant box access to opponents."
+     }
+    ],
+    "candidate_id": "C1",
+    "comparison": "SUBJECT_RECENT_VS_LONG_BASELINE",
+    "conditions": [
+     {
+      "dimension": "historical_venue_conditioning",
+      "value": "AWAY"
+     }
+    ],
+    "coverage_risk": "LOW",
+    "falsifiable_question": "In TEAM_B's last 5 away matches, are shots_inside_box and touches_in_penalty_area FOR materially higher than TEAM_B's long-run away baseline?",
+    "falsifier": "If TEAM_B's last-5 away shots_inside_box and touches_in_penalty_area are at or below their long-run away average, the recent regime change is not supported in the away context.",
+    "football_mechanism": "TEAM_B's possession dominance (56.8% last 5) and high accurate-cross output (6.4 last 5) create repeated wide-entry and box-penetration opportunities. Against a low-possession side like TEAM_A that concedes high final-third entries (71.4 long-run), TEAM_B's box-entry volume may be amplified because TEAM_A's defensive block is stretched by sustained territorial pressure rather than transitional defending.",
+    "metric_perspective": "FOR",
+    "opponent": "TEAM_A",
+    "provider_requirements": [
+     "shots_inside_box FOR AWAY W5",
+     "touches_in_penalty_area FOR AWAY W5",
+     "shots_inside_box FOR AWAY ALL_PRIOR",
+     "touches_in_penalty_area FOR AWAY ALL_PRIOR"
+    ],
+    "research_family": "ATTACK_QUALITY",
+    "self_critique": {
+     "cohort_equals_baseline": false,
+     "condition_equals_target": false,
+     "could_opponent_strength_explain_it": true,
+     "is_just_home_vs_away": false,
+     "is_just_recent_vs_long_run": true,
+     "is_overconditioned": false,
+     "likely_generic_enumeration_would_generate_this": false,
+     "notes": "The recent vs long-run flag is honest \u2014 this is partly that. However the away conditioning is important because TEAM_B's home/away split shows different box-entry patterns (home touches_in_penalty_area 24.75 vs away 21.5 long-run), and the regime change needs to be verified in the away context specifically. Opponent strength could explain recent improvement. Kept because the interaction with TEAM_A's known high box-concession rate is the specific mechanism."
+    },
+    "subject": "TEAM_B",
+    "support_risk": "LOW",
+    "target_metric": [
+     "shots_inside_box",
+     "touches_in_penalty_area"
+    ],
+    "window": "W5"
+   },
+   {
+    "behavioral_observations": [
+     {
+      "evidence_refs": [
+       "TEAM_B.blocks.long_run_all.metrics.accurate_crosses_for",
+       "TEAM_B.blocks.recent_last_5.metrics.accurate_crosses_for",
+       "TEAM_B.blocks.long_run_home.metrics.accurate_crosses_for",
+       "TEAM_B.blocks.long_run_away.metrics.accurate_crosses_for",
+       "TEAM_B.blocks.long_run_all.metrics.accurate_crosses_against"
+      ],
+      "observation": "TEAM_B's accurate crosses average 5.5 long-run and 6.4 in the last 5 matches. At home TEAM_B averages 5.875 accurate crosses vs 5.0 away long-run. The long-run FOR vs AGAINST asymmetry is stark: 5.5 for vs 3.4 against."
+     },
+     {
+      "evidence_refs": [
+       "TEAM_A.blocks.long_run_all.metrics.accurate_crosses_against",
+       "TEAM_A.blocks.recent_last_5.metrics.accurate_crosses_against"
+      ],
+      "observation": "TEAM_A concedes 5.0 accurate crosses long-run and 5.0 last 5 \u2014 a consistent concession rate that is below TEAM_B's typical output of 5.5-6.4."
+     }
+    ],
+    "candidate_id": "C2",
+    "comparison": "SIMILAR_OPPONENT_COHORT",
+    "conditions": [],
+    "coverage_risk": "LOW",
+    "falsifiable_question": "Against opponents whose pre-fixture defensive profile (goals conceded, shots on target conceded, shots inside box conceded, fouls, yellow cards) is similar to TEAM_A's profile, does TEAM_B's accurate_crosses FOR exceed its overall baseline?",
+    "falsifier": "If TEAM_B's accurate_crosses FOR against similar-profile opponents is at or below its overall baseline, the mechanism that TEAM_A's defensive style amplifies TEAM_B's crossing output is unsupported.",
+    "football_mechanism": "TEAM_B's possession-dominant style (55.7% long-run) enables sustained wide play and crossing opportunities. Against TEAM_A's low-possession, deep-block setup, TEAM_B's wide players may find space to deliver crosses because TEAM_A's defensive shape prioritises central blocking (high clearances, high tackles) over wide suppression. The question is whether TEAM_B's crossing output against opponents with a similar defensive profile to TEAM_A is systematically higher than its baseline.",
+    "metric_perspective": "FOR",
+    "opponent": "TEAM_A",
+    "provider_requirements": [
+     "accurate_crosses FOR ALL_PRIOR SIMILAR_OPPONENT_COHORT",
+     "accurate_crosses FOR ALL_PRIOR baseline"
+    ],
+    "research_family": "ATTACK_VOLUME",
+    "self_critique": {
+     "cohort_equals_baseline": false,
+     "condition_equals_target": false,
+     "could_opponent_strength_explain_it": true,
+     "is_just_home_vs_away": false,
+     "is_just_recent_vs_long_run": false,
+     "is_overconditioned": false,
+     "likely_generic_enumeration_would_generate_this": false,
+     "notes": "Opponent strength could explain some of the crossing output variation. The similar-opponent cohort is the right tool here because the mechanism is specifically about TEAM_A's defensive profile type, not just recent form. The asymmetry between TEAM_B's crossing FOR and AGAINST is the strongest evidence this is a structural feature."
+    },
+    "similar_opponent_rationale": "TEAM_A is a low-possession, high-clearance, high-tackle side that concedes many final-third entries but suppresses shots on target moderately. The frozen similarity dimensions (goals conceded, shots on target conceded, shots inside box conceded, fouls, yellow cards) will capture opponents with a similar defensive and discipline profile to TEAM_A, allowing a test of whether TEAM_B's crossing output is elevated against this type of opponent.",
+    "subject": "TEAM_B",
+    "support_risk": "LOW",
+    "target_metric": [
+     "accurate_crosses"
+    ],
+    "window": "ALL_PRIOR"
+   },
+   {
+    "behavioral_observations": [
+     {
+      "evidence_refs": [
+       "TEAM_A.blocks.long_run_all.metrics.final_third_entries_against",
+       "TEAM_A.blocks.recent_last_5.metrics.final_third_entries_against",
+       "TEAM_A.blocks.long_run_away.metrics.final_third_entries_against",
+       "TEAM_A.blocks.long_run_home.metrics.final_third_entries_against"
+      ],
+      "observation": "TEAM_A concedes 71.4 final-third entries long-run and 72.8 last 5 \u2014 consistently the highest value in the packet. In the away context TEAM_A concedes 76.5 final-third entries vs 64.5 at home, showing a pronounced venue effect on this metric."
+     },
+     {
+      "evidence_refs": [
+       "TEAM_B.blocks.long_run_all.metrics.final_third_entries_for",
+       "TEAM_B.blocks.recent_last_5.metrics.final_third_entries_for",
+       "TEAM_B.blocks.long_run_all.metrics.final_third_entries_against"
+      ],
+      "observation": "TEAM_B generates 62.5 final-third entries long-run and 61.2 last 5 \u2014 consistently above the 54.2 it concedes. TEAM_B's final-third entry generation is a structural feature of its possession-dominant style."
+     }
+    ],
+    "candidate_id": "C3",
+    "comparison": "SIMILAR_OPPONENT_COHORT",
+    "conditions": [],
+    "coverage_risk": "LOW",
+    "falsifiable_question": "Against opponents whose pre-fixture defensive profile is similar to TEAM_B's (possession-dominant, high final-third entries, low goals conceded), does TEAM_A concede more final_third_entries and shots_inside_box than its overall baseline?",
+    "falsifier": "If TEAM_A's final_third_entries_against and shots_inside_box_against against similar-profile opponents are at or below TEAM_A's overall baseline, the mechanism that possession-dominant opponents amplify TEAM_A's defensive concessions is unsupported.",
+    "football_mechanism": "TEAM_A plays as the home side here, but its structural tendency to concede high final-third entries (76.5 away, 64.5 home) combined with TEAM_B's possession-dominant style that generates 62.5 final-third entries/match creates a potential for TEAM_B to exceed its own typical final-third entry volume. The question is whether TEAM_A concedes more final-third entries and inside-box shots against possession-dominant opponents than against lower-possession opponents.",
+    "metric_perspective": "AGAINST",
+    "opponent": "TEAM_B",
+    "provider_requirements": [
+     "final_third_entries AGAINST ALL_PRIOR SIMILAR_OPPONENT_COHORT",
+     "shots_inside_box AGAINST ALL_PRIOR SIMILAR_OPPONENT_COHORT",
+     "final_third_entries AGAINST ALL_PRIOR baseline",
+     "shots_inside_box AGAINST ALL_PRIOR baseline"
+    ],
+    "research_family": "DEFENSIVE_CONCESSION",
+    "self_critique": {
+     "cohort_equals_baseline": false,
+     "condition_equals_target": false,
+     "could_opponent_strength_explain_it": true,
+     "is_just_home_vs_away": false,
+     "is_just_recent_vs_long_run": false,
+     "is_overconditioned": false,
+     "likely_generic_enumeration_would_generate_this": false,
+     "notes": "Opponent strength is a genuine confounder \u2014 better opponents generate more final-third entries. The similar-opponent cohort partially controls for this by matching on the opponent's defensive profile. The mechanism is specific: TEAM_A's structural high-concession of final-third entries may be amplified by possession-dominant opponents."
+    },
+    "similar_opponent_rationale": "TEAM_B is a possession-dominant side with high final-third entries and relatively low goals conceded. The frozen similarity dimensions will capture opponents with a similar defensive profile (low goals conceded, low shots on target conceded, low shots inside box conceded) which correlates with possession-dominant, well-organised sides. This tests whether TEAM_A's high final-third entry concession rate is amplified against this opponent type.",
+    "subject": "TEAM_A",
+    "support_risk": "LOW",
+    "target_metric": [
+     "final_third_entries",
+     "shots_inside_box"
+    ],
+    "window": "ALL_PRIOR"
+   },
+   {
+    "behavioral_observations": [
+     {
+      "evidence_refs": [
+       "TEAM_B.blocks.long_run_all.metrics.corner_kicks_against",
+       "TEAM_B.blocks.recent_last_5.metrics.corner_kicks_against",
+       "TEAM_B.blocks.long_run_all.metrics.clearances_for",
+       "TEAM_B.blocks.recent_last_5.metrics.clearances_for"
+      ],
+      "observation": "TEAM_B's corners conceded (i.e., opponents earn against TEAM_B) have risen sharply: 4.9 long-run to 6.6 last 5. Simultaneously TEAM_B's clearances made rose from 19.4 to 23.4 last 5, suggesting opponents are generating more wide/crossing pressure that results in corners."
+     },
+     {
+      "evidence_refs": [
+       "TEAM_A.blocks.long_run_all.metrics.corner_kicks_for",
+       "TEAM_A.blocks.recent_last_5.metrics.corner_kicks_for"
+      ],
+      "observation": "TEAM_A generates 5.2 corners long-run and 6.2 last 5 \u2014 a recent increase. TEAM_A's corner generation is rising at the same time TEAM_B is conceding more corners."
+     }
+    ],
+    "candidate_id": "C4",
+    "comparison": "SIMILAR_OPPONENT_COHORT",
+    "conditions": [
+     {
+      "dimension": "historical_venue_conditioning",
+      "value": "HOME"
+     }
+    ],
+    "coverage_risk": "LOW",
+    "falsifiable_question": "In TEAM_A's home matches against opponents whose pre-fixture defensive profile is similar to TEAM_B's, does TEAM_A's corner_kicks FOR exceed its home baseline?",
+    "falsifier": "If TEAM_A's corner_kicks FOR against similar-profile opponents at home is at or below TEAM_A's home baseline, the mechanism that TEAM_B's defensive style amplifies TEAM_A's corner generation is unsupported.",
+    "football_mechanism": "TEAM_A's recent increase in corner generation (6.2 last 5) combined with TEAM_B's recent increase in corners conceded (6.6 last 5) may reflect a structural interaction: TEAM_A's wide attacking play (accurate crosses 5.2 last 5, shots inside box 9.2 last 5) forces TEAM_B's defence into clearances that produce corners. The question is whether TEAM_A generates more corners against opponents with a similar defensive profile to TEAM_B (possession-dominant, high-clearance defence).",
+    "metric_perspective": "FOR",
+    "opponent": "TEAM_A",
+    "provider_requirements": [
+     "corner_kicks FOR HOME ALL_PRIOR SIMILAR_OPPONENT_COHORT",
+     "corner_kicks FOR HOME ALL_PRIOR baseline"
+    ],
+    "research_family": "SET_PIECE_GENERATION",
+    "self_critique": {
+     "cohort_equals_baseline": false,
+     "condition_equals_target": false,
+     "could_opponent_strength_explain_it": true,
+     "is_just_home_vs_away": false,
+     "is_just_recent_vs_long_run": false,
+     "is_overconditioned": false,
+     "likely_generic_enumeration_would_generate_this": false,
+     "notes": "The home conditioning is justified because TEAM_A is the home side and their home corner generation (4.5 long-run) differs from away (5.75). The similar-opponent cohort adds the specific mechanism about TEAM_B's defensive type. Not overconditioned \u2014 two conditions (home + similar opponent) are both motivated by distinct evidence."
+    },
+    "similar_opponent_rationale": "TEAM_B is a possession-dominant side with high clearances and a low accurate-crosses-conceded rate. The frozen similarity dimensions will capture opponents with a similar defensive profile. Testing whether TEAM_A generates more corners against this type of opponent at home is a specific, falsifiable question grounded in both teams' observed behaviour.",
+    "subject": "TEAM_B",
+    "support_risk": "LOW",
+    "target_metric": [
+     "corner_kicks"
+    ],
+    "window": "ALL_PRIOR"
+   },
+   {
+    "behavioral_observations": [
+     {
+      "evidence_refs": [
+       "TEAM_B.blocks.long_run_all.metrics.shots_inside_box_against",
+       "TEAM_B.blocks.recent_last_5.metrics.shots_inside_box_against",
+       "TEAM_B.blocks.long_run_all.metrics.shots_against"
+      ],
+      "observation": "TEAM_B concedes only 6.6 shots inside the box long-run (6.8 last 5) despite conceding 11.7 total shots \u2014 a low inside-box concession rate relative to total shots. This suggests TEAM_B pushes opponents to shoot from outside the box."
+     },
+     {
+      "evidence_refs": [
+       "TEAM_B.blocks.long_run_all.metrics.shots_on_target_against",
+       "TEAM_B.blocks.recent_last_5.metrics.shots_on_target_against",
+       "TEAM_B.blocks.long_run_all.metrics.corner_kicks_against",
+       "TEAM_B.blocks.recent_last_5.metrics.corner_kicks_against"
+      ],
+      "observation": "TEAM_B's shots on target conceded has fallen from 4.4 long-run to 3.4 last 5, while corners conceded rose from 4.9 to 6.6 \u2014 a tension suggesting opponents are generating wide/set-piece pressure but not converting it into on-target shots."
+     },
+     {
+      "evidence_refs": [
+       "TEAM_A.blocks.long_run_all.metrics.shots_for",
+       "TEAM_A.blocks.long_run_all.metrics.shots_on_target_for",
+       "TEAM_A.blocks.long_run_all.metrics.shots_inside_box_for",
+       "TEAM_A.blocks.recent_last_5.metrics.shots_inside_box_for"
+      ],
+      "observation": "TEAM_A generates 10.2 shots long-run with only 3.7 on target \u2014 a low on-target conversion rate. TEAM_A's shots inside box are 7.6 long-run, rising to 9.2 last 5."
+     }
+    ],
+    "candidate_id": "C5",
+    "comparison": "SIMILAR_OPPONENT_COHORT",
+    "conditions": [],
+    "coverage_risk": "LOW",
+    "falsifiable_question": "Against opponents whose pre-fixture defensive profile is similar to TEAM_A's (low possession, high fouls, moderate goals conceded), does TEAM_B concede fewer shots_on_target and shots_inside_box than its overall baseline?",
+    "falsifier": "If TEAM_B's shots_on_target_against and shots_inside_box_against against similar-profile opponents are at or above its overall baseline, the mechanism that TEAM_A's attacking profile is suppressed by TEAM_B's defensive structure is unsupported.",
+    "football_mechanism": "TEAM_B's defensive structure appears to suppress inside-box shots and shots on target even when conceding high corner and wide-pressure volumes. Against TEAM_A \u2014 a side with a historically low shots-on-target rate (3.7 long-run) \u2014 TEAM_B's defensive suppression may be particularly effective. The question is whether TEAM_B concedes fewer shots on target and inside-box shots against opponents with a similar attacking profile to TEAM_A (low shot quality, high shot volume, low possession).",
+    "metric_perspective": "AGAINST",
+    "opponent": "TEAM_A",
+    "provider_requirements": [
+     "shots_on_target AGAINST ALL_PRIOR SIMILAR_OPPONENT_COHORT",
+     "shots_inside_box AGAINST ALL_PRIOR SIMILAR_OPPONENT_COHORT",
+     "shots_on_target AGAINST ALL_PRIOR baseline",
+     "shots_inside_box AGAINST ALL_PRIOR baseline"
+    ],
+    "research_family": "DEFENSIVE_SUPPRESSION",
+    "self_critique": {
+     "cohort_equals_baseline": false,
+     "condition_equals_target": false,
+     "could_opponent_strength_explain_it": true,
+     "is_just_home_vs_away": false,
+     "is_just_recent_vs_long_run": false,
+     "is_overconditioned": false,
+     "likely_generic_enumeration_would_generate_this": false,
+     "notes": "Opponent strength is a confounder \u2014 weaker opponents generate fewer shots on target. The similar-opponent cohort partially controls for this. The specific mechanism (TEAM_B suppresses inside-box shots even under wide pressure) is grounded in the tension between TEAM_B's rising corners conceded and falling shots on target conceded."
+    },
+    "similar_opponent_rationale": "TEAM_A is a low-possession, high-foul, high-clearance side with moderate goals conceded. The frozen similarity dimensions (goals conceded, shots on target conceded, shots inside box conceded, fouls, yellow cards) will capture opponents with a similar defensive profile, which correlates with TEAM_A's low-possession, physically engaged style. This tests whether TEAM_B's defensive suppression is amplified against this opponent type.",
+    "subject": "TEAM_B",
+    "support_risk": "LOW",
+    "target_metric": [
+     "shots_on_target",
+     "shots_inside_box"
+    ],
+    "window": "ALL_PRIOR"
+   },
+   {
+    "behavioral_observations": [
+     {
+      "evidence_refs": [
+       "TEAM_A.blocks.long_run_all.metrics.possession_for",
+       "TEAM_A.blocks.recent_last_5.metrics.possession_for",
+       "TEAM_A.blocks.long_run_all.metrics.final_third_entries_for",
+       "TEAM_A.blocks.recent_last_5.metrics.final_third_entries_for"
+      ],
+      "observation": "TEAM_A's possession has risen from 41.4% long-run to 45.6% last 5, and final-third entries from 55.9 to 61.6 last 5 \u2014 a notable recent shift in territorial control."
+     },
+     {
+      "evidence_refs": [
+       "TEAM_A.blocks.long_run_home.metrics.possession_for",
+       "TEAM_A.blocks.long_run_away.metrics.possession_for",
+       "TEAM_A.blocks.recent_last_5.metrics.possession_for"
+      ],
+      "observation": "TEAM_A's home possession (41.8%) is similar to its away possession (41.0%) long-run, suggesting the recent rise to 45.6% is not venue-driven. However, the last 5 includes a mix of home and away matches."
+     },
+     {
+      "evidence_refs": [
+       "TEAM_B.blocks.long_run_all.metrics.possession_against",
+       "TEAM_B.blocks.recent_last_5.metrics.possession_against"
+      ],
+      "observation": "TEAM_B concedes 44.3% possession long-run (43.2% last 5) \u2014 opponents typically hold less than half the ball against TEAM_B. TEAM_A's structural low-possession profile means it will likely be below its recent 45.6% average in this match."
+     }
+    ],
+    "candidate_id": "C6",
+    "comparison": "SUBJECT_CONDITIONAL_VS_BASELINE",
+    "conditions": [
+     {
+      "axis": "possession_for",
+      "dimension": "opponent_profile",
+      "value": "HIGH"
+     }
+    ],
+    "coverage_risk": "LOW",
+    "falsifiable_question": "In TEAM_A's matches against opponents ranked HIGH on possession_for, are TEAM_A's possession_for and final_third_entries_for materially lower than TEAM_A's overall baseline?",
+    "falsifier": "If TEAM_A's possession_for and final_third_entries_for against HIGH-possession opponents are at or above TEAM_A's overall baseline, the mechanism that possession-dominant opponents suppress TEAM_A's territorial access is unsupported.",
+    "football_mechanism": "TEAM_A's recent possession increase may reflect easier opposition rather than a structural change. Against TEAM_B \u2014 a possession-dominant side that restricts opponents to 44.3% possession \u2014 TEAM_A's territorial access may revert toward its long-run baseline. The question is whether TEAM_A's possession and final-third entries are systematically lower against possession-dominant opponents than its overall baseline.",
+    "metric_perspective": "FOR",
+    "opponent": "TEAM_B",
+    "provider_requirements": [
+     "possession FOR ALL_PRIOR opponent_profile=HIGH(possession_for)",
+     "final_third_entries FOR ALL_PRIOR opponent_profile=HIGH(possession_for)",
+     "possession FOR ALL_PRIOR baseline",
+     "final_third_entries FOR ALL_PRIOR baseline"
+    ],
+    "research_family": "TEMPO_AND_TERRITORY",
+    "self_critique": {
+     "cohort_equals_baseline": false,
+     "condition_equals_target": false,
+     "could_opponent_strength_explain_it": true,
+     "is_just_home_vs_away": false,
+     "is_just_recent_vs_long_run": false,
+     "is_overconditioned": false,
+     "likely_generic_enumeration_would_generate_this": false,
+     "notes": "Opponent strength and possession dominance are correlated, so this is partly an opponent-quality question. However the specific mechanism \u2014 possession-dominant opponents structurally suppress TEAM_A's territorial access \u2014 is grounded in TEAM_A's known low-possession profile and TEAM_B's known possession dominance. The condition (HIGH possession opponent) is directly motivated by TEAM_B's 55.7% possession average."
+    },
+    "subject": "TEAM_A",
+    "support_risk": "LOW",
+    "target_metric": [
+     "possession",
+     "final_third_entries"
+    ],
+    "window": "ALL_PRIOR"
+   },
+   {
+    "behavioral_observations": [
+     {
+      "evidence_refs": [
+       "TEAM_A.blocks.long_run_all.metrics.fouls_for",
+       "TEAM_A.blocks.long_run_home.metrics.fouls_for",
+       "TEAM_A.blocks.long_run_away.metrics.fouls_for",
+       "TEAM_A.blocks.long_run_home.metrics.yellow_cards_for",
+       "TEAM_A.blocks.long_run_away.metrics.yellow_cards_for"
+      ],
+      "observation": "TEAM_A commits 15.1 fouls/match long-run and 14.8 last 5. At home TEAM_A commits 16.8 fouls and 2.67 yellow cards vs 13.9 fouls and 1.0 yellow cards away \u2014 a pronounced home discipline asymmetry."
+     },
+     {
+      "evidence_refs": [
+       "TEAM_B.blocks.long_run_all.metrics.red_cards_against",
+       "TEAM_B.blocks.recent_last_5.metrics.red_cards_against",
+       "TEAM_B.blocks.long_run_all.metrics.red_cards_for"
+      ],
+      "observation": "TEAM_B's opponents receive red cards at 0.29/match long-run (0.4 last 5) \u2014 the highest opponent red card rate in the packet. TEAM_B itself has zero red cards in 14 matches. This suggests TEAM_B's style provokes disciplinary responses from opponents."
+     }
+    ],
+    "candidate_id": "C7",
+    "comparison": "SUBJECT_CONDITIONAL_VS_BASELINE",
+    "conditions": [
+     {
+      "dimension": "historical_venue_conditioning",
+      "value": "HOME"
+     },
+     {
+      "axis": "possession_for",
+      "dimension": "opponent_profile",
+      "value": "HIGH"
+     }
+    ],
+    "coverage_risk": "HIGH",
+    "falsifiable_question": "In TEAM_A's home matches against opponents ranked HIGH on possession_for, are TEAM_A's fouls_for and yellow_cards_for materially higher than TEAM_A's home baseline?",
+    "falsifier": "If TEAM_A's fouls_for and yellow_cards_for at home against HIGH-possession opponents are at or below TEAM_A's home baseline, the mechanism that possession-dominant opponents amplify TEAM_A's disciplinary output is unsupported.",
+    "football_mechanism": "TEAM_B's possession-dominant style forces opponents into repeated fouling to disrupt build-up play. TEAM_A's home profile shows elevated fouls and yellow cards (2.67 home vs 1.0 away), and TEAM_B's opponents receive red cards at a notable rate. The combination of TEAM_A's home fouling tendency and TEAM_B's ability to draw disciplinary responses may produce elevated card counts. The question is whether TEAM_A commits more fouls and yellow cards against possession-dominant opponents at home.",
+    "metric_perspective": "FOR",
+    "opponent": "TEAM_B",
+    "provider_requirements": [
+     "fouls FOR HOME ALL_PRIOR opponent_profile=HIGH(possession_for)",
+     "yellow_cards FOR HOME ALL_PRIOR opponent_profile=HIGH(possession_for)",
+     "fouls FOR HOME ALL_PRIOR baseline",
+     "yellow_cards FOR HOME ALL_PRIOR baseline"
+    ],
+    "research_family": "DISCIPLINE",
+    "self_critique": {
+     "cohort_equals_baseline": false,
+     "condition_equals_target": false,
+     "could_opponent_strength_explain_it": true,
+     "is_just_home_vs_away": false,
+     "is_just_recent_vs_long_run": false,
+     "is_overconditioned": false,
+     "likely_generic_enumeration_would_generate_this": false,
+     "notes": "Two conditions (home + HIGH possession opponent) are both independently motivated: TEAM_A's home/away discipline asymmetry is large and specific, and TEAM_B's possession dominance is the mechanism. The cohort (home + HIGH possession opponent) is not the same as the baseline (home only). Opponent strength could explain some of the effect. Coverage risk is moderate given only 6 home matches in the sample."
+    },
+    "subject": "TEAM_A",
+    "support_risk": "HIGH",
+    "target_metric": [
+     "yellow_cards",
+     "fouls"
+    ],
+    "window": "ALL_PRIOR"
+   }
+  ],
+  "fixture_id": "mt_972834336",
+  "interaction_map": {
+   "a_attack_vs_b_defense": [
+    "TEAM_A's recent surge in shots inside the box (9.2 last 5) meets TEAM_B's historically low inside-box concession rate (6.6 long-run). Whether TEAM_A can sustain its recent box-entry volume against a side that structurally suppresses inside-box shots is the key tension.",
+    "TEAM_A's rising accurate crosses (5.2 last 5) and corner generation (6.2 last 5) meet TEAM_B's low accurate-crosses-conceded rate (3.4 long-run). TEAM_B appears to suppress wide delivery effectively, which could neutralise TEAM_A's recent crossing improvement.",
+    "TEAM_A's low possession (41-46%) means it will likely cede territory to TEAM_B's possession-dominant style. TEAM_A's final-third entries (61.6 last 5) may be suppressed when facing a side that controls the ball at 55-57%.",
+    "TEAM_A's high clearance rate (24.4 last 5) and tackle volume (18.6 last 5) suggest it can absorb pressure, but TEAM_B's box-entry volume (touches in penalty area 25.0 last 5) will test this."
+   ],
+   "asymmetries": [
+    "TEAM_B generates far more accurate crosses (5.5 long-run) than it concedes (3.4 long-run) \u2014 a strong asymmetry suggesting TEAM_B's wide play is a genuine structural advantage, not just a reflection of opponent quality.",
+    "TEAM_A concedes far more final-third entries (71.4) than it generates (55.9) \u2014 a structural asymmetry consistent with a deep-block, counter-attacking style.",
+    "TEAM_B's home vs away split: home shots inside box 8.6, away 9.0 \u2014 relatively stable. But home corners 6.4 vs away 5.7 \u2014 TEAM_B generates more set-piece opportunities at home. As the away side here, their corner output may be reduced."
+   ],
+   "b_attack_vs_a_defense": [
+    "TEAM_B's high accurate crosses (6.4 last 5) meet TEAM_A's moderate accurate-crosses-conceded rate (5.0 long-run). TEAM_B's crossing output is well above TEAM_A's typical concession, suggesting potential for wide overload.",
+    "TEAM_B's possession dominance (56.8% last 5) directly exploits TEAM_A's structural low-possession profile (41.4% long-run). TEAM_A concedes 71.4 final-third entries/match long-run \u2014 TEAM_B's 62.5 for is below that, but TEAM_A's defensive block may be calibrated for high-volume pressure.",
+    "TEAM_B's shots on target have risen to 4.6 last 5 vs TEAM_A conceding 5.0 last 5 \u2014 these are closely matched, suggesting a competitive but not dominant attacking edge for TEAM_B.",
+    "TEAM_A concedes corners at 5.2 last 5; TEAM_B generates 5.0 last 5 \u2014 well-matched. But TEAM_B's home corner generation is 6.4 vs 3.9 away, so as the away side their corner output may be lower."
+   ],
+   "regime_changes": [
+    "TEAM_A: shots inside box jumped from 7.6 long-run to 9.2 last 5, and touches in penalty area from 19.4 to 24.2 \u2014 a meaningful recent shift in attacking penetration.",
+    "TEAM_B: corners conceded rose from 4.9 long-run to 6.6 last 5, and clearances made rose from 19.4 to 23.4 \u2014 suggesting TEAM_B has faced more set-piece and wide pressure recently.",
+    "TEAM_B: shots on target for rose from 3.7 long-run to 4.6 last 5, while shots on target against fell from 4.4 to 3.4 \u2014 a recent improvement in both attack quality and defensive solidity simultaneously."
+   ],
+   "tensions": [
+    "TEAM_B concedes more corners recently (6.6 last 5) but fewer shots on target (3.4 last 5) \u2014 opponents are generating set-piece pressure but not converting it into on-target shots, suggesting TEAM_B's open-play defense has improved while their set-piece defense is under more stress.",
+    "TEAM_A's saves are high (4.0 last 5) despite conceding fewer shots (11.4 last 5 vs 12.4 long-run) \u2014 the shots conceded are of higher quality (more on target: 5.0 last 5 vs 4.5 long-run)."
+   ]
+  },
+  "reconnaissance": {
+   "team_a_attack": [
+    "TEAM_A (Stade Lavallois) averages 10.2 shots/match long-run, rising to 12.2 in the last 5 (recent_last_5.shots_for=12.2 vs long_run_all.shots_for=10.2). Shots inside the box have jumped from 7.6 long-run to 9.2 in last 5, suggesting a recent shift toward more central attacking.",
+    "Shot-on-target rate is modest: 3.7 long-run, 3.8 last 5, but big chances have risen to 2.75 in last 5 vs 2.0 long-run (big_chances_for). This suggests improved chance quality recently despite similar on-target volume.",
+    "Corner generation is elevated recently: 6.2 corners/match in last 5 vs 5.2 long-run (corner_kicks_for). Final third entries also rose to 61.6 in last 5 vs 55.9 long-run, indicating more territorial pressure recently.",
+    "Possession is low overall (41.4% long-run) but has risen to 45.6% in last 5, suggesting a recent tactical shift or easier opposition. TEAM_A operates as a low-possession side that defends and counter-attacks.",
+    "Accurate crosses: 4.7 long-run, but 5.2 in last 5 \u2014 consistent with the increased final-third entries and corner generation. Touches in penalty area also jumped to 24.2 in last 5 vs 19.4 long-run."
+   ],
+   "team_a_defense": [
+    "TEAM_A concedes heavily in terms of final third entries: 71.4 long-run, 72.8 last 5 \u2014 opponents consistently penetrate their defensive third at high volume. This is the most striking defensive characteristic.",
+    "Despite high final-third entries conceded, shots on target against are 4.5 long-run and 5.0 last 5 \u2014 moderate. Opponents generate volume but TEAM_A's goalkeeper makes 3.5 saves/match long-run (4.0 last 5), suggesting active shot-stopping.",
+    "Clearances are high: 23.9 long-run, 24.4 last 5 \u2014 consistent with a deep defensive block absorbing pressure. Tackles are also elevated at 17.6/match long-run.",
+    "Corners conceded: 4.8 long-run, 5.2 last 5 \u2014 moderate. Accurate crosses conceded: 5.0 long-run, 5.0 last 5 \u2014 consistent.",
+    "Yellow cards conceded: 1.7 long-run, 2.0 last 5. Fouls committed: 15.1 long-run, 14.8 last 5 \u2014 a physically engaged defensive style."
+   ],
+   "team_b_attack": [
+    "TEAM_B (Caen) averages 12.4 shots/match long-run, 13.0 last 5. Shots inside the box are high: 8.8 long-run, 10.0 last 5 \u2014 a strong trend toward box-based attacking.",
+    "Accurate crosses are notably high: 5.5 long-run, 6.4 last 5 \u2014 the highest of either team and rising. This is a clear attacking mechanism. Corner kicks: 6.1 long-run, 5.0 last 5.",
+    "Possession: 55.7% long-run, 56.8% last 5 \u2014 TEAM_B is a possession-dominant side, contrasting sharply with TEAM_A's low-possession style.",
+    "Big chances: 1.86 long-run, 2.4 last 5 \u2014 improving recently. Shots on target: 3.7 long-run, 4.6 last 5 \u2014 a notable recent improvement in shot quality.",
+    "Final third entries: 62.5 long-run, 61.2 last 5 \u2014 consistently high territorial penetration. Touches in penalty area: 23.4 long-run, 25.0 last 5 \u2014 rising."
+   ],
+   "team_b_defense": [
+    "TEAM_B concedes 11.7 shots/match long-run but only 6.6 shots inside the box \u2014 a low inside-box concession rate relative to total shots, suggesting opponents are pushed to shoot from distance. Last 5: 6.8 inside box against.",
+    "Clearances conceded (i.e., TEAM_B makes): 19.4 long-run, 23.4 last 5 \u2014 rising sharply, suggesting more defensive pressure recently. Corners conceded: 4.9 long-run, 6.6 last 5 \u2014 a significant recent increase.",
+    "Accurate crosses conceded: 3.4 long-run, 3.6 last 5 \u2014 low, suggesting TEAM_B suppresses wide delivery well. This is a tension with the high corners conceded recently.",
+    "Shots on target conceded: 4.4 long-run, 3.4 last 5 \u2014 actually improving recently despite more corners and clearances. Saves: 2.5 long-run, 3.0 last 5.",
+    "Red cards against (i.e., opponents receive): 0.29 long-run, 0.4 last 5 \u2014 TEAM_B's opponents are being sent off at a notable rate. TEAM_B itself has zero red cards in 14 matches."
+   ]
+  }
+ },
+ "temperature": 0.0
+}

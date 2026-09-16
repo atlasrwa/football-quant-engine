@@ -1,0 +1,54 @@
+{
+ "arm": "B",
+ "candidate_id": "C1",
+ "elapsed_s": 8.18,
+ "error": null,
+ "fixture_id": "mt_408750601",
+ "max_tokens": 8192,
+ "model_id": "us.anthropic.claude-sonnet-4-6",
+ "pass": 2,
+ "provenance": {
+  "input_tokens": 4132,
+  "output_tokens": 565,
+  "request_sha256": "b9c63ef9f5bef687c4c4af6560403d92d7e4d486c769d0a6ac12b30357bfba07",
+  "resolved_model_id": "us.anthropic.claude-sonnet-4-6",
+  "response_sha256": "e7c06df5a0ac28f227bef290f56d6c907be7d1d6198ebde5bc29030283120cc1",
+  "stop_reason": "tool_use"
+ },
+ "record_sha256": "1eea8317630e82a12fdb2c2e1b9c3c02b0a80ec0149ddab0647b972aedbe87c7",
+ "response": {
+  "action": "ABSTAIN",
+  "candidate_id": "C1",
+  "closest_generic_structures": [
+   "GEN_0316816",
+   "GEN_0316821",
+   "GEN_0316840"
+  ],
+  "incremental_structure": [
+   "Candidate bundles two metrics (shots_inside_box + touches_in_penalty_area) into a single question rather than testing each separately",
+   "Second behavioral observation introduces a recent-vs-long-run sub-question (W5 vs ALL_PRIOR away), but this is not reflected in the candidate's formal comparison/conditions/window fields",
+   "No additional condition dimension (e.g. competition=SAME or opponent_profile axis) is applied beyond HOME venue conditioning"
+  ],
+  "reason": "The candidate's formal statistical structure \u2014 subject=TEAM_A, FOR perspective, SUBJECT_VENUE_BASELINE comparison, condition=HOME, window=ALL_PRIOR \u2014 is exactly reproduced by GEN_0316816 (shots_inside_box) and GEN_0316821 (touches_in_penalty_area). Bundling two metrics into one question is a presentational choice, not a structural one: the canonicaliser will decompose them into the same two generic structures already retrieved. The second behavioral observation hints at a recent-vs-long-run interaction, but that dimension is not encoded in the candidate's comparison, window, or conditions fields, so it adds no structural novelty. The self-critique correctly flags is_just_home_vs_away=true and likely_generic_enumeration_would_generate_this=true. The magnitude of the observed split is empirical evidence, not structural differentiation. Nothing in the candidate escapes the coverage of the retrieved generics.",
+  "shared_structure": [
+   "subject=TEAM_A (HOME_TEAM)",
+   "metric_perspective=FOR",
+   "comparison=SUBJECT_VENUE_BASELINE",
+   "condition=historical_venue_conditioning:HOME",
+   "window=ALL_PRIOR",
+   "target_metrics include shots_inside_box (GEN_0316816) and touches_in_penalty_area (GEN_0316821)",
+   "research_family=VENUE_EFFECT"
+  ]
+ },
+ "retrieved_distances": [
+  1,
+  1,
+  3
+ ],
+ "retrieved_generic_ids": [
+  "GEN_0316816",
+  "GEN_0316821",
+  "GEN_0316840"
+ ],
+ "temperature": 0.0
+}

@@ -173,6 +173,10 @@ def main():
                       "n_interaction_lines_total": 0, "n_tensions": 0,
                       "n_asymmetries": 0, "n_regime_changes": 0}
     errors = []
+    adjudication = {"A": {"FUTURE_CLAIM": [], "DERIVED_QUANTITY": [],
+                          "n_historical_description": 0, "candidates_with_breach": 0},
+                    "B": {"FUTURE_CLAIM": [], "DERIVED_QUANTITY": [],
+                          "n_historical_description": 0, "candidates_with_breach": 0}}
     # THREE distinct states, keyed on stop_reason. Collapsing them would report an
     # apparatus truncation as an abstention -- and abstention is scored as SUCCESSFUL
     # behaviour, so the misread would invert a headline metric.
@@ -203,6 +207,13 @@ def main():
             r = A.audit_armA_hypothesis(h, i, cap=cap, packet=pkt, library_keys=LIBKEYS,
                                         vocabulary=VOCAB, valid_refs=valid)
             r["fixture_id"] = fid
+            adj = A.adjudicate_armA_prose(h)
+            r["prose_adjudication"] = adj
+            for k in ("FUTURE_CLAIM", "DERIVED_QUANTITY"):
+                adjudication["A"][k] += [{"fixture_id": fid, "id": h.get("hypothesis_id"),
+                                          "sentence": x} for x in adj[k]]
+            adjudication["A"]["n_historical_description"] += adj["HISTORICAL_DESCRIPTION"]
+            adjudication["A"]["candidates_with_breach"] += 1 if adj["genuine_breach"] else 0
             fold(arms["A"], r)
             per_candidate["A"].append(r)
             keys_seen["A"][r["novelty_verdict"].get("structural_key_sha256")] += 1
@@ -252,6 +263,14 @@ def main():
             r = A.audit_candidate(c, i, cap=cap, packet=pkt, library_keys=LIBKEYS,
                                   vocabulary=VOCAB, valid_refs=valid, values=values)
             r["fixture_id"] = fid
+            adj = A.adjudicate_candidate_prose(c)
+            r["prose_adjudication"] = adj
+            for k in ("FUTURE_CLAIM", "DERIVED_QUANTITY"):
+                adjudication["B"][k] += [{"fixture_id": fid,
+                                          "id": c.get("candidate_id"),
+                                          "sentence": x} for x in adj[k]]
+            adjudication["B"]["n_historical_description"] += adj["HISTORICAL_DESCRIPTION"]
+            adjudication["B"]["candidates_with_breach"] += 1 if adj["genuine_breach"] else 0
             fold(arms["B"], r)
             per_candidate["B"].append(r)
             b_by_cid[(fid, str(c.get("candidate_id")))] = (c, r)
@@ -302,6 +321,53 @@ def main():
         dupes = sum(v - 1 for v in keys_seen[arm].values() if v > 1)
         arms[arm]["duplicate_candidates"] = dupes
 
+    # ---- scorer-amendment audit --------------------------------------------------------
+    # Both post-hoc scorer fixes (the evidence-reference path walker and the metric-prose
+    # collision mask) were written AFTER the model outputs existed. That is the exact shape
+    # of change that can silently favour one arm, so its effect is MEASURED per arm here
+    # rather than asserted in prose. `normalise_metric_prose` is wired into Arm B's
+    # `firewall_scan` only -- Arm A keeps `FW.scan_hypothesis` verbatim -- so the honest
+    # question is what Arm A's numbers WOULD have been under the same mask.
+    amend = {}
+    for arm in ("A", "B"):
+        as_scored = collections.Counter()
+        opposite = collections.Counter()
+        if arm == "A":
+            for fp in sorted(glob.glob(f"{RESP}/A_pass1_*.json")):
+                rec = json.load(open(fp))
+                pkt = arm_a_packets.get(rec["fixture_id"]) or {}
+                for i, h in enumerate((rec.get("response") or {}).get("hypotheses") or []):
+                    for fd in A.FW.blocking(A.armA_firewall_scan(h, i, packet=pkt)):
+                        as_scored[fd.intent] += 1
+                    h2 = dict(h)
+                    for fld in ("question", "evidence_summary"):
+                        if isinstance(h2.get(fld), str):
+                            h2[fld] = A.normalise_metric_prose(h2[fld], VOCAB)
+                    for fd in A.FW.blocking(A.armA_firewall_scan(h2, i, packet=pkt)):
+                        opposite[fd.intent] += 1
+        else:
+            for fp in sorted(glob.glob(f"{RESP}/B_pass1_*.json")):
+                rec = json.load(open(fp))
+                pkt = packets.get(rec["fixture_id"]) or {}
+                vals = A.packet_values(pkt)
+                for i, c in enumerate((rec.get("response") or {}).get("candidates") or []):
+                    for fd in A.FW.blocking(
+                            A.firewall_scan(c, i, values=vals, vocabulary=VOCAB)):
+                        as_scored[fd.intent] += 1
+                    for fd in A.FW.blocking(
+                            A.firewall_scan(c, i, values=vals, vocabulary=())):
+                        opposite[fd.intent] += 1
+        amend[arm] = {
+            "mask_applied_in_scoring": arm == "B",
+            "blocking_findings_as_scored": sum(as_scored.values()),
+            "blocking_findings_under_opposite_mask_state": sum(opposite.values()),
+            "predictive_intent_as_scored":
+                as_scored["MODEL_AUTHORED_PREDICTIVE_QUANTIFICATION"],
+            "predictive_intent_under_opposite_mask_state":
+                opposite["MODEL_AUTHORED_PREDICTIVE_QUANTIFICATION"],
+            "intent_breakdown_as_scored": dict(sorted(as_scored.items())),
+        }
+
     results = {
         "v8a_results_version": "v8a_results_v1",
         "effect_blind": True,
@@ -325,6 +391,19 @@ def main():
         "family_concentration_top1_pct": {
             a: pct(families[a].most_common(1)[0][1], sum(families[a].values()))
             if families[a] else None for a in families},
+        "firewall_adjudication": adjudication,
+        "scorer_amendment_audit": amend,
+        "firewall_adjudication_note": (
+            "firewall_v5's predictive-marker set contains 'chance', which in THIS corpus "
+            "collides with the metric name `big_chances`. The V8A protocol asks for flowing "
+            "behavioural prose, so the model writes 'big chances' and every such sentence "
+            "was classified predictive. All 63 affected sentences were inspected and none "
+            "was a prediction. `normalise_metric_prose` now rewrites the space-separated "
+            "spelling of approved metric names to their underscore form BEFORE scanning, "
+            "which extends firewall_v2's existing metric-lexicon masking to a second "
+            "spelling of the SAME approved names rather than relaxing any rule. The "
+            "adjudication below reports what survives that, with every flagged sentence "
+            "quoted verbatim so the call can be checked rather than trusted."),
         "errors": errors,
         "arm_c_executed": False,
         "arm_d_note": ("Arm D is the deterministic generic library scored through the SAME "

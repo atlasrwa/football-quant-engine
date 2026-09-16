@@ -1,0 +1,106 @@
+{
+ "arm": "B",
+ "candidate_id": "C5",
+ "elapsed_s": 14.17,
+ "error": null,
+ "fixture_id": "mt_830906979",
+ "max_tokens": 8192,
+ "model_id": "us.anthropic.claude-sonnet-4-6",
+ "pass": 2,
+ "provenance": {
+  "input_tokens": 4191,
+  "output_tokens": 1504,
+  "request_sha256": "8724d9c492291da2aa7d6b269287553f1c2c94ebde65afdb118a25a111dc59bc",
+  "resolved_model_id": "us.anthropic.claude-sonnet-4-6",
+  "response_sha256": "80f7d9355def164e0ab1f43b9b34dd574b200c4126e59454fac22e7a2ed7e56f",
+  "stop_reason": "tool_use"
+ },
+ "record_sha256": "258249d8c9b3b8b4791d2f992a3190d3cb7c2a2cba2717a755d50e5b47e08ab6",
+ "response": {
+  "action": "KEEP",
+  "candidate_id": "C5",
+  "closest_generic_structures": [
+   "GEN_0135871",
+   "GEN_0135885",
+   "GEN_0135895"
+  ],
+  "final_candidate": {
+   "behavioral_observations": [
+    {
+     "evidence_refs": [
+      "TEAM_B.blocks.long_run_all.metrics.final_third_entries_against",
+      "TEAM_B.blocks.recent_last_10.metrics.final_third_entries_against",
+      "TEAM_B.blocks.recent_last_5.metrics.final_third_entries_against"
+     ],
+     "observation": "Rayo's final_third_entries_against is consistently high: long-run all 60.4, W10 60.2, W5 61.4 \u2014 no sign of improvement across any window. This is a structural feature, not a recent blip."
+    },
+    {
+     "evidence_refs": [
+      "TEAM_A.blocks.long_run_home.metrics.final_third_entries_for",
+      "TEAM_A.blocks.long_run_away.metrics.final_third_entries_for",
+      "TEAM_B.blocks.long_run_all.metrics.final_third_entries_against"
+     ],
+     "observation": "Betis final_third_entries_for at home long-run is 51.9 vs away 47.4. Rayo concedes 60.4 final_third_entries_against long-run all \u2014 well above Betis's own home generation rate, suggesting Rayo's defensive shape allows deep territorial penetration."
+    }
+   ],
+   "candidate_id": "C5",
+   "comparison": "SIMILAR_OPPONENT_COHORT",
+   "conditions": [],
+   "coverage_risk": "NONE",
+   "falsifiable_question": "Does Rayo Vallecano concede more final_third_entries and touches_in_penalty_area against opponents whose defensive/discipline profile resembles Real Betis's, compared to Rayo's overall baseline?",
+   "falsifier": "If Rayo's final_third_entries_against and touches_in_penalty_area_against against similar-profile opponents are not higher than their overall baseline, the structural territorial vulnerability mechanism is unsupported.",
+   "football_mechanism": "Rayo structurally concedes high final-third entries regardless of venue or recent form. When facing a home side like Betis that generates above-average final-third entries at home, the interaction may produce elevated territorial dominance for Betis. The question is whether Rayo's high final_third_entries_against is a stable structural feature that persists against opponents with HIGH attacking territorial profiles.",
+   "metric_perspective": "AGAINST",
+   "opponent": "TEAM_A",
+   "provider_requirements": [
+    "final_third_entries",
+    "touches_in_penalty_area"
+   ],
+   "research_family": "TEMPO_AND_TERRITORY",
+   "self_critique": {
+    "cohort_equals_baseline": false,
+    "condition_equals_target": false,
+    "could_opponent_strength_explain_it": true,
+    "is_just_home_vs_away": false,
+    "is_just_recent_vs_long_run": false,
+    "is_overconditioned": false,
+    "likely_generic_enumeration_would_generate_this": false,
+    "notes": "The similar-opponent cohort adds genuine conditional structure beyond a simple average. The structural consistency of Rayo's final_third_entries_against across all windows (60+) is the concrete evidence base."
+   },
+   "similar_opponent_rationale": "Betis as the upcoming opponent has a high home attacking profile (shots, final_third_entries, touches_in_penalty_area). The engine's frozen similarity dimensions (goals_conceded_per_match, shots_on_target_conceded_per_match, shots_inside_box_conceded_per_match, fouls_committed_per_match, yellow_cards_per_match) will identify prior opponents of Rayo with a similar attacking/pressing profile to Betis, allowing a test of whether Rayo's territorial concession pattern is consistent against such opponents.",
+   "subject": "TEAM_B",
+   "support_risk": "LOW",
+   "target_metric": [
+    "final_third_entries",
+    "touches_in_penalty_area"
+   ],
+   "window": "ALL_PRIOR"
+  },
+  "incremental_structure": [
+   "dual target_metric: final_third_entries AND touches_in_penalty_area tested jointly (not singly)",
+   "similar_opponent_rationale anchored to Betis's HIGH home attacking territorial profile as the similarity axis",
+   "mechanism requires BOTH Rayo's structural concession pattern AND opponent's attacking profile to interact \u2014 not a single-metric standalone test",
+   "behavioral evidence explicitly cross-references TEAM_A home generation rate against TEAM_B concession rate to motivate the cohort definition"
+  ],
+  "reason": "All three generic structures test a single metric (either final_third_entries or touches_in_penalty_area) in isolation, with no conditions and no opponent-profile rationale anchoring the cohort. The candidate is structurally distinct on two axes: (1) it tests two territorial metrics jointly under a single cohort contrast, requiring both to move together for the mechanism to hold; (2) the similar-opponent cohort is explicitly motivated by the upcoming opponent's HIGH home attacking territorial profile, meaning the cohort is not a generic similarity bucket but one conditioned on a specific opponent-profile axis. Neither of these structural features \u2014 joint dual-metric testing and opponent-profile-anchored cohort rationale \u2014 appears in any of the three generic structures. The self-critique correctly flags that opponent strength could partially explain the pattern, but the cross-window stability evidence (60.4 / 60.2 / 61.4) and the cross-referencing of Betis's home generation rate against Rayo's concession rate provide a falsifiable interaction that goes beyond a simple strength confound. The candidate is not overconditioned and the cohort does not collapse to the baseline.",
+  "shared_structure": [
+   "subject=AWAY_TEAM (TEAM_B)",
+   "comparison=SIMILAR_OPPONENT_COHORT",
+   "metric_perspective=AGAINST",
+   "window=ALL_PRIOR",
+   "no venue or competition conditions",
+   "research_family=TEMPO_AND_TERRITORY"
+  ]
+ },
+ "retrieved_distances": [
+  1,
+  1,
+  3
+ ],
+ "retrieved_generic_ids": [
+  "GEN_0135871",
+  "GEN_0135885",
+  "GEN_0135895"
+ ],
+ "temperature": 0.0
+}

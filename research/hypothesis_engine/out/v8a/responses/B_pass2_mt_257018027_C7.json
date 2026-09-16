@@ -1,0 +1,120 @@
+{
+ "arm": "B",
+ "candidate_id": "C7",
+ "elapsed_s": 14.18,
+ "error": null,
+ "fixture_id": "mt_257018027",
+ "max_tokens": 8192,
+ "model_id": "us.anthropic.claude-sonnet-4-6",
+ "pass": 2,
+ "provenance": {
+  "input_tokens": 4353,
+  "output_tokens": 1513,
+  "request_sha256": "769413cc9c9806da03f5ea7f77ef2f79f9c6bc38ae48a1dd69f9f23844792600",
+  "resolved_model_id": "us.anthropic.claude-sonnet-4-6",
+  "response_sha256": "404dbad38e11287ef638921f5c86313675a0c899b232884ac1aaa2be3771512b",
+  "stop_reason": "tool_use"
+ },
+ "record_sha256": "74b7a0cbc205603d031cf364ce29d614301fdc1d8db1aa7aa991f140098fc54f",
+ "response": {
+  "action": "KEEP",
+  "candidate_id": "C7",
+  "closest_generic_structures": [
+   "GEN_0001159",
+   "GEN_0001167",
+   "GEN_0001168"
+  ],
+  "final_candidate": {
+   "behavioral_observations": [
+    {
+     "evidence_refs": [
+      "TEAM_A.blocks.long_run_away.metrics.final_third_entries_for",
+      "TEAM_A.blocks.long_run_home.metrics.final_third_entries_for"
+     ],
+     "observation": "PSG final_third_entries_for away mean 81.5 vs home 49.7 \u2014 PSG generates dramatically more final third entries away than at home in this sample."
+    },
+    {
+     "evidence_refs": [
+      "TEAM_A.blocks.long_run_away.metrics.shots_for",
+      "TEAM_A.blocks.long_run_home.metrics.shots_for",
+      "TEAM_A.blocks.long_run_away.metrics.final_third_entries_for",
+      "TEAM_A.blocks.long_run_home.metrics.final_third_entries_for"
+     ],
+     "observation": "PSG shots_for away 16.83 vs home 20.83 \u2014 shot volume is higher at home despite fewer final third entries. This tension suggests away final third entries do not convert to shots at the same rate."
+    },
+    {
+     "evidence_refs": [
+      "TEAM_A.blocks.long_run_away.metrics.shots_inside_box_for",
+      "TEAM_A.blocks.long_run_home.metrics.shots_inside_box_for"
+     ],
+     "observation": "PSG shots_inside_box_for away 13.0 vs home 13.83 \u2014 box shots are similar home and away despite the large final third entry gap."
+    }
+   ],
+   "candidate_id": "C7",
+   "comparison": "OPPONENT_PROFILE_INTERACTION",
+   "conditions": [
+    {
+     "axis": "shots_on_target_conceded_per_match",
+     "dimension": "opponent_profile",
+     "value": "LOW"
+    }
+   ],
+   "coverage_risk": "NONE",
+   "falsifiable_question": "Does PSG's shots_for and shots_inside_box_for against opponents with a LOW shots_on_target_conceded_per_match profile (defensively compact opponents) differ from PSG's overall baseline for those metrics?",
+   "falsifier": "If PSG's shots_for and shots_inside_box_for against LOW shots_on_target_conceded opponents are at or above its overall baseline, the defensive compactness suppression mechanism is unsupported.",
+   "football_mechanism": "PSG's away final third entry count is anomalously high relative to home, yet shot volume is lower away. This tension suggests that against opponents who sit deep and allow territorial access (high final third entries conceded), PSG may accumulate entries without converting them to shots at the same rate as when opponents press higher. The question is whether PSG's shot volume against opponents who concede many final third entries (LOW shots_on_target_conceded profile, i.e. defensively compact) differs from its baseline.",
+   "metric_perspective": "FOR",
+   "opponent": "TEAM_B",
+   "provider_requirements": [
+    "shots",
+    "shots_inside_box",
+    "final_third_entries"
+   ],
+   "research_family": "ATTACK_VOLUME",
+   "self_critique": {
+    "cohort_equals_baseline": false,
+    "condition_equals_target": false,
+    "could_opponent_strength_explain_it": false,
+    "is_just_home_vs_away": false,
+    "is_just_recent_vs_long_run": false,
+    "is_overconditioned": false,
+    "likely_generic_enumeration_would_generate_this": false,
+    "notes": "The axis shots_on_target_conceded_per_match is a frozen dimension. The mechanism (high final third entries but lower shot conversion against compact defenses) is grounded in the observed tension between PSG's away final_third_entries and away shots. Nantes is not obviously a LOW shots_on_target_conceded team (4.17 long-run) so this may not characterise the opponent well, but the question about PSG's behaviour against compact opponents is still valid."
+   },
+   "subject": "TEAM_A",
+   "support_risk": "LOW",
+   "target_metric": [
+    "shots",
+    "shots_inside_box",
+    "final_third_entries"
+   ],
+   "window": "ALL_PRIOR"
+  },
+  "incremental_structure": [
+   "comparison: OPPONENT_PROFILE_INTERACTION vs LEAGUE_ENVIRONMENT_BASELINE \u2014 fundamentally different baseline anchor",
+   "opponent_profile axis: shots_on_target_conceded_per_match (LOW) vs goals_for (HIGH) \u2014 different axis and polarity",
+   "subject is TEAM_A (away team in this fixture), not HOME_TEAM",
+   "multi-metric joint question: shots + shots_inside_box + final_third_entries tested together as a conversion-tension mechanism, not individually against league baseline",
+   "mechanism requires two measurable characteristics simultaneously: high final_third_entries_for AND lower shots_for (conversion gap), not a single metric vs league norm"
+  ],
+  "reason": "The three generic structures all use LEAGUE_ENVIRONMENT_BASELINE as the comparison anchor and condition on opponent_profile axis goals_for=HIGH. C7 differs on three structural axes simultaneously: (1) the comparison is OPPONENT_PROFILE_INTERACTION, not LEAGUE_ENVIRONMENT_BASELINE \u2014 the baseline is PSG's own overall figures, not the league environment; (2) the conditioning axis is shots_on_target_conceded_per_match=LOW, not goals_for=HIGH \u2014 a different opponent-profile dimension measuring defensive compactness rather than attacking output; (3) the mechanism is a joint conversion-tension question requiring final_third_entries, shots, and shots_inside_box to be read together (high entries but suppressed shot volume), not any single metric tested independently against a league norm. These three structural differences together mean the statistical question C7 poses is not answered by any of the three generic structures.",
+  "shared_structure": [
+   "subject: HOME_TEAM (TEAM_A)",
+   "metric perspective: FOR",
+   "window: ALL_PRIOR",
+   "target metrics overlap: final_third_entries, shots, shots_inside_box",
+   "opponent_profile condition present"
+  ]
+ },
+ "retrieved_distances": [
+  7,
+  7,
+  7
+ ],
+ "retrieved_generic_ids": [
+  "GEN_0001159",
+  "GEN_0001167",
+  "GEN_0001168"
+ ],
+ "temperature": 0.0
+}

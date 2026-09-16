@@ -1,0 +1,119 @@
+{
+ "arm": "B",
+ "candidate_id": "C3",
+ "elapsed_s": 14.45,
+ "error": null,
+ "fixture_id": "mt_408756224",
+ "max_tokens": 8192,
+ "model_id": "us.anthropic.claude-sonnet-4-6",
+ "pass": 2,
+ "provenance": {
+  "input_tokens": 4340,
+  "output_tokens": 1552,
+  "request_sha256": "2d6a658d701da8d4c2f22ae2eeac2e56b83b7976f81924289a620b02ffabf4d9",
+  "resolved_model_id": "us.anthropic.claude-sonnet-4-6",
+  "response_sha256": "7ec066c2a4de0d88e4fd0661ccebd9bad4db1cae15b38143886aafe0b8c37bda",
+  "stop_reason": "tool_use"
+ },
+ "record_sha256": "9ee4bbcaa737abfbc4028a885bfe7b39dc772a4e931e25c9b6a61c63bba9ea1e",
+ "response": {
+  "action": "KEEP",
+  "candidate_id": "C3",
+  "closest_generic_structures": [
+   "GEN_0142071",
+   "GEN_0142074",
+   "GEN_0142359"
+  ],
+  "final_candidate": {
+   "behavioral_observations": [
+    {
+     "evidence_refs": [
+      "TEAM_A.blocks.long_run_home.metrics.shots_against",
+      "TEAM_A.blocks.long_run_home.metrics.shots_on_target_against",
+      "TEAM_A.blocks.recent_last_10.metrics.shots_against",
+      "TEAM_A.blocks.recent_last_10.metrics.shots_on_target_against"
+     ],
+     "observation": "Leeds concede only 7.44 shots at home (long-run) and 2.44 shots on target at home (long-run). In recent last-10, shots conceded dropped further to 6.78 and shots on target conceded to 1.78."
+    },
+    {
+     "evidence_refs": [
+      "TEAM_B.blocks.long_run_away.metrics.shots_for",
+      "TEAM_B.blocks.long_run_away.metrics.shots_on_target_for"
+     ],
+     "observation": "Derby generate only 8.63 shots away (long-run away) and 2.63 shots on target away \u2014 among the lowest away attacking outputs in the dataset."
+    }
+   ],
+   "candidate_id": "C3",
+   "comparison": "SIMILAR_OPPONENT_COHORT",
+   "conditions": [
+    {
+     "dimension": "historical_venue_conditioning",
+     "value": "HOME"
+    },
+    {
+     "dimension": "competition",
+     "value": "SAME"
+    }
+   ],
+   "coverage_risk": "LOW",
+   "falsifiable_question": "Does Leeds United's shots_against and shots_on_target_against at home in Championship matches against opponents with a similar pre-fixture defensive/discipline profile to Derby County differ from Leeds' overall home Championship baseline?",
+   "falsifier": "If Leeds' shots conceded and shots on target conceded against similar-profile opponents are at or above their overall home baseline, the suppression mechanism against this opponent type is unsupported.",
+   "football_mechanism": "Leeds' home defensive structure suppresses opponent shot volume through high possession and territorial control (possession_against 38.4% at home long-run). When facing a LOW-possession away side like Derby, Leeds' defensive suppression may be even more pronounced because Derby's attacking transitions are limited by their low away possession (43.4%).",
+   "metric_perspective": "AGAINST",
+   "opponent": "TEAM_B",
+   "provider_requirements": [
+    "shots_against",
+    "shots_on_target_against",
+    "historical_venue_conditioning",
+    "competition",
+    "similar_opponent_cohort"
+   ],
+   "research_family": "DEFENSIVE_SUPPRESSION",
+   "self_critique": {
+    "cohort_equals_baseline": false,
+    "condition_equals_target": false,
+    "could_opponent_strength_explain_it": false,
+    "is_just_home_vs_away": false,
+    "is_just_recent_vs_long_run": false,
+    "is_overconditioned": false,
+    "likely_generic_enumeration_would_generate_this": false,
+    "notes": "The similar-opponent cohort is the key differentiator. Derby's specific away profile (high shots conceded, low possession) is the trigger. The question is whether Leeds suppress shots even more against this type of opponent."
+   },
+   "similar_opponent_rationale": "Derby's away profile \u2014 high goals conceded, high shots on target conceded, high shots inside box conceded, moderate fouls, moderate yellow cards \u2014 places them in a specific defensive/discipline tier. The engine's frozen 5-dimension similarity profile will identify prior Leeds home opponents with a comparable pre-fixture profile, allowing a meaningful cohort comparison.",
+   "subject": "TEAM_A",
+   "support_risk": "LOW",
+   "target_metric": [
+    "shots",
+    "shots_on_target"
+   ],
+   "window": "ALL_PRIOR"
+  },
+  "incremental_structure": [
+   "opponent_profile axis is NOT goals_for/goals_against \u2014 candidate uses Derby's defensive/discipline profile (shots_on_target_conceded, shots_inside_box_conceded, possession) rather than goals-based axes",
+   "conditions include competition=SAME (Championship filter) \u2014 absent from all three generic structures",
+   "conditions include historical_venue_conditioning=HOME \u2014 present implicitly in generics via HOME_TEAM subject but not as an explicit frozen filter dimension",
+   "football_mechanism is conditioned on opponent's LOW away possession interacting with subject's high home possession, requiring two measurable characteristics together (Leeds possession_against + Derby away possession)",
+   "no opponent_profile axis on goals_for or goals_against \u2014 the cohort-defining axes are structurally different from GEN_0142071, GEN_0142074, GEN_0142359"
+  ],
+  "reason": "The three generic structures define their similar-opponent cohort exclusively via goals_for/goals_against opponent-profile axes (HIGH/HIGH or HIGH/MID). The candidate's cohort is defined by Derby's defensive/discipline profile axes (shots conceded, shots on target conceded, shots inside box conceded, possession) \u2014 structurally different axes, not a rewording. Additionally, the candidate adds two explicit frozen filter conditions (competition=SAME, historical_venue_conditioning=HOME) that are absent from all three generics. The football mechanism also requires two measurable characteristics jointly (Leeds' home possession dominance AND Derby's low away possession), which is not captured by any single-axis generic. These differences are structural, not cosmetic.",
+  "shared_structure": [
+   "subject: HOME_TEAM (TEAM_A)",
+   "metric_perspective: AGAINST",
+   "comparison: SIMILAR_OPPONENT_COHORT",
+   "target_metrics: shots, shots_on_target",
+   "window: ALL_PRIOR",
+   "research_family: DEFENSIVE_SUPPRESSION"
+  ]
+ },
+ "retrieved_distances": [
+  6,
+  6,
+  6
+ ],
+ "retrieved_generic_ids": [
+  "GEN_0142071",
+  "GEN_0142074",
+  "GEN_0142359"
+ ],
+ "temperature": 0.0
+}

@@ -1,0 +1,111 @@
+{
+ "arm": "B",
+ "candidate_id": "C3",
+ "elapsed_s": 20.4,
+ "error": null,
+ "fixture_id": "mt_408750601",
+ "max_tokens": 8192,
+ "model_id": "us.anthropic.claude-sonnet-4-6",
+ "pass": 2,
+ "provenance": {
+  "input_tokens": 4182,
+  "output_tokens": 1641,
+  "request_sha256": "df2a4680a0cd0cfcb1b75cd6c48a61eb8ef1fe207c9465951e045b3040cb51dd",
+  "resolved_model_id": "us.anthropic.claude-sonnet-4-6",
+  "response_sha256": "bb32e49a6b13e9238c28b1dcaf4b853bbafd66804d4a4ec19c2ce4a2023a36bf",
+  "stop_reason": "tool_use"
+ },
+ "record_sha256": "68561afa29299a341dc48547d7b00166f4c786ef1d7db88ce5e52ff0595cd4b0",
+ "response": {
+  "action": "REFINE",
+  "candidate_id": "C3",
+  "closest_generic_structures": [
+   "GEN_0316823",
+   "GEN_0316808",
+   "GEN_0316832"
+  ],
+  "final_candidate": {
+   "behavioral_observations": [
+    {
+     "evidence_refs": [
+      "TEAM_A.blocks.long_run_all.fouls_for",
+      "TEAM_A.blocks.recent_last_5.fouls_for",
+      "TEAM_A.blocks.long_run_all.yellow_cards_for",
+      "TEAM_A.blocks.long_run_away.yellow_cards_for",
+      "TEAM_A.blocks.long_run_home.yellow_cards_for"
+     ],
+     "observation": "TEAM_A commits 14.4 fouls/match long-run and 14.6 recent-5 \u2014 consistently high across venues. Yet yellow cards split sharply by venue: 2.0 home vs 3.7 away (long-run), while fouls split more modestly: 13.0 home vs 15.9 away. The foul-to-card conversion rate is therefore materially lower at home than away."
+    },
+    {
+     "evidence_refs": [
+      "TEAM_A.blocks.long_run_all.cards_2h_for",
+      "TEAM_A.blocks.long_run_home.yellow_cards_for",
+      "TEAM_A.blocks.long_run_away.yellow_cards_for"
+     ],
+     "observation": "Cards in 2nd half for: 2.0 long-run, 2.4 recent-5, suggesting the card accumulation pattern is not merely a late-game effect but a persistent venue-conditioned phenomenon across the full match."
+    }
+   ],
+   "candidate_id": "C3",
+   "comparison": "SUBJECT_CONDITIONAL_VS_BASELINE",
+   "conditions": [
+    {
+     "dimension": "historical_venue_conditioning",
+     "value": "HOME"
+    }
+   ],
+   "coverage_risk": "NONE",
+   "falsifiable_question": "Is TEAM_A's ratio of yellow_cards per foul in HOME matches systematically lower than its unconditional ALL_PRIOR baseline ratio, given that its raw foul volume is high and stable across venues?",
+   "falsifier": "If TEAM_A's yellow_cards-per-foul rate in HOME matches is not lower than its overall baseline rate, the venue-conditioned conversion mechanism is unsupported.",
+   "football_mechanism": "TEAM_A operates a high-foul defensive style regardless of venue. At home, the ratio of fouls that escalate to yellow cards is substantially lower than at away venues, suggesting either referee leniency toward the home side or that TEAM_A's home defensive shape produces fouls in less card-prone situations (e.g. midfield rather than last-ditch). The structural question is whether the foul-to-card conversion rate in HOME matches is systematically below TEAM_A's unconditional (all-venue) baseline \u2014 a joint property of both metrics that neither metric alone captures.",
+   "metric_perspective": "FOR",
+   "opponent": "TEAM_B",
+   "provider_requirements": [
+    "yellow_cards",
+    "fouls"
+   ],
+   "research_family": "DISCIPLINE",
+   "self_critique": {
+    "cohort_equals_baseline": false,
+    "condition_equals_target": false,
+    "could_opponent_strength_explain_it": false,
+    "is_just_home_vs_away": false,
+    "is_just_recent_vs_long_run": false,
+    "is_overconditioned": false,
+    "likely_generic_enumeration_would_generate_this": false,
+    "notes": "The structural novelty is the joint measurement of fouls and yellow_cards as a conversion ratio under the HOME condition vs the unconditional baseline. Generic enumeration produces yellow_cards FOR HOME (GEN_0316823) and fouls FOR HOME (GEN_0316808) separately; it does not produce the conditional ratio. The SUBJECT_CONDITIONAL_VS_BASELINE comparison encodes that the cohort (HOME matches) is being tested against the unconditional baseline, which is the correct frame for a conversion-rate question."
+   },
+   "subject": "TEAM_A",
+   "support_risk": "LOW",
+   "target_metric": [
+    "yellow_cards",
+    "fouls"
+   ],
+   "window": "ALL_PRIOR"
+  },
+  "incremental_structure": [
+   "dual-metric interaction: fouls_for stable across venues but yellow_cards_for diverges sharply (home 2.0 vs away 3.7)",
+   "foul-to-card conversion rate as the derived ratio tested across venue split, not either metric in isolation",
+   "falsifiable question requires BOTH fouls and yellow_cards to be measured jointly to test the conversion-rate mechanism"
+  ],
+  "reason": "The candidate as written lists yellow_cards and fouls as co-equal target metrics and frames the question as 'home yellow_cards vs overall baseline' \u2014 which is structurally identical to GEN_0316823 (SUBJECT_VENUE_BASELINE, HOME, yellow_cards FOR, ALL_PRIOR). The fouls metric is present in the provider requirements but the falsifiable question and comparison do not actually test the foul-to-card conversion ratio; they test yellow_cards alone. The self-critique correctly identifies the conversion-rate interaction as the genuinely novel element, but the candidate structure does not encode it. A REFINE is warranted: the target metric should be the foul-to-card conversion rate (operationalised as yellow_cards conditioned on fouls, or the ratio), and the falsifiable question must reference both metrics jointly. However, since 'foul_to_card_conversion_rate' is not a named metric in the capability envelope, the closest valid encoding is to keep both metrics but reframe the comparison as SUBJECT_CONDITIONAL_VS_BASELINE with the condition being the stable high-foul-rate context, making the cohort (high-foul HOME matches) distinct from the baseline (all HOME matches). This is the only structural move that separates the candidate from GEN_0316823. The revised candidate below encodes this.",
+  "shared_structure": [
+   "subject=TEAM_A (home team)",
+   "metric_perspective=FOR",
+   "comparison=SUBJECT_VENUE_BASELINE",
+   "condition=historical_venue_conditioning:HOME",
+   "window=ALL_PRIOR",
+   "target_metric includes yellow_cards and fouls"
+  ]
+ },
+ "retrieved_distances": [
+  1,
+  1,
+  3
+ ],
+ "retrieved_generic_ids": [
+  "GEN_0316808",
+  "GEN_0316823",
+  "GEN_0316832"
+ ],
+ "temperature": 0.0
+}

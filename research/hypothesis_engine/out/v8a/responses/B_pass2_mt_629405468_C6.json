@@ -1,0 +1,54 @@
+{
+ "arm": "B",
+ "candidate_id": "C6",
+ "elapsed_s": 9.63,
+ "error": null,
+ "fixture_id": "mt_629405468",
+ "max_tokens": 8192,
+ "model_id": "us.anthropic.claude-sonnet-4-6",
+ "pass": 2,
+ "provenance": {
+  "input_tokens": 4502,
+  "output_tokens": 516,
+  "request_sha256": "f9ac576075f4e8a81d743986f353d9772e845b203249a4fac4d61c555703bf97",
+  "resolved_model_id": "us.anthropic.claude-sonnet-4-6",
+  "response_sha256": "5795a5b47bae71a40196373522544b4eb4d4b28050e6fea5bea502573cbf0b03",
+  "stop_reason": "tool_use"
+ },
+ "record_sha256": "4ee2f51c1aeb0502b33beac526ab9d5b94f99b7d4fa84b1e1961859322c03b5e",
+ "response": {
+  "action": "ABSTAIN",
+  "candidate_id": "C6",
+  "closest_generic_structures": [
+   "GEN_0141991",
+   "GEN_0141996",
+   "GEN_0142279"
+  ],
+  "incremental_structure": [
+   "candidate adds competition=SAME condition",
+   "candidate uses low-possession away profile axis rather than goals_for/goals_against axes for opponent similarity",
+   "candidate bundles two metrics (final_third_entries + possession) together in a single question"
+  ],
+  "reason": "The candidate's statistical structure is materially identical to GEN_0141991 and GEN_0141996 taken together. Both generics already test TEAM_A (HOME_TEAM) FOR final_third_entries and possession respectively, under SIMILAR_OPPONENT_COHORT, at HOME, over ALL_PRIOR. The candidate's only structural additions are: (1) a competition=SAME filter, which is a standard enumeration dimension and does not change the cohort-vs-baseline contrast in a novel way; and (2) framing the opponent similarity around a low-possession/high-concession away profile rather than goals_for HIGH / goals_against HIGH \u2014 but the engine's similarity computation is frozen and the candidate cannot redefine the similarity axes. The football narrative about TEAM_B's possession-ceding style is a rewording of the opponent profile, not a structurally distinct cohort condition. Bundling two metrics into one question does not create a new statistical structure; it is two generic questions stated together. No genuinely incremental structure survives the comparison.",
+  "shared_structure": [
+   "SIMILAR_OPPONENT_COHORT comparison",
+   "subject = HOME_TEAM (TEAM_A)",
+   "metric_perspective = FOR",
+   "window = ALL_PRIOR",
+   "historical_venue_conditioning = HOME",
+   "target_metrics: final_third_entries and possession",
+   "opponent_profile conditions on goals_for/goals_against axes"
+  ]
+ },
+ "retrieved_distances": [
+  6,
+  6,
+  6
+ ],
+ "retrieved_generic_ids": [
+  "GEN_0141991",
+  "GEN_0141996",
+  "GEN_0142279"
+ ],
+ "temperature": 0.0
+}

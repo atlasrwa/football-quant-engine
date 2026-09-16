@@ -1,0 +1,118 @@
+{
+ "arm": "B",
+ "candidate_id": "C1",
+ "elapsed_s": 16.53,
+ "error": null,
+ "fixture_id": "mt_257078632",
+ "max_tokens": 8192,
+ "model_id": "us.anthropic.claude-sonnet-4-6",
+ "pass": 2,
+ "provenance": {
+  "input_tokens": 4248,
+  "output_tokens": 1613,
+  "request_sha256": "7f885c0cbe8013890a79833c85e6e60818d6e3c2299d3235821adddeebdab790",
+  "resolved_model_id": "us.anthropic.claude-sonnet-4-6",
+  "response_sha256": "2166993d53d39ab1a8aeb199238e04b4d6caf450a48cce033cbd2755daa42e4a",
+  "stop_reason": "tool_use"
+ },
+ "record_sha256": "d29b6d104db661595af73a6276020f46c379ebda4b213b2b5c233df561e543d3",
+ "response": {
+  "action": "KEEP",
+  "candidate_id": "C1",
+  "closest_generic_structures": [
+   "GEN_0136000",
+   "GEN_0136005",
+   "GEN_0135952"
+  ],
+  "final_candidate": {
+   "behavioral_observations": [
+    {
+     "evidence_refs": [
+      "TEAM_A.blocks.long_run_all.shots_inside_box_for",
+      "TEAM_A.blocks.recent_last_5.shots_inside_box_for",
+      "TEAM_A.blocks.long_run_all.touches_in_penalty_area_for",
+      "TEAM_A.blocks.recent_last_5.touches_in_penalty_area_for"
+     ],
+     "observation": "Athletic Club's shots inside the box have risen from a long-run average of 7.73/match to 10.2/match in the last 5, and touches in penalty area from 20.47 to 25.0 in the same window \u2014 a measurable recent surge in box penetration."
+    },
+    {
+     "evidence_refs": [
+      "TEAM_B.blocks.long_run_all.touches_in_penalty_area_against",
+      "TEAM_B.blocks.long_run_away.touches_in_penalty_area_against",
+      "TEAM_B.blocks.long_run_all.shots_inside_box_against"
+     ],
+     "observation": "Real Madrid concede only 17.21 touches in penalty area per match long-run (17.5 away), and 5.79 shots inside box against long-run \u2014 substantially below Athletic's recent output levels."
+    }
+   ],
+   "candidate_id": "C1",
+   "comparison": "SIMILAR_OPPONENT_COHORT",
+   "conditions": [
+    {
+     "dimension": "historical_venue_conditioning",
+     "value": "HOME"
+    },
+    {
+     "axis": "defensive_suppression",
+     "dimension": "opponent_profile",
+     "value": "LOW"
+    }
+   ],
+   "coverage_risk": "LOW",
+   "falsifiable_question": "When Athletic Club play at home against opponents whose defensive profile (goals conceded, shots on target conceded, shots inside box conceded, fouls committed, yellow cards) is similar to Real Madrid's, do Athletic's shots_inside_box and touches_in_penalty_area FOR differ from their overall home baseline?",
+   "falsifier": "If Athletic's shots_inside_box and touches_in_penalty_area FOR against similar-profile opponents are not systematically different from their overall home baseline, the mechanism is unsupported.",
+   "football_mechanism": "When a high-possession, high-volume attacking side faces a defensively compact opponent that suppresses box entries, the attacker's box penetration metrics are compressed by the opponent's defensive shape rather than the attacker's own capability. Measuring Athletic's box penetration against opponents with a similar defensive suppression profile to Real Madrid tests whether Athletic's recent surge is robust to this type of opponent.",
+   "metric_perspective": "FOR",
+   "opponent": "TEAM_B",
+   "provider_requirements": [
+    "shots_inside_box",
+    "touches_in_penalty_area"
+   ],
+   "research_family": "ATTACK_VOLUME",
+   "self_critique": {
+    "cohort_equals_baseline": false,
+    "condition_equals_target": false,
+    "could_opponent_strength_explain_it": true,
+    "is_just_home_vs_away": false,
+    "is_just_recent_vs_long_run": false,
+    "is_overconditioned": false,
+    "likely_generic_enumeration_would_generate_this": false,
+    "notes": "Opponent strength could explain reduced box penetration \u2014 but that is precisely the mechanism being tested. The similar-opponent cohort isolates this. The home condition is appropriate since Athletic play at home. The opponent_profile condition on defensive suppression axis is the structural differentiator from the generics."
+   },
+   "similar_opponent_rationale": "Real Madrid's defensive profile \u2014 low goals conceded, low shots on target conceded, low shots inside box conceded, low fouls committed \u2014 is a specific suppressive type. Athletic's box penetration against opponents sharing this profile is the relevant cohort to test whether their recent surge holds against such defenses.",
+   "subject": "TEAM_A",
+   "support_risk": "LOW",
+   "target_metric": [
+    "shots_inside_box",
+    "touches_in_penalty_area"
+   ],
+   "window": "W10"
+  },
+  "incremental_structure": [
+   "Dual-metric joint test: shots_inside_box AND touches_in_penalty_area measured together, not independently",
+   "Opponent profile condition defined by defensive suppression axis (goals conceded, shots on target conceded, shots inside box conceded, fouls, yellow cards) \u2014 not just venue or competition",
+   "Mechanism requires INTERACTION between subject's recent surge (W5 vs long-run) and opponent's defensive suppression profile \u2014 neither alone constitutes the question",
+   "Falsifiable question explicitly anchors cohort to opponent's defensive suppression profile similarity to TEAM_B, not generic opponent similarity",
+   "Evidence chain links TEAM_A's recent uplift (W5 vs ALL_PRIOR) to TEAM_B's specific defensive suppression levels, creating a cross-team conditional structure absent from all three generics"
+  ],
+  "reason": "All three generic structures share the same subject (HOME_TEAM FOR), comparison (SIMILAR_OPPONENT_COHORT), venue condition (HOME), and overlapping metrics. However, the candidate introduces two structurally incremental elements that none of the generics contain: (1) the opponent-profile condition is explicitly defined along a defensive suppression axis (low goals/shots/box entries conceded, low fouls), which is a named opponent_profile dimension with a specific axis \u2014 not present in any generic; (2) the mechanism requires the joint interaction of TEAM_A's recent surge (evidenced by W5 vs ALL_PRIOR uplift) against a suppressive defensive cohort, meaning the question is not simply 'how does TEAM_A perform at home vs similar opponents' but 'does TEAM_A's recent box-penetration surge hold against defensively suppressive opponents specifically.' The dual-metric joint test and the cross-team conditional structure (TEAM_A recent form \u00d7 TEAM_B defensive profile type) are not generated by any of the three generics individually or in combination. The self-critique correctly flags opponent strength as a potential confounder but identifies it as the mechanism under test, which is structurally sound.",
+  "shared_structure": [
+   "subject: HOME_TEAM (TEAM_A)",
+   "metric_perspective: FOR",
+   "comparison: SIMILAR_OPPONENT_COHORT",
+   "condition: historical_venue_conditioning = HOME",
+   "target_metrics include shots_inside_box and touches_in_penalty_area",
+   "window: W10 (shared with GEN_0136000 and GEN_0136005)"
+  ]
+ },
+ "retrieved_distances": [
+  1,
+  1,
+  3
+ ],
+ "retrieved_generic_ids": [
+  "GEN_0136000",
+  "GEN_0136005",
+  "GEN_0135952"
+ ],
+ "temperature": 0.0
+}

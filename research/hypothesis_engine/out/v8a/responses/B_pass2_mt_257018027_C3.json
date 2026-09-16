@@ -1,0 +1,52 @@
+{
+ "arm": "B",
+ "candidate_id": "C3",
+ "elapsed_s": 10.12,
+ "error": null,
+ "fixture_id": "mt_257018027",
+ "max_tokens": 8192,
+ "model_id": "us.anthropic.claude-sonnet-4-6",
+ "pass": 2,
+ "provenance": {
+  "input_tokens": 4264,
+  "output_tokens": 661,
+  "request_sha256": "d4d3214557fd52f1ed33ee22df010aac2ac91ce3dca2946b4d04df8812320202",
+  "resolved_model_id": "us.anthropic.claude-sonnet-4-6",
+  "response_sha256": "046a5d5bd7093c1e78cc33bc2d4d2ef5b91954f13a6f2b24b13bad501a1e9c90",
+  "stop_reason": "tool_use"
+ },
+ "record_sha256": "1a4ab9a29eca6855006d9f02393a82ce339c7c90ef8da2b799126b71bdeb2920",
+ "response": {
+  "action": "ABSTAIN",
+  "candidate_id": "C3",
+  "closest_generic_structures": [
+   "GEN_0136442",
+   "GEN_0136456",
+   "GEN_0136462"
+  ],
+  "incremental_structure": [
+   "Candidate bundles three metrics (big_chances, xg, shots_inside_box) into one question, but each metric individually is already covered by a distinct generic structure",
+   "The opponent_profile_interaction framing (high-quality attacker amplification) is a football narrative, not a structural addition \u2014 the cohort-vs-baseline contrast is identical to the three generics",
+   "No additional condition axis (e.g. opponent_profile dimension) is formally encoded in the conditions array beyond the AWAY venue conditioning already present in all three generics",
+   "The similar_opponent_rationale references PSG's attacking profile, but this is not encoded as a structural condition \u2014 it is prose motivation only"
+  ],
+  "reason": "The candidate tests big_chances_against, xg_against, and shots_inside_box_against for TEAM_B (away) vs SIMILAR_OPPONENT_COHORT over ALL_PRIOR \u2014 which is precisely the union of GEN_0136442, GEN_0136456, and GEN_0136462. Bundling three metrics into one question does not create a new statistical structure; each metric-level contrast is already enumerated. The opponent-quality amplification mechanism is a compelling football story, but it is not encoded as an additional structural condition (e.g. an opponent_profile axis with value HIGH) \u2014 the conditions array contains only the AWAY venue filter, identical to all three generics. The self-critique correctly flags that opponent strength is the mechanism under test, but without a formal opponent_profile condition separating the cohort from the baseline, the structure collapses to the same cohort-vs-baseline contrast the generics already represent. Nothing structurally incremental remains.",
+  "shared_structure": [
+   "subject=TEAM_B (away team), perspective=AGAINST, comparison=SIMILAR_OPPONENT_COHORT, condition=historical_venue_conditioning:AWAY, window=ALL_PRIOR",
+   "target_metric big_chances (AGAINST) matches GEN_0136442 exactly on all structural axes",
+   "target_metric shots_inside_box (AGAINST) matches GEN_0136456 exactly on all structural axes",
+   "target_metric xg (AGAINST) matches GEN_0136462 exactly on all structural axes"
+  ]
+ },
+ "retrieved_distances": [
+  1,
+  1,
+  1
+ ],
+ "retrieved_generic_ids": [
+  "GEN_0136442",
+  "GEN_0136456",
+  "GEN_0136462"
+ ],
+ "temperature": 0.0
+}

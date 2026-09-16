@@ -1,0 +1,110 @@
+{
+ "arm": "B",
+ "candidate_id": "C6",
+ "elapsed_s": 14.42,
+ "error": null,
+ "fixture_id": "mt_408750601",
+ "max_tokens": 8192,
+ "model_id": "us.anthropic.claude-sonnet-4-6",
+ "pass": 2,
+ "provenance": {
+  "input_tokens": 4232,
+  "output_tokens": 1586,
+  "request_sha256": "f1c1c1294e4f735f0ce39ad7bfad326d68af91490889cd3afb3b9a07364206e9",
+  "resolved_model_id": "us.anthropic.claude-sonnet-4-6",
+  "response_sha256": "694963d48667705a5d4e899e2925ed13111a0a1023646d98adc5cff025c5b818",
+  "stop_reason": "tool_use"
+ },
+ "record_sha256": "5f6a49153470729c43f89026fb3928a52c029c78ff1d3b2bbcc19cbd78d6c3f8",
+ "response": {
+  "action": "KEEP",
+  "candidate_id": "C6",
+  "closest_generic_structures": [
+   "GEN_0135794",
+   "GEN_0135808",
+   "GEN_0135810"
+  ],
+  "final_candidate": {
+   "behavioral_observations": [
+    {
+     "evidence_refs": [
+      "TEAM_A.blocks.long_run_all.final_third_entries_against",
+      "TEAM_A.blocks.long_run_all.shots_inside_box_against",
+      "TEAM_B.blocks.long_run_all.shots_for",
+      "TEAM_B.blocks.long_run_all.shots_inside_box_for"
+     ],
+     "observation": "TEAM_A concedes 64.9 final third entries and 8.4 inside-box shots long-run \u2014 a relatively open defensive profile. TEAM_B generates 13.0 shots and 8.9 inside-box shots long-run. The question is whether TEAM_B's attacking output is higher against defensively open opponents."
+    },
+    {
+     "evidence_refs": [
+      "TEAM_B.blocks.long_run_all.big_chances_for",
+      "TEAM_B.blocks.recent_last_5.big_chances_for",
+      "TEAM_A.blocks.long_run_home.big_chances_against",
+      "TEAM_A.blocks.long_run_all.big_chances_against"
+     ],
+     "observation": "TEAM_B's big chances for: 2.6 long-run, 3.0 recent-5. TEAM_A concedes 1.6 big chances long-run at home (0.6 home long-run) \u2014 TEAM_A's home defense is tight on big chances despite allowing many final-third entries."
+    }
+   ],
+   "candidate_id": "C6",
+   "comparison": "SIMILAR_OPPONENT_COHORT",
+   "conditions": [],
+   "coverage_risk": "LOW",
+   "falsifiable_question": "Does TEAM_B generate more shots_on_target, big_chances, and shots_inside_box against opponents whose defensive/discipline profile is similar to TEAM_A's, compared to TEAM_B's overall baseline?",
+   "falsifier": "If TEAM_B's attacking metrics against similar-profile opponents are not elevated relative to its overall baseline, the opponent-profile interaction mechanism is unsupported.",
+   "football_mechanism": "TEAM_B's attacking output (shots on target, big chances, inside-box shots) may vary systematically depending on how defensively open their opponents are. If TEAM_A's profile (high final-third entries conceded, moderate shots conceded) resembles a HIGH defensive openness profile, TEAM_B may generate more quality chances. The similar-opponent cohort tests whether TEAM_B's attacking metrics are elevated against opponents with TEAM_A's defensive/discipline profile.",
+   "metric_perspective": "FOR",
+   "opponent": "TEAM_A",
+   "provider_requirements": [
+    "shots_on_target",
+    "big_chances",
+    "shots_inside_box"
+   ],
+   "research_family": "OPPONENT_PROFILE_INTERACTION",
+   "self_critique": {
+    "cohort_equals_baseline": false,
+    "condition_equals_target": false,
+    "could_opponent_strength_explain_it": false,
+    "is_just_home_vs_away": false,
+    "is_just_recent_vs_long_run": false,
+    "is_overconditioned": false,
+    "likely_generic_enumeration_would_generate_this": false,
+    "notes": "The similar-opponent cohort is the right tool here \u2014 it tests whether TEAM_B's attacking quality is specifically elevated against opponents with TEAM_A's defensive profile. The frozen 5-dimension profile includes goals conceded, shots on target conceded, shots inside box conceded, fouls committed, yellow cards \u2014 all directly relevant to TEAM_A's observed defensive behaviour."
+   },
+   "similar_opponent_rationale": "TEAM_A's defensive profile (goals conceded, shots on target conceded, shots inside box conceded, fouls committed, yellow cards) defines the similarity cohort. TEAM_B's attacking output against opponents with a similar profile to TEAM_A tests whether TEAM_B exploits this specific defensive type.",
+   "subject": "TEAM_B",
+   "support_risk": "LOW",
+   "target_metric": [
+    "shots_on_target",
+    "big_chances",
+    "shots_inside_box"
+   ],
+   "window": "ALL_PRIOR"
+  },
+  "incremental_structure": [
+   "research_family: OPPONENT_PROFILE_INTERACTION (not generic ATTACK_VOLUME/ATTACK_QUALITY)",
+   "multi-metric bundle tested jointly (shots_on_target + big_chances + shots_inside_box) rather than single-metric generics",
+   "similarity cohort is explicitly anchored to TEAM_A's DEFENSIVE profile axes (goals conceded, shots on target conceded, shots inside box conceded, fouls committed, yellow cards) \u2014 not unconditional opponent similarity",
+   "mechanism requires TWO measurable characteristics together: TEAM_B's attacking output AND TEAM_A's defensive openness profile interacting",
+   "no conditions[] in generics vs. candidate's implicit opponent_profile axis grounding the cohort definition"
+  ],
+  "reason": "The three generic structures test TEAM_B's (away team's) FOR-side attacking metrics against a similar-opponent cohort in isolation \u2014 one metric each, no conditions, no specified profile axis. The candidate is structurally distinct on two dimensions: (1) it belongs to OPPONENT_PROFILE_INTERACTION, meaning the cohort is explicitly defined by TEAM_A's defensive/discipline profile axes (goals conceded, shots on target conceded, shots inside box conceded, fouls committed, yellow cards), not generic opponent similarity; and (2) it tests a joint multi-metric bundle (shots_on_target + big_chances + shots_inside_box) as a coherent attacking-quality cluster rather than three independent single-metric questions. The mechanism requires both TEAM_B's attacking output AND TEAM_A's defensive openness to be measured together \u2014 a two-characteristic interaction the generics do not capture. The shared surface (SIMILAR_OPPONENT_COHORT, FOR, ALL_PRIOR, overlapping metrics) is real but the incremental structure is not cosmetic: the profile-axis grounding changes what the cohort actually selects.",
+  "shared_structure": [
+   "subject: AWAY_TEAM (TEAM_B)",
+   "comparison: SIMILAR_OPPONENT_COHORT",
+   "metric_perspective: FOR",
+   "window: ALL_PRIOR",
+   "metrics overlap: big_chances, shots_inside_box, shots_on_target"
+  ]
+ },
+ "retrieved_distances": [
+  1,
+  1,
+  1
+ ],
+ "retrieved_generic_ids": [
+  "GEN_0135794",
+  "GEN_0135808",
+  "GEN_0135810"
+ ],
+ "temperature": 0.0
+}

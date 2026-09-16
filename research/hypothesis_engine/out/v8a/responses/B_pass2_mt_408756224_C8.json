@@ -1,0 +1,130 @@
+{
+ "arm": "B",
+ "candidate_id": "C8",
+ "elapsed_s": 14.47,
+ "error": null,
+ "fixture_id": "mt_408756224",
+ "max_tokens": 8192,
+ "model_id": "us.anthropic.claude-sonnet-4-6",
+ "pass": 2,
+ "provenance": {
+  "input_tokens": 4447,
+  "output_tokens": 1579,
+  "request_sha256": "b91fc7455e6d6ce83a7c8508848133c8503ecd10442b44c60b1f3c80f64646b7",
+  "resolved_model_id": "us.anthropic.claude-sonnet-4-6",
+  "response_sha256": "005dea3b727f8fcf300ff3687365dc5eedbc6a06d111f1cb0f7ca490dac73e0d",
+  "stop_reason": "tool_use"
+ },
+ "record_sha256": "8627bdaa742857d7beb1094c74c9eb407711e7f5769e4451e7753a6b227f4dec",
+ "response": {
+  "action": "KEEP",
+  "candidate_id": "C8",
+  "closest_generic_structures": [
+   "GEN_0006338",
+   "GEN_0006358",
+   "GEN_0006626"
+  ],
+  "final_candidate": {
+   "behavioral_observations": [
+    {
+     "evidence_refs": [
+      "TEAM_A.blocks.long_run_home.metrics.xg_for",
+      "TEAM_A.blocks.long_run_home.metrics.big_chances_for"
+     ],
+     "observation": "Leeds' xg_for at home long-run is 1.944 and big_chances_for at home long-run is 3.161. Against opponents with a HIGH shots-inside-box-conceded profile, these quality metrics may be further elevated."
+    },
+    {
+     "evidence_refs": [
+      "TEAM_B.blocks.long_run_away.metrics.shots_inside_box_against",
+      "TEAM_B.blocks.long_run_away.metrics.big_chances_against"
+     ],
+     "observation": "Derby concede 7.75 shots inside box away and 2.57 big chances away (long-run away), placing them as a HIGH shots-inside-box-conceded opponent away from home."
+    },
+    {
+     "evidence_refs": [
+      "TEAM_A.blocks.recent_last_5.metrics.xg_for",
+      "TEAM_A.blocks.recent_last_5.metrics.big_chances_for",
+      "TEAM_A.blocks.long_run_home.metrics.xg_for"
+     ],
+     "observation": "Leeds' xg_for in recent last-5 is 1.5625 (slightly below home long-run of 1.944) while big_chances_for last-5 is 2.667 \u2014 quality metrics have not risen with the volume surge, creating a tension worth investigating against a specific opponent type."
+    }
+   ],
+   "candidate_id": "C8",
+   "comparison": "OPPONENT_PROFILE_INTERACTION",
+   "conditions": [
+    {
+     "dimension": "historical_venue_conditioning",
+     "value": "HOME"
+    },
+    {
+     "axis": "shots_inside_box_conceded_per_match",
+     "dimension": "opponent_profile",
+     "value": "HIGH"
+    },
+    {
+     "dimension": "competition",
+     "value": "SAME"
+    }
+   ],
+   "coverage_risk": "LOW",
+   "falsifiable_question": "Does Leeds United's xg_for and big_chances_for at home in Championship matches against opponents with a HIGH shots-inside-box-conceded profile exceed their overall home Championship baseline?",
+   "falsifier": "If Leeds' xg_for and big_chances_for against HIGH shots-inside-box-conceded opponents are at or below their overall home baseline, the quality amplification mechanism is unsupported.",
+   "football_mechanism": "Leeds generate high shot volume at home but their xg and big chances have not risen proportionally in recent matches (xg 1.56 last-5 vs 1.94 home long-run), suggesting some shots are lower quality. Against opponents who concede high rates of shots inside the box (HIGH profile), Leeds may convert more of their volume into genuine big chances because the opponent's defensive shape allows more central penetration.",
+   "metric_perspective": "FOR",
+   "opponent": "TEAM_B",
+   "provider_requirements": [
+    "xg_for",
+    "big_chances_for",
+    "historical_venue_conditioning",
+    "opponent_profile",
+    "competition"
+   ],
+   "research_family": "ATTACK_QUALITY",
+   "self_critique": {
+    "cohort_equals_baseline": false,
+    "condition_equals_target": false,
+    "could_opponent_strength_explain_it": false,
+    "is_just_home_vs_away": false,
+    "is_just_recent_vs_long_run": false,
+    "is_overconditioned": false,
+    "likely_generic_enumeration_would_generate_this": false,
+    "notes": "The opponent profile axis (shots_inside_box_conceded_per_match) is one of the frozen similarity dimensions and is directly motivated by Derby's measured away profile. The tension between Leeds' volume surge and flat quality metrics is the specific behavioural anchor. xg is SUPPORTED_PARTIAL but coverage is 98.4% home, acceptable."
+   },
+   "subject": "TEAM_A",
+   "support_risk": "LOW",
+   "target_metric": [
+    "xg",
+    "big_chances"
+   ],
+   "window": "ALL_PRIOR"
+  },
+  "incremental_structure": [
+   "comparison: OPPONENT_PROFILE_INTERACTION (not LEAGUE_ENVIRONMENT_BASELINE)",
+   "opponent_profile axis: shots_inside_box_conceded_per_match (not goals_for / goals_against)",
+   "competition condition: SAME (Championship-scoped)",
+   "dual-metric joint question: xg_for AND big_chances_for tested together as quality pair",
+   "mechanism anchored to volume-quality tension (recent vs long-run divergence) rather than raw level",
+   "opponent_profile value HIGH on a defensive-concession axis, not an offensive output axis"
+  ],
+  "reason": "The three generic structures all use LEAGUE_ENVIRONMENT_BASELINE as their comparison and profile opponents on goals_for / goals_against axes. The candidate uses OPPONENT_PROFILE_INTERACTION as its comparison (cohort vs subject's own home baseline, not the league environment) and profiles the opponent on shots_inside_box_conceded_per_match \u2014 a defensive-concession axis that is structurally distinct from the goals-based axes in all three generics. Additionally, the candidate adds a SAME competition filter and anchors the mechanism to a measurable volume-quality tension (recent xg diverging from long-run home xg) rather than a simple level comparison. These three structural differences \u2014 comparison type, profile axis, and competition scoping \u2014 are not present in any of the nearest generics, so the candidate tests a genuinely different statistical question.",
+  "shared_structure": [
+   "subject: HOME_TEAM (TEAM_A)",
+   "metric_perspective: FOR",
+   "target_metrics: xg, big_chances",
+   "window: ALL_PRIOR",
+   "opponent_profile condition present",
+   "historical_venue_conditioning: HOME"
+  ]
+ },
+ "retrieved_distances": [
+  11,
+  11,
+  11
+ ],
+ "retrieved_generic_ids": [
+  "GEN_0006338",
+  "GEN_0006358",
+  "GEN_0006626"
+ ],
+ "temperature": 0.0
+}

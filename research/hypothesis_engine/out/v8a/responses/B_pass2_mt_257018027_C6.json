@@ -1,0 +1,126 @@
+{
+ "arm": "B",
+ "candidate_id": "C6",
+ "elapsed_s": 18.05,
+ "error": null,
+ "fixture_id": "mt_257018027",
+ "max_tokens": 8192,
+ "model_id": "us.anthropic.claude-sonnet-4-6",
+ "pass": 2,
+ "provenance": {
+  "input_tokens": 4503,
+  "output_tokens": 1767,
+  "request_sha256": "089b4a7d79dc4836c8e2a8ae0cb31211e09ffe69a5c19206336413ad3f39cb02",
+  "resolved_model_id": "us.anthropic.claude-sonnet-4-6",
+  "response_sha256": "4d088ffc1e1b8c88227f867667e7d573e957e9fe79a4e9b79c6574355f9d8fbf",
+  "stop_reason": "tool_use"
+ },
+ "record_sha256": "b1d7ae6ba20ccfc6113d179f40f093ba5c3589486a131cdfdbec16fe09a275d8",
+ "response": {
+  "action": "REFINE",
+  "candidate_id": "C6",
+  "closest_generic_structures": [
+   "GEN_0006488",
+   "GEN_0006503",
+   "GEN_0006776"
+  ],
+  "final_candidate": {
+   "behavioral_observations": [
+    {
+     "evidence_refs": [
+      "TEAM_B.blocks.long_run_all.metrics.fouls_for",
+      "TEAM_B.blocks.recent_last_5.metrics.fouls_for",
+      "TEAM_B.blocks.long_run_all.metrics.yellow_cards_for",
+      "TEAM_B.blocks.recent_last_5.metrics.yellow_cards_for"
+     ],
+     "observation": "Nantes fouls_for long-run 12.25, W5 13.4 \u2014 rising trend. Yellow_cards_for long-run 2.17, W5 1.6 \u2014 cards are lower recently despite more fouls."
+    },
+    {
+     "evidence_refs": [
+      "TEAM_B.blocks.long_run_away.metrics.fouls_for",
+      "TEAM_B.blocks.long_run_home.metrics.fouls_for",
+      "TEAM_B.blocks.long_run_away.metrics.yellow_cards_for",
+      "TEAM_B.blocks.long_run_home.metrics.yellow_cards_for"
+     ],
+     "observation": "Nantes away fouls_for 11.83 vs home 12.67. Away yellow_cards_for 2.33 vs home 2.0 \u2014 Nantes commits more bookable fouls away, establishing a distinct away discipline baseline."
+    },
+    {
+     "evidence_refs": [
+      "TEAM_A.blocks.long_run_all.metrics.possession_for",
+      "TEAM_A.blocks.long_run_all.metrics.fouls_against"
+     ],
+     "observation": "PSG possession_for long-run 68.7% \u2014 high possession teams force opponents to foul more to disrupt play. PSG fouls_against long-run 11.33 \u2014 opponents do foul PSG frequently."
+    }
+   ],
+   "candidate_id": "C6",
+   "comparison": "SUBJECT_VENUE_BASELINE",
+   "conditions": [
+    {
+     "dimension": "historical_venue_conditioning",
+     "value": "AWAY"
+    },
+    {
+     "axis": "fouls_committed_per_match",
+     "dimension": "opponent_profile",
+     "value": "HIGH"
+    }
+   ],
+   "coverage_risk": "LOW",
+   "falsifiable_question": "Does Nantes' fouls_for and yellow_cards_for in away matches against opponents with a HIGH fouls_committed_per_match profile exceed Nantes' own overall away baseline for those same metrics?",
+   "falsifier": "If Nantes' fouls_for and yellow_cards_for in away matches against high-fouling-profile opponents are at or below Nantes' own overall away baseline, the possession-pressure foul-escalation mechanism is unsupported.",
+   "football_mechanism": "When a low-possession team (Nantes away ~41%) faces a dominant possession side (PSG ~69%), the defending team must foul more frequently to disrupt build-up play and prevent final-third entries. Opponents with a HIGH fouls_committed_per_match profile signal a structural tendency to contest aggressively; when Nantes plays such opponents away from home, the combination of reduced territorial control and opponent aggression may push Nantes' own foul and yellow-card rates above its own away baseline.",
+   "metric_perspective": "FOR",
+   "opponent": "TEAM_A",
+   "provider_requirements": [
+    "fouls",
+    "yellow_cards"
+   ],
+   "research_family": "DISCIPLINE",
+   "self_critique": {
+    "cohort_equals_baseline": false,
+    "condition_equals_target": false,
+    "could_opponent_strength_explain_it": false,
+    "is_just_home_vs_away": false,
+    "is_just_recent_vs_long_run": false,
+    "is_overconditioned": true,
+    "likely_generic_enumeration_would_generate_this": false,
+    "notes": "Two conditions (away + opponent fouls profile) still risk thinning the cohort. The opponent_profile axis fouls_committed_per_match is structurally distinct from the goals_for/goals_against axes in all three generics. Comparison corrected to SUBJECT_VENUE_BASELINE to match what the falsifiable question actually tests. Support risk remains HIGH due to cohort size concern."
+   },
+   "subject": "TEAM_B",
+   "support_risk": "HIGH",
+   "target_metric": [
+    "fouls",
+    "yellow_cards"
+   ],
+   "window": "ALL_PRIOR"
+  },
+  "incremental_structure": [
+   "candidate uses OPPONENT_PROFILE_INTERACTION comparison rather than LEAGUE_ENVIRONMENT_BASELINE",
+   "candidate opponent_profile axis is fouls_committed_per_match rather than goals_for/goals_against",
+   "candidate adds historical_venue_conditioning=AWAY as a second condition",
+   "candidate tests TEAM_B (home team's opponent) not the generic AWAY_TEAM subject",
+   "candidate uses SUBJECT_VENUE_BASELINE as the implicit baseline (Nantes overall away) rather than league environment",
+   "candidate pairs fouls and yellow_cards jointly as a dual-metric discipline interaction"
+  ],
+  "reason": "The three generic structures all use LEAGUE_ENVIRONMENT_BASELINE with opponent_profile axes of goals_for/goals_against (HIGH/HIGH or HIGH/MID). The candidate differs on three structural axes simultaneously: (1) the comparison is OPPONENT_PROFILE_INTERACTION, not LEAGUE_ENVIRONMENT_BASELINE; (2) the opponent_profile axis is fouls_committed_per_match, not goals_for or goals_against \u2014 a genuinely different profile dimension; (3) a historical_venue_conditioning=AWAY condition is added. However, the candidate as written declares comparison=OPPONENT_PROFILE_INTERACTION, which is not a valid frozen comparator in the corpus. The correct comparator for testing TEAM_B's away discipline against its own away baseline, conditioned on opponent fouling profile, is SUBJECT_VENUE_BASELINE. The football mechanism (possession-pressure foul escalation away) is valid and supported by the evidence. Refining to correct the comparison to SUBJECT_VENUE_BASELINE, which is what the falsifiable question actually tests, and removing the overconditioned dual-metric joint claim by keeping both metrics but clarifying the baseline is Nantes' own away figures.",
+  "shared_structure": [
+   "subject=AWAY_TEAM (TEAM_B)",
+   "metric_perspective=FOR",
+   "target_metrics include fouls and yellow_cards",
+   "comparison=LEAGUE_ENVIRONMENT_BASELINE (generics) vs OPPONENT_PROFILE_INTERACTION (candidate)",
+   "window=ALL_PRIOR",
+   "opponent_profile condition present"
+  ]
+ },
+ "retrieved_distances": [
+  10,
+  10,
+  10
+ ],
+ "retrieved_generic_ids": [
+  "GEN_0006488",
+  "GEN_0006503",
+  "GEN_0006776"
+ ],
+ "temperature": 0.0
+}

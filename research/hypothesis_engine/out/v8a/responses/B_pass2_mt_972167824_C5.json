@@ -1,0 +1,115 @@
+{
+ "arm": "B",
+ "candidate_id": "C5",
+ "elapsed_s": 14.57,
+ "error": null,
+ "fixture_id": "mt_972167824",
+ "max_tokens": 8192,
+ "model_id": "us.anthropic.claude-sonnet-4-6",
+ "pass": 2,
+ "provenance": {
+  "input_tokens": 4359,
+  "output_tokens": 1662,
+  "request_sha256": "5ca37858287ed89e28fe676a8dd0fdf4acc6b605791f872c8802ec656b58747e",
+  "resolved_model_id": "us.anthropic.claude-sonnet-4-6",
+  "response_sha256": "e2a24c7d888015bdc52d18b7d3251e6d3b94725c1ee30f16684aec7475096e83",
+  "stop_reason": "tool_use"
+ },
+ "record_sha256": "e042d3dc25827a1f29714c6973abcc87e0b29d49eb2f24dd426b6fda06811119",
+ "response": {
+  "action": "KEEP",
+  "candidate_id": "C5",
+  "closest_generic_structures": [
+   "GEN_0135650",
+   "GEN_0135654",
+   "GEN_0135666"
+  ],
+  "final_candidate": {
+   "behavioral_observations": [
+    {
+     "evidence_refs": [
+      "TEAM_B.blocks.long_run_all.metrics.shots_on_target_against",
+      "TEAM_B.blocks.recent_last_5.metrics.shots_on_target_against",
+      "TEAM_B.blocks.long_run_away.metrics.shots_on_target_against"
+     ],
+     "observation": "TEAM_B concedes shots_on_target_against at a high rate: long_run_all 4.17, W5 mean 5.2, long_run_away 5.0 \u2014 opponents put shots on target against Burgos frequently, especially away."
+    },
+    {
+     "evidence_refs": [
+      "TEAM_B.blocks.long_run_all.metrics.fouls_for",
+      "TEAM_B.blocks.recent_last_5.metrics.fouls_for",
+      "TEAM_B.blocks.long_run_all.metrics.yellow_cards_for"
+     ],
+     "observation": "TEAM_B fouls_for (Burgos fouls committed): long_run_all 10.6, W5 mean 11.0 \u2014 moderate foul rate. Yellow_cards_for long_run_all 2.0, W5 mean 2.0 \u2014 consistent discipline profile."
+    },
+    {
+     "evidence_refs": [
+      "TEAM_A.blocks.recent_last_5.metrics.shots_on_target_for",
+      "TEAM_A.blocks.long_run_home.metrics.shots_on_target_for",
+      "TEAM_A.blocks.long_run_all.metrics.shots_on_target_for"
+     ],
+     "observation": "TEAM_A shots_on_target_for: W5 mean 5.2, long_run_home 5.6 \u2014 Oviedo's on-target output at home is elevated vs long_run_all 4.1."
+    }
+   ],
+   "candidate_id": "C5",
+   "comparison": "SIMILAR_OPPONENT_COHORT",
+   "conditions": [],
+   "coverage_risk": "LOW",
+   "falsifiable_question": "Does TEAM_A (Real Oviedo) record higher shots_on_target_for, big_chances_for, and corner_kicks_for against opponents whose pre-fixture defensive/discipline profile is similar to TEAM_B's, compared to their overall baseline?",
+   "falsifier": "If TEAM_A's shots_on_target_for, big_chances_for, and corner_kicks_for against similar-profile opponents are not higher than their overall baseline, the opponent-profile interaction is unsupported.",
+   "football_mechanism": "Oviedo's attack quality (shots on target, big chances) may vary depending on the defensive and discipline profile of the opponent they face. Burgos presents a specific profile: high shots conceded, moderate fouls, low yellow cards. The similar-opponent cohort engine can identify whether Oviedo has historically performed better against opponents with this defensive/discipline profile.",
+   "metric_perspective": "FOR",
+   "opponent": "TEAM_B",
+   "provider_requirements": [
+    "shots_on_target",
+    "big_chances",
+    "corner_kicks"
+   ],
+   "research_family": "OPPONENT_PROFILE_INTERACTION",
+   "self_critique": {
+    "cohort_equals_baseline": false,
+    "condition_equals_target": false,
+    "could_opponent_strength_explain_it": false,
+    "is_just_home_vs_away": false,
+    "is_just_recent_vs_long_run": false,
+    "is_overconditioned": false,
+    "likely_generic_enumeration_would_generate_this": false,
+    "notes": "This uses the frozen similarity engine correctly. The cohort is defined by opponent profile, not by venue or recent form. The question is whether Oviedo's attack quality metrics are elevated against this specific defensive type. Not a generic enumeration."
+   },
+   "similar_opponent_rationale": "Burgos presents a specific defensive profile: high shots_on_target conceded per match, high shots_inside_box conceded, moderate fouls committed, and low yellow cards. The engine's frozen 5-dimension similarity profile (goals_conceded_per_match, shots_on_target_conceded_per_match, shots_inside_box_conceded_per_match, fouls_committed_per_match, yellow_cards_per_match) captures this profile. Asking how Oviedo performs against similar opponents tests whether this defensive type is one Oviedo exploits.",
+   "subject": "TEAM_A",
+   "support_risk": "LOW",
+   "target_metric": [
+    "shots_on_target",
+    "big_chances",
+    "corner_kicks"
+   ],
+   "window": "ALL_PRIOR"
+  },
+  "incremental_structure": [
+   "subject is TEAM_A (away team in this fixture, not HOME_TEAM)",
+   "multi-metric bundle: shots_on_target + big_chances + corner_kicks tested jointly under a single opponent-profile interaction",
+   "research_family: OPPONENT_PROFILE_INTERACTION \u2014 the cohort is defined by a 5-dimension frozen similarity profile (goals_conceded, shots_on_target_conceded, shots_inside_box_conceded, fouls_committed, yellow_cards) rather than an unconditional similar-opponent cohort",
+   "the mechanism explicitly links TEAM_B's measured defensive/discipline profile to TEAM_A's attack quality variation, requiring two measurable characteristics together (opponent defensive permissiveness + discipline laxity) rather than one at a time"
+  ],
+  "reason": "The three generic structures each test a single attack metric (big_chances, corner_kicks, shots_on_target) for the HOME_TEAM against an unconditional similar-opponent cohort. The candidate differs in four structural ways: (1) the subject is TEAM_A, which is the AWAY side in this fixture, not the home team \u2014 so the venue conditioning is different; (2) the candidate bundles three metrics under a single opponent-profile interaction question rather than treating each independently; (3) the research_family is OPPONENT_PROFILE_INTERACTION, meaning the cohort is explicitly conditioned on a 5-dimension frozen similarity profile derived from TEAM_B's measured defensive and discipline characteristics \u2014 this is a richer cohort definition than the generic unconditional SIMILAR_OPPONENT_COHORT; (4) the mechanism requires two measurable opponent characteristics together (high shots conceded + low discipline pressure) rather than opponent similarity alone. These are genuine structural increments, not rewording.",
+  "shared_structure": [
+   "subject: HOME_TEAM (TEAM_A)",
+   "comparison: SIMILAR_OPPONENT_COHORT",
+   "window: ALL_PRIOR",
+   "metric_perspective: FOR",
+   "conditions: []"
+  ]
+ },
+ "retrieved_distances": [
+  1,
+  1,
+  1
+ ],
+ "retrieved_generic_ids": [
+  "GEN_0135650",
+  "GEN_0135654",
+  "GEN_0135666"
+ ],
+ "temperature": 0.0
+}

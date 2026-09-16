@@ -1,0 +1,112 @@
+{
+ "arm": "B",
+ "candidate_id": "C8",
+ "elapsed_s": 14.29,
+ "error": null,
+ "fixture_id": "mt_972167824",
+ "max_tokens": 8192,
+ "model_id": "us.anthropic.claude-sonnet-4-6",
+ "pass": 2,
+ "provenance": {
+  "input_tokens": 4242,
+  "output_tokens": 1496,
+  "request_sha256": "0744edd8a329fdbf28932b9c4b53c72923fbf7a58319d48b3946926fa9d46737",
+  "resolved_model_id": "us.anthropic.claude-sonnet-4-6",
+  "response_sha256": "b522c6a6b4c63675954df23648e47f979b7bf4cfabc4026f74512b0ef730f340",
+  "stop_reason": "tool_use"
+ },
+ "record_sha256": "e91edfd36d88b7ea7414c25dee78c455bd23f85e783f2dd9657044812353b2f4",
+ "response": {
+  "action": "KEEP",
+  "candidate_id": "C8",
+  "closest_generic_structures": [
+   "GEN_0135648",
+   "GEN_0135654",
+   "GEN_0135672"
+  ],
+  "final_candidate": {
+   "behavioral_observations": [
+    {
+     "evidence_refs": [
+      "TEAM_A.blocks.recent_last_5.metrics.corner_kicks_for",
+      "TEAM_A.blocks.long_run_all.metrics.corner_kicks_for",
+      "TEAM_A.blocks.long_run_home.metrics.corner_kicks_for"
+     ],
+     "observation": "TEAM_A corner_kicks_for W5 mean 6.6 vs long_run_all 5.75 \u2014 corner generation has increased in recent matches. Long_run_home 5.6 is also above long_run_away 5.9 (similar)."
+    },
+    {
+     "evidence_refs": [
+      "TEAM_B.blocks.long_run_all.metrics.corner_kicks_against",
+      "TEAM_B.blocks.recent_last_5.metrics.corner_kicks_against",
+      "TEAM_B.blocks.long_run_away.metrics.corner_kicks_against"
+     ],
+     "observation": "TEAM_B corner_kicks_against: long_run_all 5.75, W5 mean 6.0 \u2014 Burgos concedes corners at a rate matching Oviedo's generation rate. Long_run_away 6.17 is the highest split."
+    },
+    {
+     "evidence_refs": [
+      "TEAM_B.blocks.recent_last_5.metrics.accurate_crosses_against",
+      "TEAM_B.blocks.long_run_all.metrics.accurate_crosses_against"
+     ],
+     "observation": "TEAM_B accurate_crosses_against W5 mean 6.2 \u2014 opponents are crossing accurately against Burgos at an elevated rate in recent matches, suggesting wide defensive vulnerability."
+    }
+   ],
+   "candidate_id": "C8",
+   "comparison": "SIMILAR_OPPONENT_COHORT",
+   "conditions": [],
+   "coverage_risk": "LOW",
+   "falsifiable_question": "Does TEAM_A (Real Oviedo) generate more corner_kicks_for and accurate_crosses_for against opponents whose pre-fixture defensive/discipline profile is similar to TEAM_B's, compared to their overall baseline?",
+   "falsifier": "If TEAM_A's corner_kicks_for and accurate_crosses_for against similar-profile opponents are not higher than their overall baseline, the opponent-profile interaction for wide delivery is unsupported.",
+   "football_mechanism": "Oviedo generates corners and accurate crosses at an elevated rate, particularly recently. Burgos concedes both at high rates, especially away. The question is whether Oviedo's corner and crossing output is systematically higher against opponents whose defensive profile resembles Burgos \u2014 i.e., whether this is a matchup-specific pattern or simply Oviedo's general home behaviour.",
+   "metric_perspective": "FOR",
+   "opponent": "TEAM_B",
+   "provider_requirements": [
+    "corner_kicks",
+    "accurate_crosses"
+   ],
+   "research_family": "SET_PIECE_GENERATION",
+   "self_critique": {
+    "cohort_equals_baseline": false,
+    "condition_equals_target": false,
+    "could_opponent_strength_explain_it": false,
+    "is_just_home_vs_away": false,
+    "is_just_recent_vs_long_run": false,
+    "is_overconditioned": false,
+    "likely_generic_enumeration_would_generate_this": false,
+    "notes": "Uses the frozen similarity engine. The joint test of corner_kicks AND accurate_crosses as a conjunctive interaction is not produced by single-metric generic enumeration. The opponent profile rationale is grounded in specific TEAM_B defensive axes. Coverage risk is LOW given only 12 prior rows for Oviedo."
+   },
+   "similar_opponent_rationale": "Burgos's defensive profile \u2014 high shots conceded, high shots_inside_box conceded, moderate fouls, low yellow cards \u2014 defines a specific opponent type. The engine's frozen similarity dimensions capture this. If Oviedo generates more corners and accurate crosses against opponents with this profile, it suggests a specific tactical interaction (wide play against a defense that concedes wide delivery).",
+   "subject": "TEAM_A",
+   "support_risk": "LOW",
+   "target_metric": [
+    "corner_kicks",
+    "accurate_crosses"
+   ],
+   "window": "ALL_PRIOR"
+  },
+  "incremental_structure": [
+   "dual-metric target: corner_kicks AND accurate_crosses tested jointly, not separately",
+   "mechanism requires BOTH metrics to co-vary against the same opponent profile type \u2014 a conjunctive interaction, not two independent single-metric questions",
+   "opponent profile rationale is grounded in TEAM_B's specific defensive axes (high shots conceded, high shots_inside_box conceded, moderate fouls, low yellow cards) rather than a generic similarity call",
+   "behavioral evidence triangulates TEAM_A's recent uplift (W5 vs long_run_all) with TEAM_B's concession rates on both metrics, establishing a two-sided matchup pattern that neither single-metric generic covers"
+  ],
+  "reason": "The three generic structures each test a single metric (accurate_crosses or corner_kicks) in isolation against a similar-opponent cohort. C8 tests both metrics jointly as a conjunctive set-piece delivery interaction: the mechanism only holds if TEAM_A's corner generation AND accurate crossing are simultaneously elevated against this opponent profile type. That conjunctive structure is not present in any of the three generics. Additionally, the opponent-profile rationale is anchored to specific defensive axes from TEAM_B's data (shots conceded, shots_inside_box conceded, discipline), which gives the similarity call a defined dimensional basis rather than a generic invocation. The window (ALL_PRIOR) and subject (TEAM_A/home) are shared, but the dual-metric conjunctive test and the profile-grounded rationale constitute genuine incremental structure.",
+  "shared_structure": [
+   "subject: TEAM_A (home team)",
+   "comparison: SIMILAR_OPPONENT_COHORT",
+   "metric_perspective: FOR",
+   "window: ALL_PRIOR (primary)",
+   "no conditions applied"
+  ]
+ },
+ "retrieved_distances": [
+  1,
+  1,
+  3
+ ],
+ "retrieved_generic_ids": [
+  "GEN_0135648",
+  "GEN_0135654",
+  "GEN_0135672"
+ ],
+ "temperature": 0.0
+}

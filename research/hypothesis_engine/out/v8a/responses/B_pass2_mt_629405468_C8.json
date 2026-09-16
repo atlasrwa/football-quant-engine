@@ -1,0 +1,134 @@
+{
+ "arm": "B",
+ "candidate_id": "C8",
+ "elapsed_s": 20.67,
+ "error": null,
+ "fixture_id": "mt_629405468",
+ "max_tokens": 8192,
+ "model_id": "us.anthropic.claude-sonnet-4-6",
+ "pass": 2,
+ "provenance": {
+  "input_tokens": 4554,
+  "output_tokens": 1850,
+  "request_sha256": "d531ec2953589825f535d075c5bc4f33a412316795a73c8b560b5b09cdc4c444",
+  "resolved_model_id": "us.anthropic.claude-sonnet-4-6",
+  "response_sha256": "b6c5ffabd677a3814aea138674ea7e21248a0bdbdedc8eda3aab74cacb4e6603",
+  "stop_reason": "tool_use"
+ },
+ "record_sha256": "776de962ba532559c41251a00bd913237d6c864be6df3f8f3e76e037221d9658",
+ "response": {
+  "action": "REFINE",
+  "candidate_id": "C8",
+  "closest_generic_structures": [
+   "GEN_0142136",
+   "GEN_0142151",
+   "GEN_0142424"
+  ],
+  "final_candidate": {
+   "behavioral_observations": [
+    {
+     "evidence_refs": [
+      "TEAM_B.blocks.long_run_away.metrics.fouls_for",
+      "TEAM_B.blocks.long_run_home.metrics.fouls_for"
+     ],
+     "observation": "TEAM_B's fouls_for away long-run is 15.5 vs home 12.83 \u2014 TEAM_B commits more fouls away from home."
+    },
+    {
+     "evidence_refs": [
+      "TEAM_B.blocks.long_run_all.metrics.yellow_cards_for",
+      "TEAM_B.blocks.recent_last_5.metrics.yellow_cards_for"
+     ],
+     "observation": "TEAM_B's yellow_cards_for long-run all is 2.33, with W5 at 2.4 \u2014 consistently elevated card rate."
+    },
+    {
+     "evidence_refs": [
+      "TEAM_B.raw_historical_rows.ROW:03",
+      "TEAM_B.raw_historical_rows.ROW:12"
+     ],
+     "observation": "ROW:03 (TEAM_B away) shows 28 fouls_for \u2014 an extreme foul count in one away match. ROW:12 (home) shows 19 fouls_for."
+    },
+    {
+     "evidence_refs": [
+      "TEAM_A.blocks.long_run_home.metrics.final_third_entries_for"
+     ],
+     "observation": "TEAM_A's final_third_entries_for at home (55.8 long-run) is high \u2014 TEAM_A's territorial pressure at home may force TEAM_B into more defensive fouls."
+    }
+   ],
+   "candidate_id": "C8",
+   "comparison": "SIMILAR_OPPONENT_COHORT",
+   "conditions": [
+    {
+     "dimension": "historical_venue_conditioning",
+     "value": "AWAY"
+    },
+    {
+     "dimension": "competition",
+     "value": "SAME"
+    },
+    {
+     "axis": "goals_against",
+     "dimension": "opponent_profile",
+     "value": "LOW"
+    }
+   ],
+   "coverage_risk": "LOW",
+   "falsifiable_question": "Does TEAM_B record more fouls_for and yellow_cards_for in away same-competition matches against opponents with a LOW goals_against home profile (similar to TEAM_A), compared to TEAM_B's overall away same-competition baseline?",
+   "falsifier": "If TEAM_B's fouls_for and yellow_cards_for in the similar-opponent cohort (LOW goals_against home sides) are not systematically higher than in TEAM_B's overall away same-competition baseline, the mechanism is unsupported.",
+   "football_mechanism": "TEAM_B commits more fouls away from home, and their overall card rate is persistently elevated. When the away opponent is a defensively tight home side (low goals conceded) that generates high territorial pressure and final-third entries \u2014 as TEAM_A does \u2014 TEAM_B is forced into repeated defensive interventions, increasing both foul count and yellow-card exposure. The question is whether TEAM_B's fouls_for and yellow_cards_for are systematically elevated in the away same-competition cohort of matches against opponents whose home defensive profile resembles TEAM_A's (low goals conceded), compared to TEAM_B's overall away baseline.",
+   "metric_perspective": "FOR",
+   "opponent": "TEAM_A",
+   "provider_requirements": [
+    "fouls",
+    "yellow_cards",
+    "similar_opponent_cohort",
+    "final_third_entries"
+   ],
+   "research_family": "DISCIPLINE",
+   "self_critique": {
+    "cohort_equals_baseline": false,
+    "condition_equals_target": false,
+    "could_opponent_strength_explain_it": true,
+    "is_just_home_vs_away": false,
+    "is_just_recent_vs_long_run": false,
+    "is_overconditioned": false,
+    "likely_generic_enumeration_would_generate_this": false,
+    "notes": "The opponent_profile condition is now formally encoded as LOW goals_against, which is the opposite polarity to the nearest generics (HIGH goals_for + HIGH/MID goals_against). The venue and competition filters further narrow the cohort. The joint fouls+yellow_cards target and the interaction mechanism (TEAM_B away foul tendency \u00d7 opponent defensive tightness) remain structurally distinct. Opponent strength could partially explain elevated fouls against tight sides, which is acknowledged."
+   },
+   "similar_opponent_rationale": "TEAM_A's home profile is defined by low goals conceded \u2014 a tight defensive home side. The similarity axis (LOW goals_against) selects opponents whose home defensive compactness matches TEAM_A's, which is the profile hypothesised to force TEAM_B into elevated fouling. This is structurally distinct from the generic HIGH goals_for / HIGH goals_against cohorts.",
+   "subject": "TEAM_B",
+   "support_risk": "LOW",
+   "target_metric": [
+    "fouls",
+    "yellow_cards"
+   ],
+   "window": "ALL_PRIOR"
+  },
+  "incremental_structure": [
+   "candidate adds historical_venue_conditioning=AWAY as an explicit condition (generics do not)",
+   "candidate adds competition=SAME as an explicit condition (generics do not)",
+   "candidate's opponent_profile similarity axis is defined by TEAM_A's DEFENSIVE tightness (goals_against LOW, shots conceded LOW) rather than the generics' HIGH goals_for + HIGH/MID goals_against axes",
+   "candidate bundles fouls AND yellow_cards as a joint target rather than separate single-metric generics",
+   "candidate's mechanism requires interaction of TEAM_B's away foul tendency WITH opponent's territorial/defensive profile \u2014 not just opponent scoring profile"
+  ],
+  "reason": "The three generic structures test AWAY_TEAM fouls or yellow_cards under SIMILAR_OPPONENT_COHORT where the similarity axis is opponent HIGH goals_for combined with HIGH or MID goals_against \u2014 i.e. open, high-scoring opponents. The candidate's similarity axis is the opposite: a tight, defensively compact home side (low goals conceded, low shots conceded), which is a structurally different cohort definition. Additionally, the candidate explicitly conditions on historical_venue_conditioning=AWAY and competition=SAME, neither of which appear in the generics. The joint fouls+yellow_cards target is also structurally distinct from the single-metric generics. However, as written the candidate's conditions block does NOT include an opponent_profile condition \u2014 it only has venue and competition filters \u2014 meaning the similarity axis that makes it novel is described in prose but not encoded in the conditions. A REFINE is needed to add the opponent_profile condition (axis=final_third_entries_for or equivalent defensive tightness axis, value=HIGH) so the structural novelty is formally captured.",
+  "shared_structure": [
+   "subject=AWAY_TEAM (TEAM_B)",
+   "comparison=SIMILAR_OPPONENT_COHORT",
+   "metric_perspective=FOR",
+   "target_metrics include fouls and yellow_cards",
+   "window=ALL_PRIOR",
+   "opponent_profile conditions present"
+  ]
+ },
+ "retrieved_distances": [
+  6,
+  6,
+  6
+ ],
+ "retrieved_generic_ids": [
+  "GEN_0142136",
+  "GEN_0142151",
+  "GEN_0142424"
+ ],
+ "temperature": 0.0
+}

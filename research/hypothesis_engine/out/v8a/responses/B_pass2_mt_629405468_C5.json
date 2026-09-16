@@ -1,0 +1,128 @@
+{
+ "arm": "B",
+ "candidate_id": "C5",
+ "elapsed_s": 16.73,
+ "error": null,
+ "fixture_id": "mt_629405468",
+ "max_tokens": 8192,
+ "model_id": "us.anthropic.claude-sonnet-4-6",
+ "pass": 2,
+ "provenance": {
+  "input_tokens": 4657,
+  "output_tokens": 1881,
+  "request_sha256": "1e6b3d164ac6e7b7cb55c1cd9d7c9caee50e26386fa8b71f8602a9987a31b4ab",
+  "resolved_model_id": "us.anthropic.claude-sonnet-4-6",
+  "response_sha256": "4d6d68d2f4978dae24885539197a37a6d427fc2292bfaf5602f502e38eb3bb07",
+  "stop_reason": "tool_use"
+ },
+ "record_sha256": "9012bb582ca82b0aa4fb665ef5069fe845d8a3484da81eb1b9c137fb1c20e822",
+ "response": {
+  "action": "KEEP",
+  "candidate_id": "C5",
+  "closest_generic_structures": [
+   "GEN_0142144",
+   "GEN_0142147",
+   "GEN_0142432"
+  ],
+  "final_candidate": {
+   "behavioral_observations": [
+    {
+     "evidence_refs": [
+      "TEAM_B.blocks.long_run_away.metrics.shots_outside_box_for",
+      "TEAM_B.blocks.long_run_away.metrics.shots_inside_box_for"
+     ],
+     "observation": "TEAM_B's shots_outside_box_for away long-run is 5.5 vs shots_inside_box_for away of 4.33 \u2014 away from home, TEAM_B generates more shots from outside the box than inside, an unusual ratio."
+    },
+    {
+     "evidence_refs": [
+      "TEAM_B.blocks.recent_last_5.metrics.shots_outside_box_for",
+      "TEAM_B.blocks.recent_last_5.metrics.shots_inside_box_for",
+      "TEAM_B.blocks.long_run_home.metrics.shots_inside_box_for"
+     ],
+     "observation": "Recent W5 shots_outside_box_for is 6.8 vs shots_inside_box_for 6.8 \u2014 equal split, but W5 includes home matches where inside-box shots are higher (8.17 home long-run)."
+    },
+    {
+     "evidence_refs": [
+      "TEAM_B.raw_historical_rows.ROW:09"
+     ],
+     "observation": "ROW:09 (TEAM_B away) shows 15 shots_outside_box_for vs 4 shots_inside_box_for \u2014 an extreme outside-box dominance in one away match."
+    },
+    {
+     "evidence_refs": [
+      "TEAM_A.blocks.long_run_home.metrics.blocked_shots_against"
+     ],
+     "observation": "TEAM_A's home blocked_shots_against is 3.17 long-run \u2014 moderate blocking activity, not extreme."
+    }
+   ],
+   "candidate_id": "C5",
+   "comparison": "SIMILAR_OPPONENT_COHORT",
+   "conditions": [
+    {
+     "dimension": "historical_venue_conditioning",
+     "value": "AWAY"
+    },
+    {
+     "dimension": "competition",
+     "value": "SAME"
+    }
+   ],
+   "coverage_risk": "LOW",
+   "falsifiable_question": "Does TEAM_B record more shots_outside_box_for relative to shots_inside_box_for in away Ligue 1 matches when facing opponents whose pre-fixture defensive profile is similar to TEAM_A's (tight home defense), compared to TEAM_B's away Ligue 1 baseline?",
+   "falsifier": "If TEAM_B's shots_outside_box_for and shots_inside_box_for in the similar-opponent cohort show no systematic difference in ratio compared to the away Ligue 1 baseline, the mechanism is unsupported.",
+   "football_mechanism": "When TEAM_B plays away, their inside-box shot generation drops sharply relative to home, while outside-box shots remain relatively stable. This suggests TEAM_B's away attacking pattern shifts toward long-range attempts when they cannot penetrate the box. Against TEAM_A's home defense (which suppresses inside-box shots to 5.67 against), this outside-box reliance may be amplified. The question is whether TEAM_B's outside-box shot share is higher when facing opponents whose home defensive profile resembles TEAM_A's (low shots_inside_box conceded, low goals conceded at home).",
+   "metric_perspective": "FOR",
+   "opponent": "TEAM_A",
+   "provider_requirements": [
+    "shots_outside_box",
+    "shots_inside_box",
+    "similar_opponent_cohort"
+   ],
+   "research_family": "ATTACK_VOLUME",
+   "self_critique": {
+    "cohort_equals_baseline": false,
+    "condition_equals_target": false,
+    "could_opponent_strength_explain_it": true,
+    "is_just_home_vs_away": false,
+    "is_just_recent_vs_long_run": false,
+    "is_overconditioned": false,
+    "likely_generic_enumeration_would_generate_this": false,
+    "notes": "The mechanism requires the interaction of TEAM_B's away shot location split AND the opponent's defensive tightness. The raw data shows the outside-box dominance away is real (ROW:09, long-run away averages). The similar-opponent cohort tests whether this is amplified against tight defenses."
+   },
+   "similar_opponent_rationale": "TEAM_A's home defensive profile (low goals conceded, low shots_on_target conceded, low shots_inside_box conceded, moderate fouls, moderate yellow cards) defines the similarity axis. The engine's frozen 5-dimension profile captures this. The question is whether TEAM_B generates a higher share of outside-box shots when facing opponents with a tight home defensive profile similar to TEAM_A's.",
+   "subject": "TEAM_B",
+   "support_risk": "LOW",
+   "target_metric": [
+    "shots_outside_box",
+    "shots_inside_box"
+   ],
+   "window": "ALL_PRIOR"
+  },
+  "incremental_structure": [
+   "Candidate tests BOTH shots_outside_box AND shots_inside_box simultaneously as a RATIO/SPLIT, not each metric independently",
+   "Opponent similarity axis is defined by TEAM_A's DEFENSIVE profile (tight home defense: low shots_inside_box conceded, low goals conceded) \u2014 NOT by opponent goals_for/goals_against profile used in all three generics",
+   "Candidate adds historical_venue_conditioning=AWAY as an explicit condition, absent from all three generics",
+   "Candidate adds competition=SAME (Ligue 1) as an explicit condition, absent from all three generics",
+   "The mechanism requires the INTERACTION of TEAM_B's away shot-location split AND opponent defensive tightness \u2014 a two-characteristic joint condition not present in any generic",
+   "Generic opponent_profile axes are goals_for/goals_against (offensive/mixed); candidate's similarity axis is purely defensive (shots_inside_box conceded, goals conceded at home)"
+  ],
+  "reason": "The three generic structures each test a single shot-location metric (shots_inside_box OR shots_outside_box) for the away team against opponents profiled on goals_for/goals_against axes, with no venue conditioning and no competition filter. The candidate is structurally distinct on four dimensions simultaneously: (1) it tests the RATIO of shots_outside_box to shots_inside_box as a joint split rather than either metric in isolation; (2) the opponent similarity axis is TEAM_A's home defensive tightness (shots_inside_box conceded, goals conceded), not the generic goals_for/goals_against profile; (3) it adds historical_venue_conditioning=AWAY as an explicit cohort filter; (4) it adds competition=SAME. The interaction between TEAM_B's away shot-location split and the opponent's defensive profile type is a genuinely different statistical question from any of the three generics.",
+  "shared_structure": [
+   "subject: AWAY_TEAM (TEAM_B)",
+   "comparison: SIMILAR_OPPONENT_COHORT",
+   "metric_perspective: FOR",
+   "window: ALL_PRIOR",
+   "target_metrics include shots_inside_box and shots_outside_box"
+  ]
+ },
+ "retrieved_distances": [
+  6,
+  6,
+  6
+ ],
+ "retrieved_generic_ids": [
+  "GEN_0142144",
+  "GEN_0142147",
+  "GEN_0142432"
+ ],
+ "temperature": 0.0
+}

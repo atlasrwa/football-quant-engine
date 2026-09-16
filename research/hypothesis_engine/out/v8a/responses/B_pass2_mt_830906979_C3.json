@@ -1,0 +1,54 @@
+{
+ "arm": "B",
+ "candidate_id": "C3",
+ "elapsed_s": 9.71,
+ "error": null,
+ "fixture_id": "mt_830906979",
+ "max_tokens": 8192,
+ "model_id": "us.anthropic.claude-sonnet-4-6",
+ "pass": 2,
+ "provenance": {
+  "input_tokens": 4122,
+  "output_tokens": 643,
+  "request_sha256": "63bafab260976c11ca615fc5e8c21bf40f0019d968a145d83626b81cbbc214ce",
+  "resolved_model_id": "us.anthropic.claude-sonnet-4-6",
+  "response_sha256": "4c57759ae5af3b402f13c072d7100b6b3f0196797c8d2b4ac647d457b8177454",
+  "stop_reason": "tool_use"
+ },
+ "record_sha256": "26fff7a2d365b438bdd05711698c11903133791bb3083dafba3afc1e652e56d9",
+ "response": {
+  "action": "ABSTAIN",
+  "candidate_id": "C3",
+  "closest_generic_structures": [
+   "GEN_0316802",
+   "GEN_0316822",
+   "GEN_0316826"
+  ],
+  "incremental_structure": [
+   "Candidate references Rayo (TEAM_B) big_chances_against W5 deterioration as a second signal",
+   "Candidate frames a two-team interaction (Betis home attack elevation + Rayo defensive vulnerability)",
+   "Recent W5 xg_for noted as below home long-run baseline"
+  ],
+  "reason": "The candidate's core statistical structure is identical to GEN_0316802 and GEN_0316822: subject=TEAM_A, perspective=FOR, comparison=SUBJECT_VENUE_BASELINE, condition=HOME, window=ALL_PRIOR, metrics=big_chances and xg. The only claimed incremental element is the reference to TEAM_B's recent defensive deterioration (big_chances_against W5 vs long-run). However, that second signal is not encoded in the candidate's own structural fields \u2014 the comparison remains SUBJECT_VENUE_BASELINE (not OPPONENT_PROFILE_INTERACTION or SIMILAR_OPPONENT_COHORT), the conditions contain no opponent_profile axis, and the subject/perspective/window/metric tuple is unchanged. The football narrative mentions the interaction, but the statistical question as formalised is purely 'does TEAM_A generate more big_chances/xg at home than baseline?' \u2014 which is exactly what GEN_0316802 and GEN_0316822 test. The self_critique itself flags is_just_home_vs_away=true and likely_generic_enumeration_would_generate_this=true. A REFINE to encode the opponent defensive signal would require changing comparison to OPPONENT_PROFILE_INTERACTION and adding an opponent_profile condition, but the evidence supplied does not establish a stable opponent-profile cohort \u2014 it is a single recent-form observation for TEAM_B, which is a separate candidate question (recent vs long-run for TEAM_B AGAINST). No structurally distinct question survives here.",
+  "shared_structure": [
+   "subject=TEAM_A (home team)",
+   "metric_perspective=FOR",
+   "comparison=SUBJECT_VENUE_BASELINE",
+   "condition=historical_venue_conditioning:HOME",
+   "window=ALL_PRIOR",
+   "target_metrics=big_chances + xg",
+   "research_family=ATTACK_QUALITY"
+  ]
+ },
+ "retrieved_distances": [
+  1,
+  1,
+  3
+ ],
+ "retrieved_generic_ids": [
+  "GEN_0316802",
+  "GEN_0316822",
+  "GEN_0316826"
+ ],
+ "temperature": 0.0
+}

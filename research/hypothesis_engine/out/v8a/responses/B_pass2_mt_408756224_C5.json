@@ -1,0 +1,125 @@
+{
+ "arm": "B",
+ "candidate_id": "C5",
+ "elapsed_s": 11.96,
+ "error": null,
+ "fixture_id": "mt_408756224",
+ "max_tokens": 8192,
+ "model_id": "us.anthropic.claude-sonnet-4-6",
+ "pass": 2,
+ "provenance": {
+  "input_tokens": 4325,
+  "output_tokens": 1322,
+  "request_sha256": "e47841ecbb2ea7ff00ee8090c30ee50b029e0187780e2fc933a598be19796adb",
+  "resolved_model_id": "us.anthropic.claude-sonnet-4-6",
+  "response_sha256": "1a306274c84104c9c8370884415a478f911e49c095b65323ee8ba98ec9150fca",
+  "stop_reason": "tool_use"
+ },
+ "record_sha256": "0bb1e101bc08fbf5c53b79003958ce580a3e8472dc7aef7e58d67571b160778e",
+ "response": {
+  "action": "KEEP",
+  "candidate_id": "C5",
+  "closest_generic_structures": [
+   "GEN_0006343",
+   "GEN_0006348",
+   "GEN_0006631"
+  ],
+  "final_candidate": {
+   "behavioral_observations": [
+    {
+     "evidence_refs": [
+      "TEAM_A.blocks.long_run_home.metrics.possession_for",
+      "TEAM_A.blocks.recent_last_10.metrics.possession_for",
+      "TEAM_A.blocks.recent_last_5.metrics.possession_for",
+      "TEAM_A.blocks.long_run_home.metrics.final_third_entries_for",
+      "TEAM_A.blocks.recent_last_10.metrics.final_third_entries_for",
+      "TEAM_A.blocks.recent_last_5.metrics.final_third_entries_for"
+     ],
+     "observation": "Leeds' possession_for at home long-run is 61.6%, rising to 66.4% in last-10 and 73.0% in last-5. Final third entries for rose from 60.5 (home long-run) to 65.6 (last-10) and 66.75 (last-5)."
+    },
+    {
+     "evidence_refs": [
+      "TEAM_B.blocks.long_run_all.metrics.possession_against",
+      "TEAM_B.blocks.long_run_away.metrics.possession_against"
+     ],
+     "observation": "Derby's possession_against long-run all is 57.0% and away is 56.6% \u2014 Derby consistently cede possession regardless of venue, making them a LOW-possession opponent."
+    }
+   ],
+   "candidate_id": "C5",
+   "comparison": "OPPONENT_PROFILE_INTERACTION",
+   "conditions": [
+    {
+     "dimension": "historical_venue_conditioning",
+     "value": "HOME"
+    },
+    {
+     "axis": "possession_for",
+     "dimension": "opponent_profile",
+     "value": "LOW"
+    },
+    {
+     "dimension": "competition",
+     "value": "SAME"
+    }
+   ],
+   "coverage_risk": "LOW",
+   "falsifiable_question": "Does Leeds United's possession_for and final_third_entries_for at home in Championship matches against LOW-possession opponents exceed their overall home Championship baseline?",
+   "falsifier": "If Leeds' possession and final-third entries against LOW-possession opponents are at or below their overall home baseline, the opponent-profile interaction on territorial dominance is unsupported.",
+   "football_mechanism": "When Leeds face opponents who structurally cede possession (LOW possession-holding profile), Leeds' own possession and territorial dominance may be amplified beyond their baseline because the opponent does not contest midfield control. Derby's away possession profile (43.4% for, 56.6% against) makes them a natural fit for this mechanism.",
+   "metric_perspective": "FOR",
+   "opponent": "TEAM_B",
+   "provider_requirements": [
+    "possession_for",
+    "final_third_entries_for",
+    "historical_venue_conditioning",
+    "opponent_profile",
+    "competition"
+   ],
+   "research_family": "TEMPO_AND_TERRITORY",
+   "self_critique": {
+    "cohort_equals_baseline": false,
+    "condition_equals_target": false,
+    "could_opponent_strength_explain_it": false,
+    "is_just_home_vs_away": false,
+    "is_just_recent_vs_long_run": false,
+    "is_overconditioned": false,
+    "likely_generic_enumeration_would_generate_this": false,
+    "notes": "The opponent profile condition (LOW possession) is the key differentiator and is directly motivated by Derby's measured away possession profile. The mechanism is specific: opponent possession style interacts with Leeds' territorial dominance."
+   },
+   "subject": "TEAM_A",
+   "support_risk": "LOW",
+   "target_metric": [
+    "possession",
+    "final_third_entries"
+   ],
+   "window": "ALL_PRIOR"
+  },
+  "incremental_structure": [
+   "comparison = OPPONENT_PROFILE_INTERACTION (not LEAGUE_ENVIRONMENT_BASELINE)",
+   "opponent_profile axis = possession_for (not goals_for or goals_against)",
+   "opponent_profile value = LOW (not HIGH or MID)",
+   "cohort is LOW-possession opponents, not HIGH-scoring or HIGH-conceding opponents",
+   "mechanism requires two measurable characteristics together: subject's territorial dominance AND opponent's structural possession-ceding profile"
+  ],
+  "reason": "The three generic structures all use LEAGUE_ENVIRONMENT_BASELINE as the comparison and condition on opponent_profile axes of goals_for/goals_against (HIGH or MID). The candidate uses OPPONENT_PROFILE_INTERACTION as the comparison and conditions on opponent_profile axis possession_for = LOW. This is a structurally distinct contrast: the cohort is defined by the opponent's possession-holding profile, not their scoring/conceding profile, and the baseline is the subject's own home Championship average rather than the league environment. The mechanism also requires two measurable characteristics jointly \u2014 Leeds' territorial output AND Derby's structural possession-ceding tendency \u2014 which is not captured by any of the generic structures. The opponent_profile axis (possession_for LOW) is directly motivated by Derby's measured away possession data and is not a rewording of the goals-based profiling in the generics.",
+  "shared_structure": [
+   "subject = HOME_TEAM (TEAM_A)",
+   "metric_perspective = FOR",
+   "target_metrics include possession and final_third_entries",
+   "window = ALL_PRIOR",
+   "competition = SAME (Championship)",
+   "historical_venue_conditioning = HOME"
+  ]
+ },
+ "retrieved_distances": [
+  11,
+  11,
+  11
+ ],
+ "retrieved_generic_ids": [
+  "GEN_0006343",
+  "GEN_0006348",
+  "GEN_0006631"
+ ],
+ "temperature": 0.0
+}

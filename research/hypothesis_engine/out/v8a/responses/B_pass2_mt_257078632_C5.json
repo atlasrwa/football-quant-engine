@@ -1,0 +1,118 @@
+{
+ "arm": "B",
+ "candidate_id": "C5",
+ "elapsed_s": 14.39,
+ "error": null,
+ "fixture_id": "mt_257078632",
+ "max_tokens": 8192,
+ "model_id": "us.anthropic.claude-sonnet-4-6",
+ "pass": 2,
+ "provenance": {
+  "input_tokens": 4297,
+  "output_tokens": 1404,
+  "request_sha256": "583f400df397687957d44a2e4b2741904020b1f0212e96d6e1285de6288e01c7",
+  "resolved_model_id": "us.anthropic.claude-sonnet-4-6",
+  "response_sha256": "8f5fbab4ef62597db717ebb1897a553c892d9e7a36ab2297e51446f5e1123f27",
+  "stop_reason": "tool_use"
+ },
+ "record_sha256": "f45ef3134929652194933cc04273df160c62128d953259a2eeded2e459503e39",
+ "response": {
+  "action": "KEEP",
+  "candidate_id": "C5",
+  "closest_generic_structures": [
+   "GEN_0006535",
+   "GEN_0006540",
+   "GEN_0006823"
+  ],
+  "final_candidate": {
+   "behavioral_observations": [
+    {
+     "evidence_refs": [
+      "TEAM_B.blocks.long_run_all.possession_for",
+      "TEAM_B.blocks.long_run_away.possession_for",
+      "TEAM_A.blocks.recent_last_5.possession_for",
+      "TEAM_A.blocks.long_run_all.possession_for"
+     ],
+     "observation": "Real Madrid average 60.21% possession long-run (57.33% away). Athletic Club's recent last-5 possession average is 54.8% FOR \u2014 a regime change from their long-run 48.8%. These two sides both show above-50% possession tendencies, creating a genuine contest for territorial dominance."
+    },
+    {
+     "evidence_refs": [
+      "TEAM_B.blocks.long_run_all.final_third_entries_for",
+      "TEAM_B.blocks.long_run_away.final_third_entries_for",
+      "TEAM_A.blocks.long_run_all.final_third_entries_against",
+      "TEAM_A.blocks.recent_last_5.final_third_entries_against"
+     ],
+     "observation": "Real Madrid's final third entries FOR average 63.71 long-run (65.83 away). Athletic's final third entries AGAINST average 48.2 long-run (42.8 last 5) \u2014 Athletic have recently been suppressing opponent final third entries more than their long-run average."
+    }
+   ],
+   "candidate_id": "C5",
+   "comparison": "OPPONENT_PROFILE_INTERACTION",
+   "conditions": [
+    {
+     "dimension": "historical_venue_conditioning",
+     "value": "AWAY"
+    },
+    {
+     "axis": "possession_for",
+     "dimension": "opponent_profile",
+     "value": "HIGH"
+    }
+   ],
+   "coverage_risk": "LOW",
+   "falsifiable_question": "When Real Madrid play away against opponents with a HIGH possession profile, do their final_third_entries and possession FOR differ from their overall away baseline?",
+   "falsifier": "If Real Madrid's final_third_entries and possession FOR against high-possession away opponents are not systematically lower than their overall away baseline, the mechanism is unsupported.",
+   "football_mechanism": "When Real Madrid face opponents who themselves seek to dominate possession (Athletic's recent profile), their final third entry rate may be compressed relative to their baseline against lower-possession opponents. The mechanism is that a possession-contesting home side reduces the time and space available for the away side to build into the final third, unlike opponents who sit deep and cede territory.",
+   "metric_perspective": "FOR",
+   "opponent": "TEAM_A",
+   "provider_requirements": [
+    "possession",
+    "final_third_entries"
+   ],
+   "research_family": "TEMPO_AND_TERRITORY",
+   "self_critique": {
+    "cohort_equals_baseline": false,
+    "condition_equals_target": false,
+    "could_opponent_strength_explain_it": false,
+    "is_just_home_vs_away": false,
+    "is_just_recent_vs_long_run": false,
+    "is_overconditioned": false,
+    "likely_generic_enumeration_would_generate_this": false,
+    "notes": "The possession_for axis for the opponent profile is the right dimension here. The cohort (Real Madrid away vs high-possession opponents) is distinct from the baseline (Real Madrid away overall). The mechanism is specific to possession-contesting opponents, not just strong opponents generally."
+   },
+   "subject": "TEAM_B",
+   "support_risk": "LOW",
+   "target_metric": [
+    "possession",
+    "final_third_entries"
+   ],
+   "window": "W10"
+  },
+  "incremental_structure": [
+   "comparison is OPPONENT_PROFILE_INTERACTION, not LEAGUE_ENVIRONMENT_BASELINE \u2014 cohort is TEAM_B's own away baseline, not the league average",
+   "opponent_profile axis is possession_for (HIGH), not goals_for/goals_against \u2014 a qualitatively different profiling axis",
+   "historical_venue_conditioning: AWAY condition is explicit and paired with the possession_for opponent profile condition",
+   "dual-metric target (possession AND final_third_entries) tested jointly under the same cohort condition",
+   "mechanism requires BOTH sides to be high-possession contestants simultaneously, not just opponent strength tier"
+  ],
+  "reason": "The three generic structures all use LEAGUE_ENVIRONMENT_BASELINE as the comparator and profile the opponent on goals_for/goals_against axes (HIGH/MID tiers). The candidate differs on three structural axes simultaneously: (1) the comparison is OPPONENT_PROFILE_INTERACTION \u2014 the cohort is TEAM_B's own away-game subset vs their overall away baseline, not the league mean; (2) the opponent profile axis is possession_for rather than goals_for or goals_against, which is a distinct conditioning dimension not present in any of the three generics; (3) the mechanism requires the opponent to be a possession-contesting side specifically, not merely a high-scoring or high-conceding one. These three differences together mean the statistical question being asked \u2014 does TEAM_B's possession and final-third entry rate compress when the away opponent is itself a high-possession side, relative to TEAM_B's own away baseline \u2014 is not structurally equivalent to any of the retrieved generics. The dual-metric joint target under the same possession_for opponent profile condition adds further incremental structure. KEEP is warranted.",
+  "shared_structure": [
+   "subject: AWAY_TEAM (TEAM_B)",
+   "metric perspective: FOR",
+   "target metrics: final_third_entries and possession",
+   "window: W10",
+   "opponent_profile condition present",
+   "LEAGUE_ENVIRONMENT_BASELINE or similar away baseline comparison"
+  ]
+ },
+ "retrieved_distances": [
+  10,
+  10,
+  10
+ ],
+ "retrieved_generic_ids": [
+  "GEN_0006535",
+  "GEN_0006540",
+  "GEN_0006823"
+ ],
+ "temperature": 0.0
+}

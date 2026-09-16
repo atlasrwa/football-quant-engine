@@ -1,0 +1,110 @@
+{
+ "arm": "B",
+ "candidate_id": "C3",
+ "elapsed_s": 16.28,
+ "error": null,
+ "fixture_id": "mt_972834336",
+ "max_tokens": 8192,
+ "model_id": "us.anthropic.claude-sonnet-4-6",
+ "pass": 2,
+ "provenance": {
+  "input_tokens": 4312,
+  "output_tokens": 1812,
+  "request_sha256": "37c0d70e604d94be4780c587663acf6b6580d8031f565826e8ee67ea0079b8df",
+  "resolved_model_id": "us.anthropic.claude-sonnet-4-6",
+  "response_sha256": "a190ca0ab78769211ae18c513f1c8b2bd2f94c9434ee87ec395ccde96cf9a3fe",
+  "stop_reason": "tool_use"
+ },
+ "record_sha256": "5f58662b7a05066c9f3dcf18b8102c7cb348b03769b116d0d52db7423879721f",
+ "response": {
+  "action": "KEEP",
+  "candidate_id": "C3",
+  "closest_generic_structures": [
+   "GEN_0135727",
+   "GEN_0135736",
+   "GEN_0135751"
+  ],
+  "final_candidate": {
+   "behavioral_observations": [
+    {
+     "evidence_refs": [
+      "TEAM_A.blocks.long_run_all.metrics.final_third_entries_against",
+      "TEAM_A.blocks.recent_last_5.metrics.final_third_entries_against",
+      "TEAM_A.blocks.long_run_away.metrics.final_third_entries_against",
+      "TEAM_A.blocks.long_run_home.metrics.final_third_entries_against"
+     ],
+     "observation": "TEAM_A concedes 71.4 final-third entries long-run and 72.8 last 5 \u2014 consistently the highest value in the packet. In the away context TEAM_A concedes 76.5 final-third entries vs 64.5 at home, showing a pronounced venue effect on this metric."
+    },
+    {
+     "evidence_refs": [
+      "TEAM_B.blocks.long_run_all.metrics.final_third_entries_for",
+      "TEAM_B.blocks.recent_last_5.metrics.final_third_entries_for",
+      "TEAM_B.blocks.long_run_all.metrics.final_third_entries_against"
+     ],
+     "observation": "TEAM_B generates 62.5 final-third entries long-run and 61.2 last 5 \u2014 consistently above the 54.2 it concedes. TEAM_B's final-third entry generation is a structural feature of its possession-dominant style."
+    }
+   ],
+   "candidate_id": "C3",
+   "comparison": "SIMILAR_OPPONENT_COHORT",
+   "conditions": [],
+   "coverage_risk": "LOW",
+   "falsifiable_question": "Against opponents whose pre-fixture defensive profile is similar to TEAM_B's (possession-dominant, high final-third entries, low goals conceded), does TEAM_A concede more final_third_entries and shots_inside_box than its overall baseline?",
+   "falsifier": "If TEAM_A's final_third_entries_against and shots_inside_box_against against similar-profile opponents are at or below TEAM_A's overall baseline, the mechanism that possession-dominant opponents amplify TEAM_A's defensive concessions is unsupported.",
+   "football_mechanism": "TEAM_A plays as the home side here, but its structural tendency to concede high final-third entries (76.5 away, 64.5 home) combined with TEAM_B's possession-dominant style that generates 62.5 final-third entries/match creates a potential for TEAM_B to exceed its own typical final-third entry volume. The question is whether TEAM_A concedes more final-third entries and inside-box shots against possession-dominant opponents than against lower-possession opponents.",
+   "metric_perspective": "AGAINST",
+   "opponent": "TEAM_B",
+   "provider_requirements": [
+    "final_third_entries AGAINST ALL_PRIOR SIMILAR_OPPONENT_COHORT",
+    "shots_inside_box AGAINST ALL_PRIOR SIMILAR_OPPONENT_COHORT",
+    "final_third_entries AGAINST ALL_PRIOR baseline",
+    "shots_inside_box AGAINST ALL_PRIOR baseline"
+   ],
+   "research_family": "DEFENSIVE_CONCESSION",
+   "self_critique": {
+    "cohort_equals_baseline": false,
+    "condition_equals_target": false,
+    "could_opponent_strength_explain_it": true,
+    "is_just_home_vs_away": false,
+    "is_just_recent_vs_long_run": false,
+    "is_overconditioned": false,
+    "likely_generic_enumeration_would_generate_this": false,
+    "notes": "Opponent strength is a genuine confounder \u2014 better opponents generate more final-third entries. The similar-opponent cohort partially controls for this by matching on the opponent's defensive profile. The mechanism is specific: TEAM_A's structural high-concession of final-third entries may be amplified by possession-dominant opponents."
+   },
+   "similar_opponent_rationale": "TEAM_B is a possession-dominant side with high final-third entries and relatively low goals conceded. The frozen similarity dimensions will capture opponents with a similar defensive profile (low goals conceded, low shots on target conceded, low shots inside box conceded) which correlates with possession-dominant, well-organised sides. This tests whether TEAM_A's high final-third entry concession rate is amplified against this opponent type.",
+   "subject": "TEAM_A",
+   "support_risk": "LOW",
+   "target_metric": [
+    "final_third_entries",
+    "shots_inside_box"
+   ],
+   "window": "ALL_PRIOR"
+  },
+  "incremental_structure": [
+   "dual-metric test: final_third_entries AND shots_inside_box tested jointly, not separately",
+   "opponent profile axis explicitly specified: possession-dominant / high final-third entries / low goals conceded",
+   "mechanism requires TWO measurable characteristics together: TEAM_A's structural high-concession rate AND TEAM_B's possession-dominant generation profile",
+   "falsifiable question anchors cohort to a specific opponent profile dimension (possession-dominance), not generic similarity",
+   "GEN_0135736 covers shots_inside_box AGAINST in isolation; candidate tests it jointly with final_third_entries under a profiled cohort condition"
+  ],
+  "reason": "The three generic structures each test a single metric (final_third_entries or shots_inside_box) against a SIMILAR_OPPONENT_COHORT with no cohort-defining conditions. The candidate is structurally distinct on two axes: (1) it tests two metrics jointly \u2014 final_third_entries AND shots_inside_box AGAINST \u2014 requiring both to move together for the mechanism to hold, whereas the generics test each in isolation; (2) the similar-opponent cohort is anchored to a specific opponent profile axis (possession-dominant, high final-third entry generation, low goals conceded), which is a measurable structural characteristic of TEAM_B that the generics do not specify. The interaction mechanism requires TEAM_A's documented high-concession tendency AND TEAM_B's possession-dominance to co-occur \u2014 this is a two-characteristic joint condition absent from all three generic structures. GEN_0135727 and GEN_0135751 share the final_third_entries AGAINST / SIMILAR_OPPONENT_COHORT skeleton but carry no opponent profile axis and no joint metric requirement. GEN_0135736 shares shots_inside_box AGAINST but again in isolation and without profile conditioning. The candidate therefore tests something the generics do not.",
+  "shared_structure": [
+   "subject: TEAM_A (home team)",
+   "comparison: SIMILAR_OPPONENT_COHORT",
+   "metric_perspective: AGAINST",
+   "window: ALL_PRIOR",
+   "target_metric includes: final_third_entries",
+   "no venue or competition conditions applied"
+  ]
+ },
+ "retrieved_distances": [
+  1,
+  1,
+  3
+ ],
+ "retrieved_generic_ids": [
+  "GEN_0135727",
+  "GEN_0135736",
+  "GEN_0135751"
+ ],
+ "temperature": 0.0
+}

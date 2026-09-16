@@ -1,0 +1,53 @@
+{
+ "arm": "B",
+ "candidate_id": "C1",
+ "elapsed_s": 8.23,
+ "error": null,
+ "fixture_id": "mt_408756224",
+ "max_tokens": 8192,
+ "model_id": "us.anthropic.claude-sonnet-4-6",
+ "pass": 2,
+ "provenance": {
+  "input_tokens": 4217,
+  "output_tokens": 583,
+  "request_sha256": "047e8eab759363461847037578680ab4675fc1a277e71da5c58d1568a2d1b98e",
+  "resolved_model_id": "us.anthropic.claude-sonnet-4-6",
+  "response_sha256": "0ef128292c24c12f27a0f728c99605f367ff70220fd4dc5050f6703540fca44e",
+  "stop_reason": "tool_use"
+ },
+ "record_sha256": "d6f41bca8673c2d1da4765f12b91a4b1e1781eb26060650b45d657fb54abbcd4",
+ "response": {
+  "action": "ABSTAIN",
+  "candidate_id": "C1",
+  "closest_generic_structures": [
+   "GEN_0277662",
+   "GEN_0277950",
+   "GEN_0278238"
+  ],
+  "incremental_structure": [
+   "condition: historical_venue_conditioning=HOME (vs generic HOME_TEAM subject which implies home)",
+   "condition: competition=SAME",
+   "no opponent_profile condition applied (generics use opponent_profile HIGH/MID/LOW on goals_for and goals_against axes)"
+  ],
+  "reason": "The candidate's statistical structure is: TEAM_A (home), corner_kicks FOR, SUBJECT_RECENT_VS_LONG_BASELINE, W5, conditioned on HOME venue and SAME competition. The three generic structures share every material dimension \u2014 same subject side (HOME_TEAM), same metric (corner_kicks), same perspective (FOR), same comparison (SUBJECT_RECENT_VS_LONG_BASELINE), same window (W5). The only structural difference is that the generics additionally condition on opponent_profile (HIGH goals_for, with HIGH/MID/LOW goals_against), while the candidate drops the opponent_profile condition and substitutes historical_venue_conditioning=HOME and competition=SAME. However, HOME venue conditioning is already implicit in the generic structures (their subject is HOME_TEAM), and competition=SAME is a universal filter that adds no cohort differentiation. Removing the opponent_profile condition makes the candidate structurally simpler than \u2014 not different from \u2014 the generics. The candidate's self-critique correctly flags is_just_recent_vs_long_run=true and likely_generic_enumeration_would_generate_this=true. The football narrative (possession dominance, Derby's defensive shape) is a rewording of the mechanism, not a structural distinction. No genuinely different measurable interaction is present that would survive canonicalisation as a distinct structure. ABSTAIN is the correct outcome.",
+  "shared_structure": [
+   "subject: HOME_TEAM (TEAM_A)",
+   "metric: corner_kicks",
+   "perspective: FOR",
+   "comparison: SUBJECT_RECENT_VS_LONG_BASELINE",
+   "window: W5",
+   "research_family: SET_PIECE_GENERATION"
+  ]
+ },
+ "retrieved_distances": [
+  5,
+  5,
+  5
+ ],
+ "retrieved_generic_ids": [
+  "GEN_0277662",
+  "GEN_0277950",
+  "GEN_0278238"
+ ],
+ "temperature": 0.0
+}

@@ -1,0 +1,56 @@
+{
+ "arm": "B",
+ "candidate_id": "C1",
+ "elapsed_s": 8.4,
+ "error": null,
+ "fixture_id": "mt_972167824",
+ "max_tokens": 8192,
+ "model_id": "us.anthropic.claude-sonnet-4-6",
+ "pass": 2,
+ "provenance": {
+  "input_tokens": 4350,
+  "output_tokens": 583,
+  "request_sha256": "48bde5c32b536467ed8574c53284b2628e2a1645c190af09041c97bc68978f92",
+  "resolved_model_id": "us.anthropic.claude-sonnet-4-6",
+  "response_sha256": "a20d6ebfbc981e84db2e502da9f3e9777b8ff37337af16c3e9499cb620317feb",
+  "stop_reason": "tool_use"
+ },
+ "record_sha256": "94db993ce2a3333ee4f8e1a691367f7b8bd8f17a559f50266b18f744073d67f3",
+ "response": {
+  "action": "ABSTAIN",
+  "candidate_id": "C1",
+  "closest_generic_structures": [
+   "GEN_0316802",
+   "GEN_0316821",
+   "GEN_0316826"
+  ],
+  "incremental_structure": [
+   "Candidate bundles two metrics (big_chances + touches_in_penalty_area) into a single candidate rather than separate ones",
+   "Candidate references TEAM_B away defensive permeability as a motivating observation",
+   "No additional condition dimension is added beyond historical_venue_conditioning:HOME",
+   "The TEAM_B opponent profile observation is narrative motivation only \u2014 it does not alter the statistical structure (no opponent_profile condition is applied, no OPPONENT_VENUE_BASELINE comparison is used)"
+  ],
+  "reason": "The candidate's statistical structure is fully covered by the generic enumeration. GEN_0316802 tests TEAM_A big_chances FOR at home vs venue baseline (ALL_PRIOR); GEN_0316821 tests TEAM_A touches_in_penalty_area FOR at home vs venue baseline (ALL_PRIOR); GEN_0316826 covers big_chances at W5. Bundling two metrics into one candidate does not create a new statistical structure \u2014 the canonicaliser will decompose them into the same two generic slots. The reference to TEAM_B's away defensive permeability is narrative motivation only: no opponent_profile condition is applied, no OPPONENT_VENUE_BASELINE or SIMILAR_OPPONENT_COHORT comparison is used, and no joint interaction term is formally specified. The self-critique itself flags is_just_home_vs_away=true and likely_generic_enumeration_would_generate_this=true. Nothing structurally incremental remains.",
+  "shared_structure": [
+   "subject=TEAM_A (home team)",
+   "metric_perspective=FOR",
+   "comparison=SUBJECT_VENUE_BASELINE",
+   "condition=historical_venue_conditioning:HOME",
+   "window=ALL_PRIOR",
+   "target_metric=big_chances (matches GEN_0316802)",
+   "target_metric=touches_in_penalty_area (matches GEN_0316821)",
+   "window=W5 for big_chances also covered by GEN_0316826"
+  ]
+ },
+ "retrieved_distances": [
+  1,
+  1,
+  3
+ ],
+ "retrieved_generic_ids": [
+  "GEN_0316802",
+  "GEN_0316821",
+  "GEN_0316826"
+ ],
+ "temperature": 0.0
+}

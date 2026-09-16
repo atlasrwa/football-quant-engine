@@ -1,0 +1,116 @@
+{
+ "arm": "B",
+ "candidate_id": "C3",
+ "elapsed_s": 13.07,
+ "error": null,
+ "fixture_id": "mt_361718124",
+ "max_tokens": 8192,
+ "model_id": "us.anthropic.claude-sonnet-4-6",
+ "pass": 2,
+ "provenance": {
+  "input_tokens": 4309,
+  "output_tokens": 1498,
+  "request_sha256": "befc3709a1e7f51871cf6615e44a14703d8c7d2f00b7b21597b996430a520afe",
+  "resolved_model_id": "us.anthropic.claude-sonnet-4-6",
+  "response_sha256": "38873a3dc7e8452a500ee6705da0fc88c92320465ce8db6c08819d089675f9d4",
+  "stop_reason": "tool_use"
+ },
+ "record_sha256": "d3d6310e297a754f8fcf982c473de98f71d16414263c05da6fb31b215c7b5369",
+ "response": {
+  "action": "KEEP",
+  "candidate_id": "C3",
+  "closest_generic_structures": [
+   "GEN_0136584",
+   "GEN_0136585",
+   "GEN_0136586"
+  ],
+  "final_candidate": {
+   "behavioral_observations": [
+    {
+     "evidence_refs": [
+      "TEAM_A.blocks.long_run_all.metrics.shots_against",
+      "TEAM_A.blocks.recent_last_10.metrics.shots_against",
+      "TEAM_A.blocks.recent_last_5.metrics.shots_against",
+      "TEAM_A.blocks.long_run_all.metrics.touches_in_penalty_area_against",
+      "TEAM_A.blocks.recent_last_10.metrics.touches_in_penalty_area_against",
+      "TEAM_A.blocks.recent_last_5.metrics.touches_in_penalty_area_against"
+     ],
+     "observation": "Newcastle's shots conceded have fallen from 13.6 (long-run) to 11.8 (W10) to 11.4 (W5), and touches in penalty area against have dropped from 27.4 (long-run) to 22.3 (W10) to 23.0 (W5)."
+    },
+    {
+     "evidence_refs": [
+      "TEAM_A.blocks.long_run_all.metrics.big_chances_against",
+      "TEAM_A.blocks.recent_last_10.metrics.big_chances_against",
+      "TEAM_A.blocks.recent_last_5.metrics.big_chances_against"
+     ],
+     "observation": "Despite fewer shots conceded, big chances against have risen slightly: 2.2 long-run vs 2.1 W10 vs 2.6 W5 \u2014 opponents are generating fewer but higher-quality chances."
+    }
+   ],
+   "candidate_id": "C3",
+   "comparison": "SIMILAR_OPPONENT_COHORT",
+   "conditions": [
+    {
+     "dimension": "competition",
+     "value": "SAME"
+    }
+   ],
+   "coverage_risk": "NONE",
+   "falsifiable_question": "Against opponents with a similar attacking/discipline profile to Aston Villa, does Newcastle's shots_against, shots_inside_box_against, and touches_in_penalty_area_against differ from their overall EPL baseline?",
+   "falsifier": "If Newcastle's defensive suppression metrics against similar-profile opponents are not different from their overall baseline, there is no opponent-profile-conditional defensive pattern.",
+   "football_mechanism": "A defense that suppresses shot volume and box touches but concedes more big chances may be sitting deeper and compressing space, inviting opponents to probe for high-value openings rather than speculative shots. This tension \u2014 fewer shots but more dangerous ones \u2014 is a structural defensive characteristic worth measuring against opponents of similar attacking profile to Villa.",
+   "metric_perspective": "AGAINST",
+   "opponent": "TEAM_B",
+   "provider_requirements": [
+    "shots_against",
+    "shots_inside_box_against",
+    "touches_in_penalty_area_against",
+    "big_chances_against"
+   ],
+   "research_family": "DEFENSIVE_SUPPRESSION",
+   "self_critique": {
+    "cohort_equals_baseline": false,
+    "condition_equals_target": false,
+    "could_opponent_strength_explain_it": true,
+    "is_just_home_vs_away": false,
+    "is_just_recent_vs_long_run": false,
+    "is_overconditioned": false,
+    "likely_generic_enumeration_would_generate_this": false,
+    "notes": "The similar-opponent cohort adds genuine conditional structure beyond simple recent vs long-run. The tension between falling shot volume and rising big chances against is the motivating observation. Opponent strength is the main confound but the similar-opponent cohort is designed to address this."
+   },
+   "similar_opponent_rationale": "Villa are an attacking-minded side with high corner generation, moderate fouls, and a profile that the engine's frozen similarity dimensions (goals conceded, shots on target conceded, shots inside box conceded, fouls, yellow cards) can characterise. Measuring Newcastle's defensive output against historically similar opponents tests whether their suppression pattern is opponent-dependent.",
+   "subject": "TEAM_A",
+   "support_risk": "LOW",
+   "target_metric": [
+    "shots_against",
+    "shots_inside_box_against",
+    "touches_in_penalty_area_against"
+   ],
+   "window": "ALL_PRIOR"
+  },
+  "incremental_structure": [
+   "target_metric bundle: shots_against + shots_inside_box_against + touches_in_penalty_area_against (none of the three generics use these metrics)",
+   "multi-metric joint test: the candidate tests a volume-suppression cluster (shots, box shots, box touches) simultaneously rather than any single metric",
+   "motivating tension: falling shot volume co-occurring with rising big_chances_against \u2014 a two-dimensional defensive pattern not captured by any single-metric generic",
+   "big_chances_against used as motivating evidence but not as a primary target metric, distinguishing it from GEN_0136586 which tests big_chances as the sole metric"
+  ],
+  "reason": "All three generics share the same comparison (SIMILAR_OPPONENT_COHORT), perspective (AGAINST), subject (HOME_TEAM), condition (competition=SAME), and window (ALL_PRIOR). However, each generic tests a single metric: accurate_crosses (GEN_0136584), ball_recoveries (GEN_0136585), and big_chances (GEN_0136586). The candidate tests a structurally distinct bundle \u2014 shots_against, shots_inside_box_against, and touches_in_penalty_area_against \u2014 none of which appear in any of the three generics. Furthermore, the candidate's mechanism is grounded in a joint two-dimensional observation (volume suppression declining alongside big-chance quality rising), which is a different statistical question from any single-metric enumeration. The multi-metric defensive suppression cluster under the similar-opponent cohort condition is not replicated by any of the nearest generics.",
+  "shared_structure": [
+   "subject: HOME_TEAM (TEAM_A)",
+   "comparison: SIMILAR_OPPONENT_COHORT",
+   "condition: competition=SAME",
+   "perspective: AGAINST",
+   "window: ALL_PRIOR"
+  ]
+ },
+ "retrieved_distances": [
+  6,
+  6,
+  6
+ ],
+ "retrieved_generic_ids": [
+  "GEN_0136584",
+  "GEN_0136585",
+  "GEN_0136586"
+ ],
+ "temperature": 0.0
+}

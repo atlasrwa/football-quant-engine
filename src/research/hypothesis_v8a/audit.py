@@ -43,6 +43,38 @@ EVIDENCE_BEARING_FIELDS = ("observation",)
 
 _NUM_RX = re.compile(r"-?\d+(?:\.\d+)?")
 
+# ---------------------------------------------------------------------------------------
+# Metric-name collision guard
+# ---------------------------------------------------------------------------------------
+#: `firewall_v5`'s predictive-marker set contains the word "chance", because in V6.1's terse
+#: `question` field a sentence carrying "chance" plus a number was a claim about the upcoming
+#: fixture. In THIS corpus `big_chances` is a METRIC NAME, and the V8A protocol asks for
+#: flowing behavioural prose, so the model naturally writes "big chances" -- and every such
+#: sentence was classified MODEL_AUTHORED_PREDICTIVE_QUANTIFICATION. Inspection of all 63
+#: affected sentences found ZERO genuine predictive claims; every one reproduced an exact
+#: packet value for the `big_chances` metric.
+#:
+#: `firewall_v2.mask_metric_lexicon` already masks approved metric names -- it simply does
+#: not know the SPACE-SEPARATED prose spelling of them. This normalises the prose spelling to
+#: the underscore form BEFORE scanning, so the existing masker handles it. It is an extension
+#: of the lexicon to a second spelling of the same approved names, NOT a relaxation: the
+#: masker's own rule still stands, and a masked term carrying a numeric literal is still
+#: examined. Nothing outside the frozen metric vocabulary is touched.
+def normalise_metric_prose(text: str, vocabulary) -> str:
+    """Rewrite `big chances` -> `big_chances` for approved metric names only."""
+    out = text or ""
+    names = sorted({str(m) for m in vocabulary}, key=len, reverse=True)
+    for name in names:
+        if "_" not in name:
+            continue
+        spaced = name.replace("_", " ")
+        out = re.sub(rf"\b{re.escape(spaced)}\b", name, out, flags=re.IGNORECASE)
+        # singular form of a plural metric name, e.g. "big chance"
+        if spaced.endswith("s"):
+            out = re.sub(rf"\b{re.escape(spaced[:-1])}\b", name, out,
+                         flags=re.IGNORECASE)
+    return out
+
 
 # ---------------------------------------------------------------------------------------
 # candidate -> the frozen V7.1 structural spec
@@ -166,27 +198,30 @@ def packet_values(packet: dict) -> tuple:
     return tuple(sorted(vals))
 
 
-def firewall_scan(cand: dict, index: int, *, values, sample_ns=()) -> list:
+def firewall_scan(cand: dict, index: int, *, values, sample_ns=(), vocabulary=()) -> list:
     """Drive firewall_v5 over EVERY V8A prose surface, naming each explicitly."""
+    def norm(t):
+        return normalise_metric_prose(t, vocabulary) if vocabulary else t
+
     findings = []
     for field in PROSE_FIELDS:
         text = cand.get(field)
         if isinstance(text, str) and text:
             findings.extend(FW.scan_prose_field(
-                text, f"$.candidates[{index}].{field}", field,
+                norm(text), f"$.candidates[{index}].{field}", field,
                 values=values, sample_ns=sample_ns, evidence_bearing=False))
     for j, obs in enumerate(cand.get("behavioral_observations") or []):
         text = (obs or {}).get("observation")
         if isinstance(text, str) and text:
             findings.extend(FW.scan_prose_field(
-                text,
+                norm(text),
                 f"$.candidates[{index}].behavioral_observations[{j}].observation",
                 "observation", values=values, sample_ns=sample_ns,
                 evidence_bearing=True))
     crit = (cand.get("self_critique") or {}).get("notes")
     if isinstance(crit, str) and crit:
         findings.extend(FW.scan_prose_field(
-            crit, f"$.candidates[{index}].self_critique.notes", "notes",
+            norm(crit), f"$.candidates[{index}].self_critique.notes", "notes",
             values=values, sample_ns=sample_ns, evidence_bearing=False))
     return findings
 
@@ -226,19 +261,58 @@ def predictive_claims(resp: dict) -> list:
 # evidence grounding
 # ---------------------------------------------------------------------------------------
 def evidence_ref_index(packet: dict) -> set:
-    """Every reference string a candidate may legitimately cite."""
-    refs = set()
-    for side, nav in (packet.get("descriptive_navigation") or {}).items():
-        for block, blk in (nav.get("blocks") or {}).items():
-            refs.add(f"{side}.{block}")
-            for metric in (blk.get("metrics") or {}):
-                refs.add(f"{side}.{block}.{metric}")
+    """Every reference string a candidate may legitimately cite.
+
+    Built by WALKING the packet and emitting the real dotted path of every node, rather
+    than by hand-writing a shorthand. The first version of this function invented an
+    abbreviated form (`TEAM_A.long_run_home.shots_for`) while the model -- correctly --
+    cited the genuine path (`TEAM_A.blocks.long_run_home.metrics.shots_for`). Every
+    reference then scored as hallucinated, which would have reported a perfectly grounded
+    arm as 100% ungrounded on the single most important grounding metric.
+
+    Common equivalent spellings of the same real node are accepted, because a citation is
+    grounded if it POINTS AT SOMETHING THE PACKET CONTAINS -- the test is existence, not
+    a preferred notation.
+    """
+    refs: set = set()
+
+    def walk(node, path):
+        if path:
+            refs.add(path)
+        if isinstance(node, dict):
+            for k, v in node.items():
+                walk(v, f"{path}.{k}" if path else str(k))
+        elif isinstance(node, list):
+            for item in node:
+                rid = item.get("row_id") if isinstance(item, dict) else None
+                if rid:
+                    walk(item, f"{path}.{rid}")
+
+    for root in ("descriptive_navigation", "raw_historical_rows", "capability_envelope"):
+        walk(packet.get(root) or {}, root)
+        # the same subtree without its root prefix: the model is shown the packet as one
+        # object and may address a side directly as `TEAM_A....`
+        walk(packet.get(root) or {}, "")
+
+    # `TEAM_A.raw.ROW:03` -- the natural short form for a raw row.
     for side, raw in (packet.get("raw_historical_rows") or {}).items():
         refs.add(f"{side}.raw")
         for row in raw.get("rows") or []:
-            refs.add(f"{side}.raw.{row['row_id']}")
-    for m in (packet.get("capability_envelope") or {}).get("metrics") or {}:
-        refs.add(f"capability_envelope.{m}")
+            refs.add(f"{side}.raw.{row.get('row_id')}")
+
+    # Bounded aliases: the SAME real node with a purely structural container level elided
+    # (`TEAM_A.blocks.long_run_home.big_chances_against` for
+    #  `TEAM_A.blocks.long_run_home.metrics.big_chances_against`). A citation is grounded
+    # when it resolves unambiguously to something the packet contains; dropping a container
+    # key is a notational elision, not an invented reference. This is deliberately an ALIAS
+    # SET DERIVED FROM REAL PATHS, never a pattern match: a metric that does not exist in
+    # that block, or a row id the packet lacks, still has no alias and still fails.
+    for path in list(refs):
+        for container in (".blocks.", ".metrics."):
+            if container in path:
+                refs.add(path.replace(container, ".", 1))
+        if ".blocks." in path and ".metrics." in path:
+            refs.add(path.replace(".blocks.", ".", 1).replace(".metrics.", ".", 1))
     return refs
 
 
@@ -319,7 +393,7 @@ def audit_candidate(cand, index, *, cap, packet, library_keys, vocabulary, valid
     comp = compile_candidate(cand)
     meas = measurability(cand, cap)
     taut = tautology_checks(cand)
-    fw = firewall_scan(cand, index, values=values)
+    fw = firewall_scan(cand, index, values=values, vocabulary=vocabulary)
     blocking = FW.blocking(fw)
     refs = check_evidence_refs(cand, valid_refs)
 
@@ -421,7 +495,7 @@ def armA_evidence_ref_index(packet: dict) -> set:
     V8A dotted paths. Scoring it against the V8A ref index would report a 100% hallucination
     rate by construction.
     """
-    refs = set()
+    refs: set = set()
 
     def walk(o):
         if isinstance(o, dict):
@@ -434,6 +508,19 @@ def armA_evidence_ref_index(packet: dict) -> set:
             for v in o:
                 walk(v)
     walk(packet)
+
+    # V6.1's DERIVED_SUMMARIES and OPPONENT_PROFILE_SUMMARIES are COLUMNAR: each row is a
+    # list whose first column is `evidence_id`. A dict-only walk finds the AVAILABILITY_MAP
+    # declarations and nothing else, so every SUMMARY:/PROFILE: citation -- which is most of
+    # what Arm A actually cites -- would score as hallucinated.
+    for sec in packet.get("sections") or []:
+        cols = sec.get("columns")
+        if not cols or "evidence_id" not in cols:
+            continue
+        i = cols.index("evidence_id")
+        for row in sec.get("rows") or []:
+            if isinstance(row, list) and len(row) > i and isinstance(row[i], str):
+                refs.add(row[i])
     return refs
 
 
@@ -483,3 +570,77 @@ def audit_armA_hypothesis(h, index, *, cap, packet, library_keys, vocabulary, va
         "schema_valid": True,
         "sufficiency": h.get("sufficiency"),
     }
+
+
+# ---------------------------------------------------------------------------------------
+# Firewall adjudication -- separating an instrument artifact from a genuine breach
+# ---------------------------------------------------------------------------------------
+#: Explicit references to the UPCOMING fixture. A numeric sentence carrying one of these is a
+#: claim about the match that has not been played, which is the thing the firewall exists to
+#: stop -- regardless of which field it appears in.
+FUTURE_CLAIM_MARKERS = (
+    "upcoming fixture", "in this match", "in the coming match", "next match",
+    "will likely", "will be", "expected to be", "should be lower", "should be higher",
+    "is expected to", "we expect", "this fixture will",
+)
+
+#: Deriving a NEW quantity from supplied values (e.g. inferring a league average from one
+#: team's mean) is forbidden by brief section 7 even when it is about history.
+DERIVED_QUANTITY_MARKERS = ("implied by", "implies a", "which implies", "extrapolat")
+
+
+def sentences_of(text: str):
+    return [s.strip() for s in re.split(r"(?<=[.;])\s+", text or "") if s.strip()]
+
+
+def adjudicate_numeric_sentence(sentence: str) -> str:
+    """Classify ONE numeric sentence. Deterministic, and reported with the sentence itself
+    so a reader can check the call rather than trust it.
+
+        FUTURE_CLAIM       a numeric claim about the fixture not yet played -- a real breach
+        DERIVED_QUANTITY   a new quantity derived from supplied values -- a real breach
+        HISTORICAL_DESCRIPTION  a characterisation of observed prior behaviour -- permitted
+    """
+    low = (sentence or "").lower()
+    if not _NUM_RX.search(low):
+        return "NO_NUMERIC"
+    if any(m in low for m in FUTURE_CLAIM_MARKERS):
+        return "FUTURE_CLAIM"
+    if any(m in low for m in DERIVED_QUANTITY_MARKERS):
+        return "DERIVED_QUANTITY"
+    return "HISTORICAL_DESCRIPTION"
+
+
+def adjudicate_candidate_prose(cand: dict) -> dict:
+    """Every numeric sentence in a candidate's prose, with its adjudication and its text."""
+    out = {"FUTURE_CLAIM": [], "DERIVED_QUANTITY": [], "HISTORICAL_DESCRIPTION": 0}
+    texts = [cand.get(f) for f in PROSE_FIELDS]
+    texts += [(o or {}).get("observation")
+              for o in (cand.get("behavioral_observations") or [])]
+    texts.append((cand.get("self_critique") or {}).get("notes"))
+    for t in texts:
+        if not isinstance(t, str):
+            continue
+        for sent in sentences_of(t):
+            verdict = adjudicate_numeric_sentence(sent)
+            if verdict in ("FUTURE_CLAIM", "DERIVED_QUANTITY"):
+                out[verdict].append(sent[:400])
+            elif verdict == "HISTORICAL_DESCRIPTION":
+                out["HISTORICAL_DESCRIPTION"] += 1
+    out["genuine_breach"] = bool(out["FUTURE_CLAIM"] or out["DERIVED_QUANTITY"])
+    return out
+
+
+def adjudicate_armA_prose(h: dict) -> dict:
+    out = {"FUTURE_CLAIM": [], "DERIVED_QUANTITY": [], "HISTORICAL_DESCRIPTION": 0}
+    for t in (h.get("question"), h.get("evidence_summary")):
+        if not isinstance(t, str):
+            continue
+        for sent in sentences_of(t):
+            verdict = adjudicate_numeric_sentence(sent)
+            if verdict in ("FUTURE_CLAIM", "DERIVED_QUANTITY"):
+                out[verdict].append(sent[:400])
+            elif verdict == "HISTORICAL_DESCRIPTION":
+                out["HISTORICAL_DESCRIPTION"] += 1
+    out["genuine_breach"] = bool(out["FUTURE_CLAIM"] or out["DERIVED_QUANTITY"])
+    return out
