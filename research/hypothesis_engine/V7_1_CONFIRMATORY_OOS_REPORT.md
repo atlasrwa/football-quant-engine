@@ -72,7 +72,11 @@ in full because the integrity of the run depends on it.
   run.
 - Inside the namespace `src/research/matchup/` contains only `__init__.py` and `corpus.py`.
   The uncommitted V4/V5a modules **do not exist on disk at all**.
-- `git status --porcelain` was **empty** at mint time and at run time.
+- `git status --porcelain` was **empty at mint time**. At run time the only entries were the
+  authorization token (which must exist for the run) and the regenerated
+  `V7_1_CLEAN_CHECKOUT_PROOF.json`. Neither is source code, neither is a bound artifact, and
+  the executor's preflight does not read porcelain. No uncommitted Python existed at any
+  point.
 - The commit does not contain the provider corpus, so **5655 non-code JSON files** were
   supplied from the working tree — determined empirically by auditing every `open()` the
   preflight performs under `data/`, not guessed. All 5655 live under
@@ -170,10 +174,16 @@ Denominator: **ALL** frozen canonical families, measurable and unmeasurable alik
 | Canonical | 132 | 100 % | 2000 | 100 % |
 | Measurable | 51 | 38.6 % | 1618 | 80.9 % |
 | Support-qualified | 49 | 37.1 % | 1508 | 75.4 % |
-| Computable (OOS stage reached) | 51 | 38.6 % | 1618 | 80.9 % |
 | **OOS-surviving** | **22** | **16.67 %** | **803** | **40.15 %** |
 
 **Surviving-rate difference: −0.23483** (LLM minus uniform null).
+
+**On the "computable" stage.** The frozen artifact reports `oos_stage_computed` as a
+**boolean flag** (the OOS stage ran), not as a filtered count, so it is deliberately not
+given a row above: presenting it as a count would invert the funnel, since every measurable
+family reaches the OOS stage whether or not it cleared support. The real per-family outcome
+at that stage is the terminal-state table in §10 — 51 LLM families reached a terminal state,
+2 of them `CONFOUNDED_UNRESOLVED`; the null arm carries 91 `INSUFFICIENT_SUPPORT`.
 
 Attrition reasons are preserved for every family in both arms
 (`attrition_reasons_preserved: true`).
@@ -349,9 +359,11 @@ candidate set.
 
 Note that "survives" is a **direction-stability** terminal state, not a sign condition: six
 survivors carry a *negative* quality score. A family can be stably wrong-signed and still be
-recorded as surviving. Three pairs of survivors are numerically identical
-(`09854416`/`78ffe234`, `dcdcca66`/`58695773`, `fc67193b`/`22fa72db`) — distinct canonical ids
-that measure the same thing, so the effective survivor count is 19, not 22.
+recorded as surviving. Three pairs of survivors carry identical score tuples
+(`09854416`/`78ffe234`, `dcdcca66`/`58695773`, `fc67193b`/`22fa72db`). That the frozen
+evaluator counts 22 is correct on its own definition; the observation that these are distinct
+canonical ids measuring the same thing — so the count corresponds to 19 distinct measured
+relationships — is a reading of the evidence here, not a number the apparatus reports.
 
 **Frozen candidate set (7):** `2fd97e741773`, `4c6804d93503`, `586957731381`, `8696272d40d6`,
 `8c2f5ec3ed51`, `d922b8d633fd`, `dcdcca6685bb`. Every candidate is an OOS survivor; the
@@ -466,7 +478,8 @@ Stated plainly, including the ones that cut against reading anything positive in
    absent from Endpoint B (§5.2). The best-looking subset is the least comparable.
 5. **Low support throughout the treated arm**: fold counts as low as 1, matched control support
    as low as 4, three survivors with no computable p-value.
-6. **Duplicate canonical ids**: 22 survivors reduce to 19 distinct measured relationships.
+6. **Duplicate canonical ids**: 22 survivors correspond to 19 distinct measured relationships
+   (an observation about identical score tuples, not an evaluator output).
 7. **Direction stability is not correctness**: six survivors have negative quality scores.
 8. **Shared history**: V7's confirmatory window is part of V7.1's development data. Outcomes
    are not shared, but history is.
