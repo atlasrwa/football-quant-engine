@@ -1,0 +1,78 @@
+{
+ "record": "V7_1_AUTHORIZATION_SCOPE_EXCEPTION",
+ "record_version": "v71_scope_exception_v1",
+ "classification": [
+  "AUTHORIZATION_SCOPE_RECORD",
+  "NON_CONFIRMATORY",
+  "WRITTEN_BEFORE_TOKEN_MINTED"
+ ],
+ "written_before_confirmatory_oos_computed": true,
+ "frozen_apparatus_commit": "d983ce688e2855a374c20c9e218ee299fa70eba7",
+ "freeze_version": "v71_freeze_v3",
+ "freeze_manifest_sha256": "22bbd20d1437b4446d320003620af550316f4ef68e88ac1a9c99bebeb210179c",
+ "purpose": "Make the scope exception explicit and falsifiable. This record does not hide a failing test; it states a pre-existing historical defect, asserts it is outside the V7.1 executable graph, and fixes the condition under which the exception is void.",
+
+ "V7_1_AUTHORIZATION_SCOPE_EXCEPTION_V4": true,
+ "class": "PRE_EXISTING_HISTORICAL_LINEAGE_EXECUTABLE_SOURCE_DEFECT",
+ "affected_lineage": "V4/V5a",
+ "affected_modules": [
+  "src/research/matchup/design.py",
+  "src/research/matchup/features.py",
+  "src/research/matchup/harness.py"
+ ],
+ "defect_description": "Tracked historical runner/test code references first-party modules that were never committed. The modules exist only in the developer working tree.",
+
+ "v71_static_reachable": false,
+ "v71_runtime_reachable": false,
+ "v71_union_reachable": false,
+ "blocks_v71_authorization": false,
+
+ "condition": "If any missing historical module becomes reachable from the live V7.1 source graph, authorization fails immediately.",
+
+ "live_verification": {
+  "verified_at_commit": "d983ce688e2855a374c20c9e218ee299fa70eba7",
+  "verified_in": "clean isolated checkout bind-mounted at /home/ubuntu",
+  "source_graph_sha256": "3df6cb03b1d07c66caa89ca5c92af46eb62b148bc0e7c93b7f67a094aa4fd063",
+  "n_static": 35,
+  "n_runtime": 34,
+  "n_union": 35,
+  "n_untracked_executable_dependencies": 0,
+  "n_unresolved_first_party_imports": 0,
+  "forbidden_modules_present_in_source_graph": [],
+  "matchup_modules_actually_in_graph": [
+   "src/research/matchup/__init__.py",
+   "src/research/matchup/corpus.py"
+  ],
+  "strongest_form_of_the_check": "In the clean isolated checkout the three modules DO NOT EXIST ON DISK AT ALL. Any code path reaching them would raise ImportError rather than silently resolving against the developer working tree. The V7.1 apparatus imports, builds the corpus, rebuilds the full execution plan and passes its whole test suite in that environment.",
+  "fail_closed_condition_satisfied": true
+ },
+
+ "related_exceptions": {
+  "V7_D14": {
+   "class": "HISTORICAL_IMMUTABLE_BLAST_RADIUS_DECLARATION_DEFECT",
+   "severity": "P3",
+   "status": "UNFIXED_INSIDE_FROZEN_V7_BY_DESIGN",
+   "action": "DO_NOT_PATCH_V7",
+   "blocks_v71_authorization": false
+  },
+  "SHADOW_RESIDUAL_FAILURES": {
+   "class": "UNRELATED_PERSISTED_RUNTIME_STATE_FAILURES",
+   "count": 2,
+   "membership_in_v71_execution_path": false,
+   "action": "DO_NOT_IMPORT_UNRELATED_WORKING_TREE_CHANGES_TO_MAKE_THE_GLOBAL_SUITE_GREEN",
+   "blocks_v71_authorization": false
+  }
+ },
+
+ "recorded_states": {
+  "FULL_RESEARCH_SUITE_GREEN": false,
+  "V7_1_SCOPED_EXECUTABLE_CLOSURE_GREEN": true,
+  "V7_1_FREEZE_V3_READY_FOR_AUTHORIZATION": true
+ },
+
+ "do_not": [
+  "modify historical V4 implementation",
+  "harvest or commit the missing historical modules during this mission",
+  "patch V7"
+ ]
+}
