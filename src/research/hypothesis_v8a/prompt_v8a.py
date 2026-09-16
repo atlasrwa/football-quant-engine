@@ -262,8 +262,10 @@ def build_pass2_user(candidate: dict, nearest_generics: list) -> str:
     return json.dumps({
         "your_candidate": candidate,
         "nearest_generic_structures": safe,
-        "note": ("These carry structure only. No effect, survival, score, p-value or "
-                 "ranking exists in this payload."),
+        # The note deliberately does NOT enumerate the forbidden field names. Listing them
+        # would put those very tokens into the request, defeating the leak scan that proves
+        # the payload is structural, and telling the model what it is not being shown.
+        "note": "These carry structure only.",
     }, sort_keys=True, indent=1)
 
 
