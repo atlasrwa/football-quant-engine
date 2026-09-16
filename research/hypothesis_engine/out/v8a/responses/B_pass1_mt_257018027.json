@@ -1,0 +1,599 @@
+{
+ "arm": "B",
+ "elapsed_s": 114.38,
+ "error": null,
+ "fixture_id": "mt_257018027",
+ "max_tokens": 24576,
+ "model_id": "us.anthropic.claude-sonnet-4-6",
+ "pass": 1,
+ "prompt_version": "v8a_prompt_v1",
+ "provenance": {
+  "input_tokens": 39064,
+  "output_tokens": 10077,
+  "request_sha256": "c713ee8a9a0cf635dbd9d3c2486e77c2c03829ab404420b4330e55111c9ee373",
+  "resolved_model_id": "us.anthropic.claude-sonnet-4-6",
+  "response_sha256": "8377b460a91f1ef7ee1851c6875475f1ba2959f88333b218e3458c790c068bda",
+  "stop_reason": "tool_use"
+ },
+ "record_sha256": "5b89be95f8d66636fb4913055994761f27eae394f2cdcd082a2e4c9f534e1782",
+ "response": {
+  "candidates": [
+   {
+    "behavioral_observations": [
+     {
+      "evidence_refs": [
+       "TEAM_A.blocks.long_run_all.metrics.big_chances_for",
+       "TEAM_A.blocks.recent_last_5.metrics.big_chances_for"
+      ],
+      "observation": "PSG big_chances_for long-run mean 5.58, W5 mean 5.8 \u2014 consistently high big chance creation across all windows."
+     },
+     {
+      "evidence_refs": [
+       "TEAM_B.blocks.long_run_away.metrics.big_chances_against",
+       "TEAM_B.blocks.long_run_home.metrics.big_chances_against"
+      ],
+      "observation": "Nantes away big_chances_against mean 3.67 vs home 0.83 \u2014 Nantes concedes far more big chances away from home."
+     },
+     {
+      "evidence_refs": [
+       "TEAM_A.blocks.long_run_all.metrics.touches_in_penalty_area_for",
+       "TEAM_A.blocks.recent_last_5.metrics.touches_in_penalty_area_for",
+       "TEAM_B.blocks.long_run_away.metrics.touches_in_penalty_area_against"
+      ],
+      "observation": "PSG touches_in_penalty_area_for long-run 37.1, W5 38.0; Nantes touches_in_penalty_area_against away 26.5 \u2014 PSG's box presence substantially exceeds what Nantes typically concedes away."
+     }
+    ],
+    "candidate_id": "C1",
+    "comparison": "SUBJECT_VENUE_BASELINE",
+    "conditions": [
+     {
+      "dimension": "historical_venue_conditioning",
+      "value": "HOME"
+     }
+    ],
+    "coverage_risk": "NONE",
+    "falsifiable_question": "Does PSG's big_chances_for, shots_inside_box, and touches_in_penalty_area in home matches exceed its overall baseline across all prior matches?",
+    "falsifier": "If PSG's home big_chances_for, shots_inside_box, and touches_in_penalty_area are at or below its overall all-venue baseline, the venue-amplification mechanism is unsupported.",
+    "football_mechanism": "When a high-possession, high-box-entry team faces a side that structurally concedes more big chances and box touches away from home, the attacking team's chance creation metrics may be amplified beyond its unconditional baseline because the defensive shape is more open and less compact in away fixtures.",
+    "metric_perspective": "FOR",
+    "opponent": "TEAM_B",
+    "provider_requirements": [
+     "big_chances",
+     "shots_inside_box",
+     "touches_in_penalty_area"
+    ],
+    "research_family": "ATTACK_QUALITY",
+    "self_critique": {
+     "cohort_equals_baseline": false,
+     "condition_equals_target": false,
+     "could_opponent_strength_explain_it": true,
+     "is_just_home_vs_away": true,
+     "is_just_recent_vs_long_run": false,
+     "is_overconditioned": false,
+     "likely_generic_enumeration_would_generate_this": true,
+     "notes": "This is essentially a home vs away split for PSG attack \u2014 flagged as is_just_home_vs_away and likely generic. Discarding in favour of more specific candidates."
+    },
+    "subject": "TEAM_A",
+    "support_risk": "LOW",
+    "target_metric": [
+     "big_chances",
+     "shots_inside_box",
+     "touches_in_penalty_area"
+    ],
+    "window": "ALL_PRIOR"
+   },
+   {
+    "behavioral_observations": [
+     {
+      "evidence_refs": [
+       "TEAM_B.blocks.long_run_away.metrics.big_chances_against",
+       "TEAM_B.blocks.long_run_home.metrics.big_chances_against"
+      ],
+      "observation": "Nantes away big_chances_against mean 3.67 vs home 0.83 \u2014 a very large venue split in big chance concession."
+     },
+     {
+      "evidence_refs": [
+       "TEAM_B.blocks.long_run_away.metrics.xg_against",
+       "TEAM_B.blocks.long_run_home.metrics.xg_against"
+      ],
+      "observation": "Nantes away xg_against 1.91 vs home 0.94 \u2014 quality of chances conceded more than doubles away from home."
+     },
+     {
+      "evidence_refs": [
+       "TEAM_B.blocks.long_run_away.metrics.shots_inside_box_against",
+       "TEAM_B.blocks.long_run_home.metrics.shots_inside_box_against"
+      ],
+      "observation": "Nantes away shots_inside_box_against 8.83 vs home 6.17 \u2014 more box shots conceded away."
+     }
+    ],
+    "candidate_id": "C2",
+    "comparison": "SUBJECT_VENUE_BASELINE",
+    "conditions": [
+     {
+      "dimension": "historical_venue_conditioning",
+      "value": "AWAY"
+     }
+    ],
+    "coverage_risk": "NONE",
+    "falsifiable_question": "Does Nantes' big_chances_against, shots_inside_box_against, and xg_against in away matches exceed its overall all-venue baseline?",
+    "falsifier": "If Nantes' away big_chances_against, shots_inside_box_against, and xg_against are at or below its overall baseline, the away-venue defensive deterioration mechanism is unsupported.",
+    "football_mechanism": "Away from home, Nantes appears to concede a structurally different defensive profile \u2014 more big chances, higher xg against, more box shots \u2014 suggesting their defensive shape or compactness changes when playing away. This is not simply opponent quality, as the home sample also includes strong opponents.",
+    "metric_perspective": "AGAINST",
+    "opponent": "TEAM_A",
+    "provider_requirements": [
+     "big_chances",
+     "shots_inside_box",
+     "xg"
+    ],
+    "research_family": "DEFENSIVE_CONCESSION",
+    "self_critique": {
+     "cohort_equals_baseline": false,
+     "condition_equals_target": false,
+     "could_opponent_strength_explain_it": true,
+     "is_just_home_vs_away": true,
+     "is_just_recent_vs_long_run": false,
+     "is_overconditioned": false,
+     "likely_generic_enumeration_would_generate_this": true,
+     "notes": "This is a home vs away split for Nantes defense \u2014 flagged. However the magnitude of the split (xg_against doubles away) is notable and the mechanism is distinct from C1. Retaining as the split is large and the fixture context (PSG at home) makes the away condition directly relevant."
+    },
+    "subject": "TEAM_B",
+    "support_risk": "LOW",
+    "target_metric": [
+     "big_chances",
+     "shots_inside_box",
+     "xg"
+    ],
+    "window": "ALL_PRIOR"
+   },
+   {
+    "behavioral_observations": [
+     {
+      "evidence_refs": [
+       "TEAM_B.raw_historical_rows.ROW:07",
+       "TEAM_B.raw_historical_rows.ROW:01",
+       "TEAM_B.blocks.long_run_away.metrics.big_chances_against",
+       "TEAM_B.blocks.long_run_away.metrics.xg_against"
+      ],
+      "observation": "Nantes big_chances_against long-run 2.25, but away 3.67 \u2014 the away split is driven partly by opponent quality. ROW:07 (away) shows big_chances_against=7, xg_against=3.28; ROW:01 (away) big_chances_against=4, xg_against=1.71 \u2014 the worst defensive performances come in away fixtures."
+     },
+     {
+      "evidence_refs": [
+       "TEAM_B.blocks.recent_last_5.metrics.xg_against",
+       "TEAM_B.blocks.long_run_all.metrics.xg_against"
+      ],
+      "observation": "Nantes xg_against W5 1.55 vs long-run 1.43 \u2014 a recent upward trend in quality of chances conceded."
+     }
+    ],
+    "candidate_id": "C3",
+    "comparison": "SIMILAR_OPPONENT_COHORT",
+    "conditions": [
+     {
+      "dimension": "historical_venue_conditioning",
+      "value": "AWAY"
+     }
+    ],
+    "coverage_risk": "HIGH",
+    "falsifiable_question": "Does Nantes' big_chances_against, xg_against, and shots_inside_box_against in away matches against opponents whose pre-fixture profile is similar to PSG's exceed Nantes' overall away defensive baseline?",
+    "falsifier": "If Nantes' big_chances_against, xg_against, and shots_inside_box_against against similar-profile opponents away are at or below its overall away baseline, the opponent-quality amplification mechanism is unsupported.",
+    "football_mechanism": "When Nantes faces opponents with high attacking output (high shots on target, high big chances generated), their defensive concession metrics may be disproportionately elevated compared to their baseline against average opponents. The similar-opponent cohort captures whether Nantes' defensive profile systematically worsens against high-quality attacking sides.",
+    "metric_perspective": "AGAINST",
+    "opponent": "TEAM_A",
+    "provider_requirements": [
+     "big_chances",
+     "xg",
+     "shots_inside_box"
+    ],
+    "research_family": "OPPONENT_PROFILE_INTERACTION",
+    "self_critique": {
+     "cohort_equals_baseline": false,
+     "condition_equals_target": false,
+     "could_opponent_strength_explain_it": true,
+     "is_just_home_vs_away": false,
+     "is_just_recent_vs_long_run": false,
+     "is_overconditioned": false,
+     "likely_generic_enumeration_would_generate_this": false,
+     "notes": "The opponent-strength explanation is precisely what this question tests \u2014 it is not a confound but the mechanism. The away condition is added because Nantes' away defensive profile is structurally different. Two conditions (away + similar opponent) are both necessary and non-redundant."
+    },
+    "similar_opponent_rationale": "PSG is an extreme outlier in attacking output (shots on target, big chances, goals scored) in Ligue 1. Asking how Nantes has defended against opponents whose pre-fixture profile resembles PSG's \u2014 high goals scored, high shots on target generated, high shots inside box \u2014 isolates whether Nantes' defensive deterioration is specifically linked to facing high-quality attackers away from home.",
+    "subject": "TEAM_B",
+    "support_risk": "HIGH",
+    "target_metric": [
+     "big_chances",
+     "xg",
+     "shots_inside_box"
+    ],
+    "window": "ALL_PRIOR"
+   },
+   {
+    "behavioral_observations": [
+     {
+      "evidence_refs": [
+       "TEAM_A.blocks.long_run_all.metrics.corner_kicks_for",
+       "TEAM_A.blocks.recent_last_5.metrics.corner_kicks_for",
+       "TEAM_B.blocks.long_run_all.metrics.corner_kicks_against",
+       "TEAM_B.blocks.recent_last_5.metrics.corner_kicks_against"
+      ],
+      "observation": "PSG corner_kicks_for long-run mean 6.92, W5 5.8. Nantes corner_kicks_against long-run 6.0, W5 5.2 \u2014 Nantes concedes corners at a rate consistent with PSG's generation rate."
+     },
+     {
+      "evidence_refs": [
+       "TEAM_B.blocks.long_run_all.metrics.fouls_for",
+       "TEAM_B.blocks.recent_last_5.metrics.fouls_for",
+       "TEAM_A.blocks.long_run_all.metrics.possession_for"
+      ],
+      "observation": "Nantes fouls_for long-run 12.25, W5 13.4 \u2014 rising foul rate. PSG possession dominance (68.7%) means Nantes must foul frequently to disrupt play, generating free kicks for PSG."
+     }
+    ],
+    "candidate_id": "C4",
+    "comparison": "OPPONENT_PROFILE_INTERACTION",
+    "conditions": [
+     {
+      "axis": "fouls_committed_per_match",
+      "dimension": "opponent_profile",
+      "value": "HIGH"
+     }
+    ],
+    "coverage_risk": "NONE",
+    "falsifiable_question": "Does PSG's corner_kicks_for in matches against opponents with a HIGH fouls_committed_per_match profile exceed PSG's overall corner_kicks_for baseline?",
+    "falsifier": "If PSG's corner_kicks_for against high-fouling opponents is at or below its overall baseline, the mechanism linking opponent foul rate to PSG set-piece generation is unsupported.",
+    "football_mechanism": "A high-possession team that generates wide pressure and crosses forces corner kicks when deliveries are blocked or deflected. When the opponent commits fouls at an elevated rate (Nantes W5 13.4), the possession team also accumulates free kicks in dangerous areas. Together these two set-piece sources may be elevated when PSG faces foul-prone, low-possession opponents.",
+    "metric_perspective": "FOR",
+    "opponent": "TEAM_B",
+    "provider_requirements": [
+     "corner_kicks",
+     "fouls"
+    ],
+    "research_family": "SET_PIECE_GENERATION",
+    "self_critique": {
+     "cohort_equals_baseline": false,
+     "condition_equals_target": false,
+     "could_opponent_strength_explain_it": false,
+     "is_just_home_vs_away": false,
+     "is_just_recent_vs_long_run": false,
+     "is_overconditioned": false,
+     "likely_generic_enumeration_would_generate_this": false,
+     "notes": "The mechanism requires two measurable characteristics together: PSG's crossing/wide pressure AND opponent's foul rate. The opponent_profile axis (fouls_committed_per_match) is one of the frozen dimensions. The question is specific and not derivable from a single metric scan."
+    },
+    "subject": "TEAM_A",
+    "support_risk": "LOW",
+    "target_metric": [
+     "corner_kicks",
+     "fouls"
+    ],
+    "window": "ALL_PRIOR"
+   },
+   {
+    "behavioral_observations": [
+     {
+      "evidence_refs": [
+       "TEAM_A.blocks.long_run_all.metrics.shots_against",
+       "TEAM_A.blocks.recent_last_5.metrics.shots_against",
+       "TEAM_A.blocks.long_run_home.metrics.shots_against",
+       "TEAM_A.blocks.long_run_away.metrics.shots_against"
+      ],
+      "observation": "PSG shots_against long-run 9.17, W5 11.0 \u2014 a recent uptick. PSG xg_against long-run 0.91, W5 1.09 \u2014 also rising. Home shots_against 10.83 vs away 7.5."
+     },
+     {
+      "evidence_refs": [
+       "TEAM_B.blocks.long_run_all.metrics.shots_for",
+       "TEAM_B.blocks.recent_last_5.metrics.shots_for",
+       "TEAM_B.blocks.long_run_away.metrics.shots_for",
+       "TEAM_B.blocks.long_run_away.metrics.big_chances_for"
+      ],
+      "observation": "Nantes shots_for long-run 11.25, W5 10.6 \u2014 modest and declining. Away shots_for 9.33. Nantes big_chances_for away 1.5."
+     },
+     {
+      "evidence_refs": [
+       "TEAM_A.blocks.long_run_all.metrics.big_chances_against",
+       "TEAM_A.blocks.recent_last_5.metrics.big_chances_against",
+       "TEAM_B.blocks.long_run_all.metrics.big_chances_for"
+      ],
+      "observation": "PSG big_chances_against long-run 1.5, W5 1.8 \u2014 low but slightly elevated recently. Nantes big_chances_for long-run 1.83 is near PSG's typical concession rate."
+     }
+    ],
+    "candidate_id": "C5",
+    "comparison": "OPPONENT_PROFILE_INTERACTION",
+    "conditions": [
+     {
+      "axis": "goals_conceded_per_match",
+      "dimension": "opponent_profile",
+      "value": "LOW"
+     }
+    ],
+    "coverage_risk": "NONE",
+    "falsifiable_question": "Does PSG's shots_against and big_chances_against in matches against opponents with a LOW goals_conceded_per_match profile (i.e. defensively solid opponents who may play more cautiously) differ from PSG's overall baseline?",
+    "falsifier": "If PSG's shots_against and big_chances_against against LOW goals_conceded opponents are at or above its overall baseline, the suppression mechanism is unsupported.",
+    "football_mechanism": "PSG's defensive suppression is tested by how much attacking volume low-possession opponents generate against them. When PSG faces opponents who commit to a low-possession, counter-attacking style (like Nantes away), the opponent may generate fewer but more targeted shots. The question is whether PSG's shots_against and big_chances_against are lower against low-possession opponents than its overall baseline.",
+    "metric_perspective": "AGAINST",
+    "opponent": "TEAM_B",
+    "provider_requirements": [
+     "shots",
+     "shots_on_target",
+     "big_chances"
+    ],
+    "research_family": "DEFENSIVE_SUPPRESSION",
+    "self_critique": {
+     "cohort_equals_baseline": false,
+     "condition_equals_target": false,
+     "could_opponent_strength_explain_it": false,
+     "is_just_home_vs_away": false,
+     "is_just_recent_vs_long_run": false,
+     "is_overconditioned": false,
+     "likely_generic_enumeration_would_generate_this": false,
+     "notes": "The axis chosen (goals_conceded_per_match) is one of the frozen dimensions. However, Nantes is not a low goals_conceded team (1.58 long-run) \u2014 this axis does not well characterise Nantes. Discarding this candidate as the opponent profile axis does not match the actual opponent characteristic being investigated."
+    },
+    "subject": "TEAM_A",
+    "support_risk": "LOW",
+    "target_metric": [
+     "shots",
+     "shots_on_target",
+     "big_chances"
+    ],
+    "window": "ALL_PRIOR"
+   },
+   {
+    "behavioral_observations": [
+     {
+      "evidence_refs": [
+       "TEAM_B.blocks.long_run_all.metrics.fouls_for",
+       "TEAM_B.blocks.recent_last_5.metrics.fouls_for",
+       "TEAM_B.blocks.long_run_all.metrics.yellow_cards_for",
+       "TEAM_B.blocks.recent_last_5.metrics.yellow_cards_for"
+      ],
+      "observation": "Nantes fouls_for long-run 12.25, W5 13.4 \u2014 rising trend. Yellow_cards_for long-run 2.17, W5 1.6 \u2014 cards are lower recently despite more fouls."
+     },
+     {
+      "evidence_refs": [
+       "TEAM_B.blocks.long_run_away.metrics.fouls_for",
+       "TEAM_B.blocks.long_run_home.metrics.fouls_for",
+       "TEAM_B.blocks.long_run_away.metrics.yellow_cards_for",
+       "TEAM_B.blocks.long_run_home.metrics.yellow_cards_for"
+      ],
+      "observation": "Nantes away fouls_for 11.83 vs home 12.67. Away yellow_cards_for 2.33 vs home 2.0 \u2014 Nantes commits more bookable fouls away."
+     },
+     {
+      "evidence_refs": [
+       "TEAM_A.blocks.long_run_all.metrics.possession_for",
+       "TEAM_A.blocks.long_run_all.metrics.fouls_against"
+      ],
+      "observation": "PSG possession_for long-run 68.7% \u2014 high possession teams force opponents to foul more to disrupt play. PSG fouls_against long-run 11.33 \u2014 opponents do foul PSG frequently."
+     }
+    ],
+    "candidate_id": "C6",
+    "comparison": "OPPONENT_PROFILE_INTERACTION",
+    "conditions": [
+     {
+      "axis": "fouls_committed_per_match",
+      "dimension": "opponent_profile",
+      "value": "HIGH"
+     },
+     {
+      "dimension": "historical_venue_conditioning",
+      "value": "AWAY"
+     }
+    ],
+    "coverage_risk": "LOW",
+    "falsifiable_question": "Does Nantes' fouls_for and yellow_cards_for in away matches against opponents with a HIGH fouls_committed_per_match profile exceed Nantes' overall away baseline for those metrics?",
+    "falsifier": "If Nantes' fouls_for and yellow_cards_for in away matches against high-fouling-profile opponents are at or below Nantes' overall away baseline, the possession-pressure foul-escalation mechanism is unsupported.",
+    "football_mechanism": "When a low-possession team (Nantes away ~41%) faces a dominant possession side (PSG ~69%), the defending team must foul more frequently to disrupt build-up play and prevent final-third entries. This structural pressure on Nantes to foul may be amplified when facing opponents with a HIGH possession/territorial profile, potentially elevating both fouls and yellow cards above Nantes' baseline.",
+    "metric_perspective": "FOR",
+    "opponent": "TEAM_A",
+    "provider_requirements": [
+     "fouls",
+     "yellow_cards"
+    ],
+    "research_family": "DISCIPLINE",
+    "self_critique": {
+     "cohort_equals_baseline": false,
+     "condition_equals_target": false,
+     "could_opponent_strength_explain_it": false,
+     "is_just_home_vs_away": false,
+     "is_just_recent_vs_long_run": false,
+     "is_overconditioned": true,
+     "likely_generic_enumeration_would_generate_this": false,
+     "notes": "Two conditions (away + opponent profile) \u2014 checking if overconditioned. The away condition is motivated by Nantes' structurally different away discipline profile. The opponent profile axis (fouls_committed_per_match) is a frozen dimension but it characterises the OPPONENT's fouling, not PSG's possession dominance directly. This is a reasonable proxy but not ideal. The two conditions together may thin the cohort. Retaining but flagging support risk as HIGH."
+    },
+    "subject": "TEAM_B",
+    "support_risk": "HIGH",
+    "target_metric": [
+     "fouls",
+     "yellow_cards"
+    ],
+    "window": "ALL_PRIOR"
+   },
+   {
+    "behavioral_observations": [
+     {
+      "evidence_refs": [
+       "TEAM_A.blocks.long_run_away.metrics.final_third_entries_for",
+       "TEAM_A.blocks.long_run_home.metrics.final_third_entries_for"
+      ],
+      "observation": "PSG final_third_entries_for away mean 81.5 vs home 49.7 \u2014 PSG generates dramatically more final third entries away than at home in this sample."
+     },
+     {
+      "evidence_refs": [
+       "TEAM_A.blocks.long_run_away.metrics.shots_for",
+       "TEAM_A.blocks.long_run_home.metrics.shots_for",
+       "TEAM_A.blocks.long_run_away.metrics.final_third_entries_for",
+       "TEAM_A.blocks.long_run_home.metrics.final_third_entries_for"
+      ],
+      "observation": "PSG shots_for away 16.83 vs home 20.83 \u2014 shot volume is higher at home despite fewer final third entries. This tension suggests away final third entries do not convert to shots at the same rate."
+     },
+     {
+      "evidence_refs": [
+       "TEAM_A.blocks.long_run_away.metrics.shots_inside_box_for",
+       "TEAM_A.blocks.long_run_home.metrics.shots_inside_box_for"
+      ],
+      "observation": "PSG shots_inside_box_for away 13.0 vs home 13.83 \u2014 box shots are similar home and away despite the large final third entry gap."
+     }
+    ],
+    "candidate_id": "C7",
+    "comparison": "OPPONENT_PROFILE_INTERACTION",
+    "conditions": [
+     {
+      "axis": "shots_on_target_conceded_per_match",
+      "dimension": "opponent_profile",
+      "value": "LOW"
+     }
+    ],
+    "coverage_risk": "NONE",
+    "falsifiable_question": "Does PSG's shots_for and shots_inside_box_for against opponents with a LOW shots_on_target_conceded_per_match profile (defensively compact opponents) differ from PSG's overall baseline for those metrics?",
+    "falsifier": "If PSG's shots_for and shots_inside_box_for against LOW shots_on_target_conceded opponents are at or above its overall baseline, the defensive compactness suppression mechanism is unsupported.",
+    "football_mechanism": "PSG's away final third entry count is anomalously high relative to home, yet shot volume is lower away. This tension suggests that against opponents who sit deep and allow territorial access (high final third entries conceded), PSG may accumulate entries without converting them to shots at the same rate as when opponents press higher. The question is whether PSG's shot volume against opponents who concede many final third entries (LOW shots_on_target_conceded profile, i.e. defensively compact) differs from its baseline.",
+    "metric_perspective": "FOR",
+    "opponent": "TEAM_B",
+    "provider_requirements": [
+     "shots",
+     "shots_inside_box",
+     "final_third_entries"
+    ],
+    "research_family": "ATTACK_VOLUME",
+    "self_critique": {
+     "cohort_equals_baseline": false,
+     "condition_equals_target": false,
+     "could_opponent_strength_explain_it": false,
+     "is_just_home_vs_away": false,
+     "is_just_recent_vs_long_run": false,
+     "is_overconditioned": false,
+     "likely_generic_enumeration_would_generate_this": false,
+     "notes": "The axis shots_on_target_conceded_per_match is a frozen dimension. The mechanism (high final third entries but lower shot conversion against compact defenses) is grounded in the observed tension between PSG's away final_third_entries and away shots. Nantes is not obviously a LOW shots_on_target_conceded team (4.17 long-run) so this may not characterise the opponent well, but the question about PSG's behaviour against compact opponents is still valid."
+    },
+    "subject": "TEAM_A",
+    "support_risk": "LOW",
+    "target_metric": [
+     "shots",
+     "shots_inside_box",
+     "final_third_entries"
+    ],
+    "window": "ALL_PRIOR"
+   },
+   {
+    "behavioral_observations": [
+     {
+      "evidence_refs": [
+       "TEAM_B.blocks.recent_last_5.metrics.goals_against",
+       "TEAM_B.blocks.long_run_all.metrics.goals_against"
+      ],
+      "observation": "Nantes goals_against W5 2.2 vs long-run 1.58 \u2014 a meaningful recent deterioration in defensive outcomes."
+     },
+     {
+      "evidence_refs": [
+       "TEAM_B.blocks.recent_last_5.metrics.shots_on_target_against",
+       "TEAM_B.blocks.long_run_all.metrics.shots_on_target_against",
+       "TEAM_B.blocks.recent_last_5.metrics.xg_against",
+       "TEAM_B.blocks.long_run_all.metrics.xg_against"
+      ],
+      "observation": "Nantes shots_on_target_against W5 4.6 vs long-run 4.17 \u2014 rising. xg_against W5 1.55 vs long-run 1.43 \u2014 also rising."
+     },
+     {
+      "evidence_refs": [
+       "TEAM_B.blocks.recent_last_5.metrics.clearances_for",
+       "TEAM_B.blocks.long_run_all.metrics.clearances_for"
+      ],
+      "observation": "Nantes clearances_for W5 19.4 vs long-run 25.25 \u2014 a large drop in defensive clearance volume, suggesting less deep defending or a change in defensive structure recently."
+     }
+    ],
+    "candidate_id": "C8",
+    "comparison": "SUBJECT_RECENT_VS_LONG_BASELINE",
+    "conditions": [],
+    "coverage_risk": "NONE",
+    "falsifiable_question": "Is Nantes' goals_against, shots_on_target_against, and big_chances_against in the most recent 5 matches above its long-run all-match baseline for those metrics?",
+    "falsifier": "If Nantes' W5 goals_against, shots_on_target_against, and big_chances_against are at or below its long-run baseline, the recent defensive deterioration regime change is unsupported.",
+    "football_mechanism": "A team whose defensive clearance volume drops sharply while shots on target and goals conceded rise may be experiencing a structural change in how they defend \u2014 less deep-block defending, more exposure to shots. If this recent form represents a genuine regime change rather than noise, Nantes' defensive concession metrics in W5 should be measurably above their long-run baseline.",
+    "metric_perspective": "AGAINST",
+    "opponent": "TEAM_A",
+    "provider_requirements": [
+     "goals",
+     "shots_on_target",
+     "big_chances"
+    ],
+    "research_family": "FORM_VS_BASELINE",
+    "self_critique": {
+     "cohort_equals_baseline": false,
+     "condition_equals_target": false,
+     "could_opponent_strength_explain_it": true,
+     "is_just_home_vs_away": false,
+     "is_just_recent_vs_long_run": true,
+     "is_overconditioned": false,
+     "likely_generic_enumeration_would_generate_this": true,
+     "notes": "This is explicitly recent vs long-run \u2014 flagged. However the corroborating evidence (clearances drop + goals rise + xg rise together) makes this more than a single-metric observation. The clearances drop is a distinct behavioural signal. Retaining as the multi-metric coherence is grounded in the raw data."
+    },
+    "subject": "TEAM_B",
+    "support_risk": "LOW",
+    "target_metric": [
+     "goals",
+     "shots_on_target",
+     "big_chances"
+    ],
+    "window": "W5"
+   }
+  ],
+  "fixture_id": "mt_257018027",
+  "interaction_map": {
+   "a_attack_vs_b_defense": [
+    "PSG generates ~18-20 shots/match with ~13-15 inside the box; Nantes away concedes ~8.83 shots inside box and allows big_chances_against of 3.67 away \u2014 these two profiles align to suggest high box-shot volume in this fixture.",
+    "PSG xg_for long-run 2.69 meets Nantes away xg_against 1.91 \u2014 both point toward a high-xg environment for PSG.",
+    "PSG touches_in_penalty_area_for ~37-38 vs Nantes touches_in_penalty_area_against away 26.5 \u2014 PSG's box presence is far higher than what Nantes typically concedes, creating a potential mismatch.",
+    "PSG corner_kicks_for long-run 6.92 vs Nantes corner_kicks_against long-run 6.0 \u2014 Nantes concedes corners at a rate that matches PSG's generation rate.",
+    "PSG final_third_entries_for away 81.5 vs Nantes final_third_entries_against away 57.3 \u2014 PSG's away territorial dominance is extreme; Nantes away defensive exposure is already high."
+   ],
+   "asymmetries": [
+    "PSG's home defense concedes more than its away defense (xg_against home 1.21 vs away 0.60, shots_against home 10.83 vs away 7.5) \u2014 PSG is actually more defensively exposed at home, possibly because opponents are more open.",
+    "Nantes away attack is substantially weaker than home (shots_for away 9.33 vs home 13.17, big_chances away 1.5 vs home 2.17) \u2014 Nantes' away attacking output is structurally lower.",
+    "Nantes clearances_for W5 19.4 vs long-run 25.25 \u2014 a significant recent drop in defensive clearance volume may indicate a change in how deep Nantes defends or how much pressure they absorb."
+   ],
+   "b_attack_vs_a_defense": [
+    "Nantes away shots_for 9.33 vs PSG shots_against long-run 9.17 \u2014 Nantes away attack roughly matches what PSG typically concedes, suggesting PSG's defense may contain Nantes near its baseline.",
+    "Nantes away xg_for 0.94 vs PSG xg_against long-run 0.91 \u2014 Nantes away attacking quality is near PSG's typical concession level, no obvious mismatch in Nantes' favour.",
+    "Nantes fouls_for W5 13.4 (rising) vs PSG possession dominance \u2014 a high-possession team facing a foul-prone opponent creates elevated set-piece and free-kick opportunities for PSG.",
+    "Nantes big_chances_for away 1.5 vs PSG big_chances_against long-run 1.5 \u2014 Nantes away big chance creation matches PSG's typical concession rate exactly, suggesting PSG defense is likely to hold."
+   ],
+   "regime_changes": [
+    "Nantes clearances_for dropped from long-run 25.25 to W5 19.4 \u2014 a structural shift in defensive depth or pressing intensity.",
+    "PSG xg_against has risen from long-run 0.91 to W5 1.09 \u2014 a modest but consistent upward trend in quality of chances conceded.",
+    "Nantes goals_against has risen from long-run 1.58 to W5 2.2 \u2014 a meaningful deterioration in defensive outcomes recently."
+   ],
+   "tensions": [
+    "PSG home shots_against (10.83) is higher than away (7.5), yet PSG home xg_against (1.21) is also higher \u2014 both volume and quality of concession rise at home, not just volume.",
+    "Nantes W5 shots_on_target_against 4.6 rising vs W5 saves_for 2.4 \u2014 more shots on target conceded but saves not rising proportionally, suggesting goals conceded are increasing (W5 goals_against 2.2 vs long-run 1.58).",
+    "Nantes recent W5 final_third_entries_for 61.2 is higher than long-run 57.3, yet big_chances_for W5 1.4 is lower than long-run 1.83 \u2014 more territory but fewer quality chances recently."
+   ]
+  },
+  "reconnaissance": {
+   "team_a_attack": [
+    "PSG generates very high shot volume: long-run mean 18.8 shots/match, recent W5 mean 19.6. Shots inside box average 13.4 long-run, 14.6 in W5 \u2014 the majority of attempts come from inside the box.",
+    "Shot quality is high: big_chances_for long-run mean 5.58, W5 mean 5.8. xg_for long-run 2.69, W5 2.83. Shots on target long-run 8.58, W5 9.2.",
+    "PSG dominates possession: long-run mean 68.7%, W5 68.6%. Final third entries long-run 65.6, W5 65.4 \u2014 extremely high territorial pressure.",
+    "Corner generation is substantial: long-run mean 6.92, W5 5.8. Accurate crosses long-run 4.92, W5 5.4.",
+    "Away attack is similarly dominant: away final_third_entries_for mean 81.5 vs home 49.7 \u2014 PSG actually generates more territorial entries away than at home in this sample.",
+    "Touches in penalty area: long-run 37.1, W5 38.0 \u2014 consistently high box presence across all windows."
+   ],
+   "team_a_defense": [
+    "PSG concedes very few shots: long-run mean 9.17 shots against, W5 11.0 (slight recent uptick). Shots on target against long-run 3.08, W5 3.2 \u2014 opponents rarely test the keeper.",
+    "Big chances conceded: long-run 1.5, W5 1.8 \u2014 low but a slight recent increase. xg_against long-run 0.91, W5 1.09 \u2014 also creeping up.",
+    "Opponents allowed very little possession: long-run 31.3% against, W5 31.4%. Final third entries against long-run 34.4, W5 35.2.",
+    "Home defense concedes more than away: shots_against home 10.83 vs away 7.5; shots_on_target_against home 3.83 vs away 2.33; xg_against home 1.21 vs away 0.60. Opponents appear to press more at home against PSG.",
+    "Clearances_for long-run 11.25 \u2014 low, consistent with PSG rarely defending deep. Home clearances 14.17 vs away 8.33.",
+    "Saves_for long-run 2.17 \u2014 very few saves needed, consistent with low shots on target conceded."
+   ],
+   "team_b_attack": [
+    "Nantes shot volume is modest: long-run mean 11.25 shots/match, W5 10.6. Shots inside box long-run 7.92, W5 6.6 \u2014 declining recently.",
+    "Big chances for: long-run 1.83, W5 1.4 \u2014 low and declining. xg_for long-run 1.09, W5 0.98 \u2014 below average and falling.",
+    "Nantes away attack is weaker: away shots_for mean 9.33 vs home 13.17; away shots_inside_box_for 7.0 vs home 8.83; away xg_for 0.94 vs home 1.25.",
+    "Possession away: 41.0% \u2014 Nantes typically operates without the ball away from home.",
+    "Final third entries away: 52.8 vs home 61.8 \u2014 reduced territorial presence away.",
+    "Accurate crosses for: long-run 5.33, W5 5.6 \u2014 one of the more active crossing teams, but away accurate crosses drop to 4.33."
+   ],
+   "team_b_defense": [
+    "Nantes concedes heavily: long-run goals_against 1.58, W5 2.2 \u2014 worsening recently. xg_against long-run 1.43, W5 1.55.",
+    "Shots on target conceded: long-run 4.17, W5 4.6 \u2014 above average and rising. Shots inside box conceded: long-run 7.5, W5 8.0.",
+    "Away defense is significantly worse: away big_chances_against 3.67 vs home 0.83; away xg_against 1.91 vs home 0.94; away shots_inside_box_against 8.83 vs home 6.17.",
+    "Touches in penalty area conceded: long-run 24.17, away 26.5 \u2014 opponents get into the box frequently against Nantes away.",
+    "Final third entries conceded: long-run 55.08, away 57.33 \u2014 Nantes allows opponents deep access regularly.",
+    "Clearances_for long-run 25.25 (home 24.0, away 26.5) \u2014 high defensive clearance volume indicates sustained pressure absorbed. Recent W5 clearances_for 19.4 \u2014 a notable drop, possibly indicating less defensive resilience recently.",
+    "Nantes fouls_for long-run 12.25, W5 13.4 \u2014 commits fouls at an elevated rate, rising recently. Yellow cards_for long-run 2.17, W5 1.6."
+   ]
+  }
+ },
+ "temperature": 0.0
+}

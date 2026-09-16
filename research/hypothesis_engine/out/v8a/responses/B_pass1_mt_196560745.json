@@ -1,0 +1,580 @@
+{
+ "arm": "B",
+ "elapsed_s": 106.36,
+ "error": null,
+ "fixture_id": "mt_196560745",
+ "max_tokens": 24576,
+ "model_id": "us.anthropic.claude-sonnet-4-6",
+ "pass": 1,
+ "prompt_version": "v8a_prompt_v1",
+ "provenance": {
+  "input_tokens": 45498,
+  "output_tokens": 9899,
+  "request_sha256": "2413306369cbadc2cf1942e60cd385d201c120197a95676d4c34859681b5283e",
+  "resolved_model_id": "us.anthropic.claude-sonnet-4-6",
+  "response_sha256": "54130c8561a8852e1ce96ae306c7e16d8df19d92ca8a650d246239690c3cd1d8",
+  "stop_reason": "tool_use"
+ },
+ "record_sha256": "aa4c91453aae3071117bb55cbd07f2fe5a8d9dbc7e4429fafa4291d42e713572",
+ "response": {
+  "candidates": [
+   {
+    "behavioral_observations": [
+     {
+      "evidence_refs": [
+       "TEAM_A.blocks.long_run_home.metrics.big_chances_for",
+       "TEAM_A.blocks.long_run_away.metrics.big_chances_for",
+       "TEAM_A.blocks.long_run_home.metrics.shots_on_target_for",
+       "TEAM_A.blocks.long_run_away.metrics.shots_on_target_for"
+      ],
+      "observation": "Brentford's big_chances_for at home long-run is 4.5 vs 1.7 away, and shots_on_target_for at home is 7.0 vs 3.2 away \u2014 a large venue-driven split in attacking quality."
+     },
+     {
+      "evidence_refs": [
+       "TEAM_B.blocks.long_run_all.metrics.big_chances_against",
+       "TEAM_B.blocks.recent_last_10.metrics.big_chances_against",
+       "TEAM_B.blocks.recent_last_5.metrics.big_chances_against"
+      ],
+      "observation": "Leicester's big_chances_against has risen from 1.83 long-run to 3.9 in W10 and 2.8 in W5, indicating a recent structural deterioration in defensive quality that may amplify Brentford's home attacking output."
+     }
+    ],
+    "candidate_id": "C1",
+    "comparison": "SUBJECT_VENUE_BASELINE",
+    "conditions": [
+     {
+      "dimension": "historical_venue_conditioning",
+      "value": "HOME"
+     }
+    ],
+    "coverage_risk": "NONE",
+    "falsifiable_question": "Does Brentford's big_chances_for and shots_on_target_for in home matches exceed its overall baseline, and is this difference consistent across the prior home sample?",
+    "falsifier": "If Brentford's home big_chances_for and shots_on_target_for are not systematically higher than its overall baseline, the venue-driven attacking quality mechanism is unsupported.",
+    "football_mechanism": "A home team with a strong venue-driven attacking quality advantage faces a visiting defense whose ability to suppress big chances has deteriorated markedly in recent matches. The combination of Brentford's home attacking output and Leicester's recent defensive fragility may produce elevated chance creation for Brentford.",
+    "metric_perspective": "FOR",
+    "opponent": "TEAM_B",
+    "provider_requirements": [
+     "big_chances",
+     "shots_on_target",
+     "xg"
+    ],
+    "research_family": "ATTACK_QUALITY",
+    "self_critique": {
+     "cohort_equals_baseline": false,
+     "condition_equals_target": false,
+     "could_opponent_strength_explain_it": true,
+     "is_just_home_vs_away": true,
+     "is_just_recent_vs_long_run": false,
+     "is_overconditioned": false,
+     "likely_generic_enumeration_would_generate_this": true,
+     "notes": "This is partly a home/away question. However, the interaction with Leicester's specific recent defensive deterioration gives it matchup relevance beyond generic enumeration. Keeping it as the venue effect is well-supported and the mechanism is concrete."
+    },
+    "subject": "TEAM_A",
+    "support_risk": "LOW",
+    "target_metric": [
+     "big_chances",
+     "shots_on_target",
+     "xg"
+    ],
+    "window": "ALL_PRIOR"
+   },
+   {
+    "behavioral_observations": [
+     {
+      "evidence_refs": [
+       "TEAM_B.blocks.long_run_all.metrics.shots_against",
+       "TEAM_B.blocks.recent_last_10.metrics.shots_against",
+       "TEAM_B.blocks.recent_last_5.metrics.shots_against"
+      ],
+      "observation": "Leicester's shots_against long-run all is 12.0 but has risen to 17.8 in W10 and 15.4 in W5 \u2014 a large and sustained increase in shots conceded, representing a regime change from their historical defensive baseline."
+     },
+     {
+      "evidence_refs": [
+       "TEAM_B.blocks.long_run_all.metrics.big_chances_against",
+       "TEAM_B.blocks.recent_last_10.metrics.big_chances_against"
+      ],
+      "observation": "Leicester's big_chances_against has risen from 1.83 long-run to 3.9 in W10 \u2014 more than double the long-run mean \u2014 indicating a structural breakdown in defensive quality, not just shot volume."
+     },
+     {
+      "evidence_refs": [
+       "TEAM_B.blocks.long_run_all.metrics.shots_inside_box_against",
+       "TEAM_B.blocks.recent_last_10.metrics.shots_inside_box_against"
+      ],
+      "observation": "Leicester's shots_inside_box_against long-run all is 7.67 but rises to 13.0 in W10 \u2014 opponents are getting far more shots from inside the box recently."
+     }
+    ],
+    "candidate_id": "C2",
+    "comparison": "SUBJECT_RECENT_VS_LONG_BASELINE",
+    "conditions": [
+     {
+      "dimension": "competition",
+      "value": "SAME"
+     }
+    ],
+    "coverage_risk": "NONE",
+    "falsifiable_question": "Does Leicester's shots_against, shots_inside_box_against, and big_chances_against in the last 10 EPL matches exceed their overall long-run baseline in a statistically meaningful way?",
+    "falsifier": "If Leicester's recent W10 defensive concession metrics are not systematically higher than their long-run baseline when restricted to EPL matches, the regime-change mechanism is unsupported.",
+    "football_mechanism": "Leicester's recent defensive deterioration \u2014 measured across shots, shots inside box, and big chances conceded \u2014 represents a regime change from their long-run baseline. If this reflects a structural shift (e.g. loss of defensive compactness in EPL), then their recent W10 behaviour is a better predictor of their defensive concession profile than the long-run average which includes Championship data.",
+    "metric_perspective": "AGAINST",
+    "opponent": "TEAM_A",
+    "provider_requirements": [
+     "shots",
+     "shots_inside_box",
+     "big_chances"
+    ],
+    "research_family": "DEFENSIVE_SUPPRESSION",
+    "self_critique": {
+     "cohort_equals_baseline": false,
+     "condition_equals_target": false,
+     "could_opponent_strength_explain_it": true,
+     "is_just_home_vs_away": false,
+     "is_just_recent_vs_long_run": true,
+     "is_overconditioned": false,
+     "likely_generic_enumeration_would_generate_this": true,
+     "notes": "This is explicitly a recent vs long-run question. However, the magnitude of the change (shots_against nearly 50% higher, big_chances_against more than double) and the competition filter (EPL only vs mixed Championship/EPL long-run) give it genuine analytical value. The competition condition is important because the long-run baseline includes Championship matches where Leicester faced weaker opposition. Retaining."
+    },
+    "subject": "TEAM_B",
+    "support_risk": "LOW",
+    "target_metric": [
+     "shots",
+     "shots_inside_box",
+     "big_chances"
+    ],
+    "window": "W10"
+   },
+   {
+    "behavioral_observations": [
+     {
+      "evidence_refs": [
+       "TEAM_B.blocks.long_run_all.metrics.shots_on_target_for",
+       "TEAM_B.blocks.recent_last_10.metrics.shots_on_target_for",
+       "TEAM_B.blocks.recent_last_5.metrics.shots_on_target_for"
+      ],
+      "observation": "Leicester's shots_on_target_for long-run all is 4.79 but drops to 3.1 in W10 and 3.4 in W5 \u2014 a sustained decline in on-target output across both recent windows."
+     },
+     {
+      "evidence_refs": [
+       "TEAM_B.blocks.long_run_all.metrics.xg_for",
+       "TEAM_B.blocks.recent_last_10.metrics.xg_for",
+       "TEAM_B.blocks.recent_last_5.metrics.xg_for"
+      ],
+      "observation": "Leicester's xg_for long-run all is 1.69 but drops to 1.07 in W10 and 1.45 in W5 \u2014 a meaningful decline in expected goal creation, particularly in the W10 window."
+     },
+     {
+      "evidence_refs": [
+       "TEAM_B.blocks.long_run_all.metrics.goals_for",
+       "TEAM_B.blocks.recent_last_10.metrics.goals_for",
+       "TEAM_B.blocks.recent_last_5.metrics.goals_for"
+      ],
+      "observation": "Leicester's goals_for long-run all is 1.79 but drops to 1.3 in W10 and 1.2 in W5 \u2014 consistent with the decline in underlying attacking metrics."
+     }
+    ],
+    "candidate_id": "C3",
+    "comparison": "SUBJECT_RECENT_VS_LONG_BASELINE",
+    "conditions": [
+     {
+      "dimension": "competition",
+      "value": "SAME"
+     }
+    ],
+    "coverage_risk": "NONE",
+    "falsifiable_question": "Does Leicester's shots_on_target_for, xg_for, and goals_for in the last 10 EPL matches fall below their overall long-run baseline in a consistent way?",
+    "falsifier": "If Leicester's recent W10 attacking output metrics are not systematically below their long-run baseline when restricted to EPL matches, the attacking decline mechanism is unsupported.",
+    "football_mechanism": "Leicester's attacking output has declined across multiple metrics (shots on target, xG, goals) in recent EPL matches. This may reflect the difficulty of their EPL schedule relative to the Championship matches that dominate their long-run baseline, or a genuine loss of attacking form. The EPL-only recent sample may better represent their current attacking capability.",
+    "metric_perspective": "FOR",
+    "opponent": "TEAM_A",
+    "provider_requirements": [
+     "shots_on_target",
+     "xg",
+     "goals"
+    ],
+    "research_family": "FORM_VS_BASELINE",
+    "self_critique": {
+     "cohort_equals_baseline": false,
+     "condition_equals_target": false,
+     "could_opponent_strength_explain_it": true,
+     "is_just_home_vs_away": false,
+     "is_just_recent_vs_long_run": true,
+     "is_overconditioned": false,
+     "likely_generic_enumeration_would_generate_this": true,
+     "notes": "Again explicitly recent vs long-run, but the competition filter is the key differentiator \u2014 the long-run baseline mixes Championship and EPL. The parallel decline across shots_on_target, xg, and goals makes this more than a single-metric observation. Retaining."
+    },
+    "subject": "TEAM_B",
+    "support_risk": "LOW",
+    "target_metric": [
+     "shots_on_target",
+     "xg",
+     "goals"
+    ],
+    "window": "W10"
+   },
+   {
+    "behavioral_observations": [
+     {
+      "evidence_refs": [
+       "TEAM_A.blocks.long_run_home.metrics.shots_for",
+       "TEAM_A.blocks.long_run_away.metrics.shots_for"
+      ],
+      "observation": "Brentford's shots_for at home long-run is 14.7 but drops to 7.3 away. In home matches, Brentford generates substantially more attacking volume. The question is whether this home attacking output varies against opponents of different defensive quality."
+     },
+     {
+      "evidence_refs": [
+       "TEAM_B.blocks.long_run_all.metrics.shots_against",
+       "TEAM_B.blocks.recent_last_10.metrics.shots_against",
+       "TEAM_B.blocks.long_run_all.metrics.big_chances_against",
+       "TEAM_B.blocks.recent_last_10.metrics.big_chances_against"
+      ],
+      "observation": "Leicester's defensive profile has deteriorated: shots_against W10 is 17.8 vs long-run 12.0, big_chances_against W10 is 3.9 vs long-run 1.83 \u2014 Leicester currently profiles as a LOW defensive quality opponent."
+     }
+    ],
+    "candidate_id": "C4",
+    "comparison": "SIMILAR_OPPONENT_COHORT",
+    "conditions": [
+     {
+      "dimension": "historical_venue_conditioning",
+      "value": "HOME"
+     }
+    ],
+    "coverage_risk": "LOW",
+    "falsifiable_question": "Does Brentford's shots_for, shots_on_target_for, and big_chances_for in home matches against opponents with a similar defensive profile to Leicester's current profile exceed Brentford's overall home baseline?",
+    "falsifier": "If Brentford's attacking output in home matches against similarly profiled opponents is not higher than its overall home baseline, the opponent-profile interaction mechanism is unsupported.",
+    "football_mechanism": "When Brentford faces opponents with weak defensive profiles (high shots conceded, high big chances conceded), their home attacking output may be amplified relative to facing defensively stronger opponents. Leicester's current profile places them in the LOW defensive quality tier, which may unlock Brentford's home attacking ceiling.",
+    "metric_perspective": "FOR",
+    "opponent": "TEAM_B",
+    "provider_requirements": [
+     "shots",
+     "shots_on_target",
+     "big_chances"
+    ],
+    "research_family": "OPPONENT_PROFILE_INTERACTION",
+    "self_critique": {
+     "cohort_equals_baseline": false,
+     "condition_equals_target": false,
+     "could_opponent_strength_explain_it": false,
+     "is_just_home_vs_away": false,
+     "is_just_recent_vs_long_run": false,
+     "is_overconditioned": false,
+     "likely_generic_enumeration_would_generate_this": false,
+     "notes": "This combines venue conditioning with similar-opponent cohort \u2014 two distinct dimensions. The mechanism requires both Brentford being at home AND facing a weak defensive opponent. Not trivially generated by enumeration. The home condition is justified by Brentford's large home/away split."
+    },
+    "similar_opponent_rationale": "Leicester's current defensive profile \u2014 elevated shots conceded, big chances conceded, and goals conceded per match \u2014 places them in the LOW tier of the frozen defensive/discipline similarity dimensions. Brentford's attacking output against similarly profiled opponents at home is the relevant cohort.",
+    "subject": "TEAM_A",
+    "support_risk": "LOW",
+    "target_metric": [
+     "shots",
+     "shots_on_target",
+     "big_chances"
+    ],
+    "window": "ALL_PRIOR"
+   },
+   {
+    "behavioral_observations": [
+     {
+      "evidence_refs": [
+       "TEAM_B.blocks.long_run_all.metrics.possession_for",
+       "TEAM_B.blocks.recent_last_10.metrics.possession_for",
+       "TEAM_B.blocks.recent_last_5.metrics.possession_for"
+      ],
+      "observation": "Leicester's possession_for long-run all is 58.8% \u2014 a historically possession-dominant team. However, recent W10 drops to 48.5% and W5 to 53.2%, indicating a significant regime change in territorial control."
+     },
+     {
+      "evidence_refs": [
+       "TEAM_B.blocks.long_run_all.metrics.final_third_entries_for",
+       "TEAM_B.blocks.recent_last_10.metrics.final_third_entries_for"
+      ],
+      "observation": "Leicester's final_third_entries_for long-run all is 60.8 but drops to 51.9 in W10 \u2014 consistent with the possession decline, Leicester is entering the final third less frequently in recent matches."
+     },
+     {
+      "evidence_refs": [
+       "TEAM_A.blocks.long_run_all.metrics.possession_against",
+       "TEAM_A.blocks.long_run_all.metrics.possession_for"
+      ],
+      "observation": "Brentford allows 53.3% possession to opponents long-run, suggesting they do not typically dominate possession themselves. Against a Leicester that has lost its possession dominance, the territorial dynamic may be more contested than historical Leicester norms suggest."
+     }
+    ],
+    "candidate_id": "C5",
+    "comparison": "SUBJECT_RECENT_VS_LONG_BASELINE",
+    "conditions": [
+     {
+      "dimension": "competition",
+      "value": "SAME"
+     }
+    ],
+    "coverage_risk": "NONE",
+    "falsifiable_question": "Does Leicester's possession_for and final_third_entries_for in the last 10 EPL matches fall below their overall long-run baseline in a consistent way?",
+    "falsifier": "If Leicester's recent W10 possession and final_third_entries are not systematically below their long-run baseline in EPL matches, the territorial regime-change mechanism is unsupported.",
+    "football_mechanism": "Leicester historically controls games through possession and final-third entries, but this regime has broken down in recent EPL matches. When Leicester cannot establish possession dominance, their attacking output (shots, chances) declines. Brentford's defensive structure may be better suited to a contested possession game than to suppressing a possession-dominant Leicester.",
+    "metric_perspective": "FOR",
+    "opponent": "TEAM_A",
+    "provider_requirements": [
+     "possession",
+     "final_third_entries"
+    ],
+    "research_family": "TEMPO_AND_TERRITORY",
+    "self_critique": {
+     "cohort_equals_baseline": false,
+     "condition_equals_target": false,
+     "could_opponent_strength_explain_it": true,
+     "is_just_home_vs_away": false,
+     "is_just_recent_vs_long_run": true,
+     "is_overconditioned": false,
+     "likely_generic_enumeration_would_generate_this": false,
+     "notes": "The possession regime change is notable because Leicester's identity is built on possession dominance. The interaction with Brentford's defensive structure (which allows high possession to opponents) makes this more than a simple recent vs long-run question. The competition filter is important given the Championship/EPL mix. Retaining."
+    },
+    "subject": "TEAM_B",
+    "support_risk": "LOW",
+    "target_metric": [
+     "possession",
+     "final_third_entries"
+    ],
+    "window": "W10"
+   },
+   {
+    "behavioral_observations": [
+     {
+      "evidence_refs": [
+       "TEAM_A.blocks.long_run_home.metrics.corner_kicks_for",
+       "TEAM_A.blocks.long_run_away.metrics.corner_kicks_for",
+       "TEAM_A.blocks.recent_last_5.metrics.corner_kicks_for"
+      ],
+      "observation": "Brentford's corner_kicks_for at home long-run is 5.5 vs 3.3 away \u2014 a clear venue split. Recent W5 corners_for is 3.8, below the home long-run mean, suggesting some recent softening."
+     },
+     {
+      "evidence_refs": [
+       "TEAM_B.blocks.long_run_all.metrics.corner_kicks_against",
+       "TEAM_B.blocks.recent_last_10.metrics.corner_kicks_against",
+       "TEAM_B.blocks.recent_last_5.metrics.corner_kicks_against"
+      ],
+      "observation": "Leicester's corner_kicks_against long-run all is 4.86 but rises to 6.7 in W10 and 6.2 in W5 \u2014 opponents are generating significantly more corners against Leicester recently."
+     }
+    ],
+    "candidate_id": "C6",
+    "comparison": "SUBJECT_VENUE_BASELINE",
+    "conditions": [
+     {
+      "dimension": "historical_venue_conditioning",
+      "value": "HOME"
+     }
+    ],
+    "coverage_risk": "LOW",
+    "falsifiable_question": "Does Brentford's corner_kicks_for in home matches exceed its overall baseline, and is this difference consistent across the prior home sample?",
+    "falsifier": "If Brentford's corner_kicks_for in home matches is not systematically higher than its overall baseline, the home corner generation mechanism is unsupported.",
+    "football_mechanism": "Brentford's home attacking pressure generates corners at a higher rate than their away matches. Leicester's recent defensive shape has allowed opponents to generate more corners than their long-run baseline. The combination of Brentford's home corner generation and Leicester's recent elevated corner concession rate may produce above-baseline corner counts for Brentford.",
+    "metric_perspective": "FOR",
+    "opponent": "TEAM_B",
+    "provider_requirements": [
+     "corner_kicks"
+    ],
+    "research_family": "SET_PIECE_GENERATION",
+    "self_critique": {
+     "cohort_equals_baseline": false,
+     "condition_equals_target": false,
+     "could_opponent_strength_explain_it": true,
+     "is_just_home_vs_away": true,
+     "is_just_recent_vs_long_run": false,
+     "is_overconditioned": false,
+     "likely_generic_enumeration_would_generate_this": true,
+     "notes": "This is primarily a home/away question for Brentford. The Leicester side (elevated corners conceded recently) adds matchup relevance. The home sample is only 6 matches which is thin. Marginal but the two-sided evidence (Brentford home corner generation + Leicester recent corner concession) justifies inclusion."
+    },
+    "subject": "TEAM_A",
+    "support_risk": "LOW",
+    "target_metric": [
+     "corner_kicks"
+    ],
+    "window": "ALL_PRIOR"
+   },
+   {
+    "behavioral_observations": [
+     {
+      "evidence_refs": [
+       "TEAM_A.blocks.long_run_all.metrics.shots_against",
+       "TEAM_A.blocks.long_run_home.metrics.shots_against",
+       "TEAM_A.blocks.long_run_away.metrics.shots_against"
+      ],
+      "observation": "Brentford concedes 19.2 shots/match long-run all, with away matches at 22.7 and home at 15.7. This is a high shot concession rate even at home, suggesting Brentford's defensive structure allows significant opponent shot volume."
+     },
+     {
+      "evidence_refs": [
+       "TEAM_A.blocks.long_run_all.metrics.final_third_entries_against",
+       "TEAM_A.blocks.recent_last_5.metrics.final_third_entries_against"
+      ],
+      "observation": "Brentford's final_third_entries_against long-run all is 61.3, with recent W5 rising to 68.4 \u2014 opponents are entering Brentford's final third more frequently in recent matches, suggesting increased defensive pressure."
+     },
+     {
+      "evidence_refs": [
+       "TEAM_A.blocks.long_run_all.metrics.clearances_for",
+       "TEAM_A.blocks.recent_last_5.metrics.clearances_for"
+      ],
+      "observation": "Brentford's clearances_for (defensive clearances) has risen from 27.4 long-run to 34.6 in W5, consistent with defending under greater pressure recently."
+     }
+    ],
+    "candidate_id": "C7",
+    "comparison": "SUBJECT_VENUE_BASELINE",
+    "conditions": [
+     {
+      "dimension": "historical_venue_conditioning",
+      "value": "HOME"
+     }
+    ],
+    "coverage_risk": "NONE",
+    "falsifiable_question": "Does Brentford's shots_against, shots_inside_box_against, and final_third_entries_against in home matches differ systematically from its overall baseline?",
+    "falsifier": "If Brentford's defensive concession metrics in home matches are not systematically different from its overall baseline, the home defensive concession mechanism is unsupported.",
+    "football_mechanism": "Brentford's defensive structure historically allows high shot volumes to opponents even at home. When facing opponents with similar attacking profiles to Leicester's long-run (possession-dominant, high final-third entries), Brentford may concede elevated shot volumes. However, Leicester's recent attacking decline may moderate this.",
+    "metric_perspective": "AGAINST",
+    "opponent": "TEAM_B",
+    "provider_requirements": [
+     "shots",
+     "shots_inside_box",
+     "final_third_entries"
+    ],
+    "research_family": "DEFENSIVE_CONCESSION",
+    "self_critique": {
+     "cohort_equals_baseline": false,
+     "condition_equals_target": false,
+     "could_opponent_strength_explain_it": true,
+     "is_just_home_vs_away": true,
+     "is_just_recent_vs_long_run": false,
+     "is_overconditioned": false,
+     "likely_generic_enumeration_would_generate_this": true,
+     "notes": "Primarily a home/away question. The evidence shows Brentford concedes fewer shots at home (15.7) than away (22.7), which is the expected direction. The recent W5 increase in final_third_entries_against adds a regime-change angle. The question is whether the home defensive concession profile is distinct enough to be worth measuring. Marginal \u2014 but the interaction with Leicester's possession-dominant style (even if recently weakened) gives it some matchup specificity."
+    },
+    "subject": "TEAM_A",
+    "support_risk": "LOW",
+    "target_metric": [
+     "shots",
+     "shots_inside_box",
+     "final_third_entries"
+    ],
+    "window": "ALL_PRIOR"
+   },
+   {
+    "behavioral_observations": [
+     {
+      "evidence_refs": [
+       "TEAM_B.blocks.long_run_all.metrics.yellow_cards_for",
+       "TEAM_B.blocks.recent_last_10.metrics.yellow_cards_for",
+       "TEAM_B.blocks.recent_last_5.metrics.yellow_cards_for"
+      ],
+      "observation": "Leicester's yellow_cards_for long-run all is 2.07 but rises to 3.1 in W10 and 3.0 in W5 \u2014 a sustained increase in yellow cards received recently."
+     },
+     {
+      "evidence_refs": [
+       "TEAM_B.blocks.long_run_all.metrics.fouls_for",
+       "TEAM_B.blocks.recent_last_10.metrics.fouls_for",
+       "TEAM_B.blocks.recent_last_5.metrics.fouls_for"
+      ],
+      "observation": "Leicester's fouls_for long-run all is 10.5 but rises to 11.3 in W10 and 11.2 in W5 \u2014 a modest increase in fouls committed, consistent with the yellow card increase."
+     },
+     {
+      "evidence_refs": [
+       "TEAM_B.blocks.long_run_all.metrics.tackles_for",
+       "TEAM_B.blocks.recent_last_10.metrics.tackles_for",
+       "TEAM_B.blocks.recent_last_5.metrics.tackles_for"
+      ],
+      "observation": "Leicester's tackles_for has risen from 17.5 long-run to 20.8 in W10 and 21.0 in W5 \u2014 increased tackling activity, which may be driving the elevated foul and card counts."
+     }
+    ],
+    "candidate_id": "C8",
+    "comparison": "SUBJECT_RECENT_VS_LONG_BASELINE",
+    "conditions": [
+     {
+      "dimension": "competition",
+      "value": "SAME"
+     }
+    ],
+    "coverage_risk": "NONE",
+    "falsifiable_question": "Does Leicester's yellow_cards_for and fouls_for in the last 10 EPL matches exceed their overall long-run baseline in a consistent way?",
+    "falsifier": "If Leicester's recent W10 yellow cards and fouls are not systematically above their long-run baseline in EPL matches, the discipline deterioration mechanism is unsupported.",
+    "football_mechanism": "Leicester's recent increase in tackles, fouls, and yellow cards suggests a more aggressive defensive posture, possibly as they struggle to contain opponents through their traditional possession-based approach. When a team loses possession dominance and resorts to more physical defending, discipline metrics tend to rise. This pattern may persist against Brentford's direct, physical style.",
+    "metric_perspective": "FOR",
+    "opponent": "TEAM_A",
+    "provider_requirements": [
+     "yellow_cards",
+     "fouls",
+     "tackles"
+    ],
+    "research_family": "DISCIPLINE",
+    "self_critique": {
+     "cohort_equals_baseline": false,
+     "condition_equals_target": false,
+     "could_opponent_strength_explain_it": true,
+     "is_just_home_vs_away": false,
+     "is_just_recent_vs_long_run": true,
+     "is_overconditioned": false,
+     "likely_generic_enumeration_would_generate_this": false,
+     "notes": "The discipline increase is corroborated by the parallel increase in tackles, suggesting a mechanical link rather than random variation. The competition filter (EPL only) is important. The connection to Leicester's possession regime change provides a football mechanism beyond simple enumeration. Retaining."
+    },
+    "subject": "TEAM_B",
+    "support_risk": "LOW",
+    "target_metric": [
+     "yellow_cards",
+     "fouls"
+    ],
+    "window": "W10"
+   }
+  ],
+  "fixture_id": "mt_196560745",
+  "interaction_map": {
+   "a_attack_vs_b_defense": [
+    "Brentford at home generates 14.7 shots/match long-run; Leicester's long-run shots_against is only 12.0 but has risen to 17.8 in W10 and 15.4 in W5 \u2014 Leicester's defensive deterioration aligns with Brentford's home attacking volume.",
+    "Brentford's home big_chances_for long-run is 4.5; Leicester's big_chances_against has risen from 1.83 long-run to 3.9 in W10 \u2014 a potential interaction where Brentford's home chance creation meets a recently porous Leicester defense.",
+    "Brentford's home xg_for long-run is 2.43; Leicester's xg_against has risen from 1.15 long-run to 2.04 in W10 \u2014 both sides of this interaction point toward elevated xG for Brentford.",
+    "Brentford generates corners at home (5.5 long-run); Leicester concedes corners at 6.7 in W10 vs 4.86 long-run \u2014 corner generation by Brentford may be amplified by Leicester's recent defensive shape."
+   ],
+   "asymmetries": [
+    "Leicester shows a strong home/away asymmetry in attack: shots_for home long-run 14.4 vs away 12.4, but this fixture is away for Leicester \u2014 their away attacking output is below their home norms.",
+    "Brentford shows a massive home/away asymmetry in attack (14.7 home vs 7.3 away shots) \u2014 as home team, Brentford should be in its stronger attacking context.",
+    "Leicester's defensive deterioration (shots_against W10 = 17.8 vs long-run 12.0) is a regime change that may not be captured by long-run baselines."
+   ],
+   "b_attack_vs_a_defense": [
+    "Leicester's shots_for has declined to 10.0 in W10 and 11.8 in W5 from 13.4 long-run; Brentford concedes 19.2 shots/match long-run at home \u2014 even a weakened Leicester attack faces a defense that concedes high shot volumes.",
+    "Leicester's big_chances_for has dropped to 1.9 in W10 from 2.83 long-run; Brentford concedes 2.5 big_chances/match long-run \u2014 the interaction is muted by Leicester's recent decline in chance creation.",
+    "Leicester's possession has dropped from 58.8% long-run to 48.5% in W10; Brentford allows 53.3% possession to opponents long-run \u2014 Leicester may not dominate possession as it historically has, reducing its territorial advantage.",
+    "Leicester's xg_for has dropped to 1.07 in W10 from 1.69 long-run; Brentford concedes xg_against of 1.74 long-run \u2014 Leicester's recent attacking quality is well below what Brentford typically concedes."
+   ],
+   "regime_changes": [
+    "Leicester's defensive metrics show a clear regime change: shots_against, big_chances_against, and xg_against have all risen substantially in W10 vs long-run, suggesting a structural defensive breakdown in the current EPL season.",
+    "Leicester's attacking metrics show a parallel regime change: shots_for, big_chances_for, shots_on_target_for, and xg_for have all declined in W10 vs long-run.",
+    "Brentford's clearances_for rising from 27.4 long-run to 34.6 in W5 suggests a recent shift toward deeper defending, possibly reflecting a run of stronger opponents."
+   ],
+   "tensions": [
+    "Leicester's possession long-run is 58.8% (dominant) but recent W10 is 48.5% \u2014 a team that historically controls games is now in a more contested possession regime, yet Brentford's defense concedes high shot volumes regardless of possession.",
+    "Brentford's clearances_for has risen to 34.6 in W5 from 27.4 long-run, suggesting deeper defending, yet final_third_entries_against has also risen to 68.4 in W5 \u2014 more defensive activity but opponents still penetrating."
+   ]
+  },
+  "reconnaissance": {
+   "team_a_attack": [
+    "Brentford's long-run shot volume at home averages 14.7 shots/match, but away it drops to 7.3 shots/match \u2014 a stark venue split. In the last 5 matches (all competitions combined) shots_for averages 10.8, consistent with the overall 11.0 long-run mean, but the home/away gap is the dominant structural feature.",
+    "Brentford's big_chances_for at home long-run is 4.5 vs 1.7 away \u2014 more than double. Recent W5 big_chances_for is 2.8, slightly below the long-run home average of 4.5, suggesting some softening in chance creation.",
+    "Brentford's shots_on_target_for at home long-run is 7.0 vs 3.2 away. In the last 5 matches shots_on_target_for averages 4.2, which is below the home long-run mean, suggesting recent on-target output is weaker than historical home norms.",
+    "Brentford's corner_kicks_for at home long-run is 5.5 vs 3.3 away. Recent W5 corners_for is 3.8, below the home long-run average, consistent with reduced attacking pressure recently.",
+    "Brentford's accurate_crosses_for at home long-run is 6.2 vs 3.2 away. Recent W5 accurate_crosses_for is 4.2, below the home long-run mean, suggesting crossing output has softened recently.",
+    "Brentford's xg_for at home long-run is 2.43 vs 0.81 away \u2014 a very large venue split. Recent W5 xg_for is 1.63, which is below the home long-run mean but above the away mean, consistent with a mixed recent sample."
+   ],
+   "team_a_defense": [
+    "Brentford concedes heavily: shots_against long-run all is 19.2/match, with away matches averaging 22.7 and home 15.7. Recent W5 shots_against is 20.4, slightly above the long-run mean, indicating no defensive improvement.",
+    "Brentford's shots_on_target_against long-run all is 6.8, with away 8.8 and home 4.8. Recent W5 shots_on_target_against is 7.2, above the long-run mean, suggesting a slight recent deterioration in defensive quality.",
+    "Brentford concedes many corners: corner_kicks_against long-run all is 7.75, with away 10.0 and home 5.5. Recent W5 corner_kicks_against is 7.8, consistent with the long-run mean.",
+    "Brentford's clearances_for (defensive clearances) long-run all is 27.4, with recent W5 rising to 34.6 \u2014 a notable increase suggesting Brentford is defending deeper or under more pressure recently.",
+    "Brentford's blocked_shots_against (shots blocked by Brentford defenders) long-run all is 6.3, with recent W5 at 7.0 \u2014 slightly elevated, consistent with more defensive activity.",
+    "Brentford's final_third_entries_against long-run all is 61.3, with recent W5 rising to 68.4 \u2014 opponents are entering Brentford's final third more frequently in recent matches."
+   ],
+   "team_b_attack": [
+    "Leicester's long-run shots_for is 13.4/match overall, with home 14.4 and away 12.4. Recent W10 shots_for drops to 10.0 and W5 to 11.8 \u2014 a meaningful decline from the long-run mean, suggesting recent attacking output has weakened.",
+    "Leicester's big_chances_for long-run all is 2.83, but recent W10 drops sharply to 1.9 and W5 to 2.2 \u2014 a notable reduction in high-quality chance creation recently.",
+    "Leicester's shots_on_target_for long-run all is 4.79, but recent W10 drops to 3.1 and W5 to 3.4 \u2014 a significant recent decline in on-target output.",
+    "Leicester's xg_for long-run all is 1.69, but recent W10 drops to 1.07 and W5 to 1.45 \u2014 a clear recent deterioration in expected goal creation.",
+    "Leicester's corner_kicks_for long-run all is 5.09, but recent W10 drops to 3.4 and W5 to 5.0 \u2014 the W10 shows a dip but W5 has recovered somewhat.",
+    "Leicester's possession_for long-run all is 58.8%, but recent W10 drops to 48.5% and W5 to 53.2% \u2014 a significant regime change from a possession-dominant team to a more balanced one recently."
+   ],
+   "team_b_defense": [
+    "Leicester's shots_against long-run all is 12.0/match, but recent W10 rises sharply to 17.8 and W5 to 15.4 \u2014 a major deterioration in defensive shot suppression recently.",
+    "Leicester's shots_on_target_against long-run all is 4.0, but recent W10 rises to 5.6 and W5 to 4.8 \u2014 elevated above long-run norms.",
+    "Leicester's big_chances_against long-run all is 1.83, but recent W10 rises sharply to 3.9 and W5 to 2.8 \u2014 a very large increase in high-quality chances conceded recently.",
+    "Leicester's xg_against long-run all is 1.15, but recent W10 rises to 2.04 and W5 to 1.68 \u2014 a substantial recent deterioration in defensive xG conceded.",
+    "Leicester's corner_kicks_against long-run all is 4.86, but recent W10 rises to 6.7 and W5 to 6.2 \u2014 opponents are generating more corners against Leicester recently.",
+    "Leicester's clearances_for (defensive clearances) long-run all is 18.0, but recent W10 rises to 25.3 and W5 to 20.6 \u2014 elevated defensive activity consistent with being under more pressure."
+   ]
+  }
+ },
+ "temperature": 0.0
+}

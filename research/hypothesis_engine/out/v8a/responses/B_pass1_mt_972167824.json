@@ -1,0 +1,597 @@
+{
+ "arm": "B",
+ "elapsed_s": 115.8,
+ "error": null,
+ "fixture_id": "mt_972167824",
+ "max_tokens": 24576,
+ "model_id": "us.anthropic.claude-sonnet-4-6",
+ "pass": 1,
+ "prompt_version": "v8a_prompt_v1",
+ "provenance": {
+  "input_tokens": 38896,
+  "output_tokens": 10939,
+  "request_sha256": "df05553f59b830187843f88baf19415bc390161877b30958c400bed79cce47dc",
+  "resolved_model_id": "us.anthropic.claude-sonnet-4-6",
+  "response_sha256": "1572f09c403ed5386fef99dc94694ce1fd7855669d1accf4f8450d8eb8c83d6e",
+  "stop_reason": "tool_use"
+ },
+ "record_sha256": "18f024e596897f0a40d20140cc8e5d41b98ce98254efefb2341b7704b8e76989",
+ "response": {
+  "candidates": [
+   {
+    "behavioral_observations": [
+     {
+      "evidence_refs": [
+       "TEAM_A.blocks.long_run_home.metrics.big_chances_for",
+       "TEAM_A.blocks.long_run_away.metrics.big_chances_for",
+       "TEAM_A.blocks.recent_last_5.metrics.big_chances_for"
+      ],
+      "observation": "TEAM_A big_chances_for at home averages 3.0 (long_run_home, n=5) vs 1.3 away (long_run_away, n=6), and W5 mean is 3.0 (4 populated). Home matches show consistently higher chance quality."
+     },
+     {
+      "evidence_refs": [
+       "TEAM_A.blocks.long_run_home.metrics.touches_in_penalty_area_for",
+       "TEAM_A.blocks.long_run_away.metrics.touches_in_penalty_area_for",
+       "TEAM_A.blocks.recent_last_5.metrics.touches_in_penalty_area_for"
+      ],
+      "observation": "TEAM_A touches_in_penalty_area_for at home averages 28.8 (long_run_home) vs 20.0 away (long_run_away), with W5 mean 27.8 \u2014 sustained elevated box penetration at home."
+     },
+     {
+      "evidence_refs": [
+       "TEAM_B.blocks.long_run_all.metrics.touches_in_penalty_area_against",
+       "TEAM_B.blocks.recent_last_5.metrics.touches_in_penalty_area_against",
+       "TEAM_B.blocks.long_run_away.metrics.touches_in_penalty_area_against"
+      ],
+      "observation": "TEAM_B concedes touches_in_penalty_area_against at a high rate: long_run_all 23.9, W5 mean 26.6, and long_run_away 28.3 \u2014 opponents penetrate Burgos's box frequently, especially away."
+     }
+    ],
+    "candidate_id": "C1",
+    "comparison": "SUBJECT_VENUE_BASELINE",
+    "conditions": [
+     {
+      "dimension": "historical_venue_conditioning",
+      "value": "HOME"
+     }
+    ],
+    "coverage_risk": "NONE",
+    "falsifiable_question": "Does TEAM_A (Real Oviedo) record materially higher big_chances and touches_in_penalty_area in home matches compared to their overall baseline across all prior laliga2 matches?",
+    "falsifier": "If TEAM_A's big_chances_for and touches_in_penalty_area_for in home matches are not systematically higher than their all-venue baseline, the home attack quality elevation is unsupported.",
+    "football_mechanism": "When Oviedo plays at home they dominate possession (58% long-run home) and generate substantially more box entries and big chances than away. Burgos away concedes the most box touches in their record. The interaction of Oviedo's home box-penetration tendency with Burgos's away defensive permeability could produce elevated chance quality for Oviedo.",
+    "metric_perspective": "FOR",
+    "opponent": "TEAM_B",
+    "provider_requirements": [
+     "big_chances",
+     "touches_in_penalty_area"
+    ],
+    "research_family": "ATTACK_QUALITY",
+    "self_critique": {
+     "cohort_equals_baseline": false,
+     "condition_equals_target": false,
+     "could_opponent_strength_explain_it": true,
+     "is_just_home_vs_away": true,
+     "is_just_recent_vs_long_run": false,
+     "is_overconditioned": false,
+     "likely_generic_enumeration_would_generate_this": true,
+     "notes": "This is partly a home/away split question. However the magnitude of the split (28.8 vs 20.0 touches, 3.0 vs 1.3 big chances) is large enough to warrant formal measurement. Opponent strength could explain some of it. Flagged as likely generic but the interaction with Burgos's away defensive profile makes it fixture-relevant."
+    },
+    "subject": "TEAM_A",
+    "support_risk": "LOW",
+    "target_metric": [
+     "big_chances",
+     "touches_in_penalty_area"
+    ],
+    "window": "ALL_PRIOR"
+   },
+   {
+    "behavioral_observations": [
+     {
+      "evidence_refs": [
+       "TEAM_A.blocks.recent_last_5.metrics.accurate_crosses_for",
+       "TEAM_A.blocks.long_run_home.metrics.accurate_crosses_for",
+       "TEAM_A.raw_historical_rows.ROW:09"
+      ],
+      "observation": "TEAM_A accurate_crosses_for: W5 mean 6.2, long_run_home 5.8, long_run_all 4.9 \u2014 crossing output is elevated at home and in recent matches. ROW:09 (home) shows 9 accurate crosses."
+     },
+     {
+      "evidence_refs": [
+       "TEAM_A.blocks.recent_last_5.metrics.corner_kicks_for",
+       "TEAM_A.blocks.long_run_home.metrics.corner_kicks_for",
+       "TEAM_A.blocks.long_run_all.metrics.corner_kicks_for"
+      ],
+      "observation": "TEAM_A corner_kicks_for: W5 mean 6.6, long_run_home 5.6, long_run_all 5.75 \u2014 corner generation is consistently high and trending upward in W5."
+     },
+     {
+      "evidence_refs": [
+       "TEAM_B.blocks.long_run_all.metrics.accurate_crosses_against",
+       "TEAM_B.blocks.recent_last_5.metrics.accurate_crosses_against",
+       "TEAM_B.blocks.long_run_away.metrics.accurate_crosses_against"
+      ],
+      "observation": "TEAM_B accurate_crosses_against: long_run_all 5.4, W5 mean 6.2, long_run_away 6.0 \u2014 Burgos concedes accurate crosses at a high and recently increasing rate."
+     },
+     {
+      "evidence_refs": [
+       "TEAM_B.blocks.long_run_all.metrics.corner_kicks_against",
+       "TEAM_B.blocks.recent_last_5.metrics.corner_kicks_against"
+      ],
+      "observation": "TEAM_B corner_kicks_against: long_run_all 5.75, W5 mean 6.0 \u2014 Burgos concedes corners at a rate matching Oviedo's generation rate."
+     }
+    ],
+    "candidate_id": "C2",
+    "comparison": "OPPONENT_OVERALL_BASELINE",
+    "conditions": [
+     {
+      "dimension": "historical_venue_conditioning",
+      "value": "AWAY"
+     }
+    ],
+    "coverage_risk": "NONE",
+    "falsifiable_question": "Does TEAM_B (Burgos) concede more accurate_crosses and corner_kicks in away matches than their overall baseline, and does this align with TEAM_A's home crossing and corner generation rates?",
+    "falsifier": "If TEAM_B's accurate_crosses_against and corner_kicks_against in away matches are not higher than their overall baseline, the away crossing vulnerability is unsupported.",
+    "football_mechanism": "Oviedo's wide attacking play generates accurate crosses and corners at an elevated rate at home. Burgos's defense concedes accurate crosses at one of the higher rates in the data, particularly away. When a team that generates wide delivery meets a defense that concedes it, the crossing channel may be disproportionately active.",
+    "metric_perspective": "FOR",
+    "opponent": "TEAM_B",
+    "provider_requirements": [
+     "accurate_crosses",
+     "corner_kicks"
+    ],
+    "research_family": "ATTACK_VOLUME",
+    "self_critique": {
+     "cohort_equals_baseline": false,
+     "condition_equals_target": false,
+     "could_opponent_strength_explain_it": true,
+     "is_just_home_vs_away": true,
+     "is_just_recent_vs_long_run": false,
+     "is_overconditioned": false,
+     "likely_generic_enumeration_would_generate_this": true,
+     "notes": "Both sides of this interaction are independently observable and point in the same direction. The home/away flag is honest. The crossing interaction requires both teams' behaviours together, which is the genuine mechanism."
+    },
+    "subject": "TEAM_A",
+    "support_risk": "LOW",
+    "target_metric": [
+     "accurate_crosses",
+     "corner_kicks"
+    ],
+    "window": "ALL_PRIOR"
+   },
+   {
+    "behavioral_observations": [
+     {
+      "evidence_refs": [
+       "TEAM_B.blocks.recent_last_5.metrics.big_chances_for",
+       "TEAM_B.blocks.long_run_all.metrics.big_chances_for"
+      ],
+      "observation": "TEAM_B big_chances_for has dropped to W5 mean 0.8 from long_run_all mean 2.17 \u2014 a sharp recent decline in attack quality."
+     },
+     {
+      "evidence_refs": [
+       "TEAM_B.blocks.recent_last_5.metrics.goals_for",
+       "TEAM_B.blocks.long_run_all.metrics.goals_for"
+      ],
+      "observation": "TEAM_B goals_for W5 mean 0.2 (1 goal in 5 matches) vs long_run_all 1.0 \u2014 scoring output has collapsed in the most recent window."
+     },
+     {
+      "evidence_refs": [
+       "TEAM_B.blocks.recent_last_5.metrics.shots_on_target_for",
+       "TEAM_B.blocks.long_run_all.metrics.shots_on_target_for"
+      ],
+      "observation": "TEAM_B shots_on_target_for W5 mean 3.0 vs long_run_all 4.0 \u2014 on-target accuracy has declined alongside big chances, suggesting a systemic attack quality issue rather than just finishing variance."
+     },
+     {
+      "evidence_refs": [
+       "TEAM_B.blocks.recent_last_5.metrics.final_third_entries_for",
+       "TEAM_B.blocks.long_run_all.metrics.final_third_entries_for"
+      ],
+      "observation": "TEAM_B final_third_entries_for W5 mean 66.0 vs long_run_all 58.2 \u2014 territory entries are actually higher recently, creating a tension: more territory but fewer big chances and goals."
+     }
+    ],
+    "candidate_id": "C3",
+    "comparison": "SUBJECT_RECENT_VS_LONG_BASELINE",
+    "conditions": [],
+    "coverage_risk": "NONE",
+    "falsifiable_question": "Does TEAM_B (Burgos) show a statistically meaningful decline in big_chances_for, shots_on_target_for, and goals_for in their most recent 5 matches compared to their full prior baseline?",
+    "falsifier": "If TEAM_B's W5 big_chances_for, shots_on_target_for, and goals_for are not systematically below their long-run baseline, the recent attack quality regression is unsupported.",
+    "football_mechanism": "Burgos is entering the final third more frequently in recent matches but converting those entries into big chances and goals at a much lower rate than their long-run baseline. This suggests a deterioration in the quality of attacking play inside the final third \u2014 fewer shots on target and big chances per entry \u2014 rather than a territorial problem. This is a measurable attack quality regression independent of venue.",
+    "metric_perspective": "FOR",
+    "opponent": "TEAM_A",
+    "provider_requirements": [
+     "big_chances",
+     "shots_on_target",
+     "goals",
+     "final_third_entries"
+    ],
+    "research_family": "FORM_VS_BASELINE",
+    "self_critique": {
+     "cohort_equals_baseline": false,
+     "condition_equals_target": false,
+     "could_opponent_strength_explain_it": true,
+     "is_just_home_vs_away": false,
+     "is_just_recent_vs_long_run": true,
+     "is_overconditioned": false,
+     "likely_generic_enumeration_would_generate_this": true,
+     "notes": "This is explicitly a recent vs long-run question. However the magnitude of the drop (goals 0.2 vs 1.0, big chances 0.8 vs 2.17) combined with the tension of increasing final_third_entries makes it a genuine structural question worth measuring. The tension between territory and quality is the non-trivial element."
+    },
+    "subject": "TEAM_B",
+    "support_risk": "LOW",
+    "target_metric": [
+     "big_chances",
+     "shots_on_target",
+     "goals"
+    ],
+    "window": "W5"
+   },
+   {
+    "behavioral_observations": [
+     {
+      "evidence_refs": [
+       "TEAM_B.blocks.long_run_all.metrics.shots_inside_box_against",
+       "TEAM_B.blocks.recent_last_5.metrics.shots_inside_box_against",
+       "TEAM_B.blocks.long_run_away.metrics.shots_inside_box_against"
+      ],
+      "observation": "TEAM_B shots_inside_box_against: long_run_all 8.1, W5 mean 8.8, long_run_away 9.5 \u2014 opponents consistently generate high inside-box shot volumes against Burgos, especially away."
+     },
+     {
+      "evidence_refs": [
+       "TEAM_B.blocks.recent_last_5.metrics.blocked_shots_against",
+       "TEAM_B.blocks.long_run_all.metrics.blocked_shots_against"
+      ],
+      "observation": "TEAM_B blocked_shots_against (shots Burgos blocks): W5 mean 5.4 vs long_run_all 4.1 \u2014 blocking activity has increased recently, suggesting more shots are being attempted inside the box and Burgos is having to block more."
+     },
+     {
+      "evidence_refs": [
+       "TEAM_B.blocks.long_run_all.metrics.touches_in_penalty_area_against",
+       "TEAM_B.blocks.recent_last_5.metrics.touches_in_penalty_area_against",
+       "TEAM_B.blocks.long_run_away.metrics.touches_in_penalty_area_against"
+      ],
+      "observation": "TEAM_B touches_in_penalty_area_against: long_run_all 23.9, W5 mean 26.6, long_run_away 28.3 \u2014 opponents get many box touches against Burgos, with the away figure being the highest split."
+     }
+    ],
+    "candidate_id": "C4",
+    "comparison": "SUBJECT_VENUE_BASELINE",
+    "conditions": [
+     {
+      "dimension": "historical_venue_conditioning",
+      "value": "AWAY"
+     }
+    ],
+    "coverage_risk": "NONE",
+    "falsifiable_question": "Does TEAM_B (Burgos) concede materially more shots_inside_box and touches_in_penalty_area in away matches compared to their overall baseline, and does blocked_shots_against also increase in those matches?",
+    "falsifier": "If TEAM_B's shots_inside_box_against and touches_in_penalty_area_against in away matches are not higher than their overall baseline, the away box-exposure vulnerability is unsupported.",
+    "football_mechanism": "Burgos concedes high volumes of inside-box shots and box touches, particularly away. Their response has been to block more shots (W5 blocked_shots_against 5.4), but this is a reactive defensive posture. When facing a team like Oviedo that generates high box penetration at home, the question is whether Burgos's blocking activity is sufficient to suppress shot quality or merely increases shot volume without reducing danger.",
+    "metric_perspective": "AGAINST",
+    "opponent": "TEAM_A",
+    "provider_requirements": [
+     "shots_inside_box",
+     "touches_in_penalty_area",
+     "blocked_shots"
+    ],
+    "research_family": "DEFENSIVE_CONCESSION",
+    "self_critique": {
+     "cohort_equals_baseline": false,
+     "condition_equals_target": false,
+     "could_opponent_strength_explain_it": true,
+     "is_just_home_vs_away": true,
+     "is_just_recent_vs_long_run": false,
+     "is_overconditioned": false,
+     "likely_generic_enumeration_would_generate_this": true,
+     "notes": "Honest home/away flag. The additional element is the blocking tension \u2014 high blocks alongside high conceded box shots \u2014 which is a non-trivial defensive pattern worth measuring formally."
+    },
+    "subject": "TEAM_B",
+    "support_risk": "LOW",
+    "target_metric": [
+     "shots_inside_box",
+     "touches_in_penalty_area",
+     "blocked_shots"
+    ],
+    "window": "ALL_PRIOR"
+   },
+   {
+    "behavioral_observations": [
+     {
+      "evidence_refs": [
+       "TEAM_B.blocks.long_run_all.metrics.shots_on_target_against",
+       "TEAM_B.blocks.recent_last_5.metrics.shots_on_target_against",
+       "TEAM_B.blocks.long_run_away.metrics.shots_on_target_against"
+      ],
+      "observation": "TEAM_B concedes shots_on_target_against at a high rate: long_run_all 4.17, W5 mean 5.2, long_run_away 5.0 \u2014 opponents put shots on target against Burgos frequently, especially away."
+     },
+     {
+      "evidence_refs": [
+       "TEAM_B.blocks.long_run_all.metrics.fouls_for",
+       "TEAM_B.blocks.recent_last_5.metrics.fouls_for",
+       "TEAM_B.blocks.long_run_all.metrics.yellow_cards_for"
+      ],
+      "observation": "TEAM_B fouls_for (Burgos fouls committed): long_run_all 10.6, W5 mean 11.0 \u2014 moderate foul rate. Yellow_cards_for long_run_all 2.0, W5 mean 2.0 \u2014 consistent discipline profile."
+     },
+     {
+      "evidence_refs": [
+       "TEAM_A.blocks.recent_last_5.metrics.shots_on_target_for",
+       "TEAM_A.blocks.long_run_home.metrics.shots_on_target_for",
+       "TEAM_A.blocks.long_run_all.metrics.shots_on_target_for"
+      ],
+      "observation": "TEAM_A shots_on_target_for: W5 mean 5.2, long_run_home 5.6 \u2014 Oviedo's on-target output at home is elevated vs long_run_all 4.1."
+     }
+    ],
+    "candidate_id": "C5",
+    "comparison": "SIMILAR_OPPONENT_COHORT",
+    "conditions": [],
+    "coverage_risk": "LOW",
+    "falsifiable_question": "Does TEAM_A (Real Oviedo) record higher shots_on_target_for, big_chances_for, and corner_kicks_for against opponents whose pre-fixture defensive/discipline profile is similar to TEAM_B's, compared to their overall baseline?",
+    "falsifier": "If TEAM_A's shots_on_target_for, big_chances_for, and corner_kicks_for against similar-profile opponents are not higher than their overall baseline, the opponent-profile interaction is unsupported.",
+    "football_mechanism": "Oviedo's attack quality (shots on target, big chances) may vary depending on the defensive and discipline profile of the opponent they face. Burgos presents a specific profile: high shots conceded, moderate fouls, low yellow cards. The similar-opponent cohort engine can identify whether Oviedo has historically performed better against opponents with this defensive/discipline profile.",
+    "metric_perspective": "FOR",
+    "opponent": "TEAM_B",
+    "provider_requirements": [
+     "shots_on_target",
+     "big_chances",
+     "corner_kicks"
+    ],
+    "research_family": "OPPONENT_PROFILE_INTERACTION",
+    "self_critique": {
+     "cohort_equals_baseline": false,
+     "condition_equals_target": false,
+     "could_opponent_strength_explain_it": false,
+     "is_just_home_vs_away": false,
+     "is_just_recent_vs_long_run": false,
+     "is_overconditioned": false,
+     "likely_generic_enumeration_would_generate_this": false,
+     "notes": "This uses the frozen similarity engine correctly. The cohort is defined by opponent profile, not by venue or recent form. The question is whether Oviedo's attack quality metrics are elevated against this specific defensive type. Not a generic enumeration."
+    },
+    "similar_opponent_rationale": "Burgos presents a specific defensive profile: high shots_on_target conceded per match, high shots_inside_box conceded, moderate fouls committed, and low yellow cards. The engine's frozen 5-dimension similarity profile (goals_conceded_per_match, shots_on_target_conceded_per_match, shots_inside_box_conceded_per_match, fouls_committed_per_match, yellow_cards_per_match) captures this profile. Asking how Oviedo performs against similar opponents tests whether this defensive type is one Oviedo exploits.",
+    "subject": "TEAM_A",
+    "support_risk": "LOW",
+    "target_metric": [
+     "shots_on_target",
+     "big_chances",
+     "corner_kicks"
+    ],
+    "window": "ALL_PRIOR"
+   },
+   {
+    "behavioral_observations": [
+     {
+      "evidence_refs": [
+       "TEAM_A.blocks.long_run_home.metrics.shots_against",
+       "TEAM_A.blocks.long_run_away.metrics.shots_against",
+       "TEAM_A.blocks.recent_last_5.metrics.shots_against"
+      ],
+      "observation": "TEAM_A shots_against at home: long_run_home mean 7.4 vs long_run_away 12.3 \u2014 Oviedo concedes far fewer shots at home. W5 shots_against mean 8.4 (mixed venues)."
+     },
+     {
+      "evidence_refs": [
+       "TEAM_A.blocks.long_run_home.metrics.shots_inside_box_against",
+       "TEAM_A.blocks.long_run_away.metrics.shots_inside_box_against"
+      ],
+      "observation": "TEAM_A shots_inside_box_against at home: long_run_home mean 4.2 vs long_run_away 7.9 \u2014 inside-box shots conceded are nearly halved at home."
+     },
+     {
+      "evidence_refs": [
+       "TEAM_B.blocks.recent_last_5.metrics.shots_for",
+       "TEAM_B.blocks.long_run_all.metrics.shots_for",
+       "TEAM_B.blocks.recent_last_5.metrics.shots_on_target_for"
+      ],
+      "observation": "TEAM_B shots_for W5 mean 11.4, long_run_all 11.3 \u2014 Burgos's shot volume is stable but their shots_on_target_for W5 mean 3.0 is below long_run_all 4.0, suggesting reduced quality."
+     }
+    ],
+    "candidate_id": "C6",
+    "comparison": "SUBJECT_VENUE_BASELINE",
+    "conditions": [
+     {
+      "dimension": "historical_venue_conditioning",
+      "value": "HOME"
+     }
+    ],
+    "coverage_risk": "NONE",
+    "falsifiable_question": "Does TEAM_A (Real Oviedo) concede materially fewer shots, shots_inside_box, and big_chances in home matches compared to their overall baseline across all prior laliga2 matches?",
+    "falsifier": "If TEAM_A's shots_against, shots_inside_box_against, and big_chances_against in home matches are not systematically lower than their all-venue baseline, the home defensive suppression pattern is unsupported.",
+    "football_mechanism": "Oviedo's home defensive posture \u2014 possession dominance (58%), fewer clearances needed (13.0 vs 20.3 away) \u2014 suppresses opponent shot volume and inside-box access. Burgos's already-declining attack quality (W5 shots_on_target 3.0, big_chances 0.8) may be further suppressed by Oviedo's home defensive structure. The question is whether Oviedo's home shot-suppression is a systematic pattern against all opponents.",
+    "metric_perspective": "AGAINST",
+    "opponent": "TEAM_B",
+    "provider_requirements": [
+     "shots",
+     "shots_inside_box",
+     "big_chances"
+    ],
+    "research_family": "DEFENSIVE_SUPPRESSION",
+    "self_critique": {
+     "cohort_equals_baseline": false,
+     "condition_equals_target": false,
+     "could_opponent_strength_explain_it": true,
+     "is_just_home_vs_away": true,
+     "is_just_recent_vs_long_run": false,
+     "is_overconditioned": false,
+     "likely_generic_enumeration_would_generate_this": true,
+     "notes": "Honest home/away flag. The magnitude of the split (7.4 vs 12.3 shots, 4.2 vs 7.9 inside-box) is large. Combined with Burgos's declining attack quality, this is fixture-relevant even if the question is structurally a home/away split."
+    },
+    "subject": "TEAM_A",
+    "support_risk": "LOW",
+    "target_metric": [
+     "shots",
+     "shots_inside_box",
+     "big_chances"
+    ],
+    "window": "ALL_PRIOR"
+   },
+   {
+    "behavioral_observations": [
+     {
+      "evidence_refs": [
+       "TEAM_B.blocks.recent_last_5.metrics.final_third_entries_for",
+       "TEAM_B.blocks.long_run_all.metrics.final_third_entries_for"
+      ],
+      "observation": "TEAM_B final_third_entries_for W5 mean 66.0 vs long_run_all 58.2 \u2014 territory entries have increased sharply in recent matches."
+     },
+     {
+      "evidence_refs": [
+       "TEAM_B.blocks.recent_last_5.metrics.big_chances_for",
+       "TEAM_B.blocks.long_run_all.metrics.big_chances_for",
+       "TEAM_B.blocks.recent_last_5.metrics.goals_for"
+      ],
+      "observation": "Despite elevated final_third_entries_for in W5, TEAM_B big_chances_for W5 mean 0.8 (vs long_run_all 2.17) and goals_for W5 mean 0.2 \u2014 a stark disconnect between territory and output."
+     },
+     {
+      "evidence_refs": [
+       "TEAM_B.raw_historical_rows.ROW:10",
+       "TEAM_B.raw_historical_rows.ROW:11",
+       "TEAM_B.raw_historical_rows.ROW:12"
+      ],
+      "observation": "TEAM_B ROW:10 (away): final_third_entries_for 75, shots_on_target_for 2, goals_for 0. ROW:11 (home): final_third_entries_for 73, shots_on_target_for 2, goals_for 1. ROW:12 (away): final_third_entries_for 36, shots_on_target_for 3, goals_for 0 \u2014 the two high-territory matches produced minimal on-target output."
+     }
+    ],
+    "candidate_id": "C7",
+    "comparison": "SUBJECT_RECENT_VS_LONG_BASELINE",
+    "conditions": [],
+    "coverage_risk": "NONE",
+    "falsifiable_question": "In TEAM_B's (Burgos) most recent 5 matches, is the ratio of shots_on_target_for and big_chances_for to final_third_entries_for materially lower than in their full prior baseline, indicating a deterioration in final-third conversion quality?",
+    "falsifier": "If TEAM_B's shots_on_target_for and big_chances_for per final_third_entries_for in W5 are not lower than their long-run baseline, the territory-to-quality disconnect is unsupported.",
+    "football_mechanism": "Burgos is entering the final third at a high rate recently but converting those entries into shots on target and big chances at a much lower rate than their long-run baseline. This suggests a structural change in how they use possession in the final third \u2014 possibly more possession-based but less direct \u2014 rather than a simple finishing variance. Measuring whether this territory-to-quality conversion ratio has changed is a distinct question from simply measuring shot volume.",
+    "metric_perspective": "FOR",
+    "opponent": "TEAM_A",
+    "provider_requirements": [
+     "final_third_entries",
+     "shots_on_target",
+     "big_chances"
+    ],
+    "research_family": "TEMPO_AND_TERRITORY",
+    "self_critique": {
+     "cohort_equals_baseline": false,
+     "condition_equals_target": false,
+     "could_opponent_strength_explain_it": true,
+     "is_just_home_vs_away": false,
+     "is_just_recent_vs_long_run": true,
+     "is_overconditioned": false,
+     "likely_generic_enumeration_would_generate_this": false,
+     "notes": "This is a recent vs long-run question but the specific tension \u2014 more territory, fewer quality chances \u2014 is not a generic enumeration output. The mechanism (final-third conversion quality) requires two metrics together. The raw rows confirm the pattern in individual matches."
+    },
+    "subject": "TEAM_B",
+    "support_risk": "LOW",
+    "target_metric": [
+     "final_third_entries",
+     "shots_on_target",
+     "big_chances"
+    ],
+    "window": "W5"
+   },
+   {
+    "behavioral_observations": [
+     {
+      "evidence_refs": [
+       "TEAM_A.blocks.recent_last_5.metrics.corner_kicks_for",
+       "TEAM_A.blocks.long_run_all.metrics.corner_kicks_for",
+       "TEAM_A.blocks.long_run_home.metrics.corner_kicks_for"
+      ],
+      "observation": "TEAM_A corner_kicks_for W5 mean 6.6 vs long_run_all 5.75 \u2014 corner generation has increased in recent matches. Long_run_home 5.6 is also above long_run_away 5.9 (similar)."
+     },
+     {
+      "evidence_refs": [
+       "TEAM_B.blocks.long_run_all.metrics.corner_kicks_against",
+       "TEAM_B.blocks.recent_last_5.metrics.corner_kicks_against",
+       "TEAM_B.blocks.long_run_away.metrics.corner_kicks_against"
+      ],
+      "observation": "TEAM_B corner_kicks_against: long_run_all 5.75, W5 mean 6.0 \u2014 Burgos concedes corners at a rate matching Oviedo's generation rate. Long_run_away 6.17 is the highest split."
+     },
+     {
+      "evidence_refs": [
+       "TEAM_B.blocks.recent_last_5.metrics.accurate_crosses_against",
+       "TEAM_B.blocks.long_run_all.metrics.accurate_crosses_against"
+      ],
+      "observation": "TEAM_B accurate_crosses_against W5 mean 6.2 \u2014 opponents are crossing accurately against Burgos at an elevated rate in recent matches, suggesting wide defensive vulnerability."
+     }
+    ],
+    "candidate_id": "C8",
+    "comparison": "SIMILAR_OPPONENT_COHORT",
+    "conditions": [],
+    "coverage_risk": "LOW",
+    "falsifiable_question": "Does TEAM_A (Real Oviedo) generate more corner_kicks_for and accurate_crosses_for against opponents whose pre-fixture defensive/discipline profile is similar to TEAM_B's, compared to their overall baseline?",
+    "falsifier": "If TEAM_A's corner_kicks_for and accurate_crosses_for against similar-profile opponents are not higher than their overall baseline, the opponent-profile interaction for wide delivery is unsupported.",
+    "football_mechanism": "Oviedo generates corners and accurate crosses at an elevated rate, particularly recently. Burgos concedes both at high rates, especially away. The question is whether Oviedo's corner and crossing output is systematically higher against opponents whose defensive profile resembles Burgos \u2014 i.e., whether this is a matchup-specific pattern or simply Oviedo's general home behaviour.",
+    "metric_perspective": "FOR",
+    "opponent": "TEAM_B",
+    "provider_requirements": [
+     "corner_kicks",
+     "accurate_crosses"
+    ],
+    "research_family": "SET_PIECE_GENERATION",
+    "self_critique": {
+     "cohort_equals_baseline": false,
+     "condition_equals_target": false,
+     "could_opponent_strength_explain_it": false,
+     "is_just_home_vs_away": false,
+     "is_just_recent_vs_long_run": false,
+     "is_overconditioned": false,
+     "likely_generic_enumeration_would_generate_this": false,
+     "notes": "Uses the frozen similarity engine. The question is whether Oviedo's wide delivery metrics are elevated against this specific defensive type, not just at home. This is distinct from C2 which is a venue-conditioned question. Coverage risk is LOW given only 12 prior rows for Oviedo."
+    },
+    "similar_opponent_rationale": "Burgos's defensive profile \u2014 high shots conceded, high shots_inside_box conceded, moderate fouls, low yellow cards \u2014 defines a specific opponent type. The engine's frozen similarity dimensions capture this. If Oviedo generates more corners and accurate crosses against opponents with this profile, it suggests a specific tactical interaction (wide play against a defense that concedes wide delivery).",
+    "subject": "TEAM_A",
+    "support_risk": "LOW",
+    "target_metric": [
+     "corner_kicks",
+     "accurate_crosses"
+    ],
+    "window": "ALL_PRIOR"
+   }
+  ],
+  "fixture_id": "mt_972167824",
+  "interaction_map": {
+   "a_attack_vs_b_defense": [
+    "TEAM_A generates high accurate_crosses_for at home (W5 mean 6.2, long_run_home 5.8) meeting a TEAM_B defense that concedes high accurate_crosses_against (W5 mean 6.2, long_run_all 5.4) \u2014 both sides of this crossing interaction point in the same direction.",
+    "TEAM_A touches_in_penalty_area_for at home (long_run_home 28.8, W5 mean 27.8) meets TEAM_B touches_in_penalty_area_against (long_run_all 23.9, W5 mean 26.6) \u2014 Oviedo's box penetration at home aligns with Burgos's tendency to concede box touches.",
+    "TEAM_A big_chances_for at home (long_run_home 3.0) meets TEAM_B big_chances_against (W5 mean 2.2, long_run_all 2.0) \u2014 both suggest chance creation potential in this matchup.",
+    "TEAM_A corner_kicks_for at home (long_run_home 5.6, W5 mean 6.6) meets TEAM_B corner_kicks_against (long_run_all 5.75, W5 mean 6.0) \u2014 Oviedo generates corners; Burgos concedes them at a similar rate."
+   ],
+   "asymmetries": [
+    "TEAM_A shows a strong home/away asymmetry in attack: shots_for 17.4 home vs 9.6 away, touches_in_penalty_area_for 28.8 home vs 20.0 away \u2014 Oviedo is a materially different attacking team at home.",
+    "TEAM_B shows a crossing asymmetry: accurate_crosses_against 6.0 away vs 4.8 home (long_run) \u2014 Burgos concedes more accurate crosses away from home, which is where they play in this fixture.",
+    "TEAM_B attack quality (big_chances_for, goals_for) has deteriorated sharply in W5 while territorial metrics (final_third_entries_for) have improved \u2014 a conversion/quality disconnect."
+   ],
+   "b_attack_vs_a_defense": [
+    "TEAM_B big_chances_for has collapsed in W5 (mean 0.8) while TEAM_A concedes big_chances_against at a moderate rate (long_run_all 1.6, long_run_home 1.0) \u2014 Burgos's attack quality may be insufficient to exploit even a moderate defense.",
+    "TEAM_B shots_on_target_for W5 mean 3.0 meets TEAM_A saves_for at home (long_run_home 2.0) \u2014 Burgos's reduced on-target output aligns with Oviedo's relatively low save requirement at home.",
+    "TEAM_B final_third_entries_for W5 mean 66.0 (high territory) but goals_for W5 mean 0.2 \u2014 a tension between territorial presence and finishing, suggesting conversion failure rather than lack of access."
+   ],
+   "regime_changes": [
+    "TEAM_B big_chances_for: W5 mean 0.8 vs long_run_all 2.17 \u2014 a sharp downward regime change in attack quality over the last 5 matches.",
+    "TEAM_B goals_for: W5 mean 0.2 vs long_run_all 1.0 \u2014 scoring output has collapsed in recent matches.",
+    "TEAM_A corner_kicks_for: W5 mean 6.6 vs long_run_all 5.75 \u2014 modest upward trend in corner generation recently."
+   ],
+   "tensions": [
+    "TEAM_B: final_third_entries_for W5 mean 66.0 (highest in their record) but goals_for W5 mean 0.2 \u2014 high territory, near-zero scoring output. The mechanism is unclear but measurable.",
+    "TEAM_A: clearances_for (own defensive clearances) are much lower at home (13.0) than away (20.3) \u2014 at home Oviedo defends from a position of possession dominance, not reactive clearance."
+   ]
+  },
+  "reconnaissance": {
+   "team_a_attack": [
+    "TEAM_A (Real Oviedo) generates high shot volume at home: long_run_home shots_for mean 17.4 vs 9.6 away (long_run_away). Recent W5 shots_for mean 14.0 across all venues, with inside-box shots_for mean 9.4 in W5 vs 7.75 long-run all.",
+    "TEAM_A corner generation is elevated: long_run_home corner_kicks_for mean 5.6, W5 mean 6.6 \u2014 consistently above long-run all (5.75). Corners_against conceded to opponents is low at home (2.2 long_run_home).",
+    "TEAM_A accurate_crosses_for is notably high: W5 mean 6.2, long_run_home 5.8, vs long_run_away 4.3. ROW:09 shows 9 accurate crosses in a home match.",
+    "TEAM_A touches_in_penalty_area_for is markedly higher at home (long_run_home 28.8) vs away (long_run_away 20.0), and W5 mean 27.8 \u2014 suggesting sustained box penetration at home.",
+    "TEAM_A big_chances_for: W5 mean 3.0 (4 populated), long_run_home 3.0 vs long_run_away 1.3 \u2014 a clear home/away split in chance quality.",
+    "TEAM_A possession_for: long_run_home 58.0 vs long_run_away 49.3; W5 mean 52.2 \u2014 dominant possession at home, more balanced away."
+   ],
+   "team_a_defense": [
+    "TEAM_A concedes fewer shots at home: long_run_home shots_against mean 7.4 vs long_run_away 12.3. W5 shots_against mean 8.4 (mixed venues).",
+    "TEAM_A clearances_for (defensive clearances) are much higher away (long_run_away 20.3) than home (long_run_home 13.0), consistent with deeper defensive posture away.",
+    "TEAM_A concedes more accurate_crosses at home than recent W5 suggests: long_run_home accurate_crosses_against 1.8 but long_run_away 3.4. W5 accurate_crosses_against mean 1.4 \u2014 opponents are not crossing accurately against Oviedo recently.",
+    "TEAM_A saves_for (goalkeeper saves) are higher away (long_run_away 3.7) than home (long_run_home 2.0), consistent with facing more shots away.",
+    "TEAM_A red_cards_against (opponent red cards): long_run_home 0.6 per match \u2014 notably elevated, suggesting opponents may be disciplined more harshly in home matches."
+   ],
+   "team_b_attack": [
+    "TEAM_B (Burgos) shot volume is modest: long_run_all shots_for mean 11.3, W5 mean 11.4. Inside-box shots_for W5 mean 6.6 vs long_run_all 7.0 \u2014 relatively stable.",
+    "TEAM_B big_chances_for has dropped sharply in W5: mean 0.8 (5 matches) vs long_run_all 2.17 and long_run_home 2.83. This is a notable recent regime change in attack quality.",
+    "TEAM_B goals_for W5 mean 0.2 (1 goal in 5 matches) vs long_run_all 1.0 \u2014 a severe recent scoring drought despite maintaining shot volume.",
+    "TEAM_B final_third_entries_for W5 mean 66.0 vs long_run_all 58.2 \u2014 territory entries are actually increasing recently, creating a tension with the scoring drought.",
+    "TEAM_B accurate_crosses_for: long_run_all 3.3, W5 mean 3.2 \u2014 consistent and relatively low. Away accurate_crosses_for mean 2.7 (long_run_away).",
+    "TEAM_B shots_on_target_for W5 mean 3.0 vs long_run_all 4.0 \u2014 on-target accuracy has declined in recent matches despite maintained shot volume."
+   ],
+   "team_b_defense": [
+    "TEAM_B concedes high shot volumes: long_run_all shots_against mean 13.1, W5 mean 15.0. Away shots_against mean 15.2 (long_run_away) \u2014 particularly exposed away.",
+    "TEAM_B accurate_crosses_against is very high: long_run_all 5.4, W5 mean 6.2, long_run_away 6.0 \u2014 opponents cross accurately against Burgos at a high rate.",
+    "TEAM_B blocked_shots_against (shots blocked by Burgos defense): W5 mean 5.4 vs long_run_all 4.1 \u2014 blocking activity has increased recently, suggesting more defensive pressure.",
+    "TEAM_B clearances_for (Burgos defensive clearances): long_run_all 24.8, W5 mean 24.2 \u2014 consistently high, indicating sustained defensive workload.",
+    "TEAM_B touches_in_penalty_area_against: long_run_all 23.9, W5 mean 26.6, long_run_away 28.3 \u2014 opponents get many box touches against Burgos, especially away.",
+    "TEAM_B fouls_against (fouls committed by opponents vs Burgos): W5 mean 8.8 vs long_run_all 10.9 \u2014 opponents foul Burgos less recently, possibly reflecting Burgos's reduced attacking threat."
+   ]
+  }
+ },
+ "temperature": 0.0
+}

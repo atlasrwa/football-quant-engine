@@ -1,0 +1,638 @@
+{
+ "arm": "B",
+ "elapsed_s": 121.54,
+ "error": null,
+ "fixture_id": "mt_629405468",
+ "max_tokens": 24576,
+ "model_id": "us.anthropic.claude-sonnet-4-6",
+ "pass": 1,
+ "prompt_version": "v8a_prompt_v1",
+ "provenance": {
+  "input_tokens": 39069,
+  "output_tokens": 11297,
+  "request_sha256": "10ce0538528ae0bf7fa86a5ccb174de56ee9b1664850de8373c94842621c3f47",
+  "resolved_model_id": "us.anthropic.claude-sonnet-4-6",
+  "response_sha256": "6d874307c74935bc027722c79fbf2684a0a8c84cb83099d76a29a39a0e277937",
+  "stop_reason": "tool_use"
+ },
+ "record_sha256": "0bb5cddcf4102d65c5cde4e80d009f8e4d9434152e6978964ef1385d1c4294b8",
+ "response": {
+  "candidates": [
+   {
+    "behavioral_observations": [
+     {
+      "evidence_refs": [
+       "TEAM_A.blocks.long_run_home.metrics.big_chances_for",
+       "TEAM_A.blocks.long_run_home.metrics.touches_in_penalty_area_for",
+       "TEAM_A.blocks.recent_last_5.metrics.big_chances_for"
+      ],
+      "observation": "TEAM_A's big_chances_for at home is 0.83 long-run and 0.8 W5, despite touches_in_penalty_area_for of 29.5 at home (long-run) \u2014 high box presence does not translate to big chances at the same rate."
+     },
+     {
+      "evidence_refs": [
+       "TEAM_B.blocks.long_run_away.metrics.big_chances_against",
+       "TEAM_B.blocks.long_run_all.metrics.big_chances_against"
+      ],
+      "observation": "TEAM_B concedes big_chances_against at 4.5 away long-run and 3.42 long-run all \u2014 opponents create big chances against TEAM_B at a high rate, especially away."
+     },
+     {
+      "evidence_refs": [
+       "TEAM_B.blocks.long_run_away.metrics.touches_in_penalty_area_against",
+       "TEAM_B.blocks.long_run_all.metrics.touches_in_penalty_area_against"
+      ],
+      "observation": "TEAM_B concedes touches_in_penalty_area_against at 32.5 away long-run and 28.67 long-run all \u2014 opponents penetrate TEAM_B's box heavily, especially away."
+     }
+    ],
+    "candidate_id": "C1",
+    "comparison": "SIMILAR_OPPONENT_COHORT",
+    "conditions": [
+     {
+      "dimension": "historical_venue_conditioning",
+      "value": "HOME"
+     },
+     {
+      "dimension": "competition",
+      "value": "SAME"
+     }
+    ],
+    "coverage_risk": "LOW",
+    "falsifiable_question": "Does TEAM_A record more big_chances_for and touches_in_penalty_area_for at home in Ligue 1 when facing opponents whose pre-fixture defensive profile is similar to TEAM_B's, compared to TEAM_A's home Ligue 1 baseline?",
+    "falsifier": "If TEAM_A's big_chances_for and touches_in_penalty_area_for in the similar-opponent cohort are not systematically higher than in the home Ligue 1 baseline, the mechanism is unsupported.",
+    "football_mechanism": "TEAM_A generates high box presence at home but converts it to big chances at a low rate overall. TEAM_B's away defensive structure concedes big chances and box touches at an elevated rate. The question is whether TEAM_A's big-chance creation rises when facing opponents whose defensive profile resembles TEAM_B's (high concession of box touches and big chances away), compared to TEAM_A's unconditional baseline.",
+    "metric_perspective": "FOR",
+    "opponent": "TEAM_B",
+    "provider_requirements": [
+     "big_chances",
+     "touches_in_penalty_area",
+     "similar_opponent_cohort"
+    ],
+    "research_family": "ATTACK_QUALITY",
+    "self_critique": {
+     "cohort_equals_baseline": false,
+     "condition_equals_target": false,
+     "could_opponent_strength_explain_it": true,
+     "is_just_home_vs_away": false,
+     "is_just_recent_vs_long_run": false,
+     "is_overconditioned": false,
+     "likely_generic_enumeration_would_generate_this": false,
+     "notes": "Opponent strength is the mechanism here \u2014 the similar-opponent cohort is defined by defensive weakness, so opponent strength is the variable being tested, not a confound. The tension between high box presence and low big-chance creation is the specific prompt."
+    },
+    "similar_opponent_rationale": "TEAM_B's defensive profile (high goals conceded, high shots_on_target conceded, high shots_inside_box conceded, elevated fouls, moderate yellow cards) is the relevant similarity axis. The engine's frozen 5-dimension profile captures exactly this. The question is whether TEAM_A creates more big chances and box touches against opponents whose pre-fixture defensive profile resembles TEAM_B's.",
+    "subject": "TEAM_A",
+    "support_risk": "LOW",
+    "target_metric": [
+     "big_chances",
+     "touches_in_penalty_area"
+    ],
+    "window": "ALL_PRIOR"
+   },
+   {
+    "behavioral_observations": [
+     {
+      "evidence_refs": [
+       "TEAM_A.blocks.long_run_home.metrics.corner_kicks_for",
+       "TEAM_A.blocks.recent_last_5.metrics.corner_kicks_for"
+      ],
+      "observation": "TEAM_A generates 7.17 corner_kicks_for at home long-run and 6.8 in W5 \u2014 consistently high home corner generation."
+     },
+     {
+      "evidence_refs": [
+       "TEAM_B.blocks.long_run_away.metrics.corner_kicks_against",
+       "TEAM_B.blocks.long_run_all.metrics.corner_kicks_against"
+      ],
+      "observation": "TEAM_B concedes corner_kicks_against at 5.33 away long-run and 6.0 long-run all \u2014 opponents earn corners against TEAM_B at an elevated rate."
+     },
+     {
+      "evidence_refs": [
+       "TEAM_B.blocks.long_run_away.metrics.fouls_for"
+      ],
+      "observation": "TEAM_B's fouls_for away (15.5 long-run) is elevated, which can feed set-piece opportunities for the home side."
+     }
+    ],
+    "candidate_id": "C2",
+    "comparison": "SIMILAR_OPPONENT_COHORT",
+    "conditions": [
+     {
+      "dimension": "historical_venue_conditioning",
+      "value": "HOME"
+     },
+     {
+      "dimension": "competition",
+      "value": "SAME"
+     }
+    ],
+    "coverage_risk": "LOW",
+    "falsifiable_question": "Does TEAM_A record more corner_kicks_for at home in Ligue 1 when facing opponents whose pre-fixture defensive profile is similar to TEAM_B's (high fouls, high shots inside box conceded), compared to TEAM_A's home Ligue 1 baseline?",
+    "falsifier": "If TEAM_A's corner_kicks_for in the similar-opponent cohort is not systematically higher than in the home Ligue 1 baseline, the mechanism is unsupported.",
+    "football_mechanism": "TEAM_A's wide territorial pressure at home generates corners at a high rate. TEAM_B's away defensive shape concedes corners at an elevated rate and commits fouls frequently. When TEAM_A faces opponents with a defensive profile similar to TEAM_B's (high fouls, high shots conceded inside box), their corner generation may be further elevated compared to the unconditional home baseline.",
+    "metric_perspective": "FOR",
+    "opponent": "TEAM_B",
+    "provider_requirements": [
+     "corner_kicks",
+     "similar_opponent_cohort"
+    ],
+    "research_family": "SET_PIECE_GENERATION",
+    "self_critique": {
+     "cohort_equals_baseline": false,
+     "condition_equals_target": false,
+     "could_opponent_strength_explain_it": true,
+     "is_just_home_vs_away": false,
+     "is_just_recent_vs_long_run": false,
+     "is_overconditioned": false,
+     "likely_generic_enumeration_would_generate_this": false,
+     "notes": "The mechanism requires two measurable characteristics together: TEAM_A's home corner generation AND TEAM_B's foul/box-concession profile. The frozen similarity dimensions include both fouls and shots_inside_box_conceded, making this testable."
+    },
+    "similar_opponent_rationale": "The frozen similarity profile includes fouls_committed_per_match and shots_inside_box_conceded_per_match, both of which are elevated for TEAM_B. These dimensions directly relate to the mechanism: a foul-heavy, box-permissive defense generates more set-piece opportunities for the attacking team.",
+    "subject": "TEAM_A",
+    "support_risk": "LOW",
+    "target_metric": [
+     "corner_kicks"
+    ],
+    "window": "ALL_PRIOR"
+   },
+   {
+    "behavioral_observations": [
+     {
+      "evidence_refs": [
+       "TEAM_A.blocks.long_run_home.metrics.shots_on_target_against",
+       "TEAM_A.blocks.long_run_away.metrics.shots_on_target_against"
+      ],
+      "observation": "TEAM_A concedes shots_on_target_against of only 2.0 at home long-run, vs 5.33 away \u2014 a very large home/away defensive split."
+     },
+     {
+      "evidence_refs": [
+       "TEAM_A.blocks.long_run_home.metrics.big_chances_against",
+       "TEAM_A.blocks.long_run_away.metrics.big_chances_against"
+      ],
+      "observation": "TEAM_A concedes big_chances_against of 1.17 at home long-run vs 3.5 away \u2014 home defense suppresses big chances strongly."
+     },
+     {
+      "evidence_refs": [
+       "TEAM_B.blocks.long_run_away.metrics.big_chances_for",
+       "TEAM_B.blocks.long_run_away.metrics.shots_inside_box_for"
+      ],
+      "observation": "TEAM_B creates big_chances_for of only 0.33 away long-run and shots_inside_box_for of 4.33 away \u2014 TEAM_B's away attacking output is structurally low."
+     }
+    ],
+    "candidate_id": "C3",
+    "comparison": "SUBJECT_VENUE_BASELINE",
+    "conditions": [
+     {
+      "dimension": "historical_venue_conditioning",
+      "value": "HOME"
+     },
+     {
+      "dimension": "competition",
+      "value": "SAME"
+     }
+    ],
+    "coverage_risk": "LOW",
+    "falsifiable_question": "Does TEAM_A's home Ligue 1 shots_on_target_against and big_chances_against remain at the low levels observed in the long-run home baseline when measured against the full home sample, confirming the home defensive suppression is a structural feature rather than a small-sample artifact?",
+    "falsifier": "If TEAM_A's shots_on_target_against and big_chances_against in the home Ligue 1 sample are not systematically lower than in the away sample, the home defensive suppression is not a structural feature.",
+    "football_mechanism": "TEAM_A's home defensive structure suppresses shots on target and big chances conceded to very low levels. TEAM_B's away attacking output is already low. The question is whether TEAM_A's home defensive suppression is consistent against opponents whose attacking profile resembles TEAM_B's (low possession, low final-third entries away), or whether the low concession figures are driven by facing weaker opponents.",
+    "metric_perspective": "AGAINST",
+    "opponent": "TEAM_B",
+    "provider_requirements": [
+     "shots_on_target",
+     "big_chances"
+    ],
+    "research_family": "DEFENSIVE_SUPPRESSION",
+    "self_critique": {
+     "cohort_equals_baseline": false,
+     "condition_equals_target": false,
+     "could_opponent_strength_explain_it": true,
+     "is_just_home_vs_away": true,
+     "is_just_recent_vs_long_run": false,
+     "is_overconditioned": false,
+     "likely_generic_enumeration_would_generate_this": true,
+     "notes": "This is essentially a home vs away question and would be generated by blind enumeration. Discarding in favor of a more specific question."
+    },
+    "subject": "TEAM_A",
+    "support_risk": "LOW",
+    "target_metric": [
+     "shots_on_target",
+     "big_chances"
+    ],
+    "window": "ALL_PRIOR"
+   },
+   {
+    "behavioral_observations": [
+     {
+      "evidence_refs": [
+       "TEAM_B.blocks.long_run_away.metrics.shots_on_target_against",
+       "TEAM_B.blocks.long_run_all.metrics.shots_on_target_against"
+      ],
+      "observation": "TEAM_B concedes shots_on_target_against of 7.5 away long-run and 5.67 long-run all \u2014 very high concession of on-target shots, especially away."
+     },
+     {
+      "evidence_refs": [
+       "TEAM_B.blocks.long_run_away.metrics.touches_in_penalty_area_against",
+       "TEAM_B.blocks.long_run_all.metrics.touches_in_penalty_area_against"
+      ],
+      "observation": "TEAM_B concedes touches_in_penalty_area_against of 32.5 away long-run and 28.67 long-run all \u2014 opponents penetrate TEAM_B's box at a high rate."
+     },
+     {
+      "evidence_refs": [
+       "TEAM_B.blocks.recent_last_5.metrics.shots_on_target_against",
+       "TEAM_B.blocks.recent_last_5.metrics.touches_in_penalty_area_against"
+      ],
+      "observation": "Recent W5 shows some reduction: shots_on_target_against 5.2, touches_in_penalty_area_against 26.6 \u2014 below long-run away figures but W5 includes home matches."
+     }
+    ],
+    "candidate_id": "C4",
+    "comparison": "SUBJECT_VENUE_BASELINE",
+    "conditions": [
+     {
+      "dimension": "historical_venue_conditioning",
+      "value": "AWAY"
+     },
+     {
+      "dimension": "competition",
+      "value": "SAME"
+     }
+    ],
+    "coverage_risk": "LOW",
+    "falsifiable_question": "Does TEAM_B's away Ligue 1 shots_on_target_against and touches_in_penalty_area_against remain elevated relative to TEAM_B's home Ligue 1 figures across the full prior sample, confirming the away defensive vulnerability is structural?",
+    "falsifier": "If TEAM_B's shots_on_target_against and touches_in_penalty_area_against in the away Ligue 1 sample are not systematically higher than in the home sample, the away defensive vulnerability is not a structural feature.",
+    "football_mechanism": "TEAM_B's away defensive structure concedes high volumes of on-target shots and box touches. The W5 apparent improvement may be venue-driven (W5 includes home matches). The question is whether TEAM_B's away concession of shots_on_target and touches_in_penalty_area is consistent across the full away sample, confirming the structural vulnerability is not a small-sample artifact.",
+    "metric_perspective": "AGAINST",
+    "opponent": "TEAM_A",
+    "provider_requirements": [
+     "shots_on_target",
+     "touches_in_penalty_area"
+    ],
+    "research_family": "DEFENSIVE_CONCESSION",
+    "self_critique": {
+     "cohort_equals_baseline": false,
+     "condition_equals_target": false,
+     "could_opponent_strength_explain_it": true,
+     "is_just_home_vs_away": true,
+     "is_just_recent_vs_long_run": false,
+     "is_overconditioned": false,
+     "likely_generic_enumeration_would_generate_this": true,
+     "notes": "Again essentially home vs away. Discarding \u2014 the more interesting question is whether TEAM_B's away concession profile is elevated specifically against opponents resembling TEAM_A."
+    },
+    "subject": "TEAM_B",
+    "support_risk": "LOW",
+    "target_metric": [
+     "shots_on_target",
+     "touches_in_penalty_area"
+    ],
+    "window": "ALL_PRIOR"
+   },
+   {
+    "behavioral_observations": [
+     {
+      "evidence_refs": [
+       "TEAM_B.blocks.long_run_away.metrics.shots_outside_box_for",
+       "TEAM_B.blocks.long_run_away.metrics.shots_inside_box_for"
+      ],
+      "observation": "TEAM_B's shots_outside_box_for away long-run is 5.5 vs shots_inside_box_for away of 4.33 \u2014 away from home, TEAM_B generates more shots from outside the box than inside, an unusual ratio."
+     },
+     {
+      "evidence_refs": [
+       "TEAM_B.blocks.recent_last_5.metrics.shots_outside_box_for",
+       "TEAM_B.blocks.recent_last_5.metrics.shots_inside_box_for",
+       "TEAM_B.blocks.long_run_home.metrics.shots_inside_box_for"
+      ],
+      "observation": "Recent W5 shots_outside_box_for is 6.8 vs shots_inside_box_for 6.8 \u2014 equal split, but W5 includes home matches where inside-box shots are higher (8.17 home long-run)."
+     },
+     {
+      "evidence_refs": [
+       "TEAM_B.raw_historical_rows.ROW:09"
+      ],
+      "observation": "ROW:09 (TEAM_B away) shows 15 shots_outside_box_for vs 4 shots_inside_box_for \u2014 an extreme outside-box dominance in one away match."
+     },
+     {
+      "evidence_refs": [
+       "TEAM_A.blocks.long_run_home.metrics.blocked_shots_against"
+      ],
+      "observation": "TEAM_A's home blocked_shots_against is 3.17 long-run \u2014 moderate blocking activity, not extreme."
+     }
+    ],
+    "candidate_id": "C5",
+    "comparison": "SIMILAR_OPPONENT_COHORT",
+    "conditions": [
+     {
+      "dimension": "historical_venue_conditioning",
+      "value": "AWAY"
+     },
+     {
+      "dimension": "competition",
+      "value": "SAME"
+     }
+    ],
+    "coverage_risk": "LOW",
+    "falsifiable_question": "Does TEAM_B record more shots_outside_box_for relative to shots_inside_box_for in away Ligue 1 matches when facing opponents whose pre-fixture defensive profile is similar to TEAM_A's (tight home defense), compared to TEAM_B's away Ligue 1 baseline?",
+    "falsifier": "If TEAM_B's shots_outside_box_for and shots_inside_box_for in the similar-opponent cohort show no systematic difference in ratio compared to the away Ligue 1 baseline, the mechanism is unsupported.",
+    "football_mechanism": "When TEAM_B plays away, their inside-box shot generation drops sharply relative to home, while outside-box shots remain relatively stable. This suggests TEAM_B's away attacking pattern shifts toward long-range attempts when they cannot penetrate the box. Against TEAM_A's home defense (which suppresses inside-box shots to 5.67 against), this outside-box reliance may be amplified. The question is whether TEAM_B's outside-box shot share is higher when facing opponents whose home defensive profile resembles TEAM_A's (low shots_inside_box conceded, low goals conceded at home).",
+    "metric_perspective": "FOR",
+    "opponent": "TEAM_A",
+    "provider_requirements": [
+     "shots_outside_box",
+     "shots_inside_box",
+     "similar_opponent_cohort"
+    ],
+    "research_family": "ATTACK_VOLUME",
+    "self_critique": {
+     "cohort_equals_baseline": false,
+     "condition_equals_target": false,
+     "could_opponent_strength_explain_it": true,
+     "is_just_home_vs_away": false,
+     "is_just_recent_vs_long_run": false,
+     "is_overconditioned": false,
+     "likely_generic_enumeration_would_generate_this": false,
+     "notes": "The mechanism requires the interaction of TEAM_B's away shot location split AND the opponent's defensive tightness. The raw data shows the outside-box dominance away is real (ROW:09, long-run away averages). The similar-opponent cohort tests whether this is amplified against tight defenses."
+    },
+    "similar_opponent_rationale": "TEAM_A's home defensive profile (low goals conceded, low shots_on_target conceded, low shots_inside_box conceded, moderate fouls, moderate yellow cards) defines the similarity axis. The engine's frozen 5-dimension profile captures this. The question is whether TEAM_B generates a higher share of outside-box shots when facing opponents with a tight home defensive profile similar to TEAM_A's.",
+    "subject": "TEAM_B",
+    "support_risk": "LOW",
+    "target_metric": [
+     "shots_outside_box",
+     "shots_inside_box"
+    ],
+    "window": "ALL_PRIOR"
+   },
+   {
+    "behavioral_observations": [
+     {
+      "evidence_refs": [
+       "TEAM_A.blocks.long_run_home.metrics.final_third_entries_for",
+       "TEAM_A.blocks.recent_last_5.metrics.final_third_entries_for"
+      ],
+      "observation": "TEAM_A's final_third_entries_for at home long-run is 55.8 and W5 is 56.2 \u2014 consistently high home territorial dominance."
+     },
+     {
+      "evidence_refs": [
+       "TEAM_A.blocks.long_run_home.metrics.possession_for",
+       "TEAM_A.blocks.recent_last_5.metrics.possession_for"
+      ],
+      "observation": "TEAM_A's possession_for at home long-run is 54.2% and W5 is 56.0% \u2014 above-average home possession."
+     },
+     {
+      "evidence_refs": [
+       "TEAM_B.blocks.long_run_away.metrics.possession_for",
+       "TEAM_B.blocks.recent_last_5.metrics.possession_for"
+      ],
+      "observation": "TEAM_B's possession_for away long-run is 44.5% and W5 is 40.2% \u2014 TEAM_B cedes possession away, especially recently."
+     },
+     {
+      "evidence_refs": [
+       "TEAM_B.blocks.long_run_away.metrics.final_third_entries_against"
+      ],
+      "observation": "TEAM_B's final_third_entries_against away long-run is 60.2 \u2014 opponents make very high final-third entries against TEAM_B away."
+     }
+    ],
+    "candidate_id": "C6",
+    "comparison": "SIMILAR_OPPONENT_COHORT",
+    "conditions": [
+     {
+      "dimension": "historical_venue_conditioning",
+      "value": "HOME"
+     },
+     {
+      "dimension": "competition",
+      "value": "SAME"
+     }
+    ],
+    "coverage_risk": "LOW",
+    "falsifiable_question": "Does TEAM_A record higher final_third_entries_for and possession_for at home in Ligue 1 when facing opponents whose pre-fixture profile is similar to TEAM_B's (low possession away, high concession), compared to TEAM_A's home Ligue 1 baseline?",
+    "falsifier": "If TEAM_A's final_third_entries_for and possession_for in the similar-opponent cohort are not systematically higher than in the home Ligue 1 baseline, the mechanism is unsupported.",
+    "football_mechanism": "TEAM_A dominates possession and final-third entries at home. TEAM_B cedes possession and final-third entries away. When TEAM_A faces opponents whose away profile involves low possession and high final-third entries conceded (similar to TEAM_B), TEAM_A's territorial dominance may be further amplified. The question is whether TEAM_A's final_third_entries_for and possession_for at home are higher against opponents with a low-possession away profile similar to TEAM_B's.",
+    "metric_perspective": "FOR",
+    "opponent": "TEAM_B",
+    "provider_requirements": [
+     "final_third_entries",
+     "possession",
+     "similar_opponent_cohort"
+    ],
+    "research_family": "TEMPO_AND_TERRITORY",
+    "self_critique": {
+     "cohort_equals_baseline": false,
+     "condition_equals_target": false,
+     "could_opponent_strength_explain_it": true,
+     "is_just_home_vs_away": false,
+     "is_just_recent_vs_long_run": false,
+     "is_overconditioned": false,
+     "likely_generic_enumeration_would_generate_this": false,
+     "notes": "The mechanism is the interaction of TEAM_A's home territorial style with TEAM_B's away possession-ceding profile. The similar-opponent cohort tests whether this interaction is systematic."
+    },
+    "similar_opponent_rationale": "TEAM_B's away profile (low possession, high goals conceded, high shots conceded) is captured by the frozen similarity dimensions. The engine constructs the cohort from opponents resembling TEAM_B's pre-fixture defensive/discipline profile.",
+    "subject": "TEAM_A",
+    "support_risk": "LOW",
+    "target_metric": [
+     "final_third_entries",
+     "possession"
+    ],
+    "window": "ALL_PRIOR"
+   },
+   {
+    "behavioral_observations": [
+     {
+      "evidence_refs": [
+       "TEAM_A.blocks.recent_last_5.metrics.shots_for",
+       "TEAM_A.blocks.long_run_all.metrics.shots_for"
+      ],
+      "observation": "TEAM_A's shots_for W5 is 8.8 vs long-run all 11.75 \u2014 a notable recent drop in shot volume."
+     },
+     {
+      "evidence_refs": [
+       "TEAM_A.blocks.recent_last_5.metrics.shots_on_target_for",
+       "TEAM_A.blocks.long_run_all.metrics.shots_on_target_for"
+      ],
+      "observation": "TEAM_A's shots_on_target_for W5 is 2.8 vs long-run all 4.33 \u2014 recent on-target shots are well below the long-run average."
+     },
+     {
+      "evidence_refs": [
+       "TEAM_A.blocks.recent_last_5.metrics.xg_for",
+       "TEAM_A.blocks.long_run_all.metrics.xg_for",
+       "TEAM_A.blocks.long_run_home.metrics.xg_for"
+      ],
+      "observation": "TEAM_A's xG_for W5 is 0.86 vs long-run all 1.10 and long-run home 1.27 \u2014 recent xG generation is below both long-run benchmarks."
+     },
+     {
+      "evidence_refs": [
+       "TEAM_A.raw_historical_rows.ROW:11",
+       "TEAM_A.raw_historical_rows.ROW:12"
+      ],
+      "observation": "ROW:11 and ROW:12 (most recent) show shots_for of 7 and 4 respectively \u2014 the two most recent matches show very low shot volumes."
+     }
+    ],
+    "candidate_id": "C7",
+    "comparison": "SUBJECT_RECENT_VS_LONG_BASELINE",
+    "conditions": [
+     {
+      "dimension": "competition",
+      "value": "SAME"
+     }
+    ],
+    "coverage_risk": "LOW",
+    "falsifiable_question": "Is TEAM_A's shots_for, shots_on_target_for, and xg_for in the most recent 5 Ligue 1 matches systematically lower than TEAM_A's long-run Ligue 1 baseline, indicating a genuine recent form dip in attacking output?",
+    "falsifier": "If TEAM_A's W5 shots_for, shots_on_target_for, and xg_for are not systematically below the long-run Ligue 1 baseline, the recent dip is not a structural feature.",
+    "football_mechanism": "TEAM_A's recent attacking output (shots, shots on target, xG) has dropped below the long-run baseline. This could reflect a run of difficult opponents, away fixtures, or a genuine form dip. The question is whether this recent drop is explained by the recent fixture schedule (away-heavy or strong opponents) or represents a structural change in TEAM_A's attacking output relative to their own long-run baseline.",
+    "metric_perspective": "FOR",
+    "opponent": "TEAM_B",
+    "provider_requirements": [
+     "shots",
+     "shots_on_target",
+     "xg"
+    ],
+    "research_family": "FORM_VS_BASELINE",
+    "self_critique": {
+     "cohort_equals_baseline": false,
+     "condition_equals_target": false,
+     "could_opponent_strength_explain_it": true,
+     "is_just_home_vs_away": false,
+     "is_just_recent_vs_long_run": true,
+     "is_overconditioned": false,
+     "likely_generic_enumeration_would_generate_this": true,
+     "notes": "This is explicitly recent vs long-run. However, the magnitude of the drop (shots 8.8 vs 11.75, xG 0.86 vs 1.10) and the raw row evidence (ROW:11: 7 shots, ROW:12: 4 shots) make it a genuine observation worth testing. The self-critique flags it as recent vs long-run \u2014 keeping it because the drop is large and the raw rows confirm it, but acknowledging the limitation."
+    },
+    "subject": "TEAM_A",
+    "support_risk": "LOW",
+    "target_metric": [
+     "shots",
+     "shots_on_target",
+     "xg"
+    ],
+    "window": "W5"
+   },
+   {
+    "behavioral_observations": [
+     {
+      "evidence_refs": [
+       "TEAM_B.blocks.long_run_away.metrics.fouls_for",
+       "TEAM_B.blocks.long_run_home.metrics.fouls_for"
+      ],
+      "observation": "TEAM_B's fouls_for away long-run is 15.5 vs home 12.83 \u2014 TEAM_B commits more fouls away from home."
+     },
+     {
+      "evidence_refs": [
+       "TEAM_B.blocks.long_run_all.metrics.yellow_cards_for",
+       "TEAM_B.blocks.recent_last_5.metrics.yellow_cards_for"
+      ],
+      "observation": "TEAM_B's yellow_cards_for long-run all is 2.33, with W5 at 2.4 \u2014 consistently elevated card rate."
+     },
+     {
+      "evidence_refs": [
+       "TEAM_B.raw_historical_rows.ROW:03",
+       "TEAM_B.raw_historical_rows.ROW:12"
+      ],
+      "observation": "ROW:03 (TEAM_B away) shows 28 fouls_for \u2014 an extreme foul count in one away match. ROW:12 (home) shows 19 fouls_for."
+     },
+     {
+      "evidence_refs": [
+       "TEAM_A.blocks.long_run_home.metrics.final_third_entries_for"
+      ],
+      "observation": "TEAM_A's final_third_entries_for at home (55.8 long-run) is high \u2014 TEAM_A's territorial pressure at home may force TEAM_B into more defensive fouls."
+     }
+    ],
+    "candidate_id": "C8",
+    "comparison": "SIMILAR_OPPONENT_COHORT",
+    "conditions": [
+     {
+      "dimension": "historical_venue_conditioning",
+      "value": "AWAY"
+     },
+     {
+      "dimension": "competition",
+      "value": "SAME"
+     }
+    ],
+    "coverage_risk": "LOW",
+    "falsifiable_question": "Does TEAM_B record more fouls_for and yellow_cards_for in away Ligue 1 matches when facing opponents whose pre-fixture defensive profile is similar to TEAM_A's (tight home defense, high territorial pressure), compared to TEAM_B's away Ligue 1 baseline?",
+    "falsifier": "If TEAM_B's fouls_for and yellow_cards_for in the similar-opponent cohort are not systematically higher than in the away Ligue 1 baseline, the mechanism is unsupported.",
+    "football_mechanism": "TEAM_B commits more fouls away from home, and their foul rate is elevated overall. When facing a home side that generates high final-third entries and territorial pressure (like TEAM_A), TEAM_B may be forced into more defensive fouls and cards. The question is whether TEAM_B's fouls_for and yellow_cards_for are elevated when playing away against opponents whose home profile involves high final-third entries and possession (similar to TEAM_A), compared to TEAM_B's away baseline.",
+    "metric_perspective": "FOR",
+    "opponent": "TEAM_A",
+    "provider_requirements": [
+     "fouls",
+     "yellow_cards",
+     "similar_opponent_cohort"
+    ],
+    "research_family": "DISCIPLINE",
+    "self_critique": {
+     "cohort_equals_baseline": false,
+     "condition_equals_target": false,
+     "could_opponent_strength_explain_it": true,
+     "is_just_home_vs_away": false,
+     "is_just_recent_vs_long_run": false,
+     "is_overconditioned": false,
+     "likely_generic_enumeration_would_generate_this": false,
+     "notes": "The mechanism requires the interaction of TEAM_B's away foul tendency AND the opponent's home territorial pressure profile. The frozen similarity dimensions (goals conceded, shots_on_target conceded, shots_inside_box conceded, fouls, yellow cards) capture the opponent's defensive tightness, which is the relevant axis."
+    },
+    "similar_opponent_rationale": "TEAM_A's home profile (low goals conceded, low shots_on_target conceded, low shots_inside_box conceded, moderate fouls, moderate yellow cards) defines the similarity axis via the frozen 5-dimension profile. The question is whether TEAM_B's discipline deteriorates when facing opponents with a tight, possession-dominant home profile.",
+    "subject": "TEAM_B",
+    "support_risk": "LOW",
+    "target_metric": [
+     "fouls",
+     "yellow_cards"
+    ],
+    "window": "ALL_PRIOR"
+   }
+  ],
+  "fixture_id": "mt_629405468",
+  "interaction_map": {
+   "a_attack_vs_b_defense": [
+    "TEAM_A generates corners at 7.17/match at home (long-run) and 6.8 in W5; TEAM_B concedes accurate_crosses_against at 6.0 long-run all and 6.5 away \u2014 TEAM_A's wide/crossing pressure meets a defense that structurally concedes high cross volumes.",
+    "TEAM_A's touches_in_penalty_area_for at home (29.5 long-run) vs TEAM_B's touches_in_penalty_area_against away (32.5 long-run) \u2014 both indicators point toward high box penetration in this matchup.",
+    "TEAM_A's big_chances_for is low (0.83 home long-run, 0.8 W5) while TEAM_B concedes big_chances_against at 4.5 away long-run \u2014 a tension: TEAM_A's chance creation efficiency is low but TEAM_B's defensive structure concedes big chances freely away.",
+    "TEAM_A's final_third_entries_for at home (55.8 long-run, 56.2 W5) vs TEAM_B's final_third_entries_against away (60.2 long-run) \u2014 both suggest high territorial pressure in TEAM_A's half of the interaction.",
+    "TEAM_A's xG_for at home (1.27 long-run) vs TEAM_B's xG_against away (2.62 long-run) \u2014 TEAM_A's home xG generation is moderate but TEAM_B concedes very high xG away, suggesting the defense is the binding constraint."
+   ],
+   "asymmetries": [
+    "TEAM_B shows a dramatic home/away asymmetry in attack quality: big_chances_for 2.67 home vs 0.33 away, xG_for 1.67 home vs 0.69 away. As the away team here, TEAM_B's attacking output is structurally suppressed.",
+    "TEAM_A shows a strong home/away asymmetry in defensive solidity: shots_on_target_against 2.0 home vs 5.33 away, xG_against 0.89 home vs 1.64 away. TEAM_A's home defense is markedly tighter.",
+    "TEAM_B concedes accurate_crosses_against at 6.0 long-run all but TEAM_A generates accurate_crosses_for at only 3.17 long-run all \u2014 TEAM_A's crossing output is below TEAM_B's concession rate, but TEAM_A's corner generation is high, suggesting set-piece rather than open-play crossing is the mechanism."
+   ],
+   "b_attack_vs_a_defense": [
+    "TEAM_B's shots_inside_box_for away (4.33 long-run) vs TEAM_A's shots_inside_box_against at home (5.67 long-run) \u2014 TEAM_A's home defense suppresses inside-box shots below TEAM_B's away average, suggesting TEAM_A's home defense may limit TEAM_B's box entries.",
+    "TEAM_B's big_chances_for away (0.33 long-run) vs TEAM_A's big_chances_against at home (1.17 long-run) \u2014 TEAM_B creates very few big chances away; TEAM_A's home defense already concedes few. This is a double suppression.",
+    "TEAM_B's xG_for away (0.69 long-run) vs TEAM_A's xG_against at home (0.89 long-run) \u2014 both are low, consistent with a low-scoring home defensive environment for TEAM_A.",
+    "TEAM_B's shots_outside_box_for away (5.5 long-run) is relatively high vs their inside-box shots (4.33 away) \u2014 TEAM_B may rely on long-range attempts when away, which TEAM_A's home defense (shots_on_target_against 2.0 at home) has historically suppressed well.",
+    "TEAM_B's fouls_for away (15.5 long-run) is elevated; TEAM_A's corner_kicks_for at home (7.17) is high \u2014 TEAM_B's foul-heavy away style may feed TEAM_A's set-piece generation."
+   ],
+   "regime_changes": [
+    "TEAM_A's W5 shots_for (8.8) and shots_on_target_for (2.8) are below long-run all (11.75 and 4.33) \u2014 a recent drop in attacking output volume, though final_third_entries_for (56.2 W5) remains high, suggesting territory without conversion.",
+    "TEAM_B's W5 xG_for (1.41) is above long-run away (0.69) but W5 includes home matches (ROW:10, ROW:12 home); the away-specific regime has not changed.",
+    "TEAM_A's W5 clearances_for (13.6) is below long-run all (16.4) and long-run home (17.5), suggesting less defensive pressure absorbed recently \u2014 consistent with recent home-heavy schedule or opponents sitting deeper."
+   ],
+   "tensions": [
+    "TEAM_A's big_chances_for is low (0.83 home) despite high touches_in_penalty_area_for (29.5 home) and high final_third_entries_for (55.8 home) \u2014 territorial dominance is not converting to big chances at the same rate.",
+    "TEAM_B's recent W5 defensive metrics (shots_against 12.6, big_chances_against 2.2) look better than long-run away figures, but W5 includes home matches \u2014 the apparent improvement may be venue-driven rather than structural.",
+    "TEAM_B's recent W5 blocked_shots_for (4.4) is notably higher than long-run all (3.0), suggesting opponents are blocking more of their shots recently \u2014 consistent with away-heavy recent schedule or defensive improvement by opponents."
+   ]
+  },
+  "reconnaissance": {
+   "team_a_attack": [
+    "TEAM_A (Rennais) generates a clear home/away split in shot volume: 14.17 shots/match at home vs 9.33 away (long-run). Inside-box shots follow the same pattern: 9.33 home vs 5.33 away. Recent W5 shows further compression to 8.8 shots/match overall, with inside-box at 6.0.",
+    "Corner generation is notably higher at home (7.17 long-run home) vs away (4.83), and the W5 average of 6.8 corners/match is above the long-run all of 6.0, suggesting recent home-heavy fixtures or an uptick in wide pressure.",
+    "Big chances created are low across all windows: 1.08 long-run all, 0.83 long-run home, 0.8 W5. xG_for is modest: 1.27 home, 0.92 away long-run. Recent W5 xG_for drops to 0.86, below the long-run all of 1.10.",
+    "Touches in penalty area FOR show a strong home advantage: 29.5 home vs 19.0 away long-run. W5 drops to 18.8, consistent with recent away-heavy or difficult fixtures.",
+    "Final third entries FOR: 55.8 home vs 48.5 away long-run; W5 rises to 56.2, suggesting recent territorial dominance."
+   ],
+   "team_a_defense": [
+    "TEAM_A concedes substantially more away (shots_against 13.0, shots_on_target_against 5.33, big_chances_against 3.5) than at home (shots_against 9.5, shots_on_target_against 2.0, big_chances_against 1.17). The home defensive record is markedly tighter.",
+    "Clearances_for (own clearances) are higher at home (17.5) than away (15.33), but opponents' clearances_against (what TEAM_A forces) are much higher at home (26.67) vs away (17.5), indicating opponents defend deeper at home.",
+    "xG_against: 0.89 home vs 1.64 away long-run. W5 xG_against is 1.29, slightly above long-run home but below long-run away, consistent with a mixed recent venue split.",
+    "Interceptions_against (opponent interceptions) are higher at home (13.5) vs away (7.67), suggesting opponents sit deeper and intercept more at home. TEAM_A's own interceptions are stable (~9-10).",
+    "Recent W5 shows goals_against 1.6 and big_chances_against 2.2, broadly in line with long-run all, no dramatic defensive deterioration."
+   ],
+   "team_b_attack": [
+    "TEAM_B (Saint-\u00c9tienne) shows a strong home/away asymmetry in attack: shots_for 13.5 home vs 9.83 away long-run; shots_inside_box_for 8.17 home vs 4.33 away. Big chances_for: 2.67 home vs 0.33 away \u2014 a very large gap.",
+    "xG_for: 1.67 home vs 0.69 away long-run. Recent W5 xG_for rises to 1.41, but this includes home matches (ROW:10, ROW:12 are home). Away xG_for remains structurally low.",
+    "Recent W5 shots_for 13.6 and shots_inside_box_for 6.8 look better than long-run away averages, but W5 includes home matches. ROW:09 (away) shows 19 shots_for with 4 inside box \u2014 an outlier driven by outside-box volume.",
+    "Shots_outside_box_for: 5.42 long-run all, 5.5 away. Recent W5 shows 6.8 outside-box shots, suggesting TEAM_B is generating volume from distance when away.",
+    "Corner kicks_for: only 3.25 long-run all, 3.5 away \u2014 low corner generation consistently."
+   ],
+   "team_b_defense": [
+    "TEAM_B concedes heavily: shots_against 14.83 long-run all, 17.17 away. Shots_on_target_against: 5.67 long-run all, 7.5 away. Touches_in_penalty_area_against: 28.67 long-run all, 32.5 away \u2014 opponents penetrate the box frequently.",
+    "Big_chances_against: 3.42 long-run all, 4.5 away. xG_against: 1.90 long-run all, 2.62 away. These are very high concession figures, especially away.",
+    "Recent W5 shows some improvement: shots_against 12.6, shots_on_target_against 5.2, big_chances_against 2.2, xG_against 1.37. The W5 figures are below the long-run all, suggesting a possible recent defensive improvement.",
+    "Clearances_for (own clearances): 24.33 long-run all, 21.33 away \u2014 high defensive clearance volume indicating sustained pressure absorption.",
+    "Accurate_crosses_against (crosses conceded): 6.0 long-run all, 6.5 away \u2014 TEAM_B concedes a high volume of accurate crosses, suggesting vulnerability to wide delivery."
+   ]
+  }
+ },
+ "temperature": 0.0
+}

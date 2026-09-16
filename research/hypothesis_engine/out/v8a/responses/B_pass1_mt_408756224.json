@@ -1,0 +1,631 @@
+{
+ "arm": "B",
+ "elapsed_s": 110.19,
+ "error": null,
+ "fixture_id": "mt_408756224",
+ "max_tokens": 24576,
+ "model_id": "us.anthropic.claude-sonnet-4-6",
+ "pass": 1,
+ "prompt_version": "v8a_prompt_v1",
+ "provenance": {
+  "input_tokens": 47656,
+  "output_tokens": 9764,
+  "request_sha256": "f83d972ff4108edebb1546aace22bc87c568442b469c767eda1f054c6761957f",
+  "resolved_model_id": "us.anthropic.claude-sonnet-4-6",
+  "response_sha256": "9efac0dbc7c0264bfc42f2cd508b9c31277e6b438552c302433c5d12b4db7fe1",
+  "stop_reason": "tool_use"
+ },
+ "record_sha256": "342d8af13c6943de12693a7f5232126abe628eeafe5810d066101458db4ce9e8",
+ "response": {
+  "candidates": [
+   {
+    "behavioral_observations": [
+     {
+      "evidence_refs": [
+       "TEAM_A.blocks.long_run_home.metrics.corner_kicks_for",
+       "TEAM_A.blocks.recent_last_10.metrics.corner_kicks_for",
+       "TEAM_A.blocks.recent_last_5.metrics.corner_kicks_for"
+      ],
+      "observation": "Leeds' corner_kicks_for has risen from a long-run home mean of 7.41 to 7.78 in last-10 and 9.25 in last-5, indicating a recent acceleration in corner generation at home."
+     },
+     {
+      "evidence_refs": [
+       "TEAM_B.blocks.long_run_all.metrics.corner_kicks_against",
+       "TEAM_B.blocks.long_run_away.metrics.corner_kicks_against"
+      ],
+      "observation": "Derby concede corners at a rate of 5.56 long-run all and 5.63 away, which is above the league average implied by Leeds' long-run home mean of 7.41 \u2014 Derby are not a low-corner-conceding side."
+     }
+    ],
+    "candidate_id": "C1",
+    "comparison": "SUBJECT_RECENT_VS_LONG_BASELINE",
+    "conditions": [
+     {
+      "dimension": "historical_venue_conditioning",
+      "value": "HOME"
+     },
+     {
+      "dimension": "competition",
+      "value": "SAME"
+     }
+    ],
+    "coverage_risk": "NONE",
+    "falsifiable_question": "Does Leeds United's corner_kicks_for in their last 5 home Championship matches exceed their long-run home Championship baseline?",
+    "falsifier": "If Leeds' corner_kicks_for in the W5 home window is at or below their long-run home baseline, the recent regime change is unsupported.",
+    "football_mechanism": "Leeds' extreme recent possession dominance (73% last-5) and high final-third entry rate (66.75 last-5) force opponents into repeated defensive clearances and wide defensive actions, which generate corners. Derby's tendency to cede possession and defend deep away from home may amplify this mechanism.",
+    "metric_perspective": "FOR",
+    "opponent": "TEAM_B",
+    "provider_requirements": [
+     "corner_kicks_for",
+     "historical_venue_conditioning",
+     "competition"
+    ],
+    "research_family": "SET_PIECE_GENERATION",
+    "self_critique": {
+     "cohort_equals_baseline": false,
+     "condition_equals_target": false,
+     "could_opponent_strength_explain_it": true,
+     "is_just_home_vs_away": false,
+     "is_just_recent_vs_long_run": true,
+     "is_overconditioned": false,
+     "likely_generic_enumeration_would_generate_this": true,
+     "notes": "This is a recent vs long-run question and blind enumeration would likely generate it. However, the magnitude of the shift (7.41 to 9.25) and its connection to the possession regime change makes it worth testing. Opponent strength caveat is real \u2014 recent opponents may have been weaker."
+    },
+    "subject": "TEAM_A",
+    "support_risk": "LOW",
+    "target_metric": [
+     "corner_kicks"
+    ],
+    "window": "W5"
+   },
+   {
+    "behavioral_observations": [
+     {
+      "evidence_refs": [
+       "TEAM_A.blocks.long_run_home.metrics.shots_for",
+       "TEAM_A.blocks.long_run_home.metrics.shots_inside_box_for"
+      ],
+      "observation": "Leeds' shots_for home long-run mean is 17.34 and shots_inside_box_for home long-run mean is 12.25. Against opponents with a HIGH shots-conceded profile, these values may be further elevated."
+     },
+     {
+      "evidence_refs": [
+       "TEAM_B.blocks.long_run_away.metrics.shots_against",
+       "TEAM_B.blocks.long_run_away.metrics.shots_inside_box_against"
+      ],
+      "observation": "Derby concede 12.63 shots away (long-run away) and 7.75 shots inside box away \u2014 both among the higher values in the dataset, placing them as a HIGH shots-conceded opponent."
+     }
+    ],
+    "candidate_id": "C2",
+    "comparison": "OPPONENT_PROFILE_INTERACTION",
+    "conditions": [
+     {
+      "dimension": "historical_venue_conditioning",
+      "value": "HOME"
+     },
+     {
+      "axis": "shots_conceded_per_match",
+      "dimension": "opponent_profile",
+      "value": "HIGH"
+     },
+     {
+      "dimension": "competition",
+      "value": "SAME"
+     }
+    ],
+    "coverage_risk": "LOW",
+    "falsifiable_question": "Does Leeds United's shots_for and shots_inside_box_for at home in Championship matches against HIGH shots-conceded opponents exceed their overall home Championship baseline?",
+    "falsifier": "If Leeds' shot volume and inside-box shots against HIGH shots-conceded opponents are at or below their overall home baseline, the opponent-profile interaction is unsupported.",
+    "football_mechanism": "When Leeds face opponents who concede high shot volumes (HIGH opponent profile on shots conceded), their own attacking volume may be further amplified because such opponents tend to allow more space and territory, enabling Leeds to generate more shots from inside the box.",
+    "metric_perspective": "FOR",
+    "opponent": "TEAM_B",
+    "provider_requirements": [
+     "shots_for",
+     "shots_inside_box_for",
+     "historical_venue_conditioning",
+     "opponent_profile",
+     "competition"
+    ],
+    "research_family": "ATTACK_VOLUME",
+    "self_critique": {
+     "cohort_equals_baseline": false,
+     "condition_equals_target": false,
+     "could_opponent_strength_explain_it": false,
+     "is_just_home_vs_away": false,
+     "is_just_recent_vs_long_run": false,
+     "is_overconditioned": false,
+     "likely_generic_enumeration_would_generate_this": false,
+     "notes": "The opponent profile condition is the key differentiator here. Derby's away defensive profile (high shots conceded) is the specific trigger. Three conditions but each is independently motivated by the evidence."
+    },
+    "subject": "TEAM_A",
+    "support_risk": "LOW",
+    "target_metric": [
+     "shots",
+     "shots_inside_box"
+    ],
+    "window": "ALL_PRIOR"
+   },
+   {
+    "behavioral_observations": [
+     {
+      "evidence_refs": [
+       "TEAM_A.blocks.long_run_home.metrics.shots_against",
+       "TEAM_A.blocks.long_run_home.metrics.shots_on_target_against",
+       "TEAM_A.blocks.recent_last_10.metrics.shots_against",
+       "TEAM_A.blocks.recent_last_10.metrics.shots_on_target_against"
+      ],
+      "observation": "Leeds concede only 7.44 shots at home (long-run) and 2.44 shots on target at home (long-run). In recent last-10, shots conceded dropped further to 6.78 and shots on target conceded to 1.78."
+     },
+     {
+      "evidence_refs": [
+       "TEAM_B.blocks.long_run_away.metrics.shots_for",
+       "TEAM_B.blocks.long_run_away.metrics.shots_on_target_for"
+      ],
+      "observation": "Derby generate only 8.63 shots away (long-run away) and 2.63 shots on target away \u2014 among the lowest away attacking outputs in the dataset."
+     }
+    ],
+    "candidate_id": "C3",
+    "comparison": "SIMILAR_OPPONENT_COHORT",
+    "conditions": [
+     {
+      "dimension": "historical_venue_conditioning",
+      "value": "HOME"
+     },
+     {
+      "dimension": "competition",
+      "value": "SAME"
+     }
+    ],
+    "coverage_risk": "LOW",
+    "falsifiable_question": "Does Leeds United's shots_against and shots_on_target_against at home in Championship matches against opponents with a similar pre-fixture defensive/discipline profile to Derby County differ from Leeds' overall home Championship baseline?",
+    "falsifier": "If Leeds' shots conceded and shots on target conceded against similar-profile opponents are at or above their overall home baseline, the suppression mechanism against this opponent type is unsupported.",
+    "football_mechanism": "Leeds' home defensive structure suppresses opponent shot volume through high possession and territorial control (possession_against 38.4% at home long-run). When facing a LOW-possession away side like Derby, Leeds' defensive suppression may be even more pronounced because Derby's attacking transitions are limited by their low away possession (43.4%).",
+    "metric_perspective": "AGAINST",
+    "opponent": "TEAM_B",
+    "provider_requirements": [
+     "shots_against",
+     "shots_on_target_against",
+     "historical_venue_conditioning",
+     "competition",
+     "similar_opponent_cohort"
+    ],
+    "research_family": "DEFENSIVE_SUPPRESSION",
+    "self_critique": {
+     "cohort_equals_baseline": false,
+     "condition_equals_target": false,
+     "could_opponent_strength_explain_it": false,
+     "is_just_home_vs_away": false,
+     "is_just_recent_vs_long_run": false,
+     "is_overconditioned": false,
+     "likely_generic_enumeration_would_generate_this": false,
+     "notes": "The similar-opponent cohort is the key differentiator. Derby's specific away profile (high shots conceded, low possession) is the trigger. The question is whether Leeds suppress shots even more against this type of opponent."
+    },
+    "similar_opponent_rationale": "Derby's away profile \u2014 high goals conceded, high shots on target conceded, high shots inside box conceded, moderate fouls, moderate yellow cards \u2014 places them in a specific defensive/discipline tier. The engine's frozen 5-dimension similarity profile will identify prior Leeds home opponents with a comparable pre-fixture profile, allowing a meaningful cohort comparison.",
+    "subject": "TEAM_A",
+    "support_risk": "LOW",
+    "target_metric": [
+     "shots",
+     "shots_on_target"
+    ],
+    "window": "ALL_PRIOR"
+   },
+   {
+    "behavioral_observations": [
+     {
+      "evidence_refs": [
+       "TEAM_B.blocks.long_run_home.metrics.shots_for",
+       "TEAM_B.blocks.long_run_away.metrics.shots_for",
+       "TEAM_B.blocks.long_run_home.metrics.shots_on_target_for",
+       "TEAM_B.blocks.long_run_away.metrics.shots_on_target_for",
+       "TEAM_B.blocks.long_run_home.metrics.shots_inside_box_for",
+       "TEAM_B.blocks.long_run_away.metrics.shots_inside_box_for"
+      ],
+      "observation": "Derby's shots_for drops from a home mean of 13.89 to an away mean of 8.63 (long-run). Shots on target for drops from 4.44 (home) to 2.63 (away). Shots inside box for drops from 9.89 (home) to 6.5 (away)."
+     },
+     {
+      "evidence_refs": [
+       "TEAM_B.blocks.long_run_home.metrics.big_chances_for",
+       "TEAM_B.blocks.long_run_away.metrics.big_chances_for",
+       "TEAM_B.blocks.long_run_home.metrics.xg_for",
+       "TEAM_B.blocks.long_run_away.metrics.xg_for"
+      ],
+      "observation": "Derby's big_chances_for drops from 2.875 at home to 1.0 away (long-run), and xg_for drops from 1.514 at home to 0.71 away \u2014 a large quality gap between home and away attacking output."
+     }
+    ],
+    "candidate_id": "C4",
+    "comparison": "SUBJECT_VENUE_BASELINE",
+    "conditions": [
+     {
+      "dimension": "competition",
+      "value": "SAME"
+     }
+    ],
+    "coverage_risk": "LOW",
+    "falsifiable_question": "Does Derby County's shots_for, shots_on_target_for, and shots_inside_box_for in away Championship matches differ systematically from their home Championship baseline?",
+    "falsifier": "If Derby's shot metrics away are at or above their home baseline, the venue effect on their attacking output is unsupported.",
+    "football_mechanism": "Derby's attacking output is strongly venue-dependent. Away from home, they cede possession (43.4% away), generate fewer final-third entries (47.6 away vs 54.0 home), and produce fewer shots from inside the box. This suggests their attacking system relies on home conditions (crowd, familiarity, opponent pressing less) to function effectively.",
+    "metric_perspective": "FOR",
+    "opponent": "TEAM_A",
+    "provider_requirements": [
+     "shots_for",
+     "shots_on_target_for",
+     "shots_inside_box_for",
+     "historical_venue_conditioning",
+     "competition"
+    ],
+    "research_family": "VENUE_EFFECT",
+    "self_critique": {
+     "cohort_equals_baseline": false,
+     "condition_equals_target": false,
+     "could_opponent_strength_explain_it": true,
+     "is_just_home_vs_away": true,
+     "is_just_recent_vs_long_run": false,
+     "is_overconditioned": false,
+     "likely_generic_enumeration_would_generate_this": true,
+     "notes": "This is fundamentally a home vs away question and blind enumeration would generate it. However, the magnitude of the gap (shots 13.89 vs 8.63, big chances 2.875 vs 1.0) is large enough to be worth confirming. Opponent strength could explain some of it. Retaining because the gap is large and directly relevant to the matchup."
+    },
+    "subject": "TEAM_B",
+    "support_risk": "LOW",
+    "target_metric": [
+     "shots",
+     "shots_on_target",
+     "shots_inside_box"
+    ],
+    "window": "ALL_PRIOR"
+   },
+   {
+    "behavioral_observations": [
+     {
+      "evidence_refs": [
+       "TEAM_A.blocks.long_run_home.metrics.possession_for",
+       "TEAM_A.blocks.recent_last_10.metrics.possession_for",
+       "TEAM_A.blocks.recent_last_5.metrics.possession_for",
+       "TEAM_A.blocks.long_run_home.metrics.final_third_entries_for",
+       "TEAM_A.blocks.recent_last_10.metrics.final_third_entries_for",
+       "TEAM_A.blocks.recent_last_5.metrics.final_third_entries_for"
+      ],
+      "observation": "Leeds' possession_for at home long-run is 61.6%, rising to 66.4% in last-10 and 73.0% in last-5. Final third entries for rose from 60.5 (home long-run) to 65.6 (last-10) and 66.75 (last-5)."
+     },
+     {
+      "evidence_refs": [
+       "TEAM_B.blocks.long_run_all.metrics.possession_against",
+       "TEAM_B.blocks.long_run_away.metrics.possession_against"
+      ],
+      "observation": "Derby's possession_against long-run all is 57.0% and away is 56.6% \u2014 Derby consistently cede possession regardless of venue, making them a LOW-possession opponent."
+     }
+    ],
+    "candidate_id": "C5",
+    "comparison": "OPPONENT_PROFILE_INTERACTION",
+    "conditions": [
+     {
+      "dimension": "historical_venue_conditioning",
+      "value": "HOME"
+     },
+     {
+      "axis": "possession_for",
+      "dimension": "opponent_profile",
+      "value": "LOW"
+     },
+     {
+      "dimension": "competition",
+      "value": "SAME"
+     }
+    ],
+    "coverage_risk": "LOW",
+    "falsifiable_question": "Does Leeds United's possession_for and final_third_entries_for at home in Championship matches against LOW-possession opponents exceed their overall home Championship baseline?",
+    "falsifier": "If Leeds' possession and final-third entries against LOW-possession opponents are at or below their overall home baseline, the opponent-profile interaction on territorial dominance is unsupported.",
+    "football_mechanism": "When Leeds face opponents who structurally cede possession (LOW possession-holding profile), Leeds' own possession and territorial dominance may be amplified beyond their baseline because the opponent does not contest midfield control. Derby's away possession profile (43.4% for, 56.6% against) makes them a natural fit for this mechanism.",
+    "metric_perspective": "FOR",
+    "opponent": "TEAM_B",
+    "provider_requirements": [
+     "possession_for",
+     "final_third_entries_for",
+     "historical_venue_conditioning",
+     "opponent_profile",
+     "competition"
+    ],
+    "research_family": "TEMPO_AND_TERRITORY",
+    "self_critique": {
+     "cohort_equals_baseline": false,
+     "condition_equals_target": false,
+     "could_opponent_strength_explain_it": false,
+     "is_just_home_vs_away": false,
+     "is_just_recent_vs_long_run": false,
+     "is_overconditioned": false,
+     "likely_generic_enumeration_would_generate_this": false,
+     "notes": "The opponent profile condition (LOW possession) is the key differentiator and is directly motivated by Derby's measured away possession profile. The mechanism is specific: opponent possession style interacts with Leeds' territorial dominance."
+    },
+    "subject": "TEAM_A",
+    "support_risk": "LOW",
+    "target_metric": [
+     "possession",
+     "final_third_entries"
+    ],
+    "window": "ALL_PRIOR"
+   },
+   {
+    "behavioral_observations": [
+     {
+      "evidence_refs": [
+       "TEAM_B.blocks.long_run_away.metrics.shots_inside_box_against",
+       "TEAM_B.blocks.long_run_home.metrics.shots_inside_box_against",
+       "TEAM_B.blocks.long_run_away.metrics.big_chances_against",
+       "TEAM_B.blocks.long_run_home.metrics.big_chances_against"
+      ],
+      "observation": "Derby concede 7.75 shots inside box away (long-run away) and 2.57 big chances away (long-run away) \u2014 both elevated relative to their home figures (6.22 and 1.625 respectively)."
+     },
+     {
+      "evidence_refs": [
+       "TEAM_B.blocks.long_run_away.metrics.final_third_entries_against"
+      ],
+      "observation": "Derby's final_third_entries_against away is 57.88 (long-run away) \u2014 opponents consistently penetrate Derby's defensive third at a high rate when Derby are away."
+     },
+     {
+      "evidence_refs": [
+       "TEAM_A.blocks.long_run_home.metrics.shots_inside_box_for",
+       "TEAM_A.blocks.long_run_home.metrics.big_chances_for"
+      ],
+      "observation": "Leeds generate 12.25 shots inside box at home (long-run) and 3.16 big chances at home (long-run) \u2014 a high-quality attacking profile that directly confronts Derby's away defensive weakness."
+     }
+    ],
+    "candidate_id": "C6",
+    "comparison": "SUBJECT_VENUE_BASELINE",
+    "conditions": [
+     {
+      "dimension": "competition",
+      "value": "SAME"
+     }
+    ],
+    "coverage_risk": "LOW",
+    "falsifiable_question": "Does Derby County's shots_inside_box_against and big_chances_against in away Championship matches exceed their home Championship baseline?",
+    "falsifier": "If Derby's shots inside box conceded and big chances conceded away are at or below their home baseline, the away defensive vulnerability in box exposure is unsupported.",
+    "football_mechanism": "Derby's away defensive structure allows more box penetration and big chances than their home structure. When facing a high-volume, high-quality home attacker like Leeds, the combination of Derby's away defensive vulnerability and Leeds' home attacking quality may produce an elevated rate of shots inside box and big chances conceded.",
+    "metric_perspective": "AGAINST",
+    "opponent": "TEAM_A",
+    "provider_requirements": [
+     "shots_inside_box_against",
+     "big_chances_against",
+     "historical_venue_conditioning",
+     "competition"
+    ],
+    "research_family": "DEFENSIVE_CONCESSION",
+    "self_critique": {
+     "cohort_equals_baseline": false,
+     "condition_equals_target": false,
+     "could_opponent_strength_explain_it": true,
+     "is_just_home_vs_away": true,
+     "is_just_recent_vs_long_run": false,
+     "is_overconditioned": false,
+     "likely_generic_enumeration_would_generate_this": true,
+     "notes": "Again a home vs away question. The gap in big_chances_against (2.57 away vs 1.625 home) and shots_inside_box_against (7.75 vs 6.22) is meaningful. Opponent strength is a real confound. Retaining because the gap is directly relevant to the Leeds attack interaction."
+    },
+    "subject": "TEAM_B",
+    "support_risk": "LOW",
+    "target_metric": [
+     "shots_inside_box",
+     "big_chances"
+    ],
+    "window": "ALL_PRIOR"
+   },
+   {
+    "behavioral_observations": [
+     {
+      "evidence_refs": [
+       "TEAM_B.blocks.long_run_all.metrics.fouls_for",
+       "TEAM_B.blocks.long_run_away.metrics.fouls_for",
+       "TEAM_B.blocks.long_run_all.metrics.yellow_cards_for",
+       "TEAM_B.blocks.long_run_away.metrics.yellow_cards_for",
+       "TEAM_B.blocks.long_run_all.metrics.fouls_against"
+      ],
+      "observation": "Derby commit 12.82 fouls per match long-run all and 12.5 away (long-run away), and accumulate 2.35 yellow cards long-run all and 2.5 away. Their fouls_for is consistently higher than their fouls_against (9.29 long-run all)."
+     },
+     {
+      "evidence_refs": [
+       "TEAM_B.blocks.recent_last_5.metrics.fouls_for",
+       "TEAM_B.blocks.recent_last_5.metrics.yellow_cards_for"
+      ],
+      "observation": "Derby's recent last-5 fouls_for is 13.5 and yellow_cards_for is 2.75 \u2014 both above their long-run averages, suggesting a recent uptick in disciplinary activity."
+     },
+     {
+      "evidence_refs": [
+       "TEAM_A.blocks.long_run_home.metrics.fouls_against"
+      ],
+      "observation": "Leeds draw 13.09 fouls against at home (long-run home) \u2014 opponents foul Leeds frequently at home, consistent with Leeds' high possession and pressing style forcing defensive fouls."
+     }
+    ],
+    "candidate_id": "C7",
+    "comparison": "OPPONENT_PROFILE_INTERACTION",
+    "conditions": [
+     {
+      "dimension": "historical_venue_conditioning",
+      "value": "AWAY"
+     },
+     {
+      "axis": "possession_for",
+      "dimension": "opponent_profile",
+      "value": "HIGH"
+     },
+     {
+      "dimension": "competition",
+      "value": "SAME"
+     }
+    ],
+    "coverage_risk": "LOW",
+    "falsifiable_question": "Does Derby County's fouls_for and yellow_cards_for in away Championship matches against HIGH-possession opponents exceed their overall away Championship baseline?",
+    "falsifier": "If Derby's fouls and yellow cards away against HIGH-possession opponents are at or below their overall away baseline, the opponent-possession interaction on Derby's discipline is unsupported.",
+    "football_mechanism": "Derby's structural tendency to commit more fouls than they draw (12.82 vs 9.29 long-run) combined with Leeds' home possession dominance (which forces opponents into defensive fouls) may produce elevated foul and card counts. When Derby face HIGH-possession opponents, their foul rate may increase further as they attempt to disrupt play.",
+    "metric_perspective": "FOR",
+    "opponent": "TEAM_A",
+    "provider_requirements": [
+     "fouls_for",
+     "yellow_cards_for",
+     "historical_venue_conditioning",
+     "opponent_profile",
+     "competition"
+    ],
+    "research_family": "DISCIPLINE",
+    "self_critique": {
+     "cohort_equals_baseline": false,
+     "condition_equals_target": false,
+     "could_opponent_strength_explain_it": false,
+     "is_just_home_vs_away": false,
+     "is_just_recent_vs_long_run": false,
+     "is_overconditioned": false,
+     "likely_generic_enumeration_would_generate_this": false,
+     "notes": "The opponent profile condition (HIGH possession) is directly motivated by Leeds' measured home possession profile. Derby's structural foul asymmetry (more fouls committed than drawn) is the behavioural anchor. Coverage risk is LOW given Derby only have 9 away matches, but the question is well-grounded."
+    },
+    "subject": "TEAM_B",
+    "support_risk": "LOW",
+    "target_metric": [
+     "fouls",
+     "yellow_cards"
+    ],
+    "window": "ALL_PRIOR"
+   },
+   {
+    "behavioral_observations": [
+     {
+      "evidence_refs": [
+       "TEAM_A.blocks.long_run_home.metrics.xg_for",
+       "TEAM_A.blocks.long_run_home.metrics.big_chances_for"
+      ],
+      "observation": "Leeds' xg_for at home long-run is 1.944 and big_chances_for at home long-run is 3.161. Against opponents with a HIGH shots-inside-box-conceded profile, these quality metrics may be further elevated."
+     },
+     {
+      "evidence_refs": [
+       "TEAM_B.blocks.long_run_away.metrics.shots_inside_box_against",
+       "TEAM_B.blocks.long_run_away.metrics.big_chances_against"
+      ],
+      "observation": "Derby concede 7.75 shots inside box away and 2.57 big chances away (long-run away), placing them as a HIGH shots-inside-box-conceded opponent away from home."
+     },
+     {
+      "evidence_refs": [
+       "TEAM_A.blocks.recent_last_5.metrics.xg_for",
+       "TEAM_A.blocks.recent_last_5.metrics.big_chances_for",
+       "TEAM_A.blocks.long_run_home.metrics.xg_for"
+      ],
+      "observation": "Leeds' xg_for in recent last-5 is 1.5625 (slightly below home long-run of 1.944) while big_chances_for last-5 is 2.667 \u2014 quality metrics have not risen with the volume surge, creating a tension worth investigating against a specific opponent type."
+     }
+    ],
+    "candidate_id": "C8",
+    "comparison": "OPPONENT_PROFILE_INTERACTION",
+    "conditions": [
+     {
+      "dimension": "historical_venue_conditioning",
+      "value": "HOME"
+     },
+     {
+      "axis": "shots_inside_box_conceded_per_match",
+      "dimension": "opponent_profile",
+      "value": "HIGH"
+     },
+     {
+      "dimension": "competition",
+      "value": "SAME"
+     }
+    ],
+    "coverage_risk": "LOW",
+    "falsifiable_question": "Does Leeds United's xg_for and big_chances_for at home in Championship matches against opponents with a HIGH shots-inside-box-conceded profile exceed their overall home Championship baseline?",
+    "falsifier": "If Leeds' xg_for and big_chances_for against HIGH shots-inside-box-conceded opponents are at or below their overall home baseline, the quality amplification mechanism is unsupported.",
+    "football_mechanism": "Leeds generate high shot volume at home but their xg and big chances have not risen proportionally in recent matches (xg 1.56 last-5 vs 1.94 home long-run), suggesting some shots are lower quality. Against opponents who concede high rates of shots inside the box (HIGH profile), Leeds may convert more of their volume into genuine big chances because the opponent's defensive shape allows more central penetration.",
+    "metric_perspective": "FOR",
+    "opponent": "TEAM_B",
+    "provider_requirements": [
+     "xg_for",
+     "big_chances_for",
+     "historical_venue_conditioning",
+     "opponent_profile",
+     "competition"
+    ],
+    "research_family": "ATTACK_QUALITY",
+    "self_critique": {
+     "cohort_equals_baseline": false,
+     "condition_equals_target": false,
+     "could_opponent_strength_explain_it": false,
+     "is_just_home_vs_away": false,
+     "is_just_recent_vs_long_run": false,
+     "is_overconditioned": false,
+     "likely_generic_enumeration_would_generate_this": false,
+     "notes": "The opponent profile axis (shots_inside_box_conceded_per_match) is one of the frozen similarity dimensions and is directly motivated by Derby's measured away profile. The tension between Leeds' volume surge and flat quality metrics is the specific behavioural anchor. xg is SUPPORTED_PARTIAL but coverage is 98.4% home, acceptable."
+    },
+    "subject": "TEAM_A",
+    "support_risk": "LOW",
+    "target_metric": [
+     "xg",
+     "big_chances"
+    ],
+    "window": "ALL_PRIOR"
+   }
+  ],
+  "fixture_id": "mt_408756224",
+  "interaction_map": {
+   "a_attack_vs_b_defense": [
+    "Leeds' high home shot volume (17.34 long-run, 17.78 recent-10) meets Derby's high shots-conceded rate away (12.63 long-run away), creating a strong volume interaction favouring Leeds attack.",
+    "Leeds' recent corner surge (9.25 last-5 home) meets Derby's high corners-conceded rate away (5.63 long-run away) \u2014 set-piece generation could be elevated.",
+    "Leeds' dominant possession (73% last-5) meets Derby's tendency to cede possession (57% against long-run) \u2014 the possession asymmetry is extreme and may amplify Leeds' territorial metrics.",
+    "Leeds' shots inside box (12.25 home long-run) vs Derby's shots inside box conceded away (7.75) \u2014 Derby's box exposure away is high and Leeds' box shot generation is high, a direct quality interaction.",
+    "Leeds' accurate crosses (7.0 last-5) vs Derby's clearances away (23.38) \u2014 Derby defend with volume clearances, which may suppress crossing conversion but not crossing volume."
+   ],
+   "asymmetries": [
+    "Derby show a strong home/away asymmetry in attack: shots_for home 13.89 vs away 8.63, big_chances_for home 2.875 vs away 1.0 \u2014 Derby are a materially different attacking team away from home.",
+    "Leeds show a strong home/away asymmetry in corners: home mean 7.41 vs away mean 5.19 \u2014 Leeds' set-piece generation is venue-dependent.",
+    "Leeds' clearances_against (opponent clearances) spiked to 39.25 in last-5 vs long-run home mean 21.84 \u2014 recent opponents are making far more clearances against Leeds at home, suggesting Leeds are creating more sustained pressure."
+   ],
+   "b_attack_vs_a_defense": [
+    "Derby's away shot output (8.63 long-run away) meets Leeds' low shots conceded at home (7.44 long-run home) \u2014 Derby will likely be suppressed in shot volume.",
+    "Derby's away shots on target (2.63 long-run away) meets Leeds' very low shots on target conceded at home (2.44 long-run home) \u2014 Derby's on-target threat away is minimal against Leeds' home defensive record.",
+    "Derby's away big chances (1.0 long-run away) vs Leeds' big chances conceded at home (1.0 long-run home) \u2014 both are low, suggesting Derby will struggle to create quality chances.",
+    "Derby's away possession (43.4%) vs Leeds' home possession dominance (61.6%) \u2014 Derby will be in a low-possession, defensive posture, limiting their attacking opportunities."
+   ],
+   "regime_changes": [
+    "Leeds' possession_for has jumped from 59.8% long-run to 73.0% in last-5, and final_third_entries_for from 56.7 long-run to 66.75 last-5 \u2014 a clear recent regime shift toward extreme territorial dominance.",
+    "Leeds' corner_kicks_for has risen from 6.32 long-run to 9.25 last-5 \u2014 a structural change in set-piece generation in recent matches.",
+    "Derby's recent last-5 xg_for rose to 1.695 vs long-run all mean 1.136 \u2014 a recent improvement in expected goal creation, though this may reflect easier opponents."
+   ],
+   "tensions": [
+    "Leeds' recent blocked_shots_for has risen (6.75 last-5 vs 5.63 home long-run) while shots_on_target_for has also risen (6.5 last-5 vs 6.0 home long-run) \u2014 volume is high but so is blocking, creating a tension between shot quality and defensive resistance.",
+    "Derby's recent last-5 saves_for dropped to 0.75 (vs long-run all mean 2.59) while shots_against also dropped to 7.25 \u2014 Derby's goalkeeper is being tested less recently, but this is against a different opponent mix."
+   ]
+  },
+  "reconnaissance": {
+   "team_a_attack": [
+    "Leeds generate high shot volume: long-run all mean 15.46 shots_for, rising to 17.78 in last 10 and 17.0 in last 5. Home long-run mean is 17.34, confirming a strong home attacking output.",
+    "Shots on target for: long-run home mean 6.0, recent last-5 mean 6.5 \u2014 above the long-run all mean of 5.38, suggesting on-target accuracy has held or improved recently.",
+    "Shots inside box for: long-run home mean 12.25, recent last-10 mean 11.89 \u2014 Leeds consistently generate a high proportion of their shots from inside the box at home.",
+    "Corner kicks for: long-run home mean 7.41, recent last-10 mean 7.78, recent last-5 mean 9.25 \u2014 corner generation has accelerated sharply in the most recent matches.",
+    "Accurate crosses for: long-run home mean 4.81, recent last-5 mean 7.0 \u2014 a notable recent spike in crossing accuracy at home.",
+    "Possession for: long-run home mean 61.6%, recent last-5 mean 73.0% \u2014 Leeds have been dominating possession to an extreme degree in recent matches.",
+    "Final third entries for: long-run home mean 60.5, recent last-10 mean 65.6, recent last-5 mean 66.75 \u2014 territorial dominance is increasing in recent games.",
+    "Blocked shots for: long-run home mean 5.63, recent last-5 mean 6.75 \u2014 opponents are blocking more of Leeds' shots recently, possibly reflecting defensive resistance against their volume."
+   ],
+   "team_a_defense": [
+    "Shots conceded (against): long-run all mean 8.71, home mean 7.44, recent last-10 mean 6.78, recent last-5 mean 7.25 \u2014 Leeds concede relatively few shots, especially at home.",
+    "Shots on target conceded: long-run home mean 2.44, recent last-10 mean 1.78, recent last-5 mean 2.25 \u2014 very low shots on target conceded, particularly in recent matches.",
+    "Clearances for (defensive): long-run home mean 13.28, but recent last-5 mean 15.5 \u2014 clearances have risen slightly, possibly reflecting more defensive pressure in recent games.",
+    "Clearances against (opponent clearances): long-run all mean 21.06, recent last-5 mean 39.25 \u2014 a dramatic spike in opponent clearances in the last 5 matches, suggesting Leeds are creating more pressure that is being cleared.",
+    "Saves for (goalkeeper saves): long-run home mean 1.69, recent last-5 mean 1.5 \u2014 Leeds' goalkeeper is rarely tested at home.",
+    "Fouls against (fouls conceded by opponent): long-run home mean 13.09, recent last-5 mean 11.25 \u2014 opponents foul Leeds slightly less in recent matches.",
+    "Yellow cards against (opponent cards): long-run home mean 3.06, recent last-5 mean 2.0 \u2014 opponent card rate has dropped recently at home."
+   ],
+   "team_b_attack": [
+    "Derby shot volume is modest: long-run all mean 11.41 shots_for, recent last-10 mean 12.11, recent last-5 mean 13.5 \u2014 a recent uptick but still below Leeds' output.",
+    "Shots on target for: long-run all mean 3.59, recent last-10 mean 3.56, recent last-5 mean 4.0 \u2014 modest and relatively stable.",
+    "Shots inside box for: long-run all mean 8.29, recent last-5 mean 10.0 \u2014 recent improvement in box penetration.",
+    "Away shots for: long-run away mean 8.63 \u2014 Derby generate notably fewer shots away from home (vs 13.89 at home), a significant venue asymmetry.",
+    "Away shots on target for: long-run away mean 2.63 \u2014 very low away on-target output.",
+    "Away big chances for: long-run away mean 1.0 vs home mean 2.875 \u2014 Derby create far fewer big chances away.",
+    "Accurate crosses for: long-run all mean 5.47, recent last-5 mean 6.25 \u2014 crossing output is reasonable and recently elevated.",
+    "Final third entries for: long-run all mean 51.0, away mean 47.63 \u2014 Derby's territorial penetration drops away from home."
+   ],
+   "team_b_defense": [
+    "Shots conceded (against): long-run all mean 11.35, away mean 12.63 \u2014 Derby concede a high volume of shots, especially away.",
+    "Shots on target conceded: long-run all mean 3.82, away mean 4.25 \u2014 Derby concede more shots on target away than at home (home mean 3.44).",
+    "Shots inside box conceded: long-run all mean 6.94, away mean 7.75 \u2014 high box exposure away from home.",
+    "Big chances conceded: long-run all mean 2.07, away mean 2.57 \u2014 Derby concede more big chances away.",
+    "Final third entries against: long-run all mean 56.88, away mean 57.88 \u2014 opponents consistently penetrate Derby's final third at a high rate.",
+    "Clearances for: long-run all mean 21.06, away mean 23.38 \u2014 Derby make many clearances, consistent with defending under pressure.",
+    "Possession against: long-run all mean 57.0%, away mean 56.6% \u2014 Derby consistently cede possession regardless of venue.",
+    "Saves for: long-run away mean 2.5 vs home mean 2.67 \u2014 Derby's goalkeeper is regularly tested."
+   ]
+  }
+ },
+ "temperature": 0.0
+}

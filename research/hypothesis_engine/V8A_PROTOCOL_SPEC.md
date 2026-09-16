@@ -193,14 +193,22 @@ answered from **structural evidence only**. Fixed here, before any call:
 
 **YES** requires all four, at N = 12 fixtures:
 
-1. **Measurability** — Arm B measurable rate ≥ **60%** of schema-valid candidates, and
-   materially above **Arm A's rate measured by this same pipeline on these same fixtures**.
+1. **Measurability** — Arm B measurable rate ≥ **60%** of schema-valid candidates.
+   This is an **absolute bar**. Arm A's rate is reported descriptively alongside it and is
+   **not** part of the threshold.
 
-   *The internal A-vs-B contrast is the only clean one and is the one that counts.* V7.1's
-   38.6% figure is **not** used as a threshold here and is not directly comparable: it was
-   produced by a different pipeline (the V7.1 compiler and its evaluability gate, applied to
-   V6.1's hypotheses on V6.1's fixtures). Quoting it as though it were the same measurement
-   would be exactly the kind of overstatement this project has had to correct before.
+   *Why the comparative clause was dropped (decided before any rate was scored).* This
+   design runs one call per fixture per arm, and `v6_selfnoise_v1` records that four
+   byte-identical requests at temperature 0.0 produced qualified rates of
+   0.75 / 0.00 / 0.70 / 0.00 — a pooled within-cell SD of 0.363. At N = 12 with one call
+   per cell, a small A-vs-B gap is inside documented generator self-noise and cannot be
+   adjudicated. An undefined "materially above" would have invited exactly that
+   over-reading.
+
+   V7.1's 38.6% figure is likewise **not** a threshold and is not directly comparable: it
+   came from a different pipeline (the V7.1 compiler and its evaluability gate, on V6.1's
+   hypotheses and fixtures). Quoting it as the same measurement would be the kind of
+   overstatement this project has had to correct before.
 2. **Non-degeneracy** — Arm B produces ≥ **1 INCREMENTAL_STRUCTURE** candidate that is also
    measurable and firewall-clean, i.e. the protocol can reach outside enumeration at all.
 3. **Grounding** — Arm B hallucinated-evidence-reference rate ≤ **5%** of cited refs, and

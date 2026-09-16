@@ -1,0 +1,498 @@
+{
+ "arm": "B",
+ "elapsed_s": 113.6,
+ "error": null,
+ "fixture_id": "mt_257078632",
+ "max_tokens": 24576,
+ "model_id": "us.anthropic.claude-sonnet-4-6",
+ "pass": 1,
+ "prompt_version": "v8a_prompt_v1",
+ "provenance": {
+  "input_tokens": 41028,
+  "output_tokens": 10151,
+  "request_sha256": "48b860f742b11d981e10d435e46e7bd9e7a1f8c54ba812bac62fdeeb41eadc52",
+  "resolved_model_id": "us.anthropic.claude-sonnet-4-6",
+  "response_sha256": "30d1b4635f6728b2c31eb79889ce2ae3edc6356b88f80b84db7095ca30c8be23",
+  "stop_reason": "tool_use"
+ },
+ "record_sha256": "e905c184cd7c71b6fcc5538e9c2a9caafd0bb26bb037bbf6076c8b1e78cef308",
+ "response": {
+  "candidates": [
+   {
+    "behavioral_observations": [
+     {
+      "evidence_refs": [
+       "TEAM_A.blocks.long_run_all.shots_inside_box_for",
+       "TEAM_A.blocks.recent_last_5.shots_inside_box_for",
+       "TEAM_A.blocks.long_run_all.touches_in_penalty_area_for",
+       "TEAM_A.blocks.recent_last_5.touches_in_penalty_area_for"
+      ],
+      "observation": "Athletic Club's shots inside the box have risen from a long-run average of 7.73/match to 10.2/match in the last 5, and touches in penalty area from 20.47 to 25.0 in the same window \u2014 a measurable recent surge in box penetration."
+     },
+     {
+      "evidence_refs": [
+       "TEAM_B.blocks.long_run_all.touches_in_penalty_area_against",
+       "TEAM_B.blocks.long_run_away.touches_in_penalty_area_against",
+       "TEAM_B.blocks.long_run_all.shots_inside_box_against"
+      ],
+      "observation": "Real Madrid concede only 17.21 touches in penalty area per match long-run (17.5 away), and 5.79 shots inside box against long-run \u2014 substantially below Athletic's recent output levels."
+     }
+    ],
+    "candidate_id": "C1",
+    "comparison": "SIMILAR_OPPONENT_COHORT",
+    "conditions": [
+     {
+      "dimension": "historical_venue_conditioning",
+      "value": "HOME"
+     }
+    ],
+    "coverage_risk": "LOW",
+    "falsifiable_question": "When Athletic Club play at home against opponents whose defensive profile (goals conceded, shots on target conceded, shots inside box conceded, fouls committed, yellow cards) is similar to Real Madrid's, do Athletic's shots_inside_box and touches_in_penalty_area FOR differ from their overall home baseline?",
+    "falsifier": "If Athletic's shots_inside_box and touches_in_penalty_area FOR against similar-profile opponents are not systematically different from their overall home baseline, the mechanism is unsupported.",
+    "football_mechanism": "When a high-possession, high-volume attacking side faces a defensively compact opponent that suppresses box entries, the attacker's box penetration metrics are compressed by the opponent's defensive shape rather than the attacker's own capability. Measuring Athletic's box penetration against opponents with a similar defensive suppression profile to Real Madrid tests whether Athletic's recent surge is robust to this type of opponent.",
+    "metric_perspective": "FOR",
+    "opponent": "TEAM_B",
+    "provider_requirements": [
+     "shots_inside_box",
+     "touches_in_penalty_area"
+    ],
+    "research_family": "ATTACK_VOLUME",
+    "self_critique": {
+     "cohort_equals_baseline": false,
+     "condition_equals_target": false,
+     "could_opponent_strength_explain_it": true,
+     "is_just_home_vs_away": false,
+     "is_just_recent_vs_long_run": false,
+     "is_overconditioned": false,
+     "likely_generic_enumeration_would_generate_this": false,
+     "notes": "Opponent strength could explain reduced box penetration \u2014 but that is precisely the mechanism being tested. The similar-opponent cohort isolates this. The home condition is appropriate since Athletic play at home."
+    },
+    "similar_opponent_rationale": "Real Madrid's defensive profile \u2014 low goals conceded, low shots on target conceded, low shots inside box conceded, low fouls committed \u2014 is a specific suppressive type. Athletic's box penetration against opponents sharing this profile is the relevant cohort to test whether their recent surge holds against such defenses.",
+    "subject": "TEAM_A",
+    "support_risk": "LOW",
+    "target_metric": [
+     "shots_inside_box",
+     "touches_in_penalty_area"
+    ],
+    "window": "W10"
+   },
+   {
+    "behavioral_observations": [
+     {
+      "evidence_refs": [
+       "TEAM_A.blocks.long_run_all.corner_kicks_for",
+       "TEAM_A.blocks.recent_last_5.corner_kicks_for",
+       "TEAM_A.blocks.long_run_home.corner_kicks_for"
+      ],
+      "observation": "Athletic Club's corner kicks generated have risen from a long-run average of 5.13/match to 7.2/match in the last 5 \u2014 a 40% increase. At home long-run the average is 4.25/match, making the recent surge even more pronounced relative to the home baseline."
+     },
+     {
+      "evidence_refs": [
+       "TEAM_B.blocks.long_run_all.corner_kicks_against",
+       "TEAM_B.blocks.recent_last_5.corner_kicks_against"
+      ],
+      "observation": "Real Madrid concede only 3.4 corners/match in the last 5 and 4.21 long-run \u2014 below the league average, suggesting they suppress corner generation by opponents."
+     }
+    ],
+    "candidate_id": "C2",
+    "comparison": "SUBJECT_RECENT_VS_LONG_BASELINE",
+    "conditions": [
+     {
+      "dimension": "historical_venue_conditioning",
+      "value": "HOME"
+     }
+    ],
+    "coverage_risk": "LOW",
+    "falsifiable_question": "Is Athletic Club's corner_kicks FOR in the last 5 home matches systematically higher than their long-run home baseline, and does this hold when conditioned on home venue?",
+    "falsifier": "If Athletic's corner_kicks FOR in the last 5 home matches is not higher than their long-run home baseline, the recent surge is not a home-specific phenomenon.",
+    "football_mechanism": "Corner generation is partly a function of the opponent's defensive shape: a deep-block, high-clearance defense deflects more shots wide and forces more corners, while a high-line pressing defense may suppress corners by winning the ball higher up. Real Madrid's low clearance count (13.14/match) and low corners conceded suggest they do not defend deep, which may suppress Athletic's corner generation relative to their recent surge against lower-block opponents.",
+    "metric_perspective": "FOR",
+    "opponent": "TEAM_B",
+    "provider_requirements": [
+     "corner_kicks"
+    ],
+    "research_family": "SET_PIECE_GENERATION",
+    "self_critique": {
+     "cohort_equals_baseline": false,
+     "condition_equals_target": false,
+     "could_opponent_strength_explain_it": true,
+     "is_just_home_vs_away": false,
+     "is_just_recent_vs_long_run": true,
+     "is_overconditioned": false,
+     "likely_generic_enumeration_would_generate_this": true,
+     "notes": "This is essentially a recent vs long-run question with a home condition. The self-critique flags it as potentially too simple. Discarding in favour of a more specific opponent-profile question."
+    },
+    "subject": "TEAM_A",
+    "support_risk": "LOW",
+    "target_metric": [
+     "corner_kicks"
+    ],
+    "window": "W5"
+   },
+   {
+    "behavioral_observations": [
+     {
+      "evidence_refs": [
+       "TEAM_A.blocks.long_run_home.big_chances_against",
+       "TEAM_A.blocks.long_run_home.shots_on_target_against",
+       "TEAM_B.blocks.long_run_all.big_chances_for",
+       "TEAM_B.blocks.recent_last_5.big_chances_for",
+       "TEAM_B.blocks.long_run_all.shots_on_target_for"
+      ],
+      "observation": "Athletic Club concede only 1.13 big chances/match at home (long-run) and 2.25 shots on target against at home. Real Madrid create 3.29 big chances/match long-run (4.2 last 5) and 6.21 shots on target for long-run \u2014 far above what Athletic typically concede at home."
+     },
+     {
+      "evidence_refs": [
+       "TEAM_B.blocks.long_run_all.touches_in_penalty_area_for",
+       "TEAM_B.blocks.long_run_away.touches_in_penalty_area_for",
+       "TEAM_A.blocks.long_run_home.touches_in_penalty_area_against"
+      ],
+      "observation": "Real Madrid's touches in penalty area FOR average 34.86 long-run (32.83 away), while Athletic concede only 13.88 touches in penalty area at home long-run. This is a gap of roughly 19 touches per match."
+     }
+    ],
+    "candidate_id": "C3",
+    "comparison": "SIMILAR_OPPONENT_COHORT",
+    "conditions": [
+     {
+      "dimension": "historical_venue_conditioning",
+      "value": "HOME"
+     }
+    ],
+    "coverage_risk": "LOW",
+    "falsifiable_question": "When Athletic Club play at home against opponents whose attacking profile (goals scored, shots on target, shots inside box, fouls committed, yellow cards) is similar to Real Madrid's, do Athletic's big_chances, touches_in_penalty_area and shots_on_target AGAINST differ from their overall home baseline?",
+    "falsifier": "If Athletic's big_chances, touches_in_penalty_area and shots_on_target AGAINST similar-profile opponents are not systematically higher than their overall home baseline, the mechanism is unsupported.",
+    "football_mechanism": "When a high-possession, high-volume attacking side (Real Madrid) faces a defensively organised home side (Athletic), the question is whether Athletic's home defensive suppression \u2014 which holds opponents to low big chances and low shots on target \u2014 is maintained against opponents with Real Madrid's attacking profile. The mechanism is whether Athletic's defensive structure can compress Real Madrid's penalty area activity to levels consistent with their home baseline.",
+    "metric_perspective": "AGAINST",
+    "opponent": "TEAM_B",
+    "provider_requirements": [
+     "big_chances",
+     "touches_in_penalty_area",
+     "shots_on_target"
+    ],
+    "research_family": "DEFENSIVE_CONCESSION",
+    "self_critique": {
+     "cohort_equals_baseline": false,
+     "condition_equals_target": false,
+     "could_opponent_strength_explain_it": true,
+     "is_just_home_vs_away": false,
+     "is_just_recent_vs_long_run": false,
+     "is_overconditioned": false,
+     "likely_generic_enumeration_would_generate_this": false,
+     "notes": "Opponent strength is the mechanism here, not a confound. The similar-opponent cohort is the right tool. The frozen similarity dimensions include goals_conceded_per_match and shots_on_target_conceded \u2014 these are the opponent's defensive profile, not attacking. The engine uses the opponent's defensive/discipline profile for similarity. Real Madrid's defensive profile (low goals conceded, low SoT conceded) means the cohort will be high-quality opponents. This is appropriate."
+    },
+    "similar_opponent_rationale": "Real Madrid's attacking profile \u2014 high goals, high shots on target, high shots inside box \u2014 is a specific high-output type. Athletic's defensive concession against opponents sharing this profile tests whether their home defensive suppression holds against elite attacking sides.",
+    "subject": "TEAM_A",
+    "support_risk": "LOW",
+    "target_metric": [
+     "big_chances",
+     "touches_in_penalty_area",
+     "shots_on_target"
+    ],
+    "window": "W10"
+   },
+   {
+    "behavioral_observations": [
+     {
+      "evidence_refs": [
+       "TEAM_B.blocks.long_run_all.fouls_against",
+       "TEAM_B.blocks.recent_last_5.fouls_against",
+       "TEAM_B.blocks.long_run_all.yellow_cards_against",
+       "TEAM_B.blocks.recent_last_5.yellow_cards_against"
+      ],
+      "observation": "Fouls committed against Real Madrid (i.e. fouls Real Madrid draw) average 14.29/match long-run, rising sharply to 18.4/match in the last 5. Yellow cards shown to Real Madrid's opponents rose from 2.14 (long-run) to 3.4 (last 5)."
+     },
+     {
+      "evidence_refs": [
+       "TEAM_A.blocks.long_run_all.fouls_for",
+       "TEAM_A.blocks.recent_last_5.fouls_for",
+       "TEAM_A.blocks.long_run_all.yellow_cards_for",
+       "TEAM_B.blocks.long_run_all.fouls_for"
+      ],
+      "observation": "Athletic Club commit 12.67 fouls/match long-run (11.8 last 5) and receive 2.21 yellow cards/match long-run (2.0 last 5). Their fouls committed are above Real Madrid's long-run average of 9.57 fouls committed."
+     }
+    ],
+    "candidate_id": "C4",
+    "comparison": "SIMILAR_OPPONENT_COHORT",
+    "conditions": [
+     {
+      "dimension": "historical_venue_conditioning",
+      "value": "HOME"
+     }
+    ],
+    "coverage_risk": "LOW",
+    "falsifiable_question": "When Athletic Club play at home against opponents whose defensive/discipline profile is similar to Real Madrid's, do Athletic's fouls_for and yellow_cards_for differ from their overall home baseline?",
+    "falsifier": "If Athletic's fouls_for and yellow_cards_for against similar-profile opponents are not systematically different from their overall home baseline, the mechanism is unsupported.",
+    "football_mechanism": "A possession-dominant side that draws fouls frequently (Real Madrid) meeting a physically active pressing side (Athletic) that commits fouls at above-average rates creates a structural interaction: Athletic's pressing style may generate more fouls against Real Madrid than against lower-quality opponents, and Real Madrid's movement in tight spaces draws fouls from opponents who cannot win the ball cleanly. This tests whether Athletic's foul rate is elevated when facing opponents with Real Madrid's profile.",
+    "metric_perspective": "AGAINST",
+    "opponent": "TEAM_A",
+    "provider_requirements": [
+     "fouls",
+     "yellow_cards"
+    ],
+    "research_family": "DISCIPLINE",
+    "self_critique": {
+     "cohort_equals_baseline": false,
+     "condition_equals_target": false,
+     "could_opponent_strength_explain_it": true,
+     "is_just_home_vs_away": false,
+     "is_just_recent_vs_long_run": false,
+     "is_overconditioned": false,
+     "likely_generic_enumeration_would_generate_this": false,
+     "notes": "The mechanism requires two characteristics together: Athletic's pressing foul rate AND Real Madrid's foul-drawing profile. This is a genuine interaction, not a single-metric observation."
+    },
+    "similar_opponent_rationale": "Real Madrid's profile \u2014 low goals conceded, low shots on target conceded, low fouls committed \u2014 identifies a specific type of technically proficient, disciplined opponent. Athletic's foul and card behaviour against such opponents tests whether their pressing style generates more discipline events against this type.",
+    "subject": "TEAM_B",
+    "support_risk": "LOW",
+    "target_metric": [
+     "fouls",
+     "yellow_cards"
+    ],
+    "window": "W10"
+   },
+   {
+    "behavioral_observations": [
+     {
+      "evidence_refs": [
+       "TEAM_B.blocks.long_run_all.possession_for",
+       "TEAM_B.blocks.long_run_away.possession_for",
+       "TEAM_A.blocks.recent_last_5.possession_for",
+       "TEAM_A.blocks.long_run_all.possession_for"
+      ],
+      "observation": "Real Madrid average 60.21% possession long-run (57.33% away). Athletic Club's recent last-5 possession average is 54.8% FOR \u2014 a regime change from their long-run 48.8%. These two sides both show above-50% possession tendencies, creating a genuine contest for territorial dominance."
+     },
+     {
+      "evidence_refs": [
+       "TEAM_B.blocks.long_run_all.final_third_entries_for",
+       "TEAM_B.blocks.long_run_away.final_third_entries_for",
+       "TEAM_A.blocks.long_run_all.final_third_entries_against",
+       "TEAM_A.blocks.recent_last_5.final_third_entries_against"
+      ],
+      "observation": "Real Madrid's final third entries FOR average 63.71 long-run (65.83 away). Athletic's final third entries AGAINST average 48.2 long-run (42.8 last 5) \u2014 Athletic have recently been suppressing opponent final third entries more than their long-run average."
+     }
+    ],
+    "candidate_id": "C5",
+    "comparison": "OPPONENT_PROFILE_INTERACTION",
+    "conditions": [
+     {
+      "dimension": "historical_venue_conditioning",
+      "value": "AWAY"
+     },
+     {
+      "axis": "possession_for",
+      "dimension": "opponent_profile",
+      "value": "HIGH"
+     }
+    ],
+    "coverage_risk": "LOW",
+    "falsifiable_question": "When Real Madrid play away against opponents with a HIGH possession profile, do their final_third_entries and possession FOR differ from their overall away baseline?",
+    "falsifier": "If Real Madrid's final_third_entries and possession FOR against high-possession away opponents are not systematically lower than their overall away baseline, the mechanism is unsupported.",
+    "football_mechanism": "When Real Madrid face opponents who themselves seek to dominate possession (Athletic's recent profile), their final third entry rate may be compressed relative to their baseline against lower-possession opponents. The mechanism is that a possession-contesting home side reduces the time and space available for the away side to build into the final third, unlike opponents who sit deep and cede territory.",
+    "metric_perspective": "FOR",
+    "opponent": "TEAM_A",
+    "provider_requirements": [
+     "possession",
+     "final_third_entries"
+    ],
+    "research_family": "TEMPO_AND_TERRITORY",
+    "self_critique": {
+     "cohort_equals_baseline": false,
+     "condition_equals_target": false,
+     "could_opponent_strength_explain_it": false,
+     "is_just_home_vs_away": false,
+     "is_just_recent_vs_long_run": false,
+     "is_overconditioned": false,
+     "likely_generic_enumeration_would_generate_this": false,
+     "notes": "The possession_for axis for the opponent profile is the right dimension here. The cohort (Real Madrid away vs high-possession opponents) is distinct from the baseline (Real Madrid away overall). The mechanism is specific to possession-contesting opponents, not just strong opponents generally."
+    },
+    "subject": "TEAM_B",
+    "support_risk": "LOW",
+    "target_metric": [
+     "possession",
+     "final_third_entries"
+    ],
+    "window": "W10"
+   },
+   {
+    "behavioral_observations": [
+     {
+      "evidence_refs": [
+       "TEAM_B.blocks.long_run_all.big_chances_for",
+       "TEAM_B.blocks.long_run_away.big_chances_for",
+       "TEAM_B.blocks.recent_last_5.big_chances_for",
+       "TEAM_B.blocks.long_run_all.xg_for",
+       "TEAM_B.blocks.long_run_away.xg_for",
+       "TEAM_A.blocks.long_run_home.big_chances_against",
+       "TEAM_A.blocks.long_run_home.xg_against"
+      ],
+      "observation": "Real Madrid create 3.29 big chances/match long-run (2.33 away), rising to 4.2 last 5. Their xG FOR is 1.99 long-run (1.56 away). Athletic concede only 1.13 big chances at home long-run and 0.87 xG against at home."
+     },
+     {
+      "evidence_refs": [
+       "TEAM_B.blocks.long_run_away.big_chances_for",
+       "TEAM_B.blocks.long_run_home.big_chances_for",
+       "TEAM_B.blocks.long_run_away.xg_for",
+       "TEAM_B.blocks.long_run_home.xg_for"
+      ],
+      "observation": "Real Madrid's away big chances (2.33) are notably lower than their home big chances (4.0), suggesting a meaningful venue effect on their chance creation quality. Their away xG (1.56) is also below home xG (2.32)."
+     }
+    ],
+    "candidate_id": "C6",
+    "comparison": "SUBJECT_VENUE_BASELINE",
+    "conditions": [
+     {
+      "dimension": "historical_venue_conditioning",
+      "value": "AWAY"
+     }
+    ],
+    "coverage_risk": "LOW",
+    "falsifiable_question": "Is Real Madrid's big_chances and xg FOR in away matches systematically lower than their overall (home+away) baseline, and by how much does the away venue compress their chance creation quality?",
+    "falsifier": "If Real Madrid's big_chances and xg FOR in away matches are not systematically lower than their overall baseline, the venue effect on their chance creation quality is unsupported.",
+    "football_mechanism": "Real Madrid's chance quality (big chances, xG) drops when playing away, and Athletic's home defense suppresses big chances to well below Real Madrid's away average. The interaction is whether Real Madrid's chance creation quality is further compressed when facing a defensively organised home side \u2014 i.e. whether the away venue effect and the opponent's defensive suppression compound each other.",
+    "metric_perspective": "FOR",
+    "opponent": "TEAM_A",
+    "provider_requirements": [
+     "big_chances",
+     "xg"
+    ],
+    "research_family": "ATTACK_QUALITY",
+    "self_critique": {
+     "cohort_equals_baseline": false,
+     "condition_equals_target": false,
+     "could_opponent_strength_explain_it": false,
+     "is_just_home_vs_away": true,
+     "is_just_recent_vs_long_run": false,
+     "is_overconditioned": false,
+     "likely_generic_enumeration_would_generate_this": true,
+     "notes": "This is essentially a home vs away question for Real Madrid's attack quality. The self-critique flags it as potentially too simple. However, the gap between home (4.0 big chances) and away (2.33) is large and the interaction with Athletic's home defense is genuine. Keeping but noting the risk."
+    },
+    "subject": "TEAM_B",
+    "support_risk": "LOW",
+    "target_metric": [
+     "big_chances",
+     "xg"
+    ],
+    "window": "ALL_PRIOR"
+   },
+   {
+    "behavioral_observations": [
+     {
+      "evidence_refs": [
+       "TEAM_B.blocks.long_run_all.shots_on_target_against",
+       "TEAM_B.blocks.long_run_away.shots_on_target_against",
+       "TEAM_B.blocks.long_run_all.saves_for",
+       "TEAM_B.blocks.long_run_away.saves_for",
+       "TEAM_A.blocks.recent_last_10.shots_on_target_for",
+       "TEAM_A.blocks.recent_last_5.shots_on_target_for"
+      ],
+      "observation": "Real Madrid concede only 2.5 shots on target/match long-run (3.0 away). Their saves FOR (goalkeeper saves) average 1.79 long-run (2.33 away) \u2014 consistent with very few dangerous shots faced. Athletic's recent shots on target FOR average 4.5 (last 10) and 4.2 (last 5)."
+     },
+     {
+      "evidence_refs": [
+       "TEAM_B.blocks.long_run_all.big_chances_against",
+       "TEAM_B.blocks.long_run_away.big_chances_against",
+       "TEAM_A.blocks.long_run_all.big_chances_for",
+       "TEAM_A.blocks.recent_last_5.big_chances_for",
+       "TEAM_A.blocks.long_run_home.big_chances_for"
+      ],
+      "observation": "Real Madrid's big chances conceded: 1.5 long-run (1.83 away). Athletic's big chances FOR: 1.93 long-run, 2.2 last 5, 2.25 at home. Athletic's home big chances (2.25) exceed Real Madrid's away big chances conceded (1.83)."
+     }
+    ],
+    "candidate_id": "C7",
+    "comparison": "SIMILAR_OPPONENT_COHORT",
+    "conditions": [
+     {
+      "dimension": "historical_venue_conditioning",
+      "value": "AWAY"
+     }
+    ],
+    "coverage_risk": "LOW",
+    "falsifiable_question": "When Real Madrid play away against opponents whose attacking profile (goals scored, shots on target, shots inside box) is similar to Athletic Club's, do Real Madrid's shots_on_target and big_chances AGAINST differ from their overall away baseline?",
+    "falsifier": "If Real Madrid's shots_on_target and big_chances AGAINST similar-profile opponents away are not systematically higher than their overall away baseline, the mechanism is unsupported.",
+    "football_mechanism": "Real Madrid's defensive suppression of shots on target and big chances is tested when facing a high-volume home side. Athletic's recent surge in attack volume and their home big chance creation (2.25/match) exceeds what Real Madrid typically concede away (1.83). The question is whether Real Madrid's defensive suppression holds against opponents with Athletic's attacking profile \u2014 specifically whether their low shots-on-target-conceded rate is maintained against high-volume home attackers.",
+    "metric_perspective": "AGAINST",
+    "opponent": "TEAM_A",
+    "provider_requirements": [
+     "shots_on_target",
+     "big_chances"
+    ],
+    "research_family": "DEFENSIVE_SUPPRESSION",
+    "self_critique": {
+     "cohort_equals_baseline": false,
+     "condition_equals_target": false,
+     "could_opponent_strength_explain_it": true,
+     "is_just_home_vs_away": false,
+     "is_just_recent_vs_long_run": false,
+     "is_overconditioned": false,
+     "likely_generic_enumeration_would_generate_this": false,
+     "notes": "The frozen similarity dimensions are based on the opponent's defensive/discipline profile (goals conceded, SoT conceded, shots inside box conceded, fouls committed, yellow cards). Athletic's profile on these dimensions \u2014 moderate goals conceded, moderate SoT conceded \u2014 will define the cohort. This is appropriate."
+    },
+    "similar_opponent_rationale": "Athletic's attacking profile \u2014 moderate-to-high shots on target, moderate big chances, high home possession \u2014 represents a specific type of active home attacker. Real Madrid's defensive concession against opponents sharing this profile tests whether their suppression holds against this type.",
+    "subject": "TEAM_B",
+    "support_risk": "LOW",
+    "target_metric": [
+     "shots_on_target",
+     "big_chances"
+    ],
+    "window": "W10"
+   }
+  ],
+  "fixture_id": "mt_257078632",
+  "interaction_map": {
+   "a_attack_vs_b_defense": [
+    "Athletic's recent surge in shot volume (15.6/match last 5) and inside-box shots (10.2/match last 5) meets a Real Madrid defense that concedes only 2.5 shots on target per match long-run. The question is whether Athletic's recent volume translates to on-target quality against a suppressive defense.",
+    "Athletic's recent corner generation (7.2/match last 5 vs 5.13 long-run) meets a Real Madrid side that concedes only 3.4 corners/match in last 5. This is a structural tension: Athletic's set-piece generation vs Real Madrid's ability to suppress corners.",
+    "Athletic's recent accurate cross surge (5.4/match last 5) meets Real Madrid's very low accurate crosses conceded (2.0/match last 5). Whether Athletic can sustain crossing output against Real Madrid's defensive structure is a genuine interaction.",
+    "Athletic's possession dominance in last 5 (54.8%) will be tested against Real Madrid's long-run 60.2% possession average \u2014 two sides with different possession profiles meeting at home/away."
+   ],
+   "asymmetries": [
+    "Athletic's defensive exposure is much higher away (shots against 10.43, SoT against 4.0) than at home (shots against 7.75, SoT against 2.25), but Real Madrid are the away side here \u2014 so Athletic's home defensive profile is the relevant baseline.",
+    "Real Madrid's big chances created drop significantly away (2.33) vs home (4.0), but even the away figure exceeds what Athletic typically concede at home (1.13).",
+    "Athletic's recent form shows a regime change in attack (shots, corners, crosses all up) but their recent defensive metrics also show opponents making more clearances (27.6 vs 21.7 long-run), suggesting opponents are sitting deeper against them \u2014 which may not apply to Real Madrid."
+   ],
+   "b_attack_vs_a_defense": [
+    "Real Madrid's high touches in penalty area (34.86 long-run, 32.83 away) meets Athletic's home defense that concedes only 13.88 touches in penalty area at home (long-run). This is a large gap and a key interaction.",
+    "Real Madrid's big chances created (3.29 long-run, 4.2 last 5) meets Athletic's home big chances conceded (1.13/match at home long-run). Real Madrid's chance creation profile is far above what Athletic typically concede at home.",
+    "Real Madrid's low fouls committed (9.57 long-run) meets Athletic's relatively high fouls drawn (11.0 against long-run). The discipline asymmetry is notable: Athletic foul more (12.67/match) while Real Madrid foul less.",
+    "Real Madrid's away shots on target (5.83/match) meets Athletic's home shots on target conceded (2.25/match). This is a large mismatch in absolute terms."
+   ],
+   "regime_changes": [
+    "Athletic Club: last-5 shots (15.6), corners (7.2), accurate crosses (5.4), possession (54.8%) all substantially above long-run averages \u2014 a clear recent attacking regime change.",
+    "Real Madrid: fouls conceded against them rose sharply (18.4 last 5 vs 14.29 long-run), yellow cards against them also rose (3.4 vs 2.14) \u2014 opponents are increasingly fouling Real Madrid in recent matches."
+   ],
+   "tensions": [
+    "Athletic's recent shot volume surge (15.6/match last 5) is accompanied by a drop in goals scored (1.0/match last 5 vs 1.47 long-run), suggesting conversion efficiency has fallen even as volume rose.",
+    "Real Madrid concede few shots on target (2.5/match) but opponents foul them heavily (14.29/match, rising to 18.4 last 5) \u2014 suggesting opponents are disrupting Real Madrid through fouls rather than open-play shots.",
+    "Athletic's recent possession dominance (54.8% last 5) contrasts with their long-run average of 48.8%, but Real Madrid's long-run possession is 60.2% \u2014 the possession battle will be contested."
+   ]
+  },
+  "reconnaissance": {
+   "team_a_attack": [
+    "Athletic Club's long-run shot volume averages 11.93/match but has risen sharply in the last 5 to 15.6/match, with shots inside the box jumping from 7.73 (long-run) to 10.2 (last 5). Final third entries also rose from 60.1 (long-run) to 66.6 (last 5), suggesting a recent territorial surge. [TEAM_A.blocks.long_run_all.shots_for, TEAM_A.blocks.recent_last_5.shots_for, TEAM_A.blocks.recent_last_5.shots_inside_box_for, TEAM_A.blocks.recent_last_5.final_third_entries_for]",
+    "Corner kick generation has risen markedly: long-run average 5.13/match vs last-5 average 7.2/match. Accurate crosses also jumped from 3.67 (long-run) to 5.4 (last 5), indicating increased wide delivery activity recently. [TEAM_A.blocks.long_run_all.corner_kicks_for, TEAM_A.blocks.recent_last_5.corner_kicks_for, TEAM_A.blocks.recent_last_5.accurate_crosses_for]",
+    "Possession has flipped: long-run average 48.8% but last-5 average 54.8%, suggesting Athletic have recently been the dominant possession side. Touches in penalty area for rose from 20.5 (long-run) to 25.0 (last 5). [TEAM_A.blocks.long_run_all.possession_for, TEAM_A.blocks.recent_last_5.possession_for, TEAM_A.blocks.recent_last_5.touches_in_penalty_area_for]",
+    "Big chances created: long-run 1.93/match, last-5 2.2/match \u2014 modest but consistent. xG for is 1.43 long-run and 1.57 last-5, broadly stable. [TEAM_A.blocks.long_run_all.big_chances_for, TEAM_A.blocks.recent_last_5.big_chances_for, TEAM_A.blocks.long_run_all.xg_for, TEAM_A.blocks.recent_last_5.xg_for]",
+    "Home attack is notably stronger than away: shots on target 4.63 at home vs 3.29 away (long-run), big chances 2.25 at home vs 1.57 away. [TEAM_A.blocks.long_run_home.shots_on_target_for, TEAM_A.blocks.long_run_away.shots_on_target_for, TEAM_A.blocks.long_run_home.big_chances_for, TEAM_A.blocks.long_run_away.big_chances_for]"
+   ],
+   "team_a_defense": [
+    "Athletic concede relatively few shots: long-run 9.0/match against, dropping to 6.0 in last 5. Shots on target conceded also fell from 3.07 (long-run) to 2.6 (last 5). However, opponents' clearances against Athletic rose sharply in last 5 (27.6 vs 21.7 long-run), suggesting opponents are defending deeper. [TEAM_A.blocks.long_run_all.shots_against, TEAM_A.blocks.recent_last_5.shots_against, TEAM_A.blocks.recent_last_5.shots_on_target_against, TEAM_A.blocks.recent_last_5.clearances_against]",
+    "Accurate crosses conceded: long-run 3.8/match but only 3.0 in last 5. Corners conceded dropped from 4.4 (long-run) to 2.6 (last 5), consistent with opponents sitting deeper and not pressing forward. [TEAM_A.blocks.long_run_all.accurate_crosses_against, TEAM_A.blocks.recent_last_5.accurate_crosses_against, TEAM_A.blocks.recent_last_5.corner_kicks_against]",
+    "Away opponents generate more against Athletic: shots against 10.43 away vs 7.75 home (long-run), shots on target against 4.0 away vs 2.25 home. Accurate crosses conceded 5.43 away vs 2.38 home \u2014 a large venue asymmetry in Athletic's defensive exposure. [TEAM_A.blocks.long_run_away.shots_against, TEAM_A.blocks.long_run_home.shots_against, TEAM_A.blocks.long_run_away.accurate_crosses_against, TEAM_A.blocks.long_run_home.accurate_crosses_against]",
+    "Tackles by Athletic: long-run 14.47/match, rising to 17.4 in last 5, indicating increased defensive pressing activity recently. [TEAM_A.blocks.long_run_all.tackles_for, TEAM_A.blocks.recent_last_5.tackles_for]"
+   ],
+   "team_b_attack": [
+    "Real Madrid generate very high shot volume: long-run 15.93/match, shots inside box 10.64/match, shots on target 6.21/match. These are substantially above Athletic's long-run averages. Touches in penalty area for: 34.86 long-run, 33.0 last 5. [TEAM_B.blocks.long_run_all.shots_for, TEAM_B.blocks.long_run_all.shots_inside_box_for, TEAM_B.blocks.long_run_all.shots_on_target_for, TEAM_B.blocks.long_run_all.touches_in_penalty_area_for]",
+    "Big chances created: long-run 3.29/match, rising to 4.2 in last 5. xG for: 1.99 long-run, 2.07 last 5 \u2014 consistently high. [TEAM_B.blocks.long_run_all.big_chances_for, TEAM_B.blocks.recent_last_5.big_chances_for, TEAM_B.blocks.long_run_all.xg_for, TEAM_B.blocks.recent_last_5.xg_for]",
+    "Corner kicks generated: long-run 5.93/match, last-5 6.4/match. Accurate crosses for: long-run 3.5, but dropped to 2.0 in last 5, suggesting recent shift away from wide delivery despite high corner output. [TEAM_B.blocks.long_run_all.corner_kicks_for, TEAM_B.blocks.recent_last_5.corner_kicks_for, TEAM_B.blocks.long_run_all.accurate_crosses_for, TEAM_B.blocks.recent_last_5.accurate_crosses_for]",
+    "Real Madrid's away attack is somewhat reduced vs home: shots on target 5.83 away vs 6.5 home, big chances 2.33 away vs 4.0 home, touches in penalty area 32.83 away vs 36.38 home. Still high in absolute terms. [TEAM_B.blocks.long_run_away.shots_on_target_for, TEAM_B.blocks.long_run_home.shots_on_target_for, TEAM_B.blocks.long_run_away.big_chances_for, TEAM_B.blocks.long_run_home.big_chances_for]",
+    "Fouls committed by Real Madrid: long-run 9.57/match \u2014 notably low, consistent with a possession-dominant side that rarely needs to foul. Last-5 rose to 11.0. [TEAM_B.blocks.long_run_all.fouls_for, TEAM_B.blocks.recent_last_5.fouls_for]"
+   ],
+   "team_b_defense": [
+    "Real Madrid concede relatively few shots on target: long-run 2.5/match, last-5 3.0/match. Saves for (goalkeeper saves) long-run 1.79/match \u2014 low, consistent with few dangerous shots faced. [TEAM_B.blocks.long_run_all.shots_on_target_against, TEAM_B.blocks.recent_last_5.shots_on_target_against, TEAM_B.blocks.long_run_all.saves_for]",
+    "Clearances by Real Madrid: long-run 13.14/match \u2014 very low, consistent with a high defensive line that rarely needs to clear. Last-5 13.2/match, stable. [TEAM_B.blocks.long_run_all.clearances_for, TEAM_B.blocks.recent_last_5.clearances_for]",
+    "Fouls conceded against Real Madrid: long-run 14.29/match \u2014 high, suggesting opponents foul Real Madrid frequently. Last-5 jumped to 18.4/match. Yellow cards against Real Madrid: long-run 2.14/match, last-5 3.4/match \u2014 opponents are increasingly being carded against them. [TEAM_B.blocks.long_run_all.fouls_against, TEAM_B.blocks.recent_last_5.fouls_against, TEAM_B.blocks.long_run_all.yellow_cards_against, TEAM_B.blocks.recent_last_5.yellow_cards_against]",
+    "Accurate crosses conceded: long-run 2.79/match, last-5 2.0/match \u2014 Real Madrid allow very few accurate crosses against them. Corners conceded: long-run 4.21/match, last-5 3.4/match. [TEAM_B.blocks.long_run_all.accurate_crosses_against, TEAM_B.blocks.recent_last_5.accurate_crosses_against, TEAM_B.blocks.recent_last_5.corner_kicks_against]"
+   ]
+  }
+ },
+ "temperature": 0.0
+}

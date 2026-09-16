@@ -279,6 +279,15 @@ def main():
       "rows are properties of the corpus, not of a model.")
     W("- **Arm D's rates are not a model's behaviour.** Arm D is blind enumeration scored "
       "through the same audit path, present as a structural floor.")
+    W("- **Generator self-noise bounds every A-vs-B comparison.** `v6_selfnoise_v1` records "
+      "that four byte-identical requests at temperature 0.0, with the same "
+      "`serialized_request_sha256`, produced qualified rates of 0.75 / 0.00 / 0.70 / 0.00 "
+      "— pooled within-cell SD 0.363. That is measured in this repository, not asserted "
+      "here. This design runs ONE call per fixture per arm, so a small gap between arms is "
+      "inside documented generator variance and no such gap is claimed as a difference.")
+    W("- **LLM output is not bitwise reproducible on this provider at temperature 0.** "
+      "Determinism claims in this report apply to the deterministic layers — packets, "
+      "library, retrieval, canonicalisation and scoring — never to the model's text.")
     W("")
 
     open(f"{ROOT}/research/hypothesis_engine/V8A_DEVELOPMENT_REPORT.md", "w").write(

@@ -1,0 +1,584 @@
+{
+ "arm": "B",
+ "elapsed_s": 116.68,
+ "error": null,
+ "fixture_id": "mt_361718124",
+ "max_tokens": 24576,
+ "model_id": "us.anthropic.claude-sonnet-4-6",
+ "pass": 1,
+ "prompt_version": "v8a_prompt_v1",
+ "provenance": {
+  "input_tokens": 42626,
+  "output_tokens": 10056,
+  "request_sha256": "1018089b4d50099a77fe23984cb822a2a335d5155234d08156165ed7bf507b55",
+  "resolved_model_id": "us.anthropic.claude-sonnet-4-6",
+  "response_sha256": "06a14f44e40bade7742206a3aa97c1e494fd841569fc94468828baa512f66c39",
+  "stop_reason": "tool_use"
+ },
+ "record_sha256": "20c7aff05d43ca97fabe7e957a77105e65618c0c7c0eb7524b5383b0ff259a0f",
+ "response": {
+  "candidates": [
+   {
+    "behavioral_observations": [
+     {
+      "evidence_refs": [
+       "TEAM_A.blocks.long_run_all.metrics.touches_in_penalty_area_for",
+       "TEAM_A.blocks.recent_last_10.metrics.touches_in_penalty_area_for",
+       "TEAM_A.blocks.recent_last_5.metrics.touches_in_penalty_area_for"
+      ],
+      "observation": "Newcastle's touches in penalty area FOR have risen from 28.9 (long-run all) to 32.1 (W10) to 32.4 (W5), indicating a recent structural increase in box penetration."
+     },
+     {
+      "evidence_refs": [
+       "TEAM_A.blocks.long_run_all.metrics.big_chances_for",
+       "TEAM_A.blocks.recent_last_10.metrics.big_chances_for",
+       "TEAM_A.blocks.recent_last_5.metrics.big_chances_for"
+      ],
+      "observation": "Big chances FOR have also risen from 2.5 (long-run) to 3.0 (W10) to 3.6 (W5), consistent with the box penetration increase translating into higher-quality chances."
+     }
+    ],
+    "candidate_id": "C1",
+    "comparison": "SUBJECT_RECENT_VS_LONG_BASELINE",
+    "conditions": [
+     {
+      "dimension": "competition",
+      "value": "SAME"
+     }
+    ],
+    "coverage_risk": "NONE",
+    "falsifiable_question": "In Newcastle's last 5 EPL matches, are touches in penalty area FOR and big chances FOR both measurably higher than their long-run EPL baseline?",
+    "falsifier": "If the W5 averages for touches_in_penalty_area_for and big_chances_for are not higher than the long-run all baseline, the recent upward trend is unsupported.",
+    "football_mechanism": "When a team increases its volume of touches inside the penalty area, defenders are drawn into closer marking and more reactive positioning, which tends to create more clear-cut chances. The joint rise in both metrics suggests Newcastle's recent build-up play is generating more dangerous final-third actions, not just more peripheral activity.",
+    "metric_perspective": "FOR",
+    "opponent": "TEAM_B",
+    "provider_requirements": [
+     "touches_in_penalty_area_for",
+     "big_chances_for"
+    ],
+    "research_family": "ATTACK_QUALITY",
+    "self_critique": {
+     "cohort_equals_baseline": false,
+     "condition_equals_target": false,
+     "could_opponent_strength_explain_it": true,
+     "is_just_home_vs_away": false,
+     "is_just_recent_vs_long_run": true,
+     "is_overconditioned": false,
+     "likely_generic_enumeration_would_generate_this": true,
+     "notes": "This is a straightforward recent vs long-run question. The joint movement of two correlated metrics (touches in box and big chances) is the only distinguishing feature. Opponent strength could explain the recent improvement. Borderline \u2014 kept because the magnitude of the shift in touches_in_penalty_area is notable and the joint movement with big_chances adds some specificity."
+    },
+    "subject": "TEAM_A",
+    "support_risk": "LOW",
+    "target_metric": [
+     "touches_in_penalty_area_for",
+     "big_chances_for"
+    ],
+    "window": "W5"
+   },
+   {
+    "behavioral_observations": [
+     {
+      "evidence_refs": [
+       "TEAM_B.blocks.long_run_all.metrics.corner_kicks_for",
+       "TEAM_B.blocks.recent_last_10.metrics.corner_kicks_for",
+       "TEAM_B.blocks.recent_last_5.metrics.corner_kicks_for"
+      ],
+      "observation": "Aston Villa's corner kicks FOR are 6.4 long-run all, rising to 7.9 W10 and 7.2 W5 \u2014 a sustained elevation in recent matches."
+     },
+     {
+      "evidence_refs": [
+       "TEAM_B.blocks.long_run_home.metrics.corner_kicks_for",
+       "TEAM_B.blocks.long_run_away.metrics.corner_kicks_for"
+      ],
+      "observation": "Villa's home corner generation is 7.8 (long-run home) vs 4.75 (long-run away) \u2014 a large venue split. The recent W10/W5 elevation may partly reflect home-heavy scheduling."
+     },
+     {
+      "evidence_refs": [
+       "TEAM_A.blocks.long_run_home.metrics.corner_kicks_against",
+       "TEAM_A.blocks.long_run_away.metrics.corner_kicks_against"
+      ],
+      "observation": "Newcastle concede 6.4 corners at home (long-run home) vs 4.7 away (long-run away) \u2014 they concede more corners when hosting."
+     }
+    ],
+    "candidate_id": "C2",
+    "comparison": "SUBJECT_VENUE_BASELINE",
+    "conditions": [
+     {
+      "dimension": "historical_venue_conditioning",
+      "value": "AWAY"
+     }
+    ],
+    "coverage_risk": "NONE",
+    "falsifiable_question": "Does Aston Villa's corner_kicks_for in away EPL matches differ from their overall EPL baseline, and specifically is their away corner generation lower than their overall average?",
+    "falsifier": "If Villa's away corner_kicks_for is not lower than their overall baseline, the venue split is unsupported and the home-heavy explanation for recent elevation is undermined.",
+    "football_mechanism": "Villa's attacking style generates corners through wide delivery and box-entry attempts that are deflected behind. When Villa play away, their corner generation drops substantially. The question is whether Villa's elevated recent corner output is sustained when playing away, or whether it reverts to their lower away baseline \u2014 which matters because Newcastle also concede more corners at home.",
+    "metric_perspective": "FOR",
+    "opponent": "TEAM_A",
+    "provider_requirements": [
+     "corner_kicks_for"
+    ],
+    "research_family": "SET_PIECE_GENERATION",
+    "self_critique": {
+     "cohort_equals_baseline": false,
+     "condition_equals_target": false,
+     "could_opponent_strength_explain_it": false,
+     "is_just_home_vs_away": true,
+     "is_just_recent_vs_long_run": false,
+     "is_overconditioned": false,
+     "likely_generic_enumeration_would_generate_this": true,
+     "notes": "This is essentially a home vs away question. However the magnitude of the split (7.8 home vs 4.75 away) is large and directly relevant to the upcoming fixture where Villa are away. The interaction with Newcastle's home corner concession rate adds fixture-specific relevance. Kept as it is directly actionable for this matchup."
+    },
+    "subject": "TEAM_B",
+    "support_risk": "LOW",
+    "target_metric": [
+     "corner_kicks_for"
+    ],
+    "window": "ALL_PRIOR"
+   },
+   {
+    "behavioral_observations": [
+     {
+      "evidence_refs": [
+       "TEAM_A.blocks.long_run_all.metrics.shots_against",
+       "TEAM_A.blocks.recent_last_10.metrics.shots_against",
+       "TEAM_A.blocks.recent_last_5.metrics.shots_against",
+       "TEAM_A.blocks.long_run_all.metrics.touches_in_penalty_area_against",
+       "TEAM_A.blocks.recent_last_10.metrics.touches_in_penalty_area_against",
+       "TEAM_A.blocks.recent_last_5.metrics.touches_in_penalty_area_against"
+      ],
+      "observation": "Newcastle's shots conceded have fallen from 13.6 (long-run) to 11.8 (W10) to 11.4 (W5), and touches in penalty area against have dropped from 27.4 (long-run) to 22.3 (W10) to 23.0 (W5)."
+     },
+     {
+      "evidence_refs": [
+       "TEAM_A.blocks.long_run_all.metrics.big_chances_against",
+       "TEAM_A.blocks.recent_last_10.metrics.big_chances_against",
+       "TEAM_A.blocks.recent_last_5.metrics.big_chances_against"
+      ],
+      "observation": "Despite fewer shots conceded, big chances against have risen slightly: 2.2 long-run vs 2.1 W10 vs 2.6 W5 \u2014 opponents are generating fewer but higher-quality chances."
+     }
+    ],
+    "candidate_id": "C3",
+    "comparison": "SIMILAR_OPPONENT_COHORT",
+    "conditions": [
+     {
+      "dimension": "competition",
+      "value": "SAME"
+     }
+    ],
+    "coverage_risk": "NONE",
+    "falsifiable_question": "Against opponents with a similar attacking/discipline profile to Aston Villa, does Newcastle's shots_against, shots_inside_box_against, and touches_in_penalty_area_against differ from their overall EPL baseline?",
+    "falsifier": "If Newcastle's defensive suppression metrics against similar-profile opponents are not different from their overall baseline, there is no opponent-profile-conditional defensive pattern.",
+    "football_mechanism": "A defense that suppresses shot volume and box touches but concedes more big chances may be sitting deeper and compressing space, inviting opponents to probe for high-value openings rather than speculative shots. This tension \u2014 fewer shots but more dangerous ones \u2014 is a structural defensive characteristic worth measuring against opponents of similar attacking profile to Villa.",
+    "metric_perspective": "AGAINST",
+    "opponent": "TEAM_B",
+    "provider_requirements": [
+     "shots_against",
+     "shots_inside_box_against",
+     "touches_in_penalty_area_against",
+     "big_chances_against"
+    ],
+    "research_family": "DEFENSIVE_SUPPRESSION",
+    "self_critique": {
+     "cohort_equals_baseline": false,
+     "condition_equals_target": false,
+     "could_opponent_strength_explain_it": true,
+     "is_just_home_vs_away": false,
+     "is_just_recent_vs_long_run": false,
+     "is_overconditioned": false,
+     "likely_generic_enumeration_would_generate_this": false,
+     "notes": "The similar-opponent cohort adds genuine conditional structure beyond simple recent vs long-run. The tension between falling shot volume and rising big chances against is the motivating observation. Opponent strength is the main confound but the similar-opponent cohort is designed to address this."
+    },
+    "similar_opponent_rationale": "Villa are an attacking-minded side with high corner generation, moderate fouls, and a profile that the engine's frozen similarity dimensions (goals conceded, shots on target conceded, shots inside box conceded, fouls, yellow cards) can characterise. Measuring Newcastle's defensive output against historically similar opponents tests whether their suppression pattern is opponent-dependent.",
+    "subject": "TEAM_A",
+    "support_risk": "LOW",
+    "target_metric": [
+     "shots_against",
+     "shots_inside_box_against",
+     "touches_in_penalty_area_against"
+    ],
+    "window": "ALL_PRIOR"
+   },
+   {
+    "behavioral_observations": [
+     {
+      "evidence_refs": [
+       "TEAM_B.blocks.long_run_home.metrics.xg_for",
+       "TEAM_B.blocks.long_run_away.metrics.xg_for"
+      ],
+      "observation": "Villa's home xG FOR is 1.88 vs away xG FOR of 1.37 (long-run) \u2014 a substantial venue-driven gap in attacking quality."
+     },
+     {
+      "evidence_refs": [
+       "TEAM_B.blocks.long_run_home.metrics.big_chances_for",
+       "TEAM_B.blocks.long_run_away.metrics.big_chances_for",
+       "TEAM_B.blocks.long_run_home.metrics.shots_inside_box_for",
+       "TEAM_B.blocks.long_run_away.metrics.shots_inside_box_for"
+      ],
+      "observation": "Villa's home big chances FOR is 4.1 vs away 2.9 (long-run), and home shots inside box FOR is 10.9 vs away 7.9 \u2014 consistent venue-driven suppression of Villa's attacking output when away."
+     },
+     {
+      "evidence_refs": [
+       "TEAM_B.blocks.long_run_home.metrics.final_third_entries_for",
+       "TEAM_B.blocks.long_run_away.metrics.final_third_entries_for",
+       "TEAM_B.blocks.recent_last_5.metrics.final_third_entries_for"
+      ],
+      "observation": "Villa's final third entries FOR drop from 52.8 (home) to 44.0 (away) long-run, and further to 40.4 in W5 overall \u2014 territorial access is significantly reduced away from home."
+     }
+    ],
+    "candidate_id": "C4",
+    "comparison": "SUBJECT_VENUE_BASELINE",
+    "conditions": [
+     {
+      "dimension": "historical_venue_conditioning",
+      "value": "AWAY"
+     }
+    ],
+    "coverage_risk": "NONE",
+    "falsifiable_question": "In Aston Villa's away EPL matches, are xg_for, shots_inside_box_for, and big_chances_for measurably lower than their overall EPL baseline?",
+    "falsifier": "If Villa's away attacking metrics are not lower than their overall baseline, the venue-driven suppression of their attack is unsupported.",
+    "football_mechanism": "Villa's attacking output is strongly venue-conditioned: at home they dominate possession (54%), generate more final-third entries, and create substantially more big chances. Away, they concede possession (45.9%), make fewer final-third entries, and their xG drops by ~0.5 per match. This suggests their attacking system is built around home territorial dominance and is structurally less effective when they cannot establish that dominance.",
+    "metric_perspective": "FOR",
+    "opponent": "TEAM_A",
+    "provider_requirements": [
+     "xg_for",
+     "shots_inside_box_for",
+     "big_chances_for",
+     "final_third_entries_for"
+    ],
+    "research_family": "VENUE_EFFECT",
+    "self_critique": {
+     "cohort_equals_baseline": false,
+     "condition_equals_target": false,
+     "could_opponent_strength_explain_it": true,
+     "is_just_home_vs_away": true,
+     "is_just_recent_vs_long_run": false,
+     "is_overconditioned": false,
+     "likely_generic_enumeration_would_generate_this": true,
+     "notes": "This is a home vs away question, but the magnitude of the split across multiple correlated metrics (xG, big chances, shots inside box, final third entries) is large and consistent. The fixture-specific relevance is high since Villa are away. Kept despite being a standard venue question because the effect size visible in the data is substantial."
+    },
+    "subject": "TEAM_B",
+    "support_risk": "LOW",
+    "target_metric": [
+     "xg_for",
+     "shots_inside_box_for",
+     "big_chances_for"
+    ],
+    "window": "ALL_PRIOR"
+   },
+   {
+    "behavioral_observations": [
+     {
+      "evidence_refs": [
+       "TEAM_B.blocks.long_run_all.metrics.final_third_entries_for",
+       "TEAM_B.blocks.recent_last_10.metrics.final_third_entries_for",
+       "TEAM_B.blocks.recent_last_5.metrics.final_third_entries_for",
+       "TEAM_B.blocks.long_run_all.metrics.shots_inside_box_for",
+       "TEAM_B.blocks.recent_last_5.metrics.shots_inside_box_for"
+      ],
+      "observation": "Villa's final third entries FOR have declined from 48.6 (long-run) to 43.6 (W10) to 40.4 (W5), while shots inside box FOR remain stable at 10.6 (W5) vs 9.5 (long-run) \u2014 territorial access is declining but box shots are not."
+     },
+     {
+      "evidence_refs": [
+       "TEAM_B.blocks.long_run_all.metrics.possession_for",
+       "TEAM_B.blocks.recent_last_10.metrics.possession_for",
+       "TEAM_B.blocks.recent_last_5.metrics.possession_for"
+      ],
+      "observation": "Villa's possession FOR has dropped from 50.2 (long-run) to 48.8 (W10) to 45.2 (W5), suggesting a recent shift toward less possession-based play."
+     }
+    ],
+    "candidate_id": "C5",
+    "comparison": "SUBJECT_RECENT_VS_LONG_BASELINE",
+    "conditions": [
+     {
+      "dimension": "competition",
+      "value": "SAME"
+     }
+    ],
+    "coverage_risk": "NONE",
+    "falsifiable_question": "In Aston Villa's last 10 EPL matches, are final_third_entries_for and possession_for measurably lower than their long-run EPL baseline, while shots_inside_box_for remains at or above baseline?",
+    "falsifier": "If final_third_entries_for and possession_for in W10 are not lower than the long-run baseline, or if shots_inside_box_for has also declined, the regime change hypothesis is unsupported.",
+    "football_mechanism": "A team that is generating fewer final-third entries and holding less possession but maintaining box shot volume may be transitioning to a more direct, counter-attacking style \u2014 bypassing territorial build-up to reach the box more efficiently. This regime change in Villa's recent play is worth measuring against opponents with a similar defensive profile to Newcastle.",
+    "metric_perspective": "FOR",
+    "opponent": "TEAM_A",
+    "provider_requirements": [
+     "final_third_entries_for",
+     "possession_for",
+     "shots_inside_box_for"
+    ],
+    "research_family": "TEMPO_AND_TERRITORY",
+    "self_critique": {
+     "cohort_equals_baseline": false,
+     "condition_equals_target": false,
+     "could_opponent_strength_explain_it": true,
+     "is_just_home_vs_away": false,
+     "is_just_recent_vs_long_run": true,
+     "is_overconditioned": false,
+     "likely_generic_enumeration_would_generate_this": false,
+     "notes": "The interesting feature here is the divergence between declining territorial metrics and stable box shot volume \u2014 this is not a simple recent vs long-run question about one metric. The tension between the two is the mechanism. Opponent strength could explain it but the joint pattern is distinctive."
+    },
+    "subject": "TEAM_B",
+    "support_risk": "LOW",
+    "target_metric": [
+     "final_third_entries_for",
+     "possession_for"
+    ],
+    "window": "W10"
+   },
+   {
+    "behavioral_observations": [
+     {
+      "evidence_refs": [
+       "TEAM_B.blocks.long_run_all.metrics.corner_kicks_for",
+       "TEAM_B.blocks.recent_last_10.metrics.corner_kicks_for",
+       "TEAM_B.blocks.recent_last_5.metrics.corner_kicks_for",
+       "TEAM_B.blocks.long_run_all.metrics.accurate_crosses_for",
+       "TEAM_B.blocks.recent_last_10.metrics.accurate_crosses_for"
+      ],
+      "observation": "Villa's corner kicks FOR are 7.9 W10 and 7.2 W5, well above their long-run of 6.4. Their accurate crosses FOR are 4.7 W10 and 4.4 W5 vs 4.1 long-run \u2014 both elevated recently."
+     },
+     {
+      "evidence_refs": [
+       "TEAM_B.blocks.long_run_home.metrics.corner_kicks_for",
+       "TEAM_B.blocks.long_run_away.metrics.corner_kicks_for",
+       "TEAM_B.blocks.recent_last_10.metrics.corner_kicks_for"
+      ],
+      "observation": "Villa's home corner generation (7.8) is much higher than away (4.75), but their recent W10 average of 7.9 exceeds even their home baseline, suggesting the recent elevation is not purely venue-driven."
+     }
+    ],
+    "candidate_id": "C6",
+    "comparison": "OPPONENT_PROFILE_INTERACTION",
+    "conditions": [
+     {
+      "axis": "goals_conceded_per_match",
+      "dimension": "opponent_profile",
+      "value": "LOW"
+     },
+     {
+      "dimension": "competition",
+      "value": "SAME"
+     }
+    ],
+    "coverage_risk": "LOW",
+    "falsifiable_question": "Against EPL opponents with a LOW goals-conceded profile (defensively tight opponents), does Aston Villa generate more corner_kicks_for and accurate_crosses_for than against their overall EPL baseline?",
+    "falsifier": "If Villa's corner_kicks_for and accurate_crosses_for against LOW goals-conceded opponents are not higher than their overall baseline, the compact-defense interaction is unsupported.",
+    "football_mechanism": "Against defensively compact opponents (HIGH defensive profile \u2014 low goals conceded, low shots on target conceded), attacking teams may generate more corners as their shots are blocked or deflected behind rather than resulting in goals or saves. If Villa's elevated corner generation is concentrated against defensively organised opponents, it would reflect a structural interaction between Villa's wide delivery and compact defensive blocks.",
+    "metric_perspective": "FOR",
+    "opponent": "TEAM_A",
+    "provider_requirements": [
+     "corner_kicks_for",
+     "accurate_crosses_for"
+    ],
+    "research_family": "OPPONENT_PROFILE_INTERACTION",
+    "self_critique": {
+     "cohort_equals_baseline": false,
+     "condition_equals_target": false,
+     "could_opponent_strength_explain_it": false,
+     "is_just_home_vs_away": false,
+     "is_just_recent_vs_long_run": false,
+     "is_overconditioned": false,
+     "likely_generic_enumeration_would_generate_this": false,
+     "notes": "The opponent profile condition (LOW goals conceded) is the right axis because Newcastle are a defensively organised side. The mechanism \u2014 compact defenses deflecting shots into corners \u2014 is a genuine football interaction. The recent elevation in Villa's corners adds motivation. Not overconditioned."
+    },
+    "subject": "TEAM_B",
+    "support_risk": "LOW",
+    "target_metric": [
+     "corner_kicks_for",
+     "accurate_crosses_for"
+    ],
+    "window": "ALL_PRIOR"
+   },
+   {
+    "behavioral_observations": [
+     {
+      "evidence_refs": [
+       "TEAM_A.blocks.long_run_all.metrics.big_chances_against",
+       "TEAM_A.blocks.recent_last_10.metrics.big_chances_against",
+       "TEAM_A.blocks.recent_last_5.metrics.big_chances_against",
+       "TEAM_A.blocks.long_run_all.metrics.shots_against",
+       "TEAM_A.blocks.recent_last_5.metrics.shots_against"
+      ],
+      "observation": "Newcastle's big chances conceded have risen from 2.2 (long-run) to 2.1 (W10) to 2.6 (W5), while shots conceded have fallen (13.6 \u2192 11.8 \u2192 11.4) \u2014 a tension between improving shot suppression and worsening big chance concession."
+     },
+     {
+      "evidence_refs": [
+       "TEAM_A.blocks.long_run_all.metrics.xg_against",
+       "TEAM_A.blocks.recent_last_10.metrics.xg_against",
+       "TEAM_A.blocks.recent_last_5.metrics.xg_against"
+      ],
+      "observation": "xG against has fallen from 1.26 (long-run) to 1.11 (W10) to 1.18 (W5) \u2014 broadly improving, but the W5 uptick alongside rising big chances against is a mild tension."
+     },
+     {
+      "evidence_refs": [
+       "TEAM_A.blocks.long_run_home.metrics.xg_against",
+       "TEAM_A.blocks.long_run_away.metrics.xg_against"
+      ],
+      "observation": "At home, Newcastle concede 1.14 xG against (long-run home) vs 1.38 away \u2014 they are defensively tighter at home, but home big chances against is not separately broken out in the navigation."
+     }
+    ],
+    "candidate_id": "C7",
+    "comparison": "OPPONENT_PROFILE_INTERACTION",
+    "conditions": [
+     {
+      "axis": "shots_on_target_conceded_per_match",
+      "dimension": "opponent_profile",
+      "value": "HIGH"
+     },
+     {
+      "dimension": "competition",
+      "value": "SAME"
+     }
+    ],
+    "coverage_risk": "NONE",
+    "falsifiable_question": "Against EPL opponents with a HIGH shots-on-target-conceded profile (attacking opponents who generate many shots on target), does Newcastle concede more big_chances_against and higher xg_against than against their overall EPL baseline?",
+    "falsifier": "If Newcastle's big_chances_against and xg_against against HIGH shots-on-target-conceded opponents are not higher than their overall baseline, the opponent-profile-conditional defensive vulnerability is unsupported.",
+    "football_mechanism": "A defense that suppresses shot volume by sitting deep may inadvertently create space for opponents to build higher-quality chances when they do penetrate. Against a team like Villa that generates big chances at a high rate (3.5 long-run FOR), this structural vulnerability \u2014 fewer shots but more dangerous ones \u2014 is worth measuring specifically against high-chance-creating opponents.",
+    "metric_perspective": "AGAINST",
+    "opponent": "TEAM_B",
+    "provider_requirements": [
+     "big_chances_against",
+     "xg_against"
+    ],
+    "research_family": "DEFENSIVE_CONCESSION",
+    "self_critique": {
+     "cohort_equals_baseline": false,
+     "condition_equals_target": false,
+     "could_opponent_strength_explain_it": false,
+     "is_just_home_vs_away": false,
+     "is_just_recent_vs_long_run": false,
+     "is_overconditioned": false,
+     "likely_generic_enumeration_would_generate_this": false,
+     "notes": "The opponent profile axis (shots_on_target_conceded_per_match, i.e. attacking opponents) is appropriate for Villa. The mechanism \u2014 deep-sitting defense vulnerable to quality chances from attacking opponents \u2014 is grounded in the observed tension between falling shot volume and rising big chances against. Not overconditioned."
+    },
+    "subject": "TEAM_A",
+    "support_risk": "LOW",
+    "target_metric": [
+     "big_chances_against",
+     "xg_against"
+    ],
+    "window": "ALL_PRIOR"
+   },
+   {
+    "behavioral_observations": [
+     {
+      "evidence_refs": [
+       "TEAM_A.blocks.long_run_all.metrics.fouls_for",
+       "TEAM_A.blocks.recent_last_10.metrics.fouls_for",
+       "TEAM_A.blocks.recent_last_5.metrics.fouls_for",
+       "TEAM_A.blocks.long_run_all.metrics.yellow_cards_for",
+       "TEAM_A.blocks.recent_last_10.metrics.yellow_cards_for",
+       "TEAM_A.blocks.recent_last_5.metrics.yellow_cards_for"
+      ],
+      "observation": "Newcastle's fouls FOR have declined from 10.4 (long-run) to 10.1 (W10) to 8.2 (W5) \u2014 a notable recent reduction in foul-committing. Yellow cards FOR have also declined: 2.1 long-run, 1.9 W10, 1.6 W5."
+     },
+     {
+      "evidence_refs": [
+       "TEAM_A.blocks.long_run_home.metrics.fouls_for",
+       "TEAM_A.blocks.long_run_away.metrics.fouls_for"
+      ],
+      "observation": "Newcastle's home fouls FOR are 12.4 (long-run home) vs 8.6 (long-run away) \u2014 they foul more at home than away. The recent W5 decline to 8.2 overall may partly reflect away-heavy scheduling."
+     }
+    ],
+    "candidate_id": "C8",
+    "comparison": "SUBJECT_VENUE_BASELINE",
+    "conditions": [
+     {
+      "dimension": "historical_venue_conditioning",
+      "value": "HOME"
+     }
+    ],
+    "coverage_risk": "NONE",
+    "falsifiable_question": "In Newcastle's home EPL matches, are fouls_for and yellow_cards_for measurably higher than their overall EPL baseline, and does this home foul elevation persist in recent matches?",
+    "falsifier": "If Newcastle's home fouls_for and yellow_cards_for are not higher than their overall baseline, the home-specific foul elevation is unsupported.",
+    "football_mechanism": "Against opponents who generate high final-third entries and press aggressively (Villa's home profile), a team may commit more fouls to disrupt transitions. However, Newcastle's recent foul reduction may reflect a change in defensive approach \u2014 less aggressive pressing and more passive containment. Against Villa's direct away style (declining final-third entries but maintained box shots), Newcastle's foul rate may be a relevant indicator of how they manage Villa's transition play.",
+    "metric_perspective": "FOR",
+    "opponent": "TEAM_B",
+    "provider_requirements": [
+     "fouls_for",
+     "yellow_cards_for"
+    ],
+    "research_family": "DISCIPLINE",
+    "self_critique": {
+     "cohort_equals_baseline": false,
+     "condition_equals_target": false,
+     "could_opponent_strength_explain_it": true,
+     "is_just_home_vs_away": true,
+     "is_just_recent_vs_long_run": false,
+     "is_overconditioned": false,
+     "likely_generic_enumeration_would_generate_this": true,
+     "notes": "This is primarily a home vs away question. The home foul rate (12.4) vs away (8.6) is a large split. The fixture-specific relevance is that Newcastle are hosting. The recent decline in fouls adds a regime-change angle. Borderline \u2014 kept because the home/away foul split is large and directly relevant to this fixture."
+    },
+    "subject": "TEAM_A",
+    "support_risk": "LOW",
+    "target_metric": [
+     "fouls_for",
+     "yellow_cards_for"
+    ],
+    "window": "ALL_PRIOR"
+   }
+  ],
+  "fixture_id": "mt_361718124",
+  "interaction_map": {
+   "a_attack_vs_b_defense": [
+    "Newcastle's recent surge in touches in penalty area FOR (32.4 W5) meets a Villa defense that concedes 24.9 touches in penalty area away (long-run away) \u2014 Villa allow more box penetration on the road than at home (20.4).",
+    "Newcastle's rising big chances FOR (3.6 W5) vs Villa's recent improvement in big chances conceded (1.6 W5) \u2014 a direct tension between Newcastle's recent attacking quality and Villa's recent defensive tightening.",
+    "Newcastle generate 15.2 shots per match recently (W5) while Villa concede 14.0 shots per match away (long-run away) \u2014 shot volume interaction is plausible.",
+    "Newcastle's xG FOR has risen to 1.95 W5 while Villa's away xG against is 1.71 long-run \u2014 Newcastle's recent quality meets a Villa away defense that leaks more quality chances."
+   ],
+   "asymmetries": [
+    "Villa are dramatically more dangerous at home (xG 1.88, corners 7.8, big chances 4.1) than away (xG 1.37, corners 4.75, big chances 2.9) \u2014 their attacking output is heavily venue-dependent.",
+    "Newcastle generate more shots and possession away (56.9% possession away) than at home (42.9%) \u2014 they are a counter-attacking home side, not a possession-dominant one.",
+    "Newcastle's fouls FOR have declined sharply (8.2 W5 vs 10.4 long-run) while opponents' fouls against Newcastle remain stable \u2014 Newcastle are becoming less foul-prone recently."
+   ],
+   "b_attack_vs_a_defense": [
+    "Villa's corner generation (7.9 W10, 7.2 W5) meets Newcastle's home corner concession of 6.4 long-run home \u2014 Newcastle concede more corners at home than away (4.7), creating a potential set-piece volume interaction.",
+    "Villa's final third entries FOR have declined sharply (40.4 W5 vs 48.6 long-run) while Newcastle's recent shot suppression has improved (11.4 shots against W5) \u2014 both indicators point toward Newcastle limiting Villa's territorial access.",
+    "Villa's away shots inside box (9.25 long-run away) vs Newcastle's home shots inside box against (9.0 long-run home) \u2014 broadly matched, but Newcastle's recent improvement (8.5 W10 against) may be relevant.",
+    "Villa's away possession drops to 45.9% (long-run away) while Newcastle hold 56.9% away \u2014 at home Newcastle typically concede 57.1% possession, suggesting Villa may dominate possession at St. James' Park."
+   ],
+   "regime_changes": [
+    "Newcastle's touches in penalty area FOR jumped from 28.9 (long-run) to 32.4 (W5) \u2014 a structural shift in box penetration in recent matches.",
+    "Villa's final third entries FOR dropped from 48.6 (long-run) to 40.4 (W5) \u2014 a recent territorial regression despite maintained shot volume inside the box.",
+    "Villa's corner kicks FOR rose from 6.4 (long-run) to 7.9 (W10) \u2014 a recent elevation in set-piece generation that may reflect a tactical shift."
+   ],
+   "tensions": [
+    "Newcastle: big chances conceded rising (2.6 W5 vs 2.2 long-run) while shots conceded are falling \u2014 opponents are generating fewer but higher-quality chances against Newcastle recently.",
+    "Villa: final third entries declining (40.4 W5) but shots inside box FOR stable (10.6 W5) \u2014 Villa are creating box shots without proportionate territorial dominance, suggesting direct/transition play.",
+    "Villa: corner kicks FOR elevated (7.2 W5) but accurate crosses FOR slightly declining (4.4 W5 vs 4.7 W10) \u2014 corner volume and crossing accuracy are diverging."
+   ]
+  },
+  "reconnaissance": {
+   "team_a_attack": [
+    "Newcastle (TEAM_A) long-run shot volume is 13.7 per match (all), rising to 15.2 in last 10 and 15.2 in last 5, indicating a recent upward trend in shot generation. Shots inside box also rose from 10.2 (long-run) to 11.0 (W10) and 10.6 (W5).",
+    "Big chances created have increased markedly: 2.5 long-run vs 3.0 W10 vs 3.6 W5, suggesting improved quality of attacking build-up recently.",
+    "Touches in penalty area FOR have risen sharply: 28.9 long-run vs 32.1 W10 vs 32.4 W5, consistent with more sustained box penetration in recent matches.",
+    "xG FOR is 1.64 long-run vs 1.74 W10 vs 1.95 W5, showing a recent improvement in shot quality alongside volume.",
+    "Away from home, Newcastle carry 56.9% possession and generate 56.0 final-third entries (long-run away), suggesting they are not a passive away side. At home, possession drops to 42.9% and final-third entries to 49.9, indicating opponents dominate possession at St. James' Park.",
+    "Corner kicks FOR are consistent: 5.6 long-run, 5.4 W10, 4.8 W5 \u2014 no strong trend. Accurate crosses FOR are 4.4 long-run, 4.3 W10, 3.6 W5 \u2014 slight recent decline."
+   ],
+   "team_a_defense": [
+    "Newcastle concede 13.6 shots per match long-run, falling to 11.8 W10 and 11.4 W5 \u2014 a meaningful recent improvement in shot suppression.",
+    "Shots on target conceded: 4.7 long-run vs 4.2 W10 vs 4.0 W5 \u2014 also improving. However big chances conceded remain elevated at 2.6 W5 vs 2.2 long-run, a tension with the shot suppression trend.",
+    "Touches in penalty area AGAINST have dropped sharply: 27.4 long-run vs 22.3 W10 vs 23.0 W5, suggesting opponents are being kept further from goal recently.",
+    "At home, Newcastle concede 30.4 touches in penalty area against (long-run home) vs 24.8 away \u2014 opponents get deeper into the box when visiting St. James' Park.",
+    "Clearances FOR (defensive clearances) are 19.2 long-run, 18.0 W10, 18.6 W5 \u2014 relatively stable. Opponents' tackles against Newcastle are 20.7 long-run, 22.0 W10 \u2014 opponents are pressing more.",
+    "Yellow cards against Newcastle (opponent cards) are 3.1 long-run, 2.9 W10, 3.2 W5 \u2014 opponents foul Newcastle at a consistent rate. Newcastle's own fouls are low: 10.4 long-run, 10.1 W10, 8.2 W5 \u2014 declining."
+   ],
+   "team_b_attack": [
+    "Aston Villa (TEAM_B) corner kicks FOR are a standout: 6.4 long-run, rising to 7.9 W10 and 7.2 W5 \u2014 consistently high and recently elevated. Home corners are 7.8 long-run vs 4.75 away, showing a strong home/away split.",
+    "Villa's shots FOR are 12.9 long-run, 14.0 W10, 13.4 W5 \u2014 moderate volume. Shots inside box FOR: 9.5 long-run, 10.7 W10, 10.6 W5 \u2014 stable and box-focused.",
+    "Big chances FOR: 3.5 long-run (16 populated), 3.3 W10, 3.0 W5 \u2014 high quality chance creation, though slight recent dip.",
+    "xG FOR: 1.64 long-run, 1.79 W10, 1.61 W5 \u2014 broadly stable. Home xG is 1.88 vs away 1.37 \u2014 Villa are significantly more dangerous at home.",
+    "Final third entries FOR: 48.6 long-run, 43.6 W10, 40.4 W5 \u2014 a notable recent decline in territorial penetration, despite maintaining shot volume inside the box.",
+    "Accurate crosses FOR: 4.1 long-run, 4.7 W10, 4.4 W5 \u2014 above average crossing output, consistent with corner generation."
+   ],
+   "team_b_defense": [
+    "Villa concede 11.5 shots long-run, 12.2 W10, 11.8 W5 \u2014 moderate and stable. Shots on target against: 4.1 long-run, 4.5 W10, 4.2 W5.",
+    "Away, Villa concede 14.0 shots and 9.25 inside box (long-run away) vs 9.2 home \u2014 they concede more volume away from home.",
+    "Clearances FOR (Villa's defensive clearances): 16.5 long-run, 16.6 W10, 16.2 W5 \u2014 stable. Away clearances are 19.0 vs 14.3 home \u2014 Villa defend more actively away.",
+    "Tackles FOR: 16.6 long-run, 15.7 W10, 18.2 W5 \u2014 recent uptick in defensive tackling activity.",
+    "Big chances conceded: 2.25 long-run, 2.3 W10, 1.6 W5 \u2014 recent improvement in limiting big chances against.",
+    "Away xG against is 1.71 (long-run away) vs 0.75 home \u2014 Villa concede substantially more quality chances away from home."
+   ]
+  }
+ },
+ "temperature": 0.0
+}

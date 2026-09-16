@@ -1,0 +1,531 @@
+{
+ "arm": "B",
+ "elapsed_s": 102.53,
+ "error": null,
+ "fixture_id": "mt_367782066",
+ "max_tokens": 24576,
+ "model_id": "us.anthropic.claude-sonnet-4-6",
+ "pass": 1,
+ "prompt_version": "v8a_prompt_v1",
+ "provenance": {
+  "input_tokens": 51921,
+  "output_tokens": 8849,
+  "request_sha256": "fd6060a82ddbc88dce324ed1941e0e4747e22b139f22ed84ba26990c1c0e8493",
+  "resolved_model_id": "us.anthropic.claude-sonnet-4-6",
+  "response_sha256": "597586fefe9477b80b51a19c5b7ba17f4d8fe0a02b453f4ed32c326f7dfe399b",
+  "stop_reason": "tool_use"
+ },
+ "record_sha256": "5491f764fc67245cf0e2d7d50c8959a282a03cbf9e59e9f645028e8f274f69ac",
+ "response": {
+  "candidates": [
+   {
+    "behavioral_observations": [
+     {
+      "evidence_refs": [
+       "TEAM_A.blocks.long_run_all.metrics.shots_on_target_for",
+       "TEAM_A.blocks.recent_last_5.metrics.shots_on_target_for",
+       "TEAM_A.blocks.long_run_all.metrics.big_chances_for",
+       "TEAM_A.blocks.recent_last_5.metrics.big_chances_for"
+      ],
+      "observation": "West Brom's shots on target FOR has risen from 3.58 long-run to 4.6 in the last 5 matches, and big chances FOR from 2.09 long-run to 3.0 in the last 5."
+     },
+     {
+      "evidence_refs": [
+       "TEAM_A.blocks.long_run_all.metrics.xg_for",
+       "TEAM_A.blocks.recent_last_5.metrics.xg_for"
+      ],
+      "observation": "xG FOR has risen from 1.30 long-run to 1.77 in the last 5, consistent with the shots on target and big chances trend."
+     }
+    ],
+    "candidate_id": "C1",
+    "comparison": "SUBJECT_RECENT_VS_LONG_BASELINE",
+    "conditions": [
+     {
+      "dimension": "competition",
+      "value": "SAME"
+     }
+    ],
+    "coverage_risk": "NONE",
+    "falsifiable_question": "In West Brom's last 5 Championship matches, are shots on target FOR and big chances FOR materially higher than their long-run Championship average?",
+    "falsifier": "If the W5 cohort shows shots on target FOR and big chances FOR at or below the long-run all-match average, the recent uplift is not supported as a systematic shift.",
+    "football_mechanism": "When a team's shot quality improves (more shots on target, more big chances, higher xG), this may reflect a tactical or personnel shift that has altered how they create and finish chances. Measuring whether this recent uplift is sustained or reverts to the long-run baseline tests whether the change is structural.",
+    "metric_perspective": "FOR",
+    "opponent": "TEAM_B",
+    "provider_requirements": [
+     "shots_on_target",
+     "big_chances",
+     "xg"
+    ],
+    "research_family": "ATTACK_QUALITY",
+    "self_critique": {
+     "cohort_equals_baseline": false,
+     "condition_equals_target": false,
+     "could_opponent_strength_explain_it": true,
+     "is_just_home_vs_away": false,
+     "is_just_recent_vs_long_run": true,
+     "is_overconditioned": false,
+     "likely_generic_enumeration_would_generate_this": true,
+     "notes": "This is a straightforward recent vs long-run question. The opponent-strength caveat is real \u2014 the last 5 opponents may have been weaker defensively. However, the xG corroboration makes it worth asking. Kept because the magnitude of the shift (shots on target +1.0, big chances +0.9) is notable and corroborated by xG."
+    },
+    "subject": "TEAM_A",
+    "support_risk": "LOW",
+    "target_metric": [
+     "shots_on_target",
+     "big_chances"
+    ],
+    "window": "W5"
+   },
+   {
+    "behavioral_observations": [
+     {
+      "evidence_refs": [
+       "TEAM_B.blocks.long_run_all.metrics.shots_on_target_against",
+       "TEAM_B.blocks.recent_last_5.metrics.shots_on_target_against",
+       "TEAM_B.blocks.long_run_all.metrics.shots_against",
+       "TEAM_B.blocks.recent_last_5.metrics.shots_against"
+      ],
+      "observation": "Preston's shots on target conceded has spiked to 6.2 in the last 5 matches from a long-run average of 4.62, and shots conceded overall rose to 16.4 from 13.2 long-run."
+     },
+     {
+      "evidence_refs": [
+       "TEAM_B.blocks.long_run_all.metrics.big_chances_against",
+       "TEAM_B.blocks.recent_last_5.metrics.big_chances_against",
+       "TEAM_B.blocks.long_run_all.metrics.xg_against",
+       "TEAM_B.blocks.recent_last_5.metrics.xg_against"
+      ],
+      "observation": "Preston's big chances conceded rose to 2.6 in last 5 from 1.81 long-run, and xG against rose to 1.90 in last 5 from 1.29 long-run."
+     }
+    ],
+    "candidate_id": "C2",
+    "comparison": "SUBJECT_RECENT_VS_LONG_BASELINE",
+    "conditions": [
+     {
+      "dimension": "competition",
+      "value": "SAME"
+     }
+    ],
+    "coverage_risk": "NONE",
+    "falsifiable_question": "In Preston's last 5 Championship matches, are shots on target conceded, shots inside box conceded, and big chances conceded materially higher than their long-run Championship average?",
+    "falsifier": "If the W5 cohort shows these defensive metrics at or below the long-run average, the recent deterioration is not supported as a systematic shift.",
+    "football_mechanism": "A team conceding sharply more shots on target and big chances in recent matches may be experiencing a structural defensive breakdown \u2014 higher defensive line, reduced compactness, or personnel changes \u2014 rather than simply facing stronger opponents. If this is structural, it would persist against a possession-dominant home side.",
+    "metric_perspective": "AGAINST",
+    "opponent": "TEAM_A",
+    "provider_requirements": [
+     "shots_on_target",
+     "shots_inside_box",
+     "big_chances",
+     "xg"
+    ],
+    "research_family": "DEFENSIVE_CONCESSION",
+    "self_critique": {
+     "cohort_equals_baseline": false,
+     "condition_equals_target": false,
+     "could_opponent_strength_explain_it": true,
+     "is_just_home_vs_away": false,
+     "is_just_recent_vs_long_run": true,
+     "is_overconditioned": false,
+     "likely_generic_enumeration_would_generate_this": true,
+     "notes": "Again a recent vs long-run question, but the magnitude is large (shots on target conceded +1.6, xG against +0.61) and corroborated across multiple metrics. Opponent strength could explain it. Kept because the multi-metric corroboration is strong."
+    },
+    "subject": "TEAM_B",
+    "support_risk": "LOW",
+    "target_metric": [
+     "shots_on_target",
+     "shots_inside_box",
+     "big_chances"
+    ],
+    "window": "W5"
+   },
+   {
+    "behavioral_observations": [
+     {
+      "evidence_refs": [
+       "TEAM_A.blocks.long_run_home.metrics.big_chances_against",
+       "TEAM_A.blocks.long_run_away.metrics.big_chances_against",
+       "TEAM_A.blocks.long_run_home.metrics.shots_on_target_against",
+       "TEAM_A.blocks.long_run_away.metrics.shots_on_target_against",
+       "TEAM_A.blocks.long_run_home.metrics.xg_against",
+       "TEAM_A.blocks.long_run_away.metrics.xg_against"
+      ],
+      "observation": "West Brom's big chances conceded at home long-run is 1.24 vs 2.50 away; shots on target conceded at home is 2.91 vs 3.78 away; xG against at home is 0.89 vs 1.36 away \u2014 a large and consistent home defensive advantage."
+     },
+     {
+      "evidence_refs": [
+       "TEAM_A.blocks.recent_last_5.metrics.shots_on_target_against",
+       "TEAM_A.blocks.recent_last_5.metrics.big_chances_against",
+       "TEAM_A.blocks.long_run_home.metrics.shots_on_target_against"
+      ],
+      "observation": "West Brom's recent defensive deterioration (shots on target conceded 4.2 last 5, big chances 3.25 last 5) may be driven by away matches; the home baseline is substantially better."
+     }
+    ],
+    "candidate_id": "C3",
+    "comparison": "SUBJECT_VENUE_BASELINE",
+    "conditions": [
+     {
+      "dimension": "historical_venue_conditioning",
+      "value": "HOME"
+     },
+     {
+      "dimension": "competition",
+      "value": "SAME"
+     }
+    ],
+    "coverage_risk": "NONE",
+    "falsifiable_question": "In West Brom's Championship home matches, are shots on target conceded, big chances conceded, and xG against materially lower than in their away matches?",
+    "falsifier": "If West Brom's home and away defensive metrics (shots on target conceded, big chances conceded, xG against) show no systematic difference, the venue effect on their defense is not supported.",
+    "football_mechanism": "Teams that defend significantly better at home than away may benefit from crowd support, familiar pitch dimensions, and reduced travel fatigue. If West Brom's home defensive record is structurally better, the recent overall deterioration may not apply to this home fixture.",
+    "metric_perspective": "AGAINST",
+    "opponent": "TEAM_B",
+    "provider_requirements": [
+     "shots_on_target",
+     "big_chances",
+     "xg"
+    ],
+    "research_family": "VENUE_EFFECT",
+    "self_critique": {
+     "cohort_equals_baseline": false,
+     "condition_equals_target": false,
+     "could_opponent_strength_explain_it": true,
+     "is_just_home_vs_away": true,
+     "is_just_recent_vs_long_run": false,
+     "is_overconditioned": false,
+     "likely_generic_enumeration_would_generate_this": false,
+     "notes": "This is a home vs away question, but the magnitude of the split is large (big chances against 1.24 home vs 2.50 away) and directly relevant to interpreting the recent defensive deterioration. The interaction with the recent form question (C2) makes this non-redundant. Kept."
+    },
+    "subject": "TEAM_A",
+    "support_risk": "LOW",
+    "target_metric": [
+     "shots_on_target",
+     "big_chances",
+     "xg"
+    ],
+    "window": "ALL_PRIOR"
+   },
+   {
+    "behavioral_observations": [
+     {
+      "evidence_refs": [
+       "TEAM_B.blocks.long_run_all.metrics.yellow_cards_for",
+       "TEAM_B.blocks.recent_last_5.metrics.yellow_cards_for",
+       "TEAM_B.blocks.long_run_all.metrics.fouls_for",
+       "TEAM_B.blocks.recent_last_5.metrics.fouls_for"
+      ],
+      "observation": "Preston's yellow cards FOR long-run is 2.56, rising to 3.2 in the last 5 matches. Their fouls FOR long-run is 12.62, recent-5 is 11.6."
+     },
+     {
+      "evidence_refs": [
+       "TEAM_B.blocks.long_run_all.metrics.cards_2h_for",
+       "TEAM_B.blocks.recent_last_5.metrics.cards_2h_for"
+      ],
+      "observation": "Preston's cards_2h FOR long-run is 1.72, recent-5 is 2.2 \u2014 second-half card accumulation is elevated recently."
+     },
+     {
+      "evidence_refs": [
+       "TEAM_A.blocks.long_run_all.metrics.fouls_against",
+       "TEAM_B.blocks.long_run_all.metrics.fouls_for"
+      ],
+      "observation": "West Brom draws fouls at 10.44 per match long-run (opponents foul them), which is above Preston's foul rate of 12.62 \u2014 West Brom is a team that draws fouls, meeting a team that commits many."
+     }
+    ],
+    "candidate_id": "C4",
+    "comparison": "SUBJECT_CONDITIONAL_VS_BASELINE",
+    "conditions": [
+     {
+      "axis": "possession",
+      "dimension": "opponent_profile",
+      "value": "HIGH"
+     },
+     {
+      "dimension": "competition",
+      "value": "SAME"
+     }
+    ],
+    "coverage_risk": "NONE",
+    "falsifiable_question": "When Preston face Championship opponents with high possession (HIGH on possession profile axis), do their yellow cards FOR and fouls FOR differ from their overall Championship baseline?",
+    "falsifier": "If Preston's yellow cards FOR and fouls FOR against high-possession opponents are at or below their overall Championship average, the possession-driven discipline mechanism is not supported.",
+    "football_mechanism": "A team that commits many fouls and earns many yellow cards, playing against a possession-dominant side that draws fouls, may face escalating discipline pressure \u2014 particularly in the second half when fatigue and frustration compound. Preston's high foul and card rate meeting West Brom's foul-drawing style creates a specific discipline interaction.",
+    "metric_perspective": "FOR",
+    "opponent": "TEAM_A",
+    "provider_requirements": [
+     "yellow_cards",
+     "fouls",
+     "possession"
+    ],
+    "research_family": "DISCIPLINE",
+    "self_critique": {
+     "cohort_equals_baseline": false,
+     "condition_equals_target": false,
+     "could_opponent_strength_explain_it": false,
+     "is_just_home_vs_away": false,
+     "is_just_recent_vs_long_run": false,
+     "is_overconditioned": false,
+     "likely_generic_enumeration_would_generate_this": false,
+     "notes": "The mechanism requires two measurable characteristics: Preston's foul/card rate AND opponent possession profile. West Brom's possession dominance (52.2% long-run, 55.8% last 5) is the specific trigger. This is a genuine interaction question, not just a discipline enumeration."
+    },
+    "subject": "TEAM_B",
+    "support_risk": "LOW",
+    "target_metric": [
+     "yellow_cards",
+     "fouls"
+    ],
+    "window": "ALL_PRIOR"
+   },
+   {
+    "behavioral_observations": [
+     {
+      "evidence_refs": [
+       "TEAM_A.blocks.long_run_home.metrics.shots_for",
+       "TEAM_A.blocks.long_run_away.metrics.shots_for",
+       "TEAM_A.blocks.long_run_home.metrics.shots_inside_box_for",
+       "TEAM_A.blocks.long_run_away.metrics.shots_inside_box_for"
+      ],
+      "observation": "West Brom's shots FOR at home long-run is 12.0 vs 11.0 away; shots inside box FOR at home is 7.73 vs 7.09 away \u2014 a modest home advantage in shot volume."
+     },
+     {
+      "evidence_refs": [
+       "TEAM_B.blocks.long_run_all.metrics.shots_against",
+       "TEAM_B.blocks.recent_last_5.metrics.shots_against"
+      ],
+      "observation": "Preston concedes 13.2 shots per match long-run and 16.4 in the last 5 \u2014 they are a high-shot-conceding team, and this has worsened recently."
+     }
+    ],
+    "candidate_id": "C5",
+    "comparison": "SIMILAR_OPPONENT_COHORT",
+    "conditions": [
+     {
+      "dimension": "historical_venue_conditioning",
+      "value": "HOME"
+     },
+     {
+      "dimension": "competition",
+      "value": "SAME"
+     }
+    ],
+    "coverage_risk": "LOW",
+    "falsifiable_question": "In West Brom's Championship home matches against opponents whose defensive/discipline profile is similar to Preston's, are shots FOR and shots inside box FOR higher than West Brom's overall home Championship baseline?",
+    "falsifier": "If West Brom's shots FOR and shots inside box FOR against similar-profile opponents are at or below their overall home Championship average, the opponent-profile interaction on attack volume is not supported.",
+    "football_mechanism": "West Brom's home shot volume meeting Preston's high shot-concession rate creates a specific volume interaction. The question is whether West Brom's home attack volume is systematically higher against opponents who concede many shots (HIGH on shots-conceded profile), or whether their volume is opponent-independent.",
+    "metric_perspective": "FOR",
+    "opponent": "TEAM_B",
+    "provider_requirements": [
+     "shots",
+     "shots_inside_box",
+     "final_third_entries"
+    ],
+    "research_family": "ATTACK_VOLUME",
+    "self_critique": {
+     "cohort_equals_baseline": false,
+     "condition_equals_target": false,
+     "could_opponent_strength_explain_it": false,
+     "is_just_home_vs_away": false,
+     "is_just_recent_vs_long_run": false,
+     "is_overconditioned": false,
+     "likely_generic_enumeration_would_generate_this": false,
+     "notes": "This uses the similar-opponent cohort correctly \u2014 the cohort is defined by Preston's measurable defensive profile, not by a generic 'weak defense' label. The home conditioning is justified by the observed home/away split in West Brom's attack. Not overconditioned."
+    },
+    "similar_opponent_rationale": "Preston's defensive profile (high shots conceded, high shots on target conceded, high shots inside box conceded, moderate fouls, high yellow cards) defines a specific opponent type. The engine's frozen similarity dimensions (goals_conceded_per_match, shots_on_target_conceded_per_match, shots_inside_box_conceded_per_match, fouls_committed_per_match, yellow_cards_per_match) capture this profile. Asking how West Brom performs at home against similar opponents tests whether their attack volume is elevated against porous defenses.",
+    "subject": "TEAM_A",
+    "support_risk": "LOW",
+    "target_metric": [
+     "shots",
+     "shots_inside_box",
+     "final_third_entries"
+    ],
+    "window": "ALL_PRIOR"
+   },
+   {
+    "behavioral_observations": [
+     {
+      "evidence_refs": [
+       "TEAM_B.blocks.long_run_all.metrics.final_third_entries_for",
+       "TEAM_B.blocks.recent_last_5.metrics.final_third_entries_for",
+       "TEAM_B.blocks.long_run_all.metrics.shots_for",
+       "TEAM_B.blocks.recent_last_5.metrics.shots_for"
+      ],
+      "observation": "Preston's final third entries FOR long-run is 65.2, recent-5 is 59.4 \u2014 they enter the final third frequently but their shots FOR is only 9.42 long-run and 8.6 recent-5. The entry-to-shot gap is large."
+     },
+     {
+      "evidence_refs": [
+       "TEAM_A.blocks.long_run_all.metrics.ball_recoveries_for",
+       "TEAM_A.blocks.long_run_all.metrics.tackles_for"
+      ],
+      "observation": "West Brom's ball recoveries FOR long-run is 49.5, and their tackles FOR long-run is 12.82 \u2014 they are an active ball-winning team that may suppress shot conversion from final third entries."
+     }
+    ],
+    "candidate_id": "C6",
+    "comparison": "SUBJECT_CONDITIONAL_VS_BASELINE",
+    "conditions": [
+     {
+      "axis": "possession",
+      "dimension": "opponent_profile",
+      "value": "HIGH"
+     },
+     {
+      "dimension": "competition",
+      "value": "SAME"
+     }
+    ],
+    "coverage_risk": "NONE",
+    "falsifiable_question": "When Preston face Championship opponents with high possession, are their final third entries FOR and shots FOR lower than their overall Championship baseline?",
+    "falsifier": "If Preston's final third entries FOR and shots FOR against high-possession opponents are at or above their overall Championship average, the possession-suppression mechanism on Preston's attack volume is not supported.",
+    "football_mechanism": "A team that enters the final third frequently but converts to shots at a low rate may be doing so against opponents who allow territorial access but defend the box tightly. When Preston face a possession-dominant, high-ball-recovery opponent like West Brom, their final third entry volume may be suppressed further, and their already-low shot conversion from entries may worsen.",
+    "metric_perspective": "FOR",
+    "opponent": "TEAM_A",
+    "provider_requirements": [
+     "final_third_entries",
+     "shots",
+     "shots_inside_box",
+     "possession"
+    ],
+    "research_family": "TEMPO_AND_TERRITORY",
+    "self_critique": {
+     "cohort_equals_baseline": false,
+     "condition_equals_target": false,
+     "could_opponent_strength_explain_it": false,
+     "is_just_home_vs_away": false,
+     "is_just_recent_vs_long_run": false,
+     "is_overconditioned": false,
+     "likely_generic_enumeration_would_generate_this": false,
+     "notes": "The mechanism is specific: possession dominance by the opponent reduces Preston's territorial access. The entry-to-shot gap is the observable behaviour that motivates the question. Not redundant with C4 (which is about discipline) or C5 (which is about West Brom's attack)."
+    },
+    "subject": "TEAM_B",
+    "support_risk": "LOW",
+    "target_metric": [
+     "final_third_entries",
+     "shots",
+     "shots_inside_box"
+    ],
+    "window": "ALL_PRIOR"
+   },
+   {
+    "behavioral_observations": [
+     {
+      "evidence_refs": [
+       "TEAM_A.blocks.long_run_all.metrics.accurate_crosses_for",
+       "TEAM_A.blocks.recent_last_5.metrics.accurate_crosses_for",
+       "TEAM_A.blocks.long_run_all.metrics.corner_kicks_for",
+       "TEAM_A.blocks.recent_last_5.metrics.corner_kicks_for"
+      ],
+      "observation": "West Brom's accurate crosses FOR long-run is 5.04, one of the higher values in the dataset; recent-5 is 5.0 \u2014 consistent and high. Corner kicks FOR long-run is 5.69, recent-5 is 6.0."
+     },
+     {
+      "evidence_refs": [
+       "TEAM_B.blocks.long_run_all.metrics.tackles_for",
+       "TEAM_B.blocks.long_run_all.metrics.interceptions_for"
+      ],
+      "observation": "Preston's tackles FOR long-run is 18.27 (high) and interceptions FOR is 11.71 \u2014 Preston is a high-defensive-activity team that may force wide play and generate crossing opportunities for opponents."
+     }
+    ],
+    "candidate_id": "C7",
+    "comparison": "SIMILAR_OPPONENT_COHORT",
+    "conditions": [
+     {
+      "dimension": "competition",
+      "value": "SAME"
+     }
+    ],
+    "coverage_risk": "LOW",
+    "falsifiable_question": "In West Brom's Championship matches against opponents whose defensive/discipline profile is similar to Preston's, are accurate crosses FOR and corner kicks FOR higher than West Brom's overall Championship baseline?",
+    "falsifier": "If West Brom's accurate crosses FOR and corner kicks FOR against similar-profile opponents are at or below their overall Championship average, the opponent-profile interaction on crossing/set-piece generation is not supported.",
+    "football_mechanism": "A team with high crossing output meeting a defensively active opponent that forces play wide may see its crossing volume maintained or increased. West Brom's consistent crossing output against a team that defends with high tackle and interception counts tests whether their wide delivery is sustained against disrupting defenses.",
+    "metric_perspective": "FOR",
+    "opponent": "TEAM_B",
+    "provider_requirements": [
+     "accurate_crosses",
+     "corner_kicks"
+    ],
+    "research_family": "SET_PIECE_GENERATION",
+    "self_critique": {
+     "cohort_equals_baseline": false,
+     "condition_equals_target": false,
+     "could_opponent_strength_explain_it": false,
+     "is_just_home_vs_away": false,
+     "is_just_recent_vs_long_run": false,
+     "is_overconditioned": false,
+     "likely_generic_enumeration_would_generate_this": false,
+     "notes": "The mechanism requires two measurable characteristics: West Brom's crossing tendency AND Preston's defensive profile. Not redundant with C5 (which is about shot volume). The crossing/corner angle is distinct. Coverage risk is LOW because similar-opponent cohort size may be small."
+    },
+    "similar_opponent_rationale": "Preston's profile includes high fouls committed and high yellow cards (disciplinary pressure) alongside high shots conceded \u2014 the frozen similarity dimensions capture this. West Brom's crossing output against opponents with a similar defensive/discipline profile tests whether their wide delivery is opponent-dependent.",
+    "subject": "TEAM_A",
+    "support_risk": "LOW",
+    "target_metric": [
+     "corner_kicks",
+     "accurate_crosses"
+    ],
+    "window": "ALL_PRIOR"
+   }
+  ],
+  "fixture_id": "mt_367782066",
+  "interaction_map": {
+   "a_attack_vs_b_defense": [
+    "West Brom's recent uptick in shots on target (4.6 last 5) meets Preston's recent defensive collapse in shots on target conceded (6.2 last 5) \u2014 both sides of the interaction point toward elevated on-target volume in this fixture.",
+    "West Brom's big chances FOR have risen to 3.0 in last 5; Preston's big chances conceded have risen to 2.6 in last 5 \u2014 both trending in the same direction.",
+    "West Brom's accurate crossing output (5.04 long-run, 5.0 last 5) is high; Preston concedes 13.2 shots per match long-run and 16.4 in last 5 \u2014 a high-volume crossing attack meeting a porous defense.",
+    "West Brom's xG FOR (1.77 last 5) is well above Preston's xG against long-run (1.29), suggesting West Brom's recent attack quality exceeds what Preston typically allows.",
+    "West Brom generates corners at 5.69 long-run and 6.0 last 5; Preston concedes 5.32 corners long-run \u2014 broadly matched, no strong asymmetry here."
+   ],
+   "asymmetries": [
+    "Preston's final third entries (65.2 long-run) are very high relative to their shots (9.42) \u2014 a large entry-to-shot conversion gap suggesting territorial presence without shot creation.",
+    "West Brom's home defense is substantially better than away: big chances against 1.24 home vs 2.50 away long-run \u2014 this fixture is at home for West Brom, which is relevant context.",
+    "Preston's yellow cards FOR (2.56 long-run, 3.2 last 5) are very high; West Brom's fouls against (10.44 long-run) are also elevated \u2014 Preston commits many fouls and earns many cards, while West Brom draws fouls."
+   ],
+   "b_attack_vs_a_defense": [
+    "Preston's shot volume (8.6 last 5) is low; West Brom's shots conceded have risen to 12.6 last 5 \u2014 the question is whether West Brom's defensive deterioration is opponent-driven or structural.",
+    "Preston's shots on target (2.6 last 5) is very low; West Brom's shots on target conceded (4.2 last 5) is elevated \u2014 a tension: West Brom is conceding more on-target shots recently but Preston generates very few.",
+    "Preston's xG FOR (0.89 last 5) is low; West Brom's xG against (1.56 last 5) is elevated \u2014 the gap between Preston's attack quality and West Brom's recent defensive vulnerability is a key asymmetry.",
+    "Preston's final third entries (59.4 last 5) are high relative to their shot output (8.6) \u2014 Preston enters the final third frequently but converts poorly to shots, suggesting West Brom's defense may be able to limit shot conversion even if entries are allowed."
+   ],
+   "regime_changes": [
+    "West Brom's defensive metrics show a clear recent regime change: shots on target conceded 2.91 home long-run vs 4.7 recent-10 overall; big chances conceded 1.88 long-run vs 3.25 last 5.",
+    "Preston's shots on target conceded has spiked to 6.2 in last 5 from 4.62 long-run \u2014 a sharp recent deterioration in defensive solidity.",
+    "Preston's yellow cards FOR have risen to 3.2 in last 5 from 2.56 long-run \u2014 a recent disciplinary escalation."
+   ],
+   "tensions": [
+    "West Brom's shots on target conceded have risen sharply recently (4.7 last 10) but their home long-run figure is only 2.91 \u2014 the recent deterioration may be driven by away matches; home defense may be more stable.",
+    "Preston's saves FOR (4.0 last 5) are high, consistent with shots on target conceded spike, but their long-run save rate (3.07) is already elevated \u2014 Preston's goalkeeper is consistently busy.",
+    "West Brom's clearances FOR have dropped to 14.0 in last 5 despite conceding more shots \u2014 fewer clearances with more shots against is a tension suggesting opponents are getting cleaner looks."
+   ]
+  },
+  "reconnaissance": {
+   "team_a_attack": [
+    "West Brom's long-run shot volume is 11.49 per match (all), rising to 13.8 in the last 5 and 11.3 in the last 10; shots inside box average 7.4 long-run but 8.2 in last 5, suggesting a recent uptick in box penetration.",
+    "Shots on target: long-run 3.58, recent-5 4.6 \u2014 a meaningful step up in the last 5 matches. xG_for also rises from 1.30 long-run to 1.77 in last 5, consistent with higher-quality recent attack.",
+    "Corner generation: long-run 5.69, recent-5 6.0 \u2014 broadly stable; West Brom generates slightly more corners at home (5.73) than away (5.65).",
+    "Accurate crosses FOR: long-run 5.04, recent-5 5.0 \u2014 West Brom is a notably active crossing team (5.04 vs league-typical levels), and this is consistent home and away.",
+    "Possession: long-run 52.2%, recent-5 55.8% \u2014 West Brom holds the ball above 50% consistently; at home 54.3% long-run.",
+    "Final third entries FOR: long-run 50.6, recent-5 47.4 \u2014 slightly lower recently despite higher shot volume, suggesting more direct/efficient conversion of entries to shots.",
+    "Big chances FOR: long-run 2.09, recent-5 3.0 \u2014 a notable recent increase in big chance creation."
+   ],
+   "team_a_defense": [
+    "Shots conceded: long-run 11.16, recent-5 12.6 and recent-10 12.8 \u2014 West Brom is conceding more shots recently than their long-run average.",
+    "Shots on target conceded: long-run 3.36, recent-5 4.2, recent-10 4.7 \u2014 a clear upward trend in shots on target conceded; the recent-10 figure is substantially above the long-run.",
+    "Big chances conceded: long-run 1.88, recent-5 3.25 \u2014 a sharp recent deterioration in quality of chances allowed.",
+    "xG against: long-run 1.13, recent-5 1.56, recent-10 1.55 \u2014 consistent with the big chances trend; defensive quality has declined recently.",
+    "Clearances FOR (defensive): long-run 18.49, recent-5 14.0 \u2014 fewer clearances recently despite conceding more shots, which may indicate opponents are getting shots off before clearances can be made.",
+    "Corners conceded: long-run 5.33, recent-5 5.0, recent-10 6.5 \u2014 the recent-10 shows elevated corners conceded.",
+    "Home defense: shots against at home long-run 10.14, away 12.13 \u2014 West Brom defends better at home on shot volume; home big chances against 1.24 vs away 2.50 long-run \u2014 a large home/away defensive split."
+   ],
+   "team_b_attack": [
+    "Preston's shot volume is low: long-run 9.42, recent-5 8.6, recent-10 8.7 \u2014 consistently below 10 shots per match.",
+    "Shots on target FOR: long-run 3.18, recent-5 2.6, recent-10 2.6 \u2014 declining recently; Preston is generating fewer on-target efforts.",
+    "Shots inside box FOR: long-run 6.04, recent-5 5.8 \u2014 modest box presence.",
+    "xG FOR: long-run 0.91, recent-5 0.89, recent-10 0.91 \u2014 very stable and low; Preston's attack generates limited expected threat.",
+    "Big chances FOR: long-run 1.30, recent-5 1.6 \u2014 low big chance creation throughout.",
+    "Corner kicks FOR: long-run 4.34, recent-5 3.4, recent-10 3.22 \u2014 Preston generates very few corners, and this has declined further recently.",
+    "Accurate crosses FOR: long-run 3.33, recent-5 2.2 \u2014 low and declining crossing output.",
+    "Final third entries FOR: long-run 65.2, recent-5 59.4 \u2014 Preston enters the final third frequently (high relative to shot output), suggesting many entries don't convert to shots."
+   ],
+   "team_b_defense": [
+    "Shots conceded: long-run 13.2, recent-5 16.4, recent-10 13.3 \u2014 Preston concedes a high volume of shots; the last 5 shows a spike to 16.4.",
+    "Shots on target conceded: long-run 4.62, recent-5 6.2, recent-10 4.4 \u2014 the last 5 shows a dramatic spike in shots on target conceded (6.2 vs 4.62 long-run).",
+    "Big chances conceded: long-run 1.81, recent-5 2.6 \u2014 elevated recently.",
+    "xG against: long-run 1.29, recent-5 1.90, recent-10 1.39 \u2014 the last 5 xG against (1.90) is well above long-run; Preston's defense has been under severe pressure recently.",
+    "Clearances FOR (Preston's defensive clearances): long-run 20.47, recent-5 18.8 \u2014 slightly fewer clearances despite more shots conceded.",
+    "Corners conceded: long-run 5.32, recent-5 4.6 \u2014 corners conceded are not elevated recently.",
+    "Saves FOR: long-run 3.07, recent-5 4.0 \u2014 Preston's goalkeeper is making more saves recently, consistent with the shot-on-target spike.",
+    "Tackles FOR: long-run 18.27, recent-5 19.6 \u2014 Preston is a high-tackle team defensively, consistent with a pressing/disrupting style."
+   ]
+  }
+ },
+ "temperature": 0.0
+}

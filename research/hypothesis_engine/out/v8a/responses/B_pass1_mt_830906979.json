@@ -1,0 +1,525 @@
+{
+ "arm": "B",
+ "elapsed_s": 110.04,
+ "error": null,
+ "fixture_id": "mt_830906979",
+ "max_tokens": 24576,
+ "model_id": "us.anthropic.claude-sonnet-4-6",
+ "pass": 1,
+ "prompt_version": "v8a_prompt_v1",
+ "provenance": {
+  "input_tokens": 42873,
+  "output_tokens": 10368,
+  "request_sha256": "e8826b1f435c02844099e3be50773b5f1898e9315a072145086e5d9f16529e48",
+  "resolved_model_id": "us.anthropic.claude-sonnet-4-6",
+  "response_sha256": "409eaed994f4cb2a462a3d8304ca61872ff476d015608e1b4cd3333b5321c04a",
+  "stop_reason": "tool_use"
+ },
+ "record_sha256": "105c4f802da72b5d1f95b89ab2a872ccb397488508fdbf3f6f5c5e3b080199d6",
+ "response": {
+  "candidates": [
+   {
+    "behavioral_observations": [
+     {
+      "evidence_refs": [
+       "TEAM_A.blocks.long_run_home.metrics.shots_for",
+       "TEAM_A.blocks.long_run_away.metrics.shots_for",
+       "TEAM_A.blocks.long_run_home.metrics.shots_inside_box_for",
+       "TEAM_A.blocks.long_run_away.metrics.shots_inside_box_for"
+      ],
+      "observation": "Betis long-run home shots_for mean is 17.6 vs long-run away 10.2 \u2014 a gap of 7.4 shots per match. shots_inside_box_for follows the same pattern: 11.4 home vs 6.9 away."
+     },
+     {
+      "evidence_refs": [
+       "TEAM_B.blocks.long_run_all.metrics.shots_against",
+       "TEAM_B.blocks.long_run_away.metrics.shots_inside_box_against",
+       "TEAM_A.blocks.long_run_home.metrics.shots_against"
+      ],
+      "observation": "Rayo concedes 12.8 shots per match long-run all and 9.3 shots_inside_box_against away long-run, both above Betis's home baseline concession (8.5 shots, 5.5 inside box), suggesting Rayo's defensive profile does not suppress shot volume well."
+     }
+    ],
+    "candidate_id": "C1",
+    "comparison": "SUBJECT_VENUE_BASELINE",
+    "conditions": [
+     {
+      "dimension": "historical_venue_conditioning",
+      "value": "HOME"
+     }
+    ],
+    "coverage_risk": "NONE",
+    "falsifiable_question": "Does Betis generate more shots and shots_inside_box in their home matches than in their overall baseline, and does this home elevation persist when the opponent profile resembles Rayo's defensive concession profile?",
+    "falsifier": "If Betis home shots_for and shots_inside_box_for are not systematically higher than their overall baseline, the venue-driven attack elevation mechanism is unsupported.",
+    "football_mechanism": "When Betis plays at home they generate substantially more attacking entries and box touches than away. Rayo's defensive profile concedes high shot volumes and inside-box shots. The combination of Betis's home attack elevation and Rayo's permissive defensive structure may produce above-baseline shot volume for Betis.",
+    "metric_perspective": "FOR",
+    "opponent": "TEAM_B",
+    "provider_requirements": [
+     "shots",
+     "shots_inside_box"
+    ],
+    "research_family": "ATTACK_VOLUME",
+    "self_critique": {
+     "cohort_equals_baseline": false,
+     "condition_equals_target": false,
+     "could_opponent_strength_explain_it": true,
+     "is_just_home_vs_away": true,
+     "is_just_recent_vs_long_run": false,
+     "is_overconditioned": false,
+     "likely_generic_enumeration_would_generate_this": true,
+     "notes": "This is partly a home vs away question. However the interaction with Rayo's specific defensive profile (high shots conceded) makes it more than a generic venue split. Keeping it as the venue baseline is the minimal sufficient framing."
+    },
+    "subject": "TEAM_A",
+    "support_risk": "NONE",
+    "target_metric": [
+     "shots",
+     "shots_inside_box"
+    ],
+    "window": "ALL_PRIOR"
+   },
+   {
+    "behavioral_observations": [
+     {
+      "evidence_refs": [
+       "TEAM_A.blocks.long_run_home.metrics.corner_kicks_for",
+       "TEAM_A.blocks.long_run_away.metrics.corner_kicks_for",
+       "TEAM_A.blocks.recent_last_5.metrics.corner_kicks_for"
+      ],
+      "observation": "Betis generates 6.0 corner_kicks_for at home long-run vs 3.7 away \u2014 a large venue split. Recent W5 corners_for is 4.2, still above their away baseline."
+     },
+     {
+      "evidence_refs": [
+       "TEAM_B.blocks.recent_last_5.metrics.corner_kicks_against",
+       "TEAM_B.blocks.long_run_all.metrics.corner_kicks_against"
+      ],
+      "observation": "Rayo concedes 6.8 corner_kicks_against in W5 and 5.47 long-run all \u2014 their recent corner concession rate is elevated above their own baseline."
+     }
+    ],
+    "candidate_id": "C2",
+    "comparison": "SUBJECT_VENUE_BASELINE",
+    "conditions": [
+     {
+      "dimension": "historical_venue_conditioning",
+      "value": "HOME"
+     }
+    ],
+    "coverage_risk": "NONE",
+    "falsifiable_question": "Does Betis generate more corner_kicks in their home matches than in their overall baseline, and is this home elevation consistent across the prior record?",
+    "falsifier": "If Betis home corner_kicks_for is not systematically higher than their overall baseline, the home-driven corner generation mechanism is unsupported.",
+    "football_mechanism": "Betis's home attacking dominance (higher possession, more final-third entries, more shots) naturally generates more corner situations. Rayo's recent elevated corner concession rate suggests their defensive shape is currently more susceptible to wide pressure that forces corners. The two tendencies interact to potentially produce a high-corner environment for Betis.",
+    "metric_perspective": "FOR",
+    "opponent": "TEAM_B",
+    "provider_requirements": [
+     "corner_kicks"
+    ],
+    "research_family": "SET_PIECE_GENERATION",
+    "self_critique": {
+     "cohort_equals_baseline": false,
+     "condition_equals_target": false,
+     "could_opponent_strength_explain_it": true,
+     "is_just_home_vs_away": true,
+     "is_just_recent_vs_long_run": false,
+     "is_overconditioned": false,
+     "likely_generic_enumeration_would_generate_this": true,
+     "notes": "Straightforward home venue effect on corners. The Rayo side (elevated recent corner concession) adds a second supporting signal but the core question is a venue baseline. Retaining because the two-sided evidence is concrete."
+    },
+    "subject": "TEAM_A",
+    "support_risk": "NONE",
+    "target_metric": [
+     "corner_kicks"
+    ],
+    "window": "ALL_PRIOR"
+   },
+   {
+    "behavioral_observations": [
+     {
+      "evidence_refs": [
+       "TEAM_A.blocks.long_run_home.metrics.big_chances_for",
+       "TEAM_A.blocks.long_run_away.metrics.big_chances_for",
+       "TEAM_A.blocks.long_run_home.metrics.xg_for",
+       "TEAM_A.blocks.long_run_away.metrics.xg_for",
+       "TEAM_A.blocks.recent_last_5.metrics.xg_for"
+      ],
+      "observation": "Betis big_chances_for at home long-run is 3.125 vs 2.0 away. xg_for at home long-run is 2.04 vs 1.11 away. Recent W5 xg_for is 1.38, below the home long-run baseline."
+     },
+     {
+      "evidence_refs": [
+       "TEAM_B.blocks.recent_last_5.metrics.big_chances_against",
+       "TEAM_B.blocks.long_run_home.metrics.big_chances_against",
+       "TEAM_B.blocks.long_run_all.metrics.big_chances_against"
+      ],
+      "observation": "Rayo big_chances_against in W5 is 2.8, above their long-run home baseline of 1.25, indicating a recent deterioration in preventing high-quality chances."
+     }
+    ],
+    "candidate_id": "C3",
+    "comparison": "SUBJECT_VENUE_BASELINE",
+    "conditions": [
+     {
+      "dimension": "historical_venue_conditioning",
+      "value": "HOME"
+     }
+    ],
+    "coverage_risk": "NONE",
+    "falsifiable_question": "Does Betis generate more big_chances and higher xg in their home matches than in their overall baseline, and is this home elevation consistent across the prior record?",
+    "falsifier": "If Betis home big_chances_for and xg_for are not systematically higher than their overall baseline, the home attack quality elevation mechanism is unsupported.",
+    "football_mechanism": "Betis's home attack generates substantially more xg and big chances than away. Rayo's recent defensive record shows elevated big chances conceded. If Betis's home attack quality elevation is structural (not just recent form), the combination with Rayo's current defensive vulnerability in big chance prevention could produce above-baseline attack quality for Betis.",
+    "metric_perspective": "FOR",
+    "opponent": "TEAM_B",
+    "provider_requirements": [
+     "big_chances",
+     "xg"
+    ],
+    "research_family": "ATTACK_QUALITY",
+    "self_critique": {
+     "cohort_equals_baseline": false,
+     "condition_equals_target": false,
+     "could_opponent_strength_explain_it": true,
+     "is_just_home_vs_away": true,
+     "is_just_recent_vs_long_run": false,
+     "is_overconditioned": false,
+     "likely_generic_enumeration_would_generate_this": true,
+     "notes": "Again a home venue question, but the xg and big_chances split is very large (2.04 vs 1.11 xg) and the Rayo defensive deterioration adds a second signal. Keeping as a distinct quality question separate from C1 volume question."
+    },
+    "subject": "TEAM_A",
+    "support_risk": "NONE",
+    "target_metric": [
+     "big_chances",
+     "xg"
+    ],
+    "window": "ALL_PRIOR"
+   },
+   {
+    "behavioral_observations": [
+     {
+      "evidence_refs": [
+       "TEAM_B.blocks.recent_last_5.metrics.shots_on_target_against",
+       "TEAM_B.blocks.long_run_all.metrics.shots_on_target_against",
+       "TEAM_B.blocks.long_run_away.metrics.shots_on_target_against",
+       "TEAM_B.blocks.recent_last_5.metrics.big_chances_against",
+       "TEAM_B.blocks.long_run_all.metrics.big_chances_against"
+      ],
+      "observation": "Rayo's shots_on_target_against in W5 is 5.4, above long-run all (4.18) and long-run away (3.67). big_chances_against W5 is 2.8, above long-run all (2.31) and long-run home (1.25)."
+     },
+     {
+      "evidence_refs": [
+       "TEAM_B.blocks.recent_last_5.metrics.clearances_for",
+       "TEAM_B.blocks.long_run_all.metrics.clearances_for"
+      ],
+      "observation": "Rayo's clearances_for in W5 is 29.8, above long-run all (24.3), indicating they are making more defensive clearances recently \u2014 consistent with absorbing more pressure."
+     }
+    ],
+    "candidate_id": "C4",
+    "comparison": "SUBJECT_RECENT_VS_LONG_BASELINE",
+    "conditions": [],
+    "coverage_risk": "NONE",
+    "falsifiable_question": "Does Rayo Vallecano's shots_on_target_against and big_chances_against in their last 5 matches differ from their overall prior baseline in a way consistent with a defensive deterioration?",
+    "falsifier": "If Rayo's W5 shots_on_target_against and big_chances_against are not systematically higher than their overall baseline, the defensive deterioration mechanism is unsupported.",
+    "football_mechanism": "Rayo's recent matches show a pattern of conceding more shots on target and big chances than their long-run baseline. If this reflects a structural defensive deterioration rather than random variance, it would represent a regime change in their defensive quality. The question is whether Rayo's recent elevated concession of shots on target and big chances is a departure from their own baseline.",
+    "metric_perspective": "AGAINST",
+    "opponent": "TEAM_A",
+    "provider_requirements": [
+     "shots_on_target",
+     "big_chances"
+    ],
+    "research_family": "DEFENSIVE_CONCESSION",
+    "self_critique": {
+     "cohort_equals_baseline": false,
+     "condition_equals_target": false,
+     "could_opponent_strength_explain_it": true,
+     "is_just_home_vs_away": false,
+     "is_just_recent_vs_long_run": true,
+     "is_overconditioned": false,
+     "likely_generic_enumeration_would_generate_this": true,
+     "notes": "This IS a recent vs long-run question. The self-critique flags it. However the magnitude of the shift (shots_on_target_against 5.4 vs 4.18, big_chances_against 2.8 vs 2.31) and the corroborating clearances signal make it worth retaining as a genuine regime change question. Keeping it."
+    },
+    "subject": "TEAM_B",
+    "support_risk": "LOW",
+    "target_metric": [
+     "shots_on_target",
+     "big_chances"
+    ],
+    "window": "W5"
+   },
+   {
+    "behavioral_observations": [
+     {
+      "evidence_refs": [
+       "TEAM_B.blocks.long_run_all.metrics.final_third_entries_against",
+       "TEAM_B.blocks.recent_last_10.metrics.final_third_entries_against",
+       "TEAM_B.blocks.recent_last_5.metrics.final_third_entries_against"
+      ],
+      "observation": "Rayo's final_third_entries_against is consistently high: long-run all 60.4, W10 60.2, W5 61.4 \u2014 no sign of improvement across any window. This is a structural feature, not a recent blip."
+     },
+     {
+      "evidence_refs": [
+       "TEAM_A.blocks.long_run_home.metrics.final_third_entries_for",
+       "TEAM_A.blocks.long_run_away.metrics.final_third_entries_for",
+       "TEAM_B.blocks.long_run_all.metrics.final_third_entries_against"
+      ],
+      "observation": "Betis final_third_entries_for at home long-run is 51.9 vs away 47.4. Rayo concedes 60.4 final_third_entries_against long-run all \u2014 well above Betis's own home generation rate, suggesting Rayo's defensive shape allows deep territorial penetration."
+     }
+    ],
+    "candidate_id": "C5",
+    "comparison": "SIMILAR_OPPONENT_COHORT",
+    "conditions": [],
+    "coverage_risk": "NONE",
+    "falsifiable_question": "Does Rayo Vallecano concede more final_third_entries and touches_in_penalty_area against opponents whose defensive/discipline profile resembles Real Betis's, compared to Rayo's overall baseline?",
+    "falsifier": "If Rayo's final_third_entries_against and touches_in_penalty_area_against against similar-profile opponents are not higher than their overall baseline, the structural territorial vulnerability mechanism is unsupported.",
+    "football_mechanism": "Rayo structurally concedes high final-third entries regardless of venue or recent form. When facing a home side like Betis that generates above-average final-third entries at home, the interaction may produce elevated territorial dominance for Betis. The question is whether Rayo's high final_third_entries_against is a stable structural feature that persists against opponents with HIGH attacking territorial profiles.",
+    "metric_perspective": "AGAINST",
+    "opponent": "TEAM_A",
+    "provider_requirements": [
+     "final_third_entries",
+     "touches_in_penalty_area"
+    ],
+    "research_family": "TEMPO_AND_TERRITORY",
+    "self_critique": {
+     "cohort_equals_baseline": false,
+     "condition_equals_target": false,
+     "could_opponent_strength_explain_it": true,
+     "is_just_home_vs_away": false,
+     "is_just_recent_vs_long_run": false,
+     "is_overconditioned": false,
+     "likely_generic_enumeration_would_generate_this": false,
+     "notes": "The similar-opponent cohort adds genuine conditional structure beyond a simple average. The structural consistency of Rayo's final_third_entries_against across all windows (60+) is the concrete evidence base."
+    },
+    "similar_opponent_rationale": "Betis as the upcoming opponent has a high home attacking profile (shots, final_third_entries, touches_in_penalty_area). The engine's frozen similarity dimensions (goals_conceded_per_match, shots_on_target_conceded_per_match, shots_inside_box_conceded_per_match, fouls_committed_per_match, yellow_cards_per_match) will identify prior opponents of Rayo with a similar attacking/pressing profile to Betis, allowing a test of whether Rayo's territorial concession pattern is consistent against such opponents.",
+    "subject": "TEAM_B",
+    "support_risk": "LOW",
+    "target_metric": [
+     "final_third_entries",
+     "touches_in_penalty_area"
+    ],
+    "window": "ALL_PRIOR"
+   },
+   {
+    "behavioral_observations": [
+     {
+      "evidence_refs": [
+       "TEAM_B.blocks.long_run_away.metrics.shots_for",
+       "TEAM_B.blocks.long_run_home.metrics.shots_for",
+       "TEAM_B.blocks.long_run_away.metrics.shots_on_target_for",
+       "TEAM_B.blocks.long_run_home.metrics.shots_on_target_for",
+       "TEAM_B.blocks.recent_last_5.metrics.shots_on_target_for"
+      ],
+      "observation": "Rayo shots_for away long-run is 10.4 vs home 15.75. shots_on_target_for away long-run is 2.22 vs home 4.88. Recent W5 shots_on_target_for is 2.8, consistent with their away baseline."
+     },
+     {
+      "evidence_refs": [
+       "TEAM_A.blocks.long_run_home.metrics.shots_against",
+       "TEAM_A.blocks.long_run_home.metrics.shots_on_target_against",
+       "TEAM_B.blocks.long_run_away.metrics.shots_on_target_for"
+      ],
+      "observation": "Betis shots_against at home long-run is 8.5, well below Rayo's away shots_for of 10.4. Betis shots_on_target_against at home is 2.75, below Rayo's away shots_on_target_for of 2.22 \u2014 suggesting Betis suppresses shots on target at home even below Rayo's already-low away baseline."
+     }
+    ],
+    "candidate_id": "C6",
+    "comparison": "SUBJECT_VENUE_BASELINE",
+    "conditions": [
+     {
+      "dimension": "historical_venue_conditioning",
+      "value": "AWAY"
+     }
+    ],
+    "coverage_risk": "NONE",
+    "falsifiable_question": "Does Rayo Vallecano generate fewer shots and shots_on_target in their away matches than in their overall baseline, and is this away depression consistent across the prior record?",
+    "falsifier": "If Rayo's away shots_for and shots_on_target_for are not systematically lower than their overall baseline, the away attack depression mechanism is unsupported.",
+    "football_mechanism": "Rayo's away attack is substantially weaker than their home attack in shot volume and on-target accuracy. Betis's home defense suppresses shots conceded to below their own away baseline. The interaction of Rayo's away attack depression and Betis's home defensive suppression may produce below-baseline shot and shots_on_target output for Rayo.",
+    "metric_perspective": "FOR",
+    "opponent": "TEAM_A",
+    "provider_requirements": [
+     "shots",
+     "shots_on_target"
+    ],
+    "research_family": "ATTACK_VOLUME",
+    "self_critique": {
+     "cohort_equals_baseline": false,
+     "condition_equals_target": false,
+     "could_opponent_strength_explain_it": true,
+     "is_just_home_vs_away": true,
+     "is_just_recent_vs_long_run": false,
+     "is_overconditioned": false,
+     "likely_generic_enumeration_would_generate_this": true,
+     "notes": "Home/away split question. The magnitude of the split (shots_on_target 2.22 away vs 4.88 home) is large and the Betis home defensive suppression adds a second signal. Retaining as a distinct question from C1."
+    },
+    "subject": "TEAM_B",
+    "support_risk": "NONE",
+    "target_metric": [
+     "shots",
+     "shots_on_target"
+    ],
+    "window": "ALL_PRIOR"
+   },
+   {
+    "behavioral_observations": [
+     {
+      "evidence_refs": [
+       "TEAM_B.blocks.long_run_all.metrics.fouls_for",
+       "TEAM_B.blocks.recent_last_5.metrics.fouls_for",
+       "TEAM_B.blocks.long_run_away.metrics.fouls_for",
+       "TEAM_B.blocks.long_run_home.metrics.fouls_for",
+       "TEAM_B.blocks.recent_last_5.metrics.yellow_cards_for",
+       "TEAM_B.blocks.long_run_all.metrics.yellow_cards_for"
+      ],
+      "observation": "Rayo fouls_for long-run all is 14.2, rising to 14.6 in W5. Away long-run fouls_for is 15.9, above their home baseline of 12.4. Rayo yellow_cards_for W5 is 3.4, above long-run all (2.69) and long-run away (2.78)."
+     },
+     {
+      "evidence_refs": [
+       "TEAM_A.blocks.long_run_all.metrics.fouls_against",
+       "TEAM_A.blocks.recent_last_5.metrics.fouls_against"
+      ],
+      "observation": "Betis fouls_against (fouls committed by opponents against Betis) long-run all is 14.4, rising to 15.8 in W5 \u2014 opponents are fouling Betis more frequently recently, consistent with Betis drawing fouls."
+     }
+    ],
+    "candidate_id": "C7",
+    "comparison": "SUBJECT_VENUE_BASELINE",
+    "conditions": [
+     {
+      "dimension": "historical_venue_conditioning",
+      "value": "AWAY"
+     }
+    ],
+    "coverage_risk": "NONE",
+    "falsifiable_question": "Does Rayo Vallecano commit more fouls and receive more yellow_cards in their away matches than in their overall baseline, and is this away elevation consistent across the prior record?",
+    "falsifier": "If Rayo's away fouls_for and yellow_cards_for are not systematically higher than their overall baseline, the away discipline deterioration mechanism is unsupported.",
+    "football_mechanism": "Rayo commits more fouls away than at home, and their recent yellow card rate has risen. Betis draws more fouls from opponents recently. When a high-fouling away side faces a team that draws fouls, the interaction may produce elevated foul and card counts for Rayo. The question is whether Rayo's away foul and yellow card rates are systematically above their overall baseline.",
+    "metric_perspective": "FOR",
+    "opponent": "TEAM_A",
+    "provider_requirements": [
+     "fouls",
+     "yellow_cards"
+    ],
+    "research_family": "DISCIPLINE",
+    "self_critique": {
+     "cohort_equals_baseline": false,
+     "condition_equals_target": false,
+     "could_opponent_strength_explain_it": false,
+     "is_just_home_vs_away": true,
+     "is_just_recent_vs_long_run": false,
+     "is_overconditioned": false,
+     "likely_generic_enumeration_would_generate_this": true,
+     "notes": "Home/away discipline question. The two-sided evidence (Rayo away fouls elevated + Betis drawing more fouls recently) provides concrete grounding beyond a generic enumeration. Retaining."
+    },
+    "subject": "TEAM_B",
+    "support_risk": "NONE",
+    "target_metric": [
+     "fouls",
+     "yellow_cards"
+    ],
+    "window": "ALL_PRIOR"
+   },
+   {
+    "behavioral_observations": [
+     {
+      "evidence_refs": [
+       "TEAM_B.blocks.recent_last_5.metrics.corner_kicks_against",
+       "TEAM_B.blocks.long_run_all.metrics.corner_kicks_against",
+       "TEAM_B.blocks.long_run_away.metrics.accurate_crosses_against",
+       "TEAM_B.blocks.long_run_all.metrics.accurate_crosses_against"
+      ],
+      "observation": "Rayo corner_kicks_against W5 is 6.8, above long-run all (5.47) and long-run away (6.44). Rayo accurate_crosses_against long-run away is 5.33, above long-run all (4.53)."
+     },
+     {
+      "evidence_refs": [
+       "TEAM_A.blocks.recent_last_5.metrics.accurate_crosses_for",
+       "TEAM_A.blocks.long_run_all.metrics.accurate_crosses_for",
+       "TEAM_A.blocks.long_run_home.metrics.corner_kicks_for",
+       "TEAM_A.blocks.long_run_away.metrics.corner_kicks_for"
+      ],
+      "observation": "Betis accurate_crosses_for W5 is 5.2, above long-run all (4.65) and long-run away (3.78). Betis corner_kicks_for at home long-run is 6.0 vs away 3.67."
+     }
+    ],
+    "candidate_id": "C8",
+    "comparison": "SIMILAR_OPPONENT_COHORT",
+    "conditions": [],
+    "coverage_risk": "NONE",
+    "falsifiable_question": "Does Rayo Vallecano concede more corner_kicks and accurate_crosses against opponents whose defensive/discipline profile resembles Real Betis's, compared to Rayo's overall baseline?",
+    "falsifier": "If Rayo's corner_kicks_against and accurate_crosses_against against similar-profile opponents are not higher than their overall baseline, the wide-pressure vulnerability mechanism is unsupported.",
+    "football_mechanism": "Rayo concedes more corners and accurate crosses when playing away (as the visiting team faces home sides with more attacking width). Betis generates more accurate crosses recently and more corners at home. The question is whether Rayo concedes elevated corner_kicks and accurate_crosses against opponents with a HIGH attacking width/crossing profile \u2014 which Betis currently exhibits.",
+    "metric_perspective": "AGAINST",
+    "opponent": "TEAM_A",
+    "provider_requirements": [
+     "corner_kicks",
+     "accurate_crosses"
+    ],
+    "research_family": "OPPONENT_PROFILE_INTERACTION",
+    "self_critique": {
+     "cohort_equals_baseline": false,
+     "condition_equals_target": false,
+     "could_opponent_strength_explain_it": true,
+     "is_just_home_vs_away": false,
+     "is_just_recent_vs_long_run": false,
+     "is_overconditioned": false,
+     "likely_generic_enumeration_would_generate_this": false,
+     "notes": "The similar-opponent cohort adds genuine conditional structure. The two-sided evidence (Rayo elevated corner/cross concession + Betis elevated recent crossing) is concrete. The frozen similarity dimensions are opponent-profile based, not formation-based."
+    },
+    "similar_opponent_rationale": "Betis's recent profile shows elevated accurate_crosses_for (5.2 W5) and high home corner generation (6.0 long-run). The engine's frozen similarity dimensions will identify prior Rayo opponents with a similar attacking/pressing profile, allowing a test of whether Rayo concedes more corners and accurate crosses against such opponents.",
+    "subject": "TEAM_B",
+    "support_risk": "LOW",
+    "target_metric": [
+     "corner_kicks",
+     "accurate_crosses"
+    ],
+    "window": "ALL_PRIOR"
+   }
+  ],
+  "fixture_id": "mt_830906979",
+  "interaction_map": {
+   "a_attack_vs_b_defense": [
+    "Betis generates 17.6 shots at home (long-run) while Rayo concedes 12.8 shots per match overall (long-run all) \u2014 Betis home shot volume substantially exceeds Rayo's typical concession rate, suggesting Betis could generate above-average volume.",
+    "Betis home touches_in_penalty_area_for (31.75) vs Rayo's long-run touches_in_penalty_area_against (23.2) \u2014 Betis's home box penetration is well above what Rayo typically concedes, a potential quality mismatch.",
+    "Betis home corner_kicks_for (6.0 long-run) vs Rayo's corner_kicks_against W5 (6.8) \u2014 both indicators point toward a high-corner environment; Rayo has been conceding more corners recently.",
+    "Betis accurate_crosses_for W5 (5.2) vs Rayo's accurate_crosses_against long-run all (4.53) \u2014 Betis's recent crossing output exceeds Rayo's typical concession, potentially exploiting Rayo's wide defensive exposure.",
+    "Betis big_chances_for at home long-run (3.125) vs Rayo big_chances_against W5 (2.8) \u2014 Betis home big chance creation is above Rayo's recent concession rate, suggesting a potential quality edge."
+   ],
+   "asymmetries": [
+    "Betis attack is strongly home-biased (shots, xg, box touches all much higher at home) while their defense is also better at home \u2014 both sides of the ledger favor Betis in this fixture.",
+    "Rayo's attack metrics (shots_on_target, accurate_crosses, corner_kicks) have all declined in W5 vs long-run, while their defensive metrics (shots_on_target_against, big_chances_against) have worsened \u2014 a double deterioration.",
+    "Rayo concedes high final_third_entries_against consistently (60+ across all windows) but their xg_against is relatively low (1.14 long-run all), suggesting they allow territory but limit shot quality \u2014 a tension between volume and quality conceded."
+   ],
+   "b_attack_vs_a_defense": [
+    "Rayo shots_for away (10.4 long-run) vs Betis shots_against at home (8.5 long-run) \u2014 Rayo's away shot volume is above what Betis typically concedes at home, but Betis home defense is generally suppressive.",
+    "Rayo shots_on_target_for W5 (2.8) vs Betis saves_for W5 (1.0) \u2014 Rayo's recent on-target output is low, consistent with Betis conceding few shots on target at home recently.",
+    "Rayo final_third_entries_for long-run all (57.2) vs Betis final_third_entries_against long-run home (46.4) \u2014 Rayo generates more final-third entries than Betis typically concedes at home, a tension worth examining.",
+    "Rayo fouls_for long-run all (14.2) vs Betis fouls_against long-run all (14.4) \u2014 both teams generate similar foul counts, suggesting a potentially physical match with discipline implications."
+   ],
+   "regime_changes": [
+    "Rayo's possession_for has dropped to 44.6 in W5 from 48.5 long-run all, and their ball_recoveries_for W5 (48.2) is below long-run all (50.9) \u2014 a recent shift toward a more defensive/reactive posture.",
+    "Betis corner_kicks_against W5 (2.2) is well below long-run home (3.75) and long-run all (4.0) \u2014 opponents have been generating fewer corners against Betis recently, possibly reflecting a change in how Betis defends wide areas."
+   ],
+   "tensions": [
+    "Rayo allows many final_third_entries_against (60+) but their xg_against long-run all (1.14) is below their shots_on_target_against W5 (5.4) \u2014 recent deterioration in shot quality conceded may not yet be reflected in xg.",
+    "Betis recent W5 goals_against (2.2) is elevated vs long-run home (1.0), yet their saves_for W5 (1.0) is very low \u2014 the goals conceded recently are coming despite few shots on target, suggesting conversion efficiency by opponents rather than volume."
+   ]
+  },
+  "reconnaissance": {
+   "team_a_attack": [
+    "Real Betis generates substantially more shots at home (long-run home mean 17.6) than away (10.2), with shots_inside_box_for also much higher at home (11.4 vs 6.9). This is a pronounced venue split in attack volume. [TEAM_A.blocks.long_run_home.metrics.shots_for, TEAM_A.blocks.long_run_away.metrics.shots_for]",
+    "Home corner generation is notably higher (6.0 long-run home) vs away (3.7), and recent W5 corners_for is 4.2 vs long-run all 4.8, suggesting a slight recent dip but still above away baseline. [TEAM_A.blocks.long_run_home.metrics.corner_kicks_for, TEAM_A.blocks.long_run_away.metrics.corner_kicks_for, TEAM_A.blocks.recent_last_5.metrics.corner_kicks_for]",
+    "Betis xg_for at home (2.04 long-run) is nearly double their away xg_for (1.11), while recent W5 xg_for is 1.38 \u2014 below the home long-run baseline, suggesting recent attack quality has softened. [TEAM_A.blocks.long_run_home.metrics.xg_for, TEAM_A.blocks.long_run_away.metrics.xg_for, TEAM_A.blocks.recent_last_5.metrics.xg_for]",
+    "Accurate crosses_for jumped in recent W5 (5.2) vs long-run all (4.6) and long-run away (3.8), suggesting a recent uptick in crossing output. [TEAM_A.blocks.recent_last_5.metrics.accurate_crosses_for, TEAM_A.blocks.long_run_all.metrics.accurate_crosses_for]",
+    "touches_in_penalty_area_for at home long-run is 31.75 vs away 20.9, reinforcing the home attack dominance in box penetration. [TEAM_A.blocks.long_run_home.metrics.touches_in_penalty_area_for, TEAM_A.blocks.long_run_away.metrics.touches_in_penalty_area_for]"
+   ],
+   "team_a_defense": [
+    "Betis concedes far more shots away (12.8 long-run away) than at home (8.5), and shots_inside_box_against is 9.4 away vs 5.5 home. Their home defensive suppression is markedly better. [TEAM_A.blocks.long_run_home.metrics.shots_against, TEAM_A.blocks.long_run_away.metrics.shots_against]",
+    "Recent W5 goals_against is 2.2 (vs long-run all 1.24), indicating a defensive deterioration in recent matches. xg_against W5 (1.52) is above long-run home (0.94) but below long-run away (1.73). [TEAM_A.blocks.recent_last_5.metrics.goals_against, TEAM_A.blocks.long_run_all.metrics.goals_against]",
+    "Betis concedes more corners at home in recent W5 (2.2) vs long-run home (3.75) \u2014 actually fewer recently, suggesting opponents are not generating corner pressure at home. [TEAM_A.blocks.recent_last_5.metrics.corner_kicks_against, TEAM_A.blocks.long_run_home.metrics.corner_kicks_against]",
+    "Betis opponent fouls_against (fouls committed by opponents) is 14.4 long-run all, rising to 15.8 in W5, suggesting opponents are fouling Betis more frequently recently. [TEAM_A.blocks.long_run_all.metrics.fouls_against, TEAM_A.blocks.recent_last_5.metrics.fouls_against]",
+    "Betis saves_for (their goalkeeper saves) is very low in W5 (1.0) vs long-run all (2.4), consistent with fewer shots on target conceded recently at home. [TEAM_A.blocks.recent_last_5.metrics.saves_for, TEAM_A.blocks.long_run_all.metrics.saves_for]"
+   ],
+   "team_b_attack": [
+    "Rayo Vallecano's shots_for away long-run is 10.4 vs home 15.75, a significant home/away split. Recent W5 shots_for is 10.8, consistent with their away baseline. [TEAM_B.blocks.long_run_away.metrics.shots_for, TEAM_B.blocks.long_run_home.metrics.shots_for, TEAM_B.blocks.recent_last_5.metrics.shots_for]",
+    "Rayo's shots_on_target_for has dropped sharply in recent W5 (2.8) vs long-run all (3.47) and long-run home (4.88), suggesting a recent decline in shot quality/accuracy. [TEAM_B.blocks.recent_last_5.metrics.shots_on_target_for, TEAM_B.blocks.long_run_all.metrics.shots_on_target_for]",
+    "Rayo's corner_kicks_for in recent W5 is 3.8, below long-run all (5.29) and long-run home (5.5), indicating a recent reduction in corner generation. [TEAM_B.blocks.recent_last_5.metrics.corner_kicks_for, TEAM_B.blocks.long_run_all.metrics.corner_kicks_for]",
+    "Rayo's accurate_crosses_for in W5 is 2.6, well below long-run all (4.47) and long-run home (4.63), a notable recent drop in crossing output. [TEAM_B.blocks.recent_last_5.metrics.accurate_crosses_for, TEAM_B.blocks.long_run_all.metrics.accurate_crosses_for]",
+    "Rayo's touches_in_penalty_area_for in W5 is 17.4, below long-run all (19.9) and long-run home (22.4), consistent with reduced box penetration recently. [TEAM_B.blocks.recent_last_5.metrics.touches_in_penalty_area_for, TEAM_B.blocks.long_run_all.metrics.touches_in_penalty_area_for]"
+   ],
+   "team_b_defense": [
+    "Rayo concedes heavily in terms of final_third_entries_against: long-run all 60.4, W5 61.4, W10 60.2 \u2014 consistently high across all windows, suggesting a structural tendency to allow opponents into their final third. [TEAM_B.blocks.long_run_all.metrics.final_third_entries_against, TEAM_B.blocks.recent_last_5.metrics.final_third_entries_against]",
+    "Rayo's shots_on_target_against in W5 is 5.4, above long-run all (4.18) and long-run away (3.67), indicating a recent worsening of defensive shot quality conceded. [TEAM_B.blocks.recent_last_5.metrics.shots_on_target_against, TEAM_B.blocks.long_run_all.metrics.shots_on_target_against]",
+    "Rayo's corner_kicks_against in W5 is 6.8, above long-run all (5.47) and long-run away (6.44), suggesting they are conceding more corners recently. [TEAM_B.blocks.recent_last_5.metrics.corner_kicks_against, TEAM_B.blocks.long_run_all.metrics.corner_kicks_against]",
+    "Rayo's clearances_for in W5 is 29.8, above long-run all (24.3) and long-run away (27.4), indicating increased defensive clearance activity recently \u2014 consistent with absorbing more pressure. [TEAM_B.blocks.recent_last_5.metrics.clearances_for, TEAM_B.blocks.long_run_all.metrics.clearances_for]",
+    "Rayo's big_chances_against in W5 is 2.8, above long-run all (2.31) and long-run home (1.25), suggesting they are conceding more high-quality chances recently. [TEAM_B.blocks.recent_last_5.metrics.big_chances_against, TEAM_B.blocks.long_run_all.metrics.big_chances_against]"
+   ]
+  }
+ },
+ "temperature": 0.0
+}
