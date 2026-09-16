@@ -46,6 +46,8 @@ Arms A and B ran on the **same model, temperature and max_tokens**, so the A→B
 | cohort == baseline | 47 | 25 | 45 |
 | excessive complexity | 37 | 4 | 709 |
 | duplicate candidates (within arm) | 57 | 39 | 0 |
+| first-pass slots declined by the model | 0 | 3 | n/a |
+| candidates emitted OVER the schema ceiling | 0 | 3 | n/a |
 | hallucinated evidence refs | 0 | 11 | 0 |
 | candidates with >=1 blocking firewall finding | 120 | 79 | 0 |
 
@@ -64,6 +66,8 @@ Fixtures where Arm B produced no candidate at a NATURAL stop (genuine abstention
 | **measurable** | 100.0% | 91.7% | 100.0% |
 | unsupported metric | 0.0% | 0.0% | 0.0% |
 | tautology | 32.6% | 26.0% | 6.8% |
+| duplicate candidates (within arm) | 39.6% | 40.6% | 0.0% |
+| opponent-profile conditioned | 22.2% | 16.7% | 24.6% |
 | exact generic duplicate | 6.2% | 3.1% | 19.6% |
 | structural generic equivalent | 59.7% | 40.6% | 73.7% |
 | **incremental structure** | 0.7% | 14.6% | 0.0% |
@@ -78,7 +82,10 @@ Fixtures where Arm B produced no candidate at a NATURAL stop (genuine abstention
 | excessive complexity | 25.7% | 4.2% | 35.5% |
 | hallucinated evidence ref | 0.0% | 1.6% | n/a |
 | candidates with >=1 blocking firewall finding | 83.3% | 82.3% | 0.0% |
-| mean conditions / candidate | 0.66% | 1.09% | 0.91% |
+| mean conditions / candidate | 0.66 | 1.09 | 0.91 |
+| mean target metrics / candidate | 2.83 | 2.21 | 2.85 |
+
+*`tautology` and `cohort == baseline` are the SAME set in this run (47/47 for A, 25/25 for B): cohort==baseline was the only tautology mode that fired, so the two rows are one finding and must not be read as two.*
 
 *Arm D has no packet and makes no calls, so its evidence-grounding and firewall cells are not meaningful and should be read as n/a rather than as a perfect score.*
 
@@ -196,6 +203,7 @@ Arm A's protocol has no reconnaissance surface at all — `schema_v4` has no fie
 | generic library exposes any effect / survival / p-value | false |
 | predictive claims made in the novelty pass | 0 |
 | execution errors | 0 |
+| §21 research budget honoured (max 8 per fixture, Arm B) | False |
 | **PIT-clean packets** | **12/12** |
 | historical rows checked against the cutoff | 405 |
 | rows at or after the information cutoff | 0 |
@@ -246,6 +254,10 @@ Two scorer defects were found and fixed **after** the model responses were on di
 
 ---
 
+**§21 budget breach, disclosed.** `schema_v8a` caps the candidate array at 8 to match brief §21, but the provider did not enforce the array bound and one response returned more: {"mt_972834961": 11}. That is 3 candidates of 96 (3.1%) above the declared budget. The candidates were scored as returned rather than silently truncated, because dropping them after seeing them would be a post-hoc sample edit. Recorded as `V8A-D4`.
+
+---
+
 ## 9. Interpretation caveats
 
 - **N = 12 fixtures.** Every rate here is a small-sample descriptive statistic. No confidence interval is attached because none is warranted at this N, and no inferential claim is made.
@@ -265,7 +277,7 @@ Structural evidence only. No predictive claim is made or implied anywhere below.
 
 **1. Did the new protocol make Sonnet actually analyse football behaviour before hypothesising?**
 
-Yes, and this is the clearest positive result. All **12/12** fixtures returned all four reconnaissance blocks populated, with **274 behavioural observations**, **100 attack×defense interaction lines**, and explicitly labelled **30 tensions**, **35 asymmetries** and **33 regime changes**. The caveat is that the schema *required* these fields, so compliance is not proof of insight — what it proves is that the model could fill them from the packet without hallucinating: only 11 of 705 citations were unresolvable.
+Yes, and this is the clearest positive result. All **12/12** fixtures returned all four reconnaissance blocks populated, with **274 behavioural observations**, **100 attack×defense interaction lines**, and explicitly labelled **30 tensions**, **35 asymmetries** and **33 regime changes**. The caveat is that the schema *required* these fields, so compliance is not proof of insight — what it proves is that the model could fill them from the packet without hallucinating: only 11 of 705 citations were unresolvable. Read this as schema compliance plus grounding, not as insight — §21 warns specifically against treating a filled slot as a good one, and §10 of this report shows the self-critic that was supposed to thin these candidates rejected none.
 
 **2. Did measurability improve substantially relative to the old behaviour?**
 
@@ -285,11 +297,13 @@ Unanswerable from this run, and not the model's fault. Formation-conditioned coh
 
 **6. Did similar-opponent reasoning become materially richer?**
 
-**Yes — the largest clean gain.** Arm A produced 0 similar-opponent hypotheses (0.0%). Arm B produced 29 (30.2%), against blind enumeration's 9.9%. A capability the incumbent protocol never touched is now routinely used, and used within the deterministic similarity engine rather than computed by the model.
+**Yes, but it is a substitution, not an addition.** Arm A produced 0 similar-opponent hypotheses (0.0%). Arm B produced 29 (30.2%), against blind enumeration's 9.9%. The engine's similarity capability went from untouched to routine, and it is the DETERMINISTIC engine computing the similarity, not the model. But Arm A was not blind to the opponent: it conditioned on opponent profile MORE often (32, 22.2%) than Arm B (16, 16.7%). So the protocol shifted opponent reasoning from tercile-band filters onto the similarity engine rather than introducing opponent reasoning where there was none.
 
 **7. Did the generic novelty challenge cause useful refinement or mostly abstention?**
 
 **Overwhelmingly abstention:** ABSTAIN 61, KEEP 30, REFINE 5 of 96 second-pass decisions. Roughly 64% of candidates were withdrawn once the model saw structurally comparable generic hypotheses. Per §21 abstention is successful behaviour, and the challenge is clearly doing work rather than being rubber-stamped. But REFINE at 5 shows the model mostly cannot convert a generic candidate into a distinct one — it either keeps or gives up. Note also that the model's own self-grading is **not** the label: §16's deterministic canonicalisation is.
+
+**The sharper finding underneath this: the §13 self-critic is inert.** Every one of Arm B's 96 candidates carries a populated `self_critique` block, and every one of them was still emitted — first-pass rejections: **3** slots declined across 12 fixtures, with 9 fixtures at or above the ceiling. So §13 produced self-assessment prose but filtered essentially nothing, and **all** of the abstention in this run was done by the generic challenge, not by the model's own criticism. §21 says abstention is successful behaviour and that filling every slot should not be rewarded; at pass 1 the model did the opposite and then withdrew 64% at pass 2. A V8A.1 should make the self-critic emit a rejected-candidate list so the stage is observable, rather than trusting an unobservable filter.
 
 **8. Did the LLM find structures the generic generator does not already cover?**
 

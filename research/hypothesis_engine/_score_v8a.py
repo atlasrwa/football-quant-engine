@@ -26,6 +26,8 @@ import src  # noqa: F401,E402
 from src.research.hypothesis_v71 import controls as C                    # noqa: E402
 from src.research.hypothesis_v8a import audit as A                       # noqa: E402
 from src.research.hypothesis_v8a import genericlib as G                  # noqa: E402
+from src.research.hypothesis_engine import schema_v4 as SCHEMA_V4        # noqa: E402
+from src.research.hypothesis_v8a import schema_v8a as SCH8              # noqa: E402
 from src.research.hypothesis_v8a.frozencap import FrozenCapability       # noqa: E402
 
 ROOT = "/home/ubuntu/v8a-worktree"
@@ -126,6 +128,9 @@ def rates(acc):
         "unsupported_metric_rate_pct": pct(acc["unsupported_metric"], d_raw),
         "unknown_metric_rate_pct": pct(acc["unknown_metric"], d_raw),
         "tautology_rate_pct": pct(acc["tautology"], d_raw),
+        "duplicate_candidate_rate_pct": pct(acc["duplicate_candidates"], d_raw),
+        "opponent_profile_conditioned_rate_pct": pct(
+            acc["opponent_profile_conditioned"], d_raw),
         "exact_generic_duplicate_rate_pct": pct(acc["exact_generic_duplicates"], d_raw),
         "structural_generic_equivalent_rate_pct": pct(
             acc["structural_generic_equivalents"], d_raw),
@@ -368,6 +373,36 @@ def main():
             "intent_breakdown_as_scored": dict(sorted(as_scored.items())),
         }
 
+    # ---- section 21 research budget ----------------------------------------------------
+    # Each arm has its OWN declared ceiling -- Arm A's schema_v4 allows 12, V8A's
+    # schema_v8a allows 8 -- so a single shared constant would manufacture a negative
+    # "rejected" count for Arm A. Section 13 asks the model to reject weak candidates BEFORE
+    # emitting, and the schema has no "rejected" surface, so a first-pass rejection is
+    # visible only as a slot the model declined to fill.
+    CEILING = {"A": SCHEMA_V4.MAX_HYPOTHESES, "B": SCH8.MAX_HYPOTHESES}
+    first_pass = {}
+    for arm in ("A", "B"):
+        per_fix = collections.Counter(r["fixture_id"] for r in per_candidate[arm])
+        cap = CEILING[arm]
+        n_fix = arms[arm]["fixtures"]
+        emitted = arms[arm]["raw_candidates"]
+        over = {f: n for f, n in sorted(per_fix.items()) if n > cap}
+        first_pass[arm] = {
+            "declared_ceiling_per_fixture": cap,
+            "fixtures": n_fix,
+            "slots_available": n_fix * cap,
+            "candidates_emitted": emitted,
+            # Summed PER FIXTURE: a net figure would let one over-ceiling response
+            # cancel three fixtures that genuinely declined a slot.
+            "first_pass_rejected": sum(max(0, cap - per_fix.get(fx, 0))
+                                      for fx in per_fix),
+            "fixtures_at_or_above_the_ceiling": sum(1 for n in per_fix.values() if n >= cap),
+            "fixtures_over_the_ceiling": over,
+            "candidates_over_the_ceiling": sum(n - cap for n in over.values()),
+            "per_fixture_counts": dict(sorted(collections.Counter(
+                per_fix.values()).items())),
+        }
+
     results = {
         "v8a_results_version": "v8a_results_v1",
         "effect_blind": True,
@@ -391,6 +426,9 @@ def main():
         "family_concentration_top1_pct": {
             a: pct(families[a].most_common(1)[0][1], sum(families[a].values()))
             if families[a] else None for a in families},
+        "first_pass_budget": first_pass,
+        "first_pass_budget_note": (
+            "A first-pass rejection has no field in either schema: section 13 asks the model to reject before emitting, so a rejection is visible only as an unfilled slot. `fixtures_over_the_ceiling` records responses that exceeded the schema's own maxItems -- the provider did not enforce the array bound."),
         "firewall_adjudication": adjudication,
         "scorer_amendment_audit": amend,
         "firewall_adjudication_note": (

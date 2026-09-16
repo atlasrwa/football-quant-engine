@@ -36,6 +36,16 @@
    "independent_check": "The breach counts actually reported (Arm A 1 candidate, Arm B 4) come from adjudicate_numeric_sentence, a SYMMETRIC classifier applied to both arms with no masking on either, which quotes every flagged sentence verbatim. That figure is independent of this fix.",
    "severity": "P2",
    "title": "firewall_v5's predictive marker 'chance' collides with this corpus's `big_chances` metric name"
+  },
+  {
+   "decision": "The three extra candidates were SCORED AS RETURNED, not truncated. Truncating a sample after seeing it is a post-hoc sample edit, which is the defect class brief section 24 exists to prevent. Disclosure plus an unedited sample is the honest option; silent truncation is not.",
+   "effect_on_conclusions": "Bounded and small: 3.1% of Arm B's candidates. No section 31 answer turns on a 3% shift, and the two gaps the report treats as real -- similar-opponent 0% -> 30.2% and incremental structure 0.7% -> 14.6% -- are far larger than this.",
+   "evidence": "`schema_v8a.pass1_schema()` sets candidates maxItems = MAX_HYPOTHESES = 8, matching brief section 21. Arm B per-fixture counts were 7 x3, 8 x8, 11 x1; fixture mt_972834961 returned 11 candidates. 3 of 96 candidates (3.1%) sit above the declared budget. Bedrock's tool-use schema enforcement honoured the per-candidate object schema -- all 96 are schema-valid at the item level -- but not the array bound.",
+   "found_when": "AFTER the run, while adding the section 30 `first_pass_rejected` field. It changes no conclusion but is a budget-compliance breach and is recorded rather than quietly normalised away.",
+   "generic_fix": "A schema bound that the provider may not enforce is not a control. The driver must re-validate the ARRAY bound on receipt, not only the item schema, and record an over-budget response as an explicit state the way it already records max_tokens truncation (V8A-D1). Enforce on receipt; never assume the provider enforced.",
+   "id": "V8A-D4",
+   "severity": "P3",
+   "title": "The provider did not enforce the candidate array's maxItems; one response exceeded the section 21 budget"
   }
  ],
  "spend": {

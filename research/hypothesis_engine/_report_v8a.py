@@ -35,6 +35,8 @@ def main():
         ca = None
 
     C, RT = R["per_arm_counts"], R["per_arm_rates"]
+    fpb = R["first_pass_budget"]
+    SCH8_MAX = fpb["B"]["declared_ceiling_per_fixture"]
     p2 = R["pass2_actions"]
 
     def row(label, key, fmt=str):
@@ -107,6 +109,11 @@ def main():
     W(row("cohort == baseline", "cohort_equals_baseline"))
     W(row("excessive complexity", "excessive_complexity"))
     W(row("duplicate candidates (within arm)", "duplicate_candidates"))
+    W(f"| first-pass slots declined by the model | {fpb['A']['first_pass_rejected']} | "
+      f"{fpb['B']['first_pass_rejected']} | n/a |")
+    W(f"| candidates emitted OVER the schema ceiling | "
+      f"{fpb['A']['candidates_over_the_ceiling']} | "
+      f"{fpb['B']['candidates_over_the_ceiling']} | n/a |")
     W(row("hallucinated evidence refs", "n_evidence_refs_hallucinated"))
     W(row("candidates with >=1 blocking firewall finding", "firewall_blocking"))
     W("")
@@ -131,6 +138,8 @@ def main():
     W(rrow("**measurable**", "measurable_rate_pct"))
     W(rrow("unsupported metric", "unsupported_metric_rate_pct"))
     W(rrow("tautology", "tautology_rate_pct"))
+    W(rrow("duplicate candidates (within arm)", "duplicate_candidate_rate_pct"))
+    W(rrow("opponent-profile conditioned", "opponent_profile_conditioned_rate_pct"))
     W(rrow("exact generic duplicate", "exact_generic_duplicate_rate_pct"))
     W(rrow("structural generic equivalent", "structural_generic_equivalent_rate_pct"))
     W(rrow("**incremental structure**", "incremental_structure_rate_pct"))
@@ -145,7 +154,16 @@ def main():
     W(rrow("excessive complexity", "excessive_complexity_rate_pct"))
     W(rrow("hallucinated evidence ref", "hallucinated_evidence_ref_rate_pct"))
     W(rrow("candidates with >=1 blocking firewall finding", "firewall_blocking_rate_pct"))
-    W(rrow("mean conditions / candidate", "mean_conditions_per_candidate"))
+    # counts, not percentages -- rrow would suffix them with "%"
+    for _lbl, _k in (("mean conditions / candidate", "mean_conditions_per_candidate"),
+                     ("mean target metrics / candidate",
+                      "mean_target_metrics_per_candidate")):
+        W(f"| {_lbl} | {f(RT['A'][_k], '')} | {f(RT['B'][_k], '')} | "
+          f"{f(RT['D'][_k], '')} |")
+    W("")
+    W(f"*`tautology` and `cohort == baseline` are the SAME set in this run "
+      f"({C['A']['tautology']}/{C['A']['cohort_equals_baseline']} for A, "
+      f"{C['B']['tautology']}/{C['B']['cohort_equals_baseline']} for B): cohort==baseline was the only tautology mode that fired, so the two rows are one finding and must not be read as two.*")
     W("")
     W("*Arm D has no packet and makes no calls, so its evidence-grounding and firewall "
       "cells are not meaningful and should be read as n/a rather than as a perfect score.*")
@@ -267,6 +285,8 @@ def main():
     n_rows = sum(v.get("n_rows_checked", 0) for v in pit.values())
     n_future = sum(len(v.get("rows_at_or_after_cutoff") or []) for v in pit.values())
     n_target = sum(1 for v in pit.values() if v.get("target_outcome_present"))
+    _over = fpb["B"]["fixtures_over_the_ceiling"]
+    W(f"| §21 research budget honoured (max 8 per fixture, Arm B) | {not _over} |")
     W(f"| **PIT-clean packets** | **{n_clean}/{len(pit)}** |")
     W(f"| historical rows checked against the cutoff | {n_rows} |")
     W(f"| rows at or after the information cutoff | {n_future} |")
@@ -372,6 +392,19 @@ def main():
     W("---")
     W("")
 
+    if _over:
+        W("**§21 budget breach, disclosed.** `schema_v8a` caps the candidate array at "
+          f"{SCH8_MAX} to match brief §21, but the provider did not enforce the array "
+          f"bound and one response returned more: {json.dumps(_over)}. That is "
+          f"{fpb['B']['candidates_over_the_ceiling']} candidates of "
+          f"{C['B']['raw_candidates']} ("
+          f"{round(100*fpb['B']['candidates_over_the_ceiling']/C['B']['raw_candidates'],1)}%) "
+          "above the declared budget. The candidates were scored as returned rather "
+          "than silently truncated, because dropping them after seeing them would be a "
+          "post-hoc sample edit. Recorded as `V8A-D4`.")
+        W("")
+        W("---")
+        W("")
     W("## 9. Interpretation caveats")
     W("")
     W("- **N = 12 fixtures.** Every rate here is a small-sample descriptive statistic. No "
@@ -442,7 +475,7 @@ def main():
       f"schema *required* these fields, so compliance is not proof of insight — what it "
       f"proves is that the model could fill them from the packet without hallucinating: "
       f"only {C['B']['n_evidence_refs_hallucinated']} of "
-      f"{C['B']['n_evidence_refs_cited']} citations were unresolvable.")
+      f"{C['B']['n_evidence_refs_cited']} citations were unresolvable. Read this as schema compliance plus grounding, not as insight — §21 warns specifically against treating a filled slot as a good one, and §10 of this report shows the self-critic that was supposed to thin these candidates rejected none.")
     W("")
 
     W("**2. Did measurability improve substantially relative to the old behaviour?**")
@@ -494,13 +527,20 @@ def main():
 
     W("**6. Did similar-opponent reasoning become materially richer?**")
     W("")
-    W(f"**Yes — the largest clean gain.** Arm A produced "
+    W(f"**Yes, but it is a substitution, not an addition.** Arm A produced "
       f"{C['A']['similar_opponent']} similar-opponent hypotheses "
       f"({f(RT['A']['similar_opponent_rate_pct'])}). Arm B produced "
       f"{C['B']['similar_opponent']} ({f(RT['B']['similar_opponent_rate_pct'])}), against "
-      f"blind enumeration's {f(RT['D']['similar_opponent_rate_pct'])}. A capability the "
-      f"incumbent protocol never touched is now routinely used, and used within the "
-      f"deterministic similarity engine rather than computed by the model.")
+      f"blind enumeration's {f(RT['D']['similar_opponent_rate_pct'])}. The engine's "
+      f"similarity capability went from untouched to routine, and it is the "
+      f"DETERMINISTIC engine computing the similarity, not the model. But Arm A was "
+      f"not blind to the opponent: it conditioned on opponent profile MORE often "
+      f"({C['A']['opponent_profile_conditioned']}, "
+      f"{f(RT['A']['opponent_profile_conditioned_rate_pct'])}) than Arm B "
+      f"({C['B']['opponent_profile_conditioned']}, "
+      f"{f(RT['B']['opponent_profile_conditioned_rate_pct'])}). So the protocol "
+      f"shifted opponent reasoning from tercile-band filters onto the similarity "
+      f"engine rather than introducing opponent reasoning where there was none.")
     W("")
 
     W("**7. Did the generic novelty challenge cause useful refinement or mostly abstention?**")
@@ -514,6 +554,21 @@ def main():
       f"{p2['REFINE']} shows the model mostly cannot convert a generic candidate into a "
       f"distinct one — it either keeps or gives up. Note also that the model's own "
       f"self-grading is **not** the label: §16's deterministic canonicalisation is.")
+    W("")
+    W(f"**The sharper finding underneath this: the §13 self-critic is inert.** Every "
+      f"one of Arm B's {C['B']['raw_candidates']} candidates carries a populated "
+      f"`self_critique` block, and every one of them was still emitted — "
+      f"first-pass rejections: **{fpb['B']['first_pass_rejected']}** slots declined "
+      f"across {fpb['B']['fixtures']} fixtures, with "
+      f"{fpb['B']['fixtures_at_or_above_the_ceiling']} fixtures at or above the "
+      f"ceiling. So §13 produced self-assessment prose but filtered essentially "
+      f"nothing, and **all** of the abstention in this run was done by the generic "
+      f"challenge, not by the model's own criticism. §21 says abstention is "
+      f"successful behaviour and that filling every slot should not be rewarded; at "
+      f"pass 1 the model did the opposite and then withdrew "
+      f"{round(100*p2['ABSTAIN']/max(1,sum(p2.values())))}% at pass 2. A V8A.1 "
+      f"should make the self-critic emit a rejected-candidate list so the stage is "
+      f"observable, rather than trusting an unobservable filter.")
     W("")
 
     W("**8. Did the LLM find structures the generic generator does not already cover?**")
