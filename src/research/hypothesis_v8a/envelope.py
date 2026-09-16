@@ -148,15 +148,11 @@ def formation_context(index, rec, rec_i, records_by_pos):
 
 
 def _recorded_formation(rec, team_id):
-    for blk in ("rich", "extra", "base"):
-        d = getattr(rec, blk, None) or {}
-        for key in ("formation", "formations", "team_formation"):
-            v = d.get(key)
-            if isinstance(v, (list, tuple)) and len(v) == 2:
-                return v[0] if str(rec.home_id) == str(team_id) else v[1]
-            if isinstance(v, str) and v:
-                return v
-    return None
+    """Reuse the canonical reader rather than restating it, so V8A and the earlier
+    experiments can never disagree about whether a formation was recorded."""
+    from src.research.hypothesis_engine import corpus_adapter as CA
+    team = rec.home if str(rec.home_id) == str(team_id) else rec.away
+    return CA.team_formation_family(rec, team)
 
 
 def build(cap, index, rec, rec_i, metrics, records_by_pos):
