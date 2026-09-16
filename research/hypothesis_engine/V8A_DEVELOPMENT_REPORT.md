@@ -21,7 +21,7 @@ No historical effect size appears anywhere in this report. Nothing here says whi
 
 **`V8A_TERRA_ARM_EXECUTED = false`.** Blocker: No model named Terra exists in this repository; no OpenAI or other non-Bedrock credential is present; no adapter exists. Substituting another model is forbidden by brief 19/33.
 
-Arms A and B ran on the **same model, temperature and max_tokens**, so the A→B contrast isolates protocol rather than model.
+Arms A and B ran on the **same model and temperature** (`us.anthropic.claude-sonnet-4-6`, temperature 0.0). The `max_tokens` ceiling was **not** equal: Arm A ran at 8192, Arm B pass-1 at 24576 and Arm B pass-2 at 8192, because defect `V8A-D1` raised the Arm B ceilings mid-run and Arm A was not re-run. The A→B contrast still isolates protocol rather than model, because that ceiling never bound for Arm A — 12 of 12 Arm A responses stopped naturally at `tool_use` with at most 6730 output tokens, and at temperature 0 a ceiling that never binds cannot alter the emitted tokens. See §8, `V8A-D1`.
 
 ---
 
@@ -156,6 +156,25 @@ Arm A's protocol has no reconnaissance surface at all — `schema_v4` has no fie
 - verdict: `STRUCTURAL_EQUIVALENT` — different prose, but the structure lies inside the generic generator's image: enumeration already represents this statistical question
 - compiles to: For big_chances, shots, shots_on_target: does the subject's production, over all prior matches, against opponents similar to the fixture opponent, restricted to matches where the match was played HOME differ from the subject's production, over all prior matches, against opponents NOT similar to the fixture opponent, restricted to matches where the match was played HOME?
 - measurable: True; conditions: 1
+
+### Appropriate abstentions (Arm B)
+
+All **61** ABSTAIN decisions are recorded in `out/v8a/responses/B_pass2_*.json`. Three are shown verbatim, chosen deterministically as the first three by sorted record name. The deterministic label, not the model's own grading, is what counts (brief §16) — these are shown as evidence that the model's stated reason tracks structure rather than taste.
+
+**mt_196560745_C1** — model action `ABSTAIN`
+
+- nearest generic structures retrieved deterministically: `GEN_0316802`, `GEN_0316818`, `GEN_0316822`
+- model reason: The candidate's statistical structure is identical to the union of GEN_0316802, GEN_0316818, and GEN_0316822: it measures TEAM_A's attacking metrics (big_chances, shots_on_target, xg) FOR, under HOME venue conditioning, against SUBJECT_VENUE_BASELINE, over ALL_PRIOR. The only incremental element is the narrative reference to TEAM_B's recent defensive deterioration — but that is not encoded as a structural condition on the cohort or baseline. The comparison remains SUBJECT_VENUE_BASELINE (not OPPONENT_PROFILE_INTERACTION or SIMILAR_OPPONENT_COHORT), no opponent_profile condition is added, and the window is unchanged. The self-critique itself flags is_just_home_vs_away=true and likely_generic_enumeration_would_generate_this=true. Bundling three metrics that each have their own generic structure does not create structural novelty. A REFINE path would require encoding the opponent's defensive state as a formal condition (e.g., opponent_profile axis), but the evidence supplied does not support a different comparison type or window that would make the structure genuinely distinct. Nothing material remains after the comparison.
+
+**mt_196560745_C2** — model action `ABSTAIN`
+
+- nearest generic structures retrieved deterministically: `GEN_0272426`, `GEN_0272439`, `GEN_0272440`
+- model reason: The candidate's statistical structure is fully covered by the three nearest generic structures taken together. Each of the three target metrics (shots, shots_inside_box, big_chances) is individually enumerated as AWAY_TEAM AGAINST, SUBJECT_RECENT_VS_LONG_BASELINE, W10, competition=SAME. Bundling all three into one candidate does not create a new structural contrast — the schema has no joint-metric interaction term, so the bundle resolves to the same three independent comparisons the generics already represent. The candidate's self-critique correctly flags is_just_recent_vs_long_run=true and likely_generic_enumeration_would_generate_this=true. The cross-competition contamination argument (Championship vs EPL in the long-run baseline) is a narrative motivation for why the recent window might differ, but it is not a structural condition the corpus can encode — the only available competition filter is SAME, which is already applied in all three generics. The magnitude of the observed change is evidence content, not structural novelty. No REFINE path is available because there is no additional structural dimension in the supplied evidence that would differentiate this from the generics without inventing a new mechanism.
+
+**mt_196560745_C3** — model action `ABSTAIN`
+
+- nearest generic structures retrieved deterministically: `GEN_0272361`, `GEN_0272370`, `GEN_0272374`
+- model reason: The candidate's statistical structure is the union of exactly the three generic structures retrieved: SUBJECT_RECENT_VS_LONG_BASELINE, FOR perspective, TEAM_B (away), W10, competition=SAME, across goals, shots_on_target, and xg. Bundling three metrics into one candidate does not create a new structural contrast — each metric arm is already enumerated individually by the generic set. The self-critique correctly flags is_just_recent_vs_long_run=true and likely_generic_enumeration_would_generate_this=true. The competition-tier mixing argument (Championship vs EPL contaminating the long-run baseline) is a prose mechanism, not a structural condition: the corpus only honours competition=SAME as a filter, which is already present in all three generics. No additional dimension (e.g. opponent_profile, historical_venue_conditioning) is applied that would differentiate the cohort from the baseline in a structurally novel way. Nothing material remains after the comparison.
 
 ### Invalid / caught cases
 
