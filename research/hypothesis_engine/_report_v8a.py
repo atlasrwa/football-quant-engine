@@ -111,7 +111,14 @@ def main():
     W("### Second pass (Arm B only)")
     W("")
     W(f"KEEP **{p2['KEEP']}** · REFINE **{p2['REFINE']}** · ABSTAIN **{p2['ABSTAIN']}**"
-      + (f" · missing/errored {p2['MISSING']}" if p2["MISSING"] else ""))
+      + (f" · missing/errored {p2['MISSING']}" if p2.get("MISSING") else "")
+      + (f" · TRUNCATED {p2['TRUNCATED']}" if p2.get("TRUNCATED") else ""))
+    W("")
+    ga = R["genuine_abstention_fixtures"]["B"]
+    tr = R["truncated_fixtures"]["B"]
+    W(f"Fixtures where Arm B produced no candidate at a NATURAL stop (genuine "
+      f"abstention): **{len(ga)}**. Fixtures truncated at the output ceiling (apparatus "
+      f"fault, excluded from abstention): **{len(tr)}**.")
     W("")
     W("### Rates")
     W("")

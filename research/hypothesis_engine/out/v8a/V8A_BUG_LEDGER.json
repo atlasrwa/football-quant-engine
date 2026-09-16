@@ -1,0 +1,25 @@
+{
+  "bugledger_version": "v8a_bugledger_v1",
+  "defects": [
+    {
+      "arm_a_not_rerun": "The 8192 ceiling never bound for Arm A: all 12 responses stopped naturally at tool_use with at most 6730 output tokens. At temperature 0, max_tokens is purely a stopping condition, so a ceiling that never binds cannot alter the emitted tokens. Re-running Arm A would spend money to reproduce identical output.",
+      "evidence": "2 of 2 executed Arm B pass-1 responses: stop_reason=max_tokens, output_tokens=8192/8192, response keys = [fixture_id, interaction_map, reconnaissance]. Arm A on the same ceiling: 12 of 12 stop_reason=tool_use, max 6730 output tokens.",
+      "fix": "max_tokens_pass1 8192 -> 24576 and max_tokens_pass2 2048 -> 8192. These are EXECUTION parameters. The prompt, the schema, the fixture sample and the packets are byte-identical -- proved by seven unchanged hashes.",
+      "found_when": "BEFORE the run completed and BEFORE any structural result was computed or viewed. No outcome existed that could have informed the fix. This is a stronger position than the V6 -> V6.1 precedent, where the evaluator defect was found post-run.",
+      "generic_fix": "`load_ok` now REJECTS any cached record whose stop_reason is max_tokens -- a truncated record is perfectly self-consistent and would otherwise cache forever. The driver records a max_tokens stop as an error that counts toward the three-consecutive fail-fast. The scorer keeps ABSTENTION, TRUNCATED and ERROR as three distinct states and excludes truncation from every abstention count.",
+      "id": "V8A-D1",
+      "regression_evidence": "At temperature 0 the truncated prefix is deterministic, so the re-run must reproduce byte-identical reconnaissance and interaction_map for mt_196560745 and mt_257078511 before continuing into candidates. The discarded responses are preserved under out/v8a/truncated_prefix_evidence/ for that diff.",
+      "root_cause": "The V8A protocol requires behavioural reconnaissance and an attack x defense interaction map to be emitted BEFORE any candidate, and the schema orders them that way on purpose. Both sections are substantial. At max_tokens=8192 Arm B spent the entire output budget on them and generation stopped with the `candidates` key absent from the response object entirely.",
+      "severity": "P1",
+      "title": "The pass-1 output ceiling bound for Arm B, truncating every response before the candidates array",
+      "why_this_is_not_a_result": "A truncated response is structurally incapable of containing the quantity being measured. Reading it as an abstention would have inverted a headline metric, because brief section 21 scores abstention as SUCCESSFUL behaviour."
+    }
+  ],
+  "spend": {
+    "billed_before_amendment_usd": "3.4309",
+    "n_responses_retained": 12,
+    "new_ceiling_usd": "25.72",
+    "of_which_discarded_truncated_usd": "0.4994",
+    "old_ceiling_usd": "11.23"
+  }
+}

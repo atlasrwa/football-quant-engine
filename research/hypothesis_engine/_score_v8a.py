@@ -167,13 +167,17 @@ def main():
     keys_seen = {"A": collections.Counter(), "B": collections.Counter()}
     families = {"A": collections.Counter(), "B": collections.Counter()}
     metrics_used = {"A": collections.Counter(), "B": collections.Counter()}
-    pass2 = {"KEEP": 0, "REFINE": 0, "ABSTAIN": 0, "MISSING": 0}
+    pass2 = {"KEEP": 0, "REFINE": 0, "ABSTAIN": 0, "MISSING": 0, "TRUNCATED": 0}
     pass2_predictive_claims = []
     reconnaissance = {"fixtures_with_all_four_blocks": 0, "n_observations_total": 0,
                       "n_interaction_lines_total": 0, "n_tensions": 0,
                       "n_asymmetries": 0, "n_regime_changes": 0}
     errors = []
-    zero_candidate_fixtures = {"A": [], "B": []}
+    # THREE distinct states, keyed on stop_reason. Collapsing them would report an
+    # apparatus truncation as an abstention -- and abstention is scored as SUCCESSFUL
+    # behaviour, so the misread would invert a headline metric.
+    zero_candidate_fixtures = {"A": [], "B": []}      # genuine abstention (natural stop)
+    truncated_fixtures = {"A": [], "B": []}           # apparatus fault, NOT an abstention
 
     # ---- Arm A -------------------------------------------------------------------------
     for fp in sorted(glob.glob(f"{RESP}/A_pass1_*.json")):
@@ -181,6 +185,12 @@ def main():
         fid = rec["fixture_id"]
         arms["A"]["fixtures"] += 1
         arms["A"]["calls"] += 1
+        stop = (rec.get("provenance") or {}).get("stop_reason")
+        if stop == "max_tokens":
+            truncated_fixtures["A"].append(fid)
+            errors.append({"arm": "A", "fixture": fid,
+                           "error": "TRUNCATED_AT_MAX_TOKENS"})
+            continue
         if rec.get("error"):
             errors.append({"arm": "A", "fixture": fid, "error": rec["error"]})
             continue
@@ -207,6 +217,12 @@ def main():
         fid = rec["fixture_id"]
         arms["B"]["fixtures"] += 1
         arms["B"]["calls"] += 1
+        stop = (rec.get("provenance") or {}).get("stop_reason")
+        if stop == "max_tokens":
+            truncated_fixtures["B"].append(fid)
+            errors.append({"arm": "B", "fixture": fid,
+                           "error": "TRUNCATED_AT_MAX_TOKENS"})
+            continue
         if rec.get("error"):
             errors.append({"arm": "B", "fixture": fid, "error": rec["error"]})
             continue
@@ -252,6 +268,11 @@ def main():
             errors.append({"arm": "B", "pass": 2, "error": rec["error"]})
             pass2["MISSING"] += 1
             continue
+        if (rec.get("provenance") or {}).get("stop_reason") == "max_tokens":
+            errors.append({"arm": "B", "pass": 2, "candidate_id": rec.get("candidate_id"),
+                           "error": "TRUNCATED_AT_MAX_TOKENS"})
+            pass2["TRUNCATED"] += 1
+            continue
         resp = rec.get("response") or {}
         act = resp.get("action")
         pass2[act if act in pass2 else "MISSING"] += 1
@@ -291,7 +312,12 @@ def main():
         "pass2_actions": pass2,
         "pass2_predictive_claims": pass2_predictive_claims,
         "reconnaissance": reconnaissance,
-        "zero_candidate_fixtures": zero_candidate_fixtures,
+        "genuine_abstention_fixtures": zero_candidate_fixtures,
+        "truncated_fixtures": truncated_fixtures,
+        "abstention_vs_truncation": ("a fixture counts as an ABSTENTION only when the "
+                                     "response stopped naturally (tool_use) with no "
+                                     "candidates. A max_tokens stop is an apparatus fault "
+                                     "and is excluded from every abstention count."),
         "research_family_distribution": {a: dict(families[a].most_common())
                                          for a in families},
         "target_metric_distribution": {a: dict(metrics_used[a].most_common())

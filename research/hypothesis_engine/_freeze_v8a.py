@@ -52,8 +52,8 @@ CAP_PATH = f"{OOS_OUT}/v7_1/V7_1_CAPABILITY_MATRIX.json"
 
 MODEL_ID = "us.anthropic.claude-sonnet-4-6"
 TEMPERATURE = 0.0
-MAX_TOKENS_PASS1 = 8192
-MAX_TOKENS_PASS2 = 2048
+MAX_TOKENS_PASS1 = 24576
+MAX_TOKENS_PASS2 = 8192
 REGION = "us-east-1"
 
 #: FROZEN BEFORE ANY CALL (brief section 24): the second pass is ONE CALL PER CANDIDATE.
@@ -179,7 +179,21 @@ def main():
         },
         "model": {"model_id": MODEL_ID, "temperature": TEMPERATURE,
                   "max_tokens_pass1": MAX_TOKENS_PASS1,
-                  "max_tokens_pass2": MAX_TOKENS_PASS2, "region": REGION},
+                  "max_tokens_pass2": MAX_TOKENS_PASS2, "region": REGION,
+                  "max_tokens_amended": {
+                      "amendment": "V8A_PRE_SPEND_AMENDMENT",
+                      "was_pass1": 8192, "was_pass2": 2048,
+                      "why": ("the 8192 pass-1 ceiling BOUND for Arm B: both executed "
+                              "responses stopped at max_tokens with the `candidates` key "
+                              "absent entirely, so they could not contain the measured "
+                              "quantity. An apparatus fault, not a result."),
+                      "arm_a_affected": False,
+                      "arm_a_reason": ("the 8192 ceiling never bound for Arm A -- all 12 "
+                                       "responses stopped naturally at tool_use, max 6730 "
+                                       "output tokens. At temperature 0 a non-binding "
+                                       "ceiling is purely a stopping condition and cannot "
+                                       "alter the emitted tokens, so Arm A is not re-run."),
+                      "prompt_unchanged": True}},
         "revision_policy": ("If the structural results disappoint, the result is recorded "
                             "as it stands. A prompt revision becomes V8A.1 with its own "
                             "frozen development sample; it is never the same experiment."),

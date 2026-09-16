@@ -42,8 +42,8 @@ CAP_PATH = f"{ROOT}/research/hypothesis_oos/out/v7_1/V7_1_CAPABILITY_MATRIX.json
 
 MODEL_ID = "us.anthropic.claude-sonnet-4-6"
 TEMPERATURE = 0.0
-MAX_TOKENS_PASS1 = 8192
-MAX_TOKENS_PASS2 = 2048
+MAX_TOKENS_PASS1 = 24576
+MAX_TOKENS_PASS2 = 8192
 REGION = "us-east-1"
 
 
@@ -73,7 +73,15 @@ def load_ok(name: str):
     except (OSError, json.JSONDecodeError):
         return None
     core = {k: v for k, v in rec.items() if k != "record_sha256"}
-    return rec if rec.get("record_sha256") == _sha(core) else None
+    if rec.get("record_sha256") != _sha(core):
+        return None
+    # A TRUNCATED record is perfectly self-consistent and would otherwise cache forever.
+    # `stop_reason == max_tokens` means generation was cut off, so the response is
+    # structurally incapable of containing the thing being measured -- an apparatus fault,
+    # never a model answer. Reject it so it is recomputed rather than silently reused.
+    if (rec.get("provenance") or {}).get("stop_reason") == "max_tokens":
+        return None
+    return rec
 
 
 def main():
@@ -137,6 +145,13 @@ def main():
             out, prov, err = None, {"resolved_model_id": MODEL_ID}, \
                 f"{type(exc).__name__}: {exc}"[:400]
         spent += price(prov.get("input_tokens"), prov.get("output_tokens"))
+        # Truncation is an ERROR, not a quiet zero. Without this, a cut-off response with
+        # no `candidates` key is indistinguishable from a deliberate abstention -- and
+        # abstention is scored as SUCCESSFUL behaviour, so the misread would invert a
+        # headline metric.
+        if err is None and prov.get("stop_reason") == "max_tokens":
+            err = ("TRUNCATED_AT_MAX_TOKENS: generation stopped at the output ceiling, so "
+                   "this response cannot be read as an abstention")
         rec = save(name, {**meta, "response": out, "provenance": prov, "error": err,
                           "elapsed_s": round(time.time() - t0, 2),
                           "model_id": MODEL_ID, "temperature": TEMPERATURE,
