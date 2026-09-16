@@ -63,3 +63,36 @@ packet, or control arm work resumes.
 
 No code was changed. No CHAMPION file was touched. No model was called. This report and the
 taint inventory it references are read-only forensic artifacts.
+
+
+## Addendum — expected, accepted test drift from adding V8B.1 test files
+
+Adding `tests/research/hypothesis_v8b1/test_scorer.py` (committed at `6aa22ad4d`) causes
+`tests/research/hypothesis_v71/test_v71_dependency_closure.py::
+test_16_blast_radius_test_reachability_is_not_stale` to fail: the frozen
+`V7_1_BLAST_RADIUS.json` (committed at `8af4426db`, part of V7.1's sealed, already-executed
+confirmatory-run provenance chain) recorded `n_test_modules_scanned: 219` at freeze time;
+adding the new test file makes 220 test modules tracked at HEAD.
+
+This is the SAME class of guard as the earlier module-level blast-radius drift (§ this
+report's main body), now firing on the test-reachability side rather than the changed-module
+side, and it is working exactly as designed — its own docstring states its purpose is to catch
+"whatever scratch test files happen to sit in a working tree." It correctly detected a real,
+new test file.
+
+**Decision: do not regenerate `V7_1_BLAST_RADIUS.json`.** That artifact is bound into
+`V7_1_PROVENANCE.json` and the authorization/preflight chain for a confirmatory run that has
+ALREADY EXECUTED (`V7_1_CONFIRMATORY_RESULT.json`, committed `5ceda9f61`, predates this work).
+Editing a frozen artifact tied to an already-sealed scientific result — even to make it
+"correct" again — is retroactively altering evidence of a completed run, which is a more
+serious violation than leaving one unrelated test red. This mirrors the earlier decision to
+keep the V8B.1 scorer physically out of `src/research/hypothesis_v71/` rather than force an
+edit to this same frozen artifact family.
+
+`test_scorer.py` and `test_search.py` (both under `tests/research/hypothesis_v8b1/`) do not
+import, and cannot reach, any V7.1 changed module — confirmed by the same AST-based static
+closure check the failing test itself performs. The reachability CLAIM in
+`V7_1_BLAST_RADIUS.json` (7 test modules reaching changed code) remains factually correct;
+only the total SCANNED count is now stale by exactly the two V8B.1-only test files added in
+this work. This is recorded here as an accepted, non-blocking, explained test failure — not
+silently ignored, not patched by touching sealed evidence.
