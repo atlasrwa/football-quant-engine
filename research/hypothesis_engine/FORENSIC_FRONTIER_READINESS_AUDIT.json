@@ -1,0 +1,242 @@
+{
+  "audit_id": "FORENSIC_FRONTIER_READINESS_AUDIT_v1",
+  "audited_at_utc": "2026-09-16T15:11:38Z",
+  "branch": "feat/v7-1-hardening",
+  "commit": "4506600516184179ab26119d06489cd4761e0ea3",
+  "working_tree_note": "20 pre-existing uncommitted files identified by the requester as predecessor/in-progress work; audit made zero writes and re-verified byte-identical diff before and after",
+  "scope": "read-only forensic pass over the V7.1 hypothesis engine and the llm_matchup/hypothesis_engine evidence+prompt subsystem; no code changed; no CHAMPION write; no model spend beyond two zero-token-billed access-check calls",
+
+  "architecture_finding": {
+    "v71_core_has_no_live_llm_wiring": true,
+    "v71_driver_refuses_if_bedrock_module_loaded": true,
+    "v71_confirmatory_oos_treated_arm_source": "frozen V6.1 Claude-Sonnet-derived hypothesis set (V7_HYPOTHESIS_UNIVERSE.json), not a live call",
+    "third_deterministic_heuristic_control_arm_exists": false,
+    "existing_control_arms": ["UNIFORM_POOL (blind grammar)", "MARGINAL_POOL (matched to treated arm structural marginals)"],
+    "conclusion": "the requested Terra-vs-blind-vs-heuristic experiment requires net-new integration code; it is not already present as a runnable or frozen path"
+  },
+
+  "corpus": {
+    "total_records": 5636,
+    "development_records": 5319,
+    "fresh_records": 317,
+    "metrics_indexed": 25,
+    "competitions": ["champ", "epl", "laliga", "laliga2", "ligue1", "ligue2"],
+    "verification_method": "direct load via src.research.hypothesis_v71.corpus_index.load_records + PITIndex, not documentation",
+    "raw_directory_file_count": 13438,
+    "raw_directory_note": "majority are non-fixture artifacts (odds ledgers, discovery logs, competition lists); 5636 is the real usable fixture corpus"
+  },
+
+  "field_inventory": {
+    "source": "src/research/hypothesis_v7/provider.py::METRIC_CONTRACT (reused verbatim by v71 capability.py)",
+    "n_contracted_metrics": 22,
+    "provider": "thestatsapi",
+    "storage_blocks": ["base", "rich", "extra"],
+    "provenance_defect_v1_status": "FIXED — v1 misread 3 storage blocks of 1 provider as 2 providers, biasing 33 canonical families; corrected in provider.py v2, documented in-file",
+    "big_chances_defect_class_status": "RESOLVED",
+    "big_chances_defect_detail": "big_chances is canonical (block=rich, audited=true); FOR/AGAINST suffixing is a deliberate systematic convention, not an inconsistency; a separate firewall-v1 false positive on the bare metric name was fixed in firewall v2 with passing regression tests",
+    "excluded_metrics_named_with_reason": ["np_xg", "cards", "xg (coverage gate)", "touches_in_penalty_area (coverage gate)"]
+  },
+
+  "null_zero_forensics": {
+    "method": "independent script, 25 metrics x 5636 records, cross-checked every zero-valued read against its raw source record",
+    "null_to_zero_mutations_found": 0,
+    "verdict": "NULL and ZERO remain distinguishable at the lowest read layer by construction"
+  },
+
+  "pit_forensics": {
+    "method": "independent script, 500 adversarially sampled reference positions including a constructed same-timestamp/adjacent-fixture boundary case",
+    "pit_boundary_violations_found": 0,
+    "independent_recomputation_checks": 600,
+    "independent_recomputation_mismatches": 0,
+    "corroborates_existing_test_suite": "tests/research/test_anti_leakage.py + 5 other files, 46/46 passed, including an explicit injected-leak-detection test"
+  },
+
+  "compiler_ir_enumerator_forensics": {
+    "exhaustive_shape_enumeration": {
+      "total_shapes": 600,
+      "status_distribution": {"OK": 504, "MISSING_REQUIRED_SIMILARITY": 36, "MISSING_REQUIRED_CONDITION": 60},
+      "unexpected_ir_failures": 0
+    },
+    "metamorphic_tests": {
+      "invariants_checked": 6,
+      "failures": 0,
+      "invariants": [
+        "condition_order_swap_preserves_ir_id",
+        "target_metric_order_swap_preserves_ir_id",
+        "non_restrictive_value_addition_preserves_ir_id",
+        "duplicate_condition_preserves_ir_id",
+        "for_against_swap_changes_ir_id",
+        "subject_swap_changes_ir_id"
+      ]
+    },
+    "large_corpus_compiler_differential_test": {
+      "sampled_positions": 300,
+      "comparator_families_tested": 5,
+      "all_refusals_attributable_to_documented_failclosed_behavior": true,
+      "notes": "SUBJECT_OVERALL_BASELINE with no condition correctly refused 300/300 via IDENTICAL_COHORT_BASELINE/SELF_COMPARISON (deliberately degenerate test spec); SimilarityRefused on thin-history opponents is caught by the real production caller (engine.py) alongside CompileRefused, confirmed by reading the call site"
+    },
+    "slot_inhabitation_proof": {
+      "no_structural_zero_from_generator_incapability": true,
+      "uninhabited_slots": []
+    }
+  },
+
+  "test_suite_results": {
+    "scoped_run": {
+      "paths": ["tests/research/", "tests/asymmetric/"],
+      "collected": 3785,
+      "passed": 3764,
+      "failed": 17,
+      "errors": 4,
+      "pass_rate": 0.994
+    },
+    "failure_triage": {
+      "timeout_budget_artifacts_all_pass_on_rerun": 19,
+      "timeout_root_cause": "HistoryIndex.prior_records (src/research/llm_matchup/cohorts.py) is an O(N) linear corpus scan, invoked deeply nested in formation-evidence tiering; exceeds 60s default test timeout as corpus has grown to 5636+ records; one such test is self-labelled @pytest.mark.slow",
+      "timeout_verdict": "NONBLOCKING_P2 (performance note, not correctness)",
+      "live_network_test_failures": 2,
+      "live_network_detail": "tests/research/test_footystats_integration.py::TestRealAPISmokeTest — real HTTP calls to the FootyStats API, rate-limit sleep exceeds timeout budget; unrelated to research/hypothesis pipeline",
+      "reconfirmed_preexisting_defect": 1,
+      "reconfirmed_defect_id": "D14",
+      "reconfirmed_defect_severity": "P3",
+      "reconfirmed_defect_detail": "src/research/hypothesis_v7/measurement.py absent from V7's own frozen immutable V7_BLAST_RADIUS.json; already found, triaged P3, and resolved-by-decision (V7 not patched, miss re-verified harmless) in V7_1_PRE_OOS_HARDENING_REPORT.md; V7.1's own blast-radius/provenance artifacts correctly declare this file"
+    },
+    "hypothesis_v71_directory": {
+      "passed": 166,
+      "failed": 1,
+      "failure_detail": "test_05_the_authorization_artifact_does_not_exist_during_the_mission — expected to fail post-run because the V7.1 confirmatory run already happened and minted its token; not a live defect"
+    },
+    "oos_leakage_suite": {
+      "path": "tests/research/hypothesis_oos/test_v4_oos_execution_leakage.py",
+      "passed": 3,
+      "failed": 0,
+      "note": "initial run with system python3 (no sklearn) was a tooling mistake in this audit's own process, not a repo defect; corrected using project .venv"
+    }
+  },
+
+  "evidence_packet_and_prompt_forensics": {
+    "packet_builder": "src/research/llm_matchup/evidence.py::EvidencePacketBuilder",
+    "packet_properties": ["deterministic", "PIT-tagged per item (temporal_status, cutoff_unix, max_source_time_unix)", "hierarchical shrinkage with named SHRINK_K", "symmetric Team A/B construction", "packet_hash sha256 over full packet", "formation explicitly FORMATION_UNKNOWN with stated reason, never silently asserted"],
+    "prompt_file": "src/research/hypothesis_engine/prompt_v2.py",
+    "prompt_properties": ["abstention explicitly stated as a correct answer", "evidence_refs citation channel forbids copying numbers into prose", "per-fixture gated RESEARCH SPACE omits withheld dimensions rather than listing-and-forbidding", "evidence block framed as untrusted data for injection resistance", "worked examples are football-story-free pure grammar"],
+    "content_hashing": "prompt text + tool schema both content-hashed and folded into the Bedrock cache key together with model_id and version stamp",
+    "token_distribution_measurement_completed": false,
+    "token_distribution_not_completed_reason": "queued behind Terra integration work, paused with it per instruction"
+  },
+
+  "model_configuration_audit": {
+    "live_wired_models": ["us.anthropic.claude-sonnet-4-6", "us.anthropic.claude-sonnet-4-5-20250929-v1:0"],
+    "inference_config": {"temperature": 0.0, "maxTokens": 8192},
+    "reasoning_effort_param_exists_in_codebase": false,
+    "reasoning_effort_param_reason": "not a Converse API field exposed for the Anthropic models currently wired",
+    "resolved_model_id_recorded_separately_from_requested": true,
+    "cross_model_cache_poisoning_guard": "CacheModelIdentityError",
+    "on_bedrock_error_behavior": "LLM_STATE_UNAVAILABLE, never fabricates",
+    "artificially_shallow_reasoning_found": false,
+    "terra_configuration_evaluated": false,
+    "terra_configuration_not_evaluated_reason": "no live call possible (see terra_access_blocker)"
+  },
+
+  "champion_isolation": {
+    "champion_freeze_json_sha256": "22303dfd4c71120a20d02bc4630632952251e7c8eccab327a414c26eeb2af133",
+    "stat_mixer_py_sha256": "10123820b86b127c063e1ae8cefd923d6c5c35d49e0bdfc95c7b70cf461dcadf",
+    "forward_predict_py_sha256": "751606530dc5cb76dd173551ab2b5993b2a7ba4c067a70a613fa134076b3bce3",
+    "forecast_broadcast_py_sha256": "233019b5bb72ec0effdcfed0175f4b1523e587c001e3ce1028928daa8abff04f",
+    "champion_artifact_sha256": "0b8f5ff3dc4ddf15363d17989330b6f010197265ce8d2ee892cdc7ca410c00c9",
+    "before_after_identical": true,
+    "matches_champion_freeze_json_recorded_hash": true,
+    "matches_v71_confirmatory_report_recorded_hash": true,
+    "structural_isolation_test": "tests/research/hypothesis_engine/test_architecture_isolation.py — ast-based import graph proof + subprocess predict-path proof with LLM packages import-blocked + no probability-producing symbol in hypothesis engine"
+  },
+
+  "terra_access_blocker": {
+    "model_id_requested": "openai.gpt-5.6-terra",
+    "catalog_status": "ACTIVE",
+    "catalog_check_method": "aws bedrock list-foundation-models --region us-east-1",
+    "inference_profile_id": "us.openai.gpt-5.6-terra",
+    "inference_profile_status": "ACTIVE, SYSTEM_DEFINED",
+    "inference_profile_check_method": "aws bedrock list-inference-profiles --region us-east-1",
+    "live_call_attempted": true,
+    "live_call_result": "AccessDeniedException",
+    "live_call_error_text": "openai.gpt-5.6-terra is not available for this account. You can explore other available models on Amazon Bedrock. For additional access options, contact AWS Sales at https://aws.amazon.com/contact-us/sales-support/",
+    "attempted_as_bare_model_id": true,
+    "attempted_as_full_inference_profile_arn": true,
+    "both_forms_refused": true,
+    "control_models_tested_same_credentials": ["us.anthropic.claude-sonnet-4-6", "us.anthropic.claude-sonnet-4-5-20250929-v1:0"],
+    "control_models_result": "both succeeded",
+    "conclusion": "per-model access grant specifically withheld for Terra; not a general Bedrock permissions or connectivity problem",
+    "tokens_billed": 0,
+    "spend_usd": 0,
+    "model_substitution_performed": false,
+    "new_integration_code_written_after_blocker_found": false,
+    "resolution_required": "account owner must grant model access for openai.gpt-5.6-terra in the Bedrock console (Model access page) or via AWS Sales, per the error message",
+    "status": "BLOCKED, awaiting user confirmation of granted access; work paused per explicit instruction"
+  },
+
+  "deferred_sections": {
+    "terra_capability_validation": "not executed (blocked)",
+    "material_sample_construction_50_200_fixtures": "not executed (blocked, and superseded by the larger ~1000-fixture request pending access)",
+    "terra_research_task": "not executed (blocked)",
+    "terra_output_forensics": "not executed (blocked)",
+    "simple_average_baseline_check": "not executed (blocked)",
+    "web_formation_pilot": "not attempted this pass",
+    "third_deterministic_heuristic_control_arm": "not built (paused per instruction pending Terra access)",
+    "1000_fixture_freeze": "not built (paused per instruction pending Terra access)",
+    "evidence_packet_token_distribution_p50_p90_p95_p99_max": "not measured (paused with Terra integration work)"
+  },
+
+  "layer_verdicts": {
+    "DATA": "FIT_FOR_PURPOSE",
+    "PIT_CORPUS": "FRONTIER_READY",
+    "PROSPECTIVE_WEB_CONTEXT": "UPGRADE_AVAILABLE",
+    "EVIDENCE_PACKET": "FIT_FOR_PURPOSE",
+    "LLM_RESEARCH_PROTOCOL": "FIT_FOR_PURPOSE",
+    "MODEL_CONFIGURATION": "FIT_FOR_PURPOSE_SONNET_ARMS_ONLY",
+    "EVIDENCE_GROUNDING": "FIT_FOR_PURPOSE",
+    "IR": "FRONTIER_READY",
+    "COMPILER": "FRONTIER_READY",
+    "ENUMERATOR": "FRONTIER_READY",
+    "MEASUREMENT": "FIT_FOR_PURPOSE",
+    "STATISTICAL_VALIDATION": "FIT_FOR_PURPOSE",
+    "REPRODUCIBILITY": "FRONTIER_READY",
+    "CHAMPION_ISOLATION": "FRONTIER_READY"
+  },
+
+  "critical_final_question_answer": {
+    "deterministic_core": "would believe a negative result -- no pipeline-side defect found that would provide a plausible alternative explanation",
+    "terra_specifically": "not yet answerable -- no live call has been made; nothing to believe or disbelieve yet"
+  },
+
+  "final_machine_state": {
+    "DATA_READY": true,
+    "PIT_READY": true,
+    "WEB_T_MINUS_1H_CONTEXT_READY": false,
+    "EVIDENCE_PACKET_READY": true,
+    "LLM_PROTOCOL_READY": true,
+    "MODEL_CONFIGURATION_READY": "true_for_sonnet_arms_only_terra_unverified",
+    "EVIDENCE_GROUNDING_READY": true,
+    "IR_READY": true,
+    "COMPILER_READY": true,
+    "GENERIC_ENUMERATOR_READY": true,
+    "MEASUREMENT_READY": true,
+    "STATISTICAL_VALIDATION_READY": true,
+    "REPRODUCIBILITY_READY": true,
+    "CHAMPION_ISOLATION_READY": true,
+
+    "VALID_HYPOTHESIS_KILL_PATHS": 0,
+    "UNRESOLVED_P0": 0,
+    "UNRESOLVED_P1": 0,
+
+    "PIPELINE_RESEARCH_READY": true,
+    "PIPELINE_RESEARCH_READY_SCOPE": "deterministic core only; does not certify the not-yet-executed Terra experiment",
+    "STOP_GENERAL_HARDENING": true,
+
+    "TERRA_EXPERIMENT_STATUS": "BLOCKED_ON_MODEL_ACCESS",
+    "TERRA_EXPERIMENT_BLOCKER": "AccessDeniedException: openai.gpt-5.6-terra is not available for this account",
+    "TERRA_EXPERIMENT_RESOLUTION_OWNER": "user (AWS account owner) must grant Bedrock model access",
+    "TERRA_EXPERIMENT_SPEND_TO_DATE_USD": 0,
+    "MODEL_SUBSTITUTION_PERFORMED": false,
+
+    "NEXT_RECOMMENDED_SCIENTIFIC_EXPERIMENT": "LLM football-informed selection (openai.gpt-5.6-terra) vs matched blind selection vs deterministic heuristic selection, over the same complete admissible hypothesis universe, across a ~1000-fixture chronological walk-forward sample -- BLOCKED pending confirmed Bedrock model access for openai.gpt-5.6-terra; resume from this frozen state once access is granted"
+  }
+}
