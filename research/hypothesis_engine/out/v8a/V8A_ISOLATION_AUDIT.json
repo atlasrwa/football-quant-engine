@@ -1,0 +1,27 @@
+{
+  "v8a_branch": "feat/v8a-deep-football-research-dev",
+  "base_commit": "4506600516184179ab26119d06489cd4761e0ea3",
+  "worktree_path": "/home/ubuntu/v8a-worktree",
+  "isolation_mechanism": "git worktree (NOT checkout -b in the dirty main tree)",
+  "why": "The primary checkout /home/ubuntu has 20 modified tracked files and many untracked trees. A branch cut there would have absorbed unrelated dirty state into V8A, violating brief section 3.",
+  "code_isolation_proof": {
+    "src_package_path": "/home/ubuntu/v8a-worktree/src",
+    "note": "Repo modules hard-code sys.path.insert(0, '/home/ubuntu'). Because the first import of the `src` package binds src.__path__, a driver that inserts the worktree path and imports `src` first resolves ALL src.* submodules inside the worktree. Verified empirically for v6_prompt and corpus_adapter.",
+    "verified": true
+  },
+  "shared_untracked_dependencies": {
+    "explanation": "These are read through absolute /home/ubuntu paths and are NOT tracked by git, so the worktree necessarily reads the live main-tree copies. This is intended for EVIDENCE (the corpus is the data, not the code) but is recorded explicitly rather than left invisible.",
+    "corpus_cache_dir": "/home/ubuntu/data/thestatsapi/championship",
+    "corpus_files_present": 13439,
+    "corpus_tracked_by_git": false,
+    "scripts_dir": "/home/ubuntu/scripts",
+    "scripts_sha256_identical_to_worktree": {
+      "scripts/multisrc_corpus.py": "44b78b9d8488452f079b251aede4c631dd09b715bcb80b0a4ac9118c3867a0f4",
+      "scripts/championship_adapter.py": "970153a835007d1f688db05501ca330a98e3c4f84889608ed560c2b84f0175a2",
+      "identical": true
+    }
+  },
+  "v8a_code_provenance": "frozen commit 4506600516184179ab26119d06489cd4761e0ea3 + additive V8A modules only",
+  "v71_artifacts_modified": false,
+  "v71_artifacts_reread_only": true
+}
