@@ -51,6 +51,7 @@ import itertools
 import json
 
 from src.research.hypothesis_v71 import controls as C
+from src.research.hypothesis_v71 import ir as IRM
 from src.research.hypothesis_v71 import ontology as O
 
 GENERICLIB_VERSION = "v8a_genericlib_v1"
@@ -111,7 +112,12 @@ def is_degenerate(conditions) -> bool:
 def canonical_key(spec) -> tuple:
     """The structural identity of a hypothesis. Prose plays no part."""
     sig, _kinds = condition_signature(spec.get("conditions"))
-    metrics = tuple(sorted({str(m).strip().lower()
+    # Metric identity is CANONICAL, via the frozen V7 synonym map. V6.1's packet spells
+    # `total_shots` / `touches_in_box` / `corners` where the capability contract spells
+    # `shots` / `touches_in_penalty_area` / `corner_kicks`. Comparing the raw strings would
+    # make every Arm A candidate look unmeasurable and structurally novel through
+    # nomenclature alone -- the arm difference would be a dictionary, not a protocol.
+    metrics = tuple(sorted({IRM.normalise_metric(m)
                             for m in (spec.get("target_metrics") or [])}))
     return (
         str(spec.get("comparison") or "").upper(),
@@ -154,7 +160,7 @@ def reachability(spec, vocabulary) -> dict:
     if str(spec.get("window") or "ALL_PRIOR").upper() not in WINDOWS:
         reasons.append("window outside grammar")
 
-    metrics = sorted({str(m).strip().lower()
+    metrics = sorted({IRM.normalise_metric(m)
                       for m in (spec.get("target_metrics") or [])})
     if not metrics:
         reasons.append("no target metric")
@@ -288,8 +294,8 @@ DISTANCE_WEIGHTS = {
 def distance(a, b) -> int:
     """Structural distance between two hypotheses. Integer, symmetric, order-independent."""
     d = 0
-    ma = {str(m).lower() for m in (a.get("target_metrics") or [])}
-    mb = {str(m).lower() for m in (b.get("target_metrics") or [])}
+    ma = {IRM.normalise_metric(m) for m in (a.get("target_metrics") or [])}
+    mb = {IRM.normalise_metric(m) for m in (b.get("target_metrics") or [])}
     if not (ma & mb):
         d += DISTANCE_WEIGHTS["target_metric"]
     elif ma != mb:

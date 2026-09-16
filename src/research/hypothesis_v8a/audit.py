@@ -88,7 +88,10 @@ def compile_candidate(cand: dict) -> dict:
 
 def measurability(cand: dict, cap) -> dict:
     """Can this corpus answer the question, at this fixture's competition?"""
-    metrics = [str(m).strip().lower() for m in (cand.get("target_metric") or [])]
+    # Canonicalise through the frozen V7 synonym map first: Arm A speaks V6.1's packet
+    # vocabulary and Arm B speaks the capability contract's, and they must be scored on the
+    # same metric identity or the comparison measures naming rather than research.
+    metrics = [IRM.normalise_metric(m) for m in (cand.get("target_metric") or [])]
     unknown, unsupported, restricted = [], [], []
     for m in metrics:
         status, _detail = cap.classify_metric(m)
@@ -117,7 +120,7 @@ def tautology_checks(cand: dict) -> dict:
     spec = to_spec(cand)
     comparator = spec["comparison"]
     sig, kinds = G.condition_signature(spec["conditions"])
-    metrics = {str(m).lower() for m in spec["target_metrics"]}
+    metrics = {IRM.normalise_metric(m) for m in spec["target_metrics"]}
 
     # A venue-baseline comparator whose ONLY condition is that same venue compares a set
     # with itself.
@@ -359,3 +362,124 @@ def version_stamp() -> dict:
                                                           "self_critique.notes"],
             "llm_sets_the_label": False,
             "computes_effects": False}
+
+
+# ---------------------------------------------------------------------------------------
+# Arm A adapter -- schema_v4 responses speak a DIFFERENT field vocabulary
+# ---------------------------------------------------------------------------------------
+#: V6.1's `schema_v4` names its fields `target_metrics` / `side` / HOME_TEAM|AWAY_TEAM, while
+#: the V8A schema uses `target_metric` / `metric_perspective` / TEAM_A|TEAM_B. Feeding a
+#: schema_v4 hypothesis to `to_spec` would silently yield an empty metric list and an
+#: unmapped subject, so EVERY Arm A candidate would land INVALID and Arm B would appear to
+#: win on measurability through a field-name mismatch alone. This adapter exists so the
+#: A-vs-B contrast measures protocol rather than nomenclature.
+def armA_to_spec(h: dict) -> dict:
+    """schema_v4 hypothesis -> the same structural spec the V7.1 IR compiles.
+
+    Near-identity: `target_metrics`, `subject`, `side`, `window`, `conditions` and
+    `comparison` already carry the IR's own names -- which is exactly what
+    `controls.derive_marginals` reads off V6.1 hypotheses.
+    """
+    return {
+        "target_metrics": list(h.get("target_metrics") or []),
+        "subject": str(h.get("subject") or "").upper(),
+        "side": str(h.get("side") or "").upper(),
+        "window": str(h.get("window") or "ALL_PRIOR").upper(),
+        "comparison": str(h.get("comparison") or "").upper(),
+        "conditions": h.get("conditions") or [],
+        "research_family": h.get("research_family"),
+        "required_capabilities": list(h.get("required_capabilities") or []),
+    }
+
+
+def armA_as_v8a_candidate(h: dict) -> dict:
+    """A thin V8A-shaped VIEW of an Arm A hypothesis, for the shared structural scorers.
+
+    Only the structural fields are mapped. The V8A-only reasoning surfaces stay ABSENT
+    rather than being invented, so Arm A is never credited with observations, a mechanism,
+    a falsifier or a self-critique that its protocol never asked it for.
+    """
+    subj = str(h.get("subject") or "").upper()
+    return {
+        "candidate_id": h.get("hypothesis_id"),
+        "research_family": h.get("research_family"),
+        "subject": {"HOME_TEAM": "TEAM_A", "AWAY_TEAM": "TEAM_B"}.get(subj, subj),
+        "opponent": {"HOME_TEAM": "TEAM_B", "AWAY_TEAM": "TEAM_A"}.get(subj),
+        "target_metric": list(h.get("target_metrics") or []),
+        "metric_perspective": str(h.get("side") or "").upper(),
+        "comparison": str(h.get("comparison") or "").upper(),
+        "window": str(h.get("window") or "ALL_PRIOR").upper(),
+        "conditions": h.get("conditions") or [],
+        "provider_requirements": list(h.get("required_capabilities") or []),
+    }
+
+
+def armA_evidence_ref_index(packet: dict) -> set:
+    """Every evidence id the V6.1 packet actually contains.
+
+    Arm A cites V6.1 ids (`MATCH:HOME:M01`, `AVAIL:competition`, summary row ids), never the
+    V8A dotted paths. Scoring it against the V8A ref index would report a 100% hallucination
+    rate by construction.
+    """
+    refs = set()
+
+    def walk(o):
+        if isinstance(o, dict):
+            ev = o.get("evidence_id")
+            if isinstance(ev, str):
+                refs.add(ev)
+            for v in o.values():
+                walk(v)
+        elif isinstance(o, list):
+            for v in o:
+                walk(v)
+    walk(packet)
+    return refs
+
+
+def armA_firewall_scan(h: dict, index: int, *, packet) -> list:
+    """Arm A's prose lives in `question` / `evidence_summary`, which is exactly what
+    `firewall_v5.scan_hypothesis` iterates. Use it unchanged for Arm A."""
+    return FW.scan_hypothesis(h, index, packet=packet)
+
+
+def audit_armA_hypothesis(h, index, *, cap, packet, library_keys, vocabulary, valid_refs):
+    """The deterministic record for one Arm A hypothesis, scored by the SAME structural
+    rules as Arm B but through Arm A's own field and evidence vocabulary."""
+    view = armA_as_v8a_candidate(h)
+    spec = armA_to_spec(h)
+    ir = IRM.build_ir(spec)
+    meas = measurability(view, cap)
+    taut = tautology_checks(view)
+    fw = armA_firewall_scan(h, index, packet=packet)
+    blocking = FW.blocking(fw)
+
+    cited = [r for r in (h.get("evidence_refs") or [])]
+    bad = [r for r in cited if r not in valid_refs]
+
+    ir_ok = ir.status == IRM.OK and meas["measurable"] and not taut["tautology"]
+    ir_status = ir.status
+    if ir.status == IRM.OK and not meas["measurable"]:
+        ir_status = "UNSUPPORTED_OR_UNKNOWN_METRIC"
+    if ir.status == IRM.OK and taut["tautology"]:
+        ir_status = "TAUTOLOGY_OR_DEGENERATE_COHORT"
+
+    return {
+        "candidate_id": h.get("hypothesis_id"),
+        "compiler": {"spec": spec, "ir_status": ir.status, "ir_ok": ir.status == IRM.OK,
+                     "describes": ir.describe() if ir.status == IRM.OK else None},
+        "measurability": meas,
+        "tautology": taut,
+        "firewall": {"n_findings": len(fw), "n_blocking": len(blocking),
+                     "blocking_paths": [f.path for f in blocking][:10],
+                     "clean": not blocking},
+        "evidence_refs": {"n_cited": len(cited), "n_hallucinated": len(bad),
+                          "hallucinated_refs": sorted(set(bad))[:20],
+                          "all_refs_valid": not bad},
+        "character": classify_character(view),
+        "complexity": complexity(view),
+        "novelty_verdict": G.judge(spec, library_keys, vocabulary,
+                                   ir_ok=ir_ok, ir_status=ir_status),
+        "schema_valid": True,
+        "sufficiency": h.get("sufficiency"),
+    }

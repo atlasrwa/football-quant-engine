@@ -194,8 +194,13 @@ answered from **structural evidence only**. Fixed here, before any call:
 **YES** requires all four, at N = 12 fixtures:
 
 1. **Measurability** — Arm B measurable rate ≥ **60%** of schema-valid candidates, and
-   materially above Arm A's rate on the same fixtures. (V7.1's measurability was 38.6%; a
-   protocol that does not clear that comfortably has not fixed the binding problem.)
+   materially above **Arm A's rate measured by this same pipeline on these same fixtures**.
+
+   *The internal A-vs-B contrast is the only clean one and is the one that counts.* V7.1's
+   38.6% figure is **not** used as a threshold here and is not directly comparable: it was
+   produced by a different pipeline (the V7.1 compiler and its evaluability gate, applied to
+   V6.1's hypotheses on V6.1's fixtures). Quoting it as though it were the same measurement
+   would be exactly the kind of overstatement this project has had to correct before.
 2. **Non-degeneracy** — Arm B produces ≥ **1 INCREMENTAL_STRUCTURE** candidate that is also
    measurable and firewall-clean, i.e. the protocol can reach outside enumeration at all.
 3. **Grounding** — Arm B hallucinated-evidence-reference rate ≤ **5%** of cited refs, and
