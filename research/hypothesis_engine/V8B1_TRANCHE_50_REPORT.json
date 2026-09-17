@@ -1,0 +1,90 @@
+{
+ "report_version": "v8b1_tranche_50_report_v1",
+ "tranche_manifest": "research/hypothesis_engine/V8B1_TRANCHE_50_MANIFEST.json",
+ "tranche_manifest_hash": "103a705d35d396a5",
+ "n_fixtures": 50,
+ "executed": 50,
+ "stopped_early": false,
+
+ "statuses": {"OK": 47, "OK_ABSTAIN": 2, "INVALID_UNKNOWN_HYPOTHESIS_ID": 1},
+ "termination_reasons": {"FORCED_SUBMIT": 50},
+ "note_all_forced_submit": "In this tranche every fixture reached the six-search budget before submitting, so all 50 terminated via the forced final turn. This is a model-behavior observation, not tuned.",
+
+ "valid_terminal_research_artifacts": 49,
+ "valid_terminal_note": "OK(47)+OK_ABSTAIN(2)=49 produced a valid terminal research artifact (a submitted, id-validated selection set; abstention with zero selections is a valid artifact). The 1 non-valid is mt_195507497 = INVALID_UNKNOWN_HYPOTHESIS_ID.",
+
+ "search_call_distribution": {"6": 50, "max": 6, "any_over_cap": false},
+ "converse_call_distribution": {"3": 36, "4": 14, "max": 4, "ceiling": 7},
+
+ "tokens": {"input_sum": 3987593, "output_sum": 383216, "total_sum": 4370809,
+            "input_p50": 73013.0, "input_p95": 116827.35, "input_max": 128795,
+            "output_p50": 7438.5, "output_p95": 9467.6, "output_max": 10147},
+ "latency_s": {"p50": 118.97, "p95": 149.17, "max": 154.04, "min": 57.5},
+
+ "spend": {
+  "research_fixture_spend_usd": 17.711,
+  "per_fixture_cost_p50": 0.33, "per_fixture_cost_p95": 0.47, "per_fixture_cost_max": 0.518595,
+  "pricing": "$0.003/1K input, $0.015/1K output (Bedrock on-demand Sonnet)",
+  "infrastructure_probe_spend_note": "SEPARATE from research spend: prior canary attempts (1 timed-out, 2, 3), the cap canary (~83.5K tokens), and the 915-token synthetic path probe are infrastructure/validation spend, not part of this 50-fixture research tranche."
+ },
+
+ "retries_timeouts": {
+  "app_level_fixture_retries": 0,
+  "transport_read_timeouts": 0,
+  "llm_state_unavailable_count": 0,
+  "botocore_retry_policy": "standard, max_attempts=3 (transport-level; carried forward)"
+ },
+
+ "cache": {"cache_hit_count": 0, "cache_write_count": 50,
+           "note": "all 50 were fresh (no prior v3 cache entry for tranche fixtures); every OK/OK_ABSTAIN/INVALID result persisted per runner semantics."},
+
+ "forced_submit_count": 50,
+ "search_budget_exhausted": {
+  "live_tool_results_emitted": 48,
+  "fixtures_that_hit_the_excess_path": 26,
+  "note": "26/50 fixtures had at least one turn where the model requested more searches than the remaining budget; the runner returned SEARCH_BUDGET_EXHAUSTED tool results (48 total) and the Bedrock conversation stayed valid in every case -> strong live validation of the true-cap conversation path."
+ },
+
+ "failure_taxonomy": {
+  "INVALID_UNKNOWN_HYPOTHESIS_ID": {
+   "count": 1, "fixture": "mt_195507497",
+   "meaning": "the model submitted a hypothesis_id that the search tool never returned this session; the runner rejected it fail-closed (no fabrication, selections dropped).",
+   "classification": "apparatus fail-closed validation reject -- NOT a transport/infrastructure failure, NOT a cap/structure/cache/accounting failure, NOT outcome leakage. It is a legitimate outcome-blind terminal state.",
+   "gate_impact_flagged_for_user": "It did not produce a valid selection artifact, so valid_terminal=49/50 (meets the >=49 threshold exactly). It is not an 'unrecoverable ordinary infrastructure/transport failure' (of which there were 0). Whether this single reject should consume the '<=1' allowance or be treated as a distinct, acceptable apparatus outcome is a preregistration-interpretation call flagged for the user."
+  }
+ },
+
+ "invariant_verification": {
+  "search_calls_le_6_all": true,
+  "toolUseId_integrity": "every toolUseId answered exactly once by construction; 0 orphan/missing/duplicate tool results; 0 conversation-structure validation failures (0 Bedrock invoke errors across 50 fixtures)",
+  "fixture_identity_matches_preregistered_order": true,
+  "duplicate_execution": false,
+  "packet_outcome_blind_all": true,
+  "config_drift": "none (max_search_calls==6, max_tool_turns==7 on every fixture)",
+  "total_invariant_violations": 0
+ },
+
+ "scientific_hash_verification": {"post_run_drift": [], "all_22_byte_identical": true},
+ "champion_verification": {"post_run_champion_ok": true,
+                           "sha256": "0b8f5ff3dc4ddf15363d17989330b6f010197265ce8d2ee892cdc7ca410c00c9"},
+
+ "operational_gate": {
+  "at_least_49_of_50_valid_terminal": true,
+  "at_most_1_unrecoverable_infra_transport_failure": true,
+  "unrecoverable_infra_transport_failures": 0,
+  "cap_breaches": 0, "conversation_structure_failures": 0, "cache_integrity_failures": 0,
+  "accounting_mismatches": 0, "fixture_identity_mismatches": 0, "outcome_leakage": 0,
+  "unauthorized_config_drift": 0,
+  "verdict": "PASS (with the INVALID_UNKNOWN_HYPOTHESIS_ID classification flagged for user preregistration interpretation)"
+ },
+ "cost_gate": {"prorated_ceiling_usd": 34.2, "actual_research_spend_usd": 17.711,
+               "verdict": "PASS"},
+
+ "target_outcomes_viewed": false,
+ "target_outcomes_sealed": true,
+ "selections_frozen_store": "research/hypothesis_engine/V8B1_TRANCHE_50_SELECTIONS.json",
+ "no_tuning_performed": true,
+ "no_football_quality_inspected": true,
+ "stopped_after_fixture_50": true,
+ "fixtures_51plus_not_started": true
+}
