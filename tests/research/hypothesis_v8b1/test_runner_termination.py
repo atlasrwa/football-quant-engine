@@ -223,6 +223,77 @@ def test_end_turn_without_tool_is_invalid_no_submission():
     assert r.manifest["termination_reason"] == "ENDED_WITHOUT_TOOL"
 
 
+def _n_searches_turn(n, tag):
+    """A single turn that emits n search_hypotheses tool calls."""
+    def fn(kwargs):
+        content = [{"toolUse": {"toolUseId": f"{tag}_{i}", "name": "search_hypotheses",
+                                "input": {"target_metric": "goals"}}} for i in range(n)]
+        return {"output": {"message": {"role": "assistant", "content": content}},
+                "stopReason": "tool_use",
+                "usage": {"inputTokens": 100 * n, "outputTokens": 10 * n,
+                          "totalTokens": 110 * n}}
+    return fn
+
+
+def test_true_execution_cap_excess_searches_in_one_turn():
+    # One turn emits 10 searches; budget is 6. Only 6 execute; the other 4 get
+    # SEARCH_BUDGET_EXHAUSTED; search_calls never exceeds 6; next turn is forced submit.
+    captured = {}
+
+    def capturing_search(query, capability):
+        return [{"hypothesis_id": "idA"}]
+
+    def forced_submit(kwargs):
+        # This is the forced turn: assert we are forced + thinking off, and that the PRIOR
+        # user turn answered all 10 toolUseIds (6 results + 4 budget-exhausted).
+        assert kwargs["toolConfig"]["toolChoice"] == {"tool": {"name": "submit_selections"}}
+        assert "thinking" not in (kwargs.get("additionalModelRequestFields") or {})
+        prior_user = kwargs["messages"][-1]
+        results = prior_user["content"]
+        captured["n_tool_results"] = len(results)
+        captured["n_exhausted"] = sum(
+            1 for tr in results
+            if tr["toolResult"]["content"][0]["json"].get("status") == "SEARCH_BUDGET_EXHAUSTED")
+        return _submit_use("final", [{"hypothesis_id": "idA"}])
+
+    fake = FakeConverse([_n_searches_turn(10, "big"), forced_submit])
+    with contextlib.ExitStack() as stack:
+        stack.enter_context(_patched(SE, "search", capturing_search))
+        stack.enter_context(_patched(SE, "resolve", lambda h, c: object()))
+        stack.enter_context(_patched(RN, "_bedrock_client", lambda region: fake))
+        r = RN.run_fixture(_packet(), capability=None, model_id=MODEL, region=REGION,
+                           config_stamp=CONFIG_STAMP, use_cache=False)
+
+    assert r.status == "OK"
+    assert r.manifest["termination_reason"] == "FORCED_SUBMIT"
+    # TRUE CAP: exactly MAX_SEARCH_CALLS searches executed, never more.
+    assert r.manifest["search_calls"] == RN.MAX_SEARCH_CALLS == 6
+    # every one of the 10 toolUseIds was answered (valid conversation), 4 as budget-exhausted.
+    assert captured["n_tool_results"] == 10
+    assert captured["n_exhausted"] == 4
+
+
+def test_cap_across_turns_never_exceeds_budget():
+    # 4 searches in turn 0, then 4 more in turn 1 (would be 8); cap holds at 6, then forced.
+    captured = {}
+
+    def forced_submit(kwargs):
+        assert kwargs["toolConfig"]["toolChoice"] == {"tool": {"name": "submit_selections"}}
+        captured["forced"] = True
+        return _submit_use("final", [])  # abstain is fine here
+
+    fake = FakeConverse([_n_searches_turn(4, "a"), _n_searches_turn(4, "b"), forced_submit])
+    with contextlib.ExitStack() as stack:
+        stack.enter_context(_patched(SE, "search", lambda q, c: [{"hypothesis_id": "idA"}]))
+        stack.enter_context(_patched(SE, "resolve", lambda h, c: object()))
+        stack.enter_context(_patched(RN, "_bedrock_client", lambda region: fake))
+        r = RN.run_fixture(_packet(), capability=None, model_id=MODEL, region=REGION,
+                           config_stamp=CONFIG_STAMP, use_cache=False)
+    assert r.status == "OK_ABSTAIN"
+    assert r.manifest["search_calls"] == 6  # not 8
+    assert captured.get("forced") is True
+
+
 def test_cache_written_and_rehit_without_client(tmp_path, monkeypatch):
     # An OK result is cached; a second run with a client that would explode is served from cache.
     monkeypatch.setattr(PR, "prompt_content_hash", lambda: "prompthash")

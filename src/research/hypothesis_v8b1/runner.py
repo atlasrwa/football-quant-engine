@@ -36,7 +36,10 @@ CACHE_DIR = "/home/ubuntu/research/hypothesis_engine/out/v8b1_cache"
 # universe, scorer, and controls are untouched.
 #
 #   * The model may call search_hypotheses up to MAX_SEARCH_CALLS times (auto tool choice,
-#     extended thinking ON exactly as frozen).
+#     extended thinking ON exactly as frozen). MAX_SEARCH_CALLS is a TRUE EXECUTION CAP: if a
+#     single response contains more search calls than the remaining budget, only the remaining
+#     allowed searches are executed and each excess call gets a deterministic
+#     SEARCH_BUDGET_EXHAUSTED tool result (every toolUseId answered => valid conversation).
 #   * If it calls submit_selections at any point BEFORE the budget is exhausted, that is
 #     accepted immediately (the budget is a maximum, not a mandatory quota).
 #   * Once MAX_SEARCH_CALLS is reached without a submission, the runner issues EXACTLY ONE more
@@ -293,10 +296,17 @@ def run_fixture(packet: dict, capability, *, model_id: str, region: str,
                                           reason="model ended turn without calling any tool")})
             continue
 
-        # Answer every search_hypotheses call locally (zero network, zero marginal cost).
+        # Answer every tool call locally (zero network, zero marginal cost), but enforce
+        # MAX_SEARCH_CALLS as a TRUE EXECUTION CAP -- not merely a between-turn threshold. A
+        # single Sonnet response may contain several search_hypotheses tool calls; we execute
+        # only as many as remain within the budget and return a deterministic
+        # SEARCH_BUDGET_EXHAUSTED result for every excess call (search or otherwise). Every
+        # toolUseId is still answered exactly once, so the conversation structure stays valid;
+        # the next turn will be force_submit because search_calls has reached the cap.
         tool_results = []
         for tu in tool_uses:
-            if tu["name"] == "search_hypotheses":
+            remaining = MAX_SEARCH_CALLS - search_calls
+            if tu["name"] == "search_hypotheses" and remaining > 0:
                 search_calls += 1
                 q = SE.SearchQuery(**{k: v for k, v in tu["input"].items()
                                       if k in SE.SearchQuery.__dataclass_fields__})
@@ -307,6 +317,21 @@ def run_fixture(packet: dict, capability, *, model_id: str, region: str,
                     returned_ids.add(r["hypothesis_id"])
                 tool_results.append({"toolResult": {"toolUseId": tu["toolUseId"],
                                      "content": [{"json": {"results": results}}]}})
+            elif tu["name"] == "search_hypotheses":
+                # Over the six-search execution cap: do NOT run search; return a deterministic
+                # budget-exhausted tool result so the toolUseId is answered and the model is
+                # told to submit.
+                print(f"    [runner] turn {turn}: SEARCH_BUDGET_EXHAUSTED "
+                      f"(cap={MAX_SEARCH_CALLS}) -- excess search not executed", flush=True)
+                tool_results.append({"toolResult": {"toolUseId": tu["toolUseId"],
+                                     "content": [{"json": {
+                                         "status": "SEARCH_BUDGET_EXHAUSTED",
+                                         "max_search_calls": MAX_SEARCH_CALLS,
+                                         "search_calls_used": search_calls,
+                                         "instruction": "search budget is exhausted; call "
+                                                        "submit_selections now with the best "
+                                                        "hypotheses you currently support "
+                                                        "(zero is valid)"}}]}})
             else:
                 tool_results.append({"toolResult": {"toolUseId": tu["toolUseId"],
                                      "content": [{"json": {"error": "unknown tool"}}],
@@ -323,8 +348,10 @@ def run_fixture(packet: dict, capability, *, model_id: str, region: str,
 
 
 def version_stamp() -> dict:
-    return {"runner_version": "v8b1_runner_v2_bounded_search_forced_submit",
+    return {"runner_version": "v8b1_runner_v3_true_search_cap",
             "max_search_calls": MAX_SEARCH_CALLS,
+            "search_budget_is_true_execution_cap": True,
+            "excess_search_tool_result": "SEARCH_BUDGET_EXHAUSTED",
             "final_forced_submit_calls": FINAL_FORCED_SUBMIT_CALLS,
             "max_tool_turns": MAX_TOOL_TURNS,
             "termination_contract": "BOUNDED_SEARCH_THEN_FORCED_SUBMIT",
