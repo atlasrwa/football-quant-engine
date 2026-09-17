@@ -1,0 +1,44 @@
+{
+ "freeze_version": "v8b2_freeze_manifest_v1",
+ "supersedes_scorer": "v8b1_scorer_v1",
+ "reason": "fix P1: fixture-level support gate used unique_teams(=1) vs MIN_UNIQUE_TEAMS(=6) -> SCORE_OK structurally unreachable. V8B.2 uses unique_opponents (fixture-level diversity analogue, threshold 6, effect-blind translation).",
+ "gates": {
+  "SCORE_OK_SYNTHETIC_REACHABLE": true,
+  "SUPPORT_FAILURE_MUTATION_TESTS": true,
+  "PIT_AND_DETERMINISM_TESTS": true,
+  "EVALUATOR_CONTRACT": true,
+  "SCORE_OK_REAL_CORPUS_REACHABLE": true,
+  "CHAMPION_UNCHANGED": true
+ },
+ "known_good_reachability_test": true,
+ "scorer_version": "v8b2_scorer_v1",
+ "support_version": "v8b2_fixture_support_v1",
+ "threshold_change": {
+  "was": "unique_teams>=6 (V7.1 pooled-cohort unit, always 1 at fixture level -> SCORE_OK unreachable)",
+  "now": "unique_opponents>=6 (fixture-level diversity analogue)"
+ },
+ "code_hashes": {
+  "v8b2_scorer_py": "5799a58f2686de638c1df5cc577440d22c0263ee6c1772180166d72577b4e6bc",
+  "v8b2_support_py": "1a6be520d05a19b80981a7c10be578b51df7e766dc24ff7bcf310a5f2b4b7b3e",
+  "v8b2_test_scorer_py": "043b394fdc1beeccc3017c51d13ba3c384b849407dab0eb5362ad1ba5ee60952",
+  "v8b2_test_support_py": "6b662af359a558bf06223ac121023a92b1ad366609fb3289afb48043149351a2",
+  "evaluator_contract_test_py": "1681c4a65e05ca50e490c47fd5cbf214cd4b0ba757a5fcf768d734766b7733e9",
+  "regression_driver_py": "bd0b9b2a869acf83d4a3e0f5b334ec263dcc33b63c0f7b90bf9a01ec831f1610",
+  "frozen_v8b1_scorer_py_UNCHANGED": "15c1e1ee8259135cfad053901a5e239b068f6a27c429db363b532df94ed57838",
+  "v7_pit_py": "384a58f648a07a1674d7caacb7c06fd1eef4fac330d178ec38a96acf10ca3045"
+ },
+ "artifact_hashes": {
+  "exposed50_regression": "cbe6f2223952e256967a5aac5c7a3de5b3e38f0f130e850c528aefe2ecae4a27"
+ },
+ "real_corpus_score_ok_by_arm": {
+  "SONNET": 5,
+  "R": 7,
+  "H": 0
+ },
+ "champion_unchanged": true,
+ "champion_sha256": "0b8f5ff3dc4ddf15363d17989330b6f010197265ce8d2ee892cdc7ca410c00c9",
+ "llm_layer_changed": false,
+ "scientific_parameters_changed": "support gate diversity unit only (unique_teams -> unique_opponents); no LLM/prompt/packet/search/control /other-threshold change",
+ "sealed_947_outcomes_viewed": false,
+ "freeze_self_hash": "00d9ac6cd55765ef27c7e70c90e47f208b8b3d082e077b51c03d4d44bcdebee5"
+}
