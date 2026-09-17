@@ -1,0 +1,57 @@
+{
+ "record_version": "v8b1_cap_canary_provenance_v1",
+ "purpose": "Validate the true-search-cap runner (v3): deterministic termination, canonical output, cache/accounting integrity, and that the over-budget SEARCH_BUDGET_EXHAUSTED -> forced-submit conversation path is valid transport.",
+ "run_after": "V8B1_SEARCH_CAP_AMENDMENT (hash 6e8873319423e238) + commit 15e194bad",
+ "runner_version": "v8b1_runner_v3_true_search_cap",
+ "model_id": "us.anthropic.claude-sonnet-4-6",
+ "region": "us-east-1",
+
+ "cache_handling": "attempt-3 cache preserved aside at out/v8b1_cache_attempt3_preserved/ (moved, not deleted) so the cap canary ran fresh under v3 rather than serving a v2 cache hit.",
+
+ "live_cap_canary": {
+  "n_fixtures": 1,
+  "fixture_id": "mt_012232342",
+  "fixture_note": "first T2 infrastructure fixture (frozen, deterministic, excluded from primary sample); reused for infra validation, not scientific evaluation.",
+  "status": "OK",
+  "termination_reason": "FORCED_SUBMIT",
+  "converse_calls": 4,
+  "search_calls": 6,
+  "search_calls_capped_at_max": true,
+  "max_search_calls": 6,
+  "input_tokens": 77845,
+  "output_tokens": 5637,
+  "total_tokens": 83482,
+  "latency_s": 88.832,
+  "n_final_selections": 4,
+  "all_selections_resolve": true,
+  "cache_written": true,
+  "packet_reads_target_outcome": false,
+  "natural_over_budget_burst_observed": false,
+  "natural_over_budget_note": "the model requested <=2 searches per response this run, so search_calls reached exactly 6 without a single-response burst; the SEARCH_BUDGET_EXHAUSTED excess branch was therefore not triggered by natural model output in this run. The cap held regardless (search_calls==6)."
+ },
+
+ "over_budget_path_probe": {
+  "why": "Because the natural run did not burst past six searches in one response, the live over-budget SEARCH_BUDGET_EXHAUSTED -> forced-submit CONVERSATION path was validated with a targeted synthetic transport probe (no evidence packet, no football content, no target outcome).",
+  "artifact": "research/hypothesis_engine/V8B1_CAP_PATHPROBE_RESULTS.json",
+  "api_accepted_conversation": true,
+  "model_emitted_submit_selections": true,
+  "stop_reason": "tool_use",
+  "usage": {"inputTokens": 880, "outputTokens": 35, "totalTokens": 915},
+  "unit_tests_also_cover_this": "tests/research/hypothesis_v8b1/test_runner_termination.py::test_true_execution_cap_excess_searches_in_one_turn and ::test_cap_across_turns_never_exceeds_budget prove the runner emits SEARCH_BUDGET_EXHAUSTED for excess calls, answers every toolUseId, caps search_calls at 6, and forces submit."
+ },
+
+ "success_criteria": {
+  "conversation_valid": true,
+  "deterministic_termination": true,
+  "canonical_output": true,
+  "outcome_blind": true,
+  "cache_safe": true,
+  "accounting_integrity": true,
+  "no_football_quality_inspection": true
+ },
+
+ "champion_unchanged": true,
+ "champion_sha256": "0b8f5ff3dc4ddf15363d17989330b6f010197265ce8d2ee892cdc7ca410c00c9",
+ "target_outcomes_viewed": false,
+ "research_experiment_started": false
+}
