@@ -1,0 +1,93 @@
+{
+ "SMALL_SAMPLE_CAVEAT": "n=3 calibration fixtures: p95/max are weak and the true per-fixture distribution at 1000 scale is unknown. Treat the central estimate as indicative and the hard ceiling as the planning bound.",
+ "arms_note": "Only the Sonnet arm spends. Control arms R (matched blind) and H (deterministic heuristic) make ZERO model calls, so ~1000 fixtures = ~1000 Sonnet sessions, not ~3000.",
+ "attempt2_vs_attempt3": {
+  "attempt2_termination_rate": "1/3 OK (2/3 non-terminating)",
+  "attempt2_unbounded_input_tokens_3fix": 1309669,
+  "attempt3_bounded_input_tokens_3fix": 264940,
+  "attempt3_termination_rate": "3/3 OK deterministic",
+  "input_token_reduction_factor": 4.94
+ },
+ "basis": "attempt-3 canary (v2 bounded-search-then-forced-submit), 3 fixtures, all OK",
+ "central_estimate_1000": {
+  "est_cost_usd": 395.79,
+  "est_total_input_tokens": 88313333,
+  "est_total_output_tokens": 8723333,
+  "method": "mean per-fixture usage x 1000"
+ },
+ "conservative_ceiling_1000": {
+  "est_cost_usd_before_margin": 456.11,
+  "est_total_input_tokens_before_margin": 105867000,
+  "est_total_output_tokens_before_margin": 9234000,
+  "hard_cost_ceiling_usd": 684.16,
+  "method": "max observed per-fixture usage x 1000, then x1.5 safety margin"
+ },
+ "n_calibration_fixtures": 3,
+ "n_target_fixtures": 1000,
+ "no_model_call_made_by_this_script": true,
+ "no_target_outcome_viewed": true,
+ "per_fixture_distributions": {
+  "converse_calls": {
+   "max": 4,
+   "mean": 3.3,
+   "min": 3,
+   "n": 3,
+   "p50": 3.0,
+   "p95": 3.9
+  },
+  "input_tokens": {
+   "max": 105867,
+   "mean": 88313.3,
+   "min": 75813,
+   "n": 3,
+   "p50": 83260.0,
+   "p95": 103606.3
+  },
+  "latency_s": {
+   "max": 145.479,
+   "mean": 138.2,
+   "min": 133.511,
+   "n": 3,
+   "p50": 135.521,
+   "p95": 144.4832
+  },
+  "output_tokens": {
+   "max": 9234,
+   "mean": 8723.3,
+   "min": 8227,
+   "n": 3,
+   "p50": 8709.0,
+   "p95": 9181.5
+  },
+  "search_calls": {
+   "max": 8,
+   "mean": 7.3,
+   "min": 6,
+   "n": 3,
+   "p50": 8.0,
+   "p95": 8.0
+  },
+  "total_tokens": {
+   "max": 114094,
+   "mean": 97036.7,
+   "min": 84522,
+   "n": 3,
+   "p50": 92494.0,
+   "p95": 111934.0
+  }
+ },
+ "pricing": {
+  "input_per_1k_usd": 0.003,
+  "output_per_1k_usd": 0.015,
+  "prompt_caching_used": false,
+  "source": "Bedrock on-demand Claude Sonnet: $3/1M input, $15/1M output; verify against the live AWS Bedrock pricing page and the account's actual tier before spending."
+ },
+ "projection_version": "v8b1_economics_projection_v1",
+ "research_experiment_started": false,
+ "wall_clock": {
+  "mean_latency_s_per_fixture": 138.2,
+  "note": "runner is single-call-per-fixture serial internally; parallelism is across fixtures. 8-way is illustrative; actual concurrency is bounded by Bedrock throughput/quota and any run lock.",
+  "parallel_8way_hours": 4.8,
+  "serial_hours": 38.4
+ }
+}

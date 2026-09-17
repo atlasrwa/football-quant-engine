@@ -1,0 +1,64 @@
+{
+ "record_version": "v8b1_canary_attempt_provenance_v1",
+ "canary_attempt": 3,
+ "run_after": "orchestration amendment (V8B1_ORCHESTRATION_AMENDMENT.json, hash 9ea6b308) + commit 437d329cd",
+ "runner_version": "v8b1_runner_v2_bounded_search_forced_submit",
+ "termination_contract": "BOUNDED_SEARCH_THEN_FORCED_SUBMIT (MAX_SEARCH_CALLS=6, FINAL_FORCED_SUBMIT_CALLS=1, MAX_TOOL_TURNS=7)",
+ "raw_evidence_source": "research/hypothesis_engine/V8B1_CANARY_RESULTS.json (this attempt)",
+ "attempt2_cache_preserved_at": "research/hypothesis_engine/out/v8b1_cache_attempt2_preserved/ (moved aside, not deleted, so attempt 3 genuinely re-executed v2 on all 3 fixtures rather than serving the stale attempt-2 OK for mt_581141428)",
+ "model_id": "us.anthropic.claude-sonnet-4-6",
+ "region": "us-east-1",
+ "prompt_content_hash": "ae285113d4256b3a0306fae270fa2227383a37da55ba897b1a1b45e06853bb8f",
+ "canary_fixtures_reused": ["mt_012232342", "mt_406686877", "mt_581141428"],
+ "canary_fixture_reuse_note": "Same 3 frozen T2 infrastructure fixtures reused (first-3 of manifest). T2, excluded from primary sample. Repeated use is infrastructure validation, not scientific evaluation.",
+
+ "termination_verdict": "PASS",
+ "all_fixtures_terminated_deterministically": true,
+ "per_fixture": [
+  {"fixture_id": "mt_012232342", "status": "OK", "termination_reason": "FORCED_SUBMIT",
+   "converse_calls": 3, "search_calls": 8, "n_final_selections": 8,
+   "all_selections_resolve_to_canonical_ir": true,
+   "input_tokens": 83260, "output_tokens": 9234, "total_tokens": 92494, "latency_s": 145.479},
+  {"fixture_id": "mt_406686877", "status": "OK", "termination_reason": "FORCED_SUBMIT",
+   "converse_calls": 4, "search_calls": 6, "n_final_selections": 6,
+   "all_selections_resolve_to_canonical_ir": true,
+   "input_tokens": 105867, "output_tokens": 8227, "total_tokens": 114094, "latency_s": 133.511},
+  {"fixture_id": "mt_581141428", "status": "OK", "termination_reason": "FORCED_SUBMIT",
+   "converse_calls": 3, "search_calls": 8, "n_final_selections": 5,
+   "all_selections_resolve_to_canonical_ir": true,
+   "input_tokens": 75813, "output_tokens": 8709, "total_tokens": 84522, "latency_s": 135.521}
+ ],
+
+ "success_criteria_ss14": {
+  "termination_reliable": true,
+  "termination_reasons_all_in_expected_set": true,
+  "termination_reasons_observed": ["FORCED_SUBMIT"],
+  "note_on_forced_vs_early": "All 3 reached the search budget before submitting, so all terminated via the forced final turn (FORCED_SUBMIT). None submitted early this attempt; that is a model-behavior observation, not tuned. Both FORCED_SUBMIT and EARLY_SUBMIT are valid OK terminations under the contract.",
+  "bounded_tool_calls": true,
+  "search_calls_bounded_note": "search_calls can slightly exceed MAX_SEARCH_CALLS=6 because the budget is checked BETWEEN turns and the model may issue several searches within one turn; observed max 8. converse_calls <= MAX_TOOL_TURNS=7 always (observed 3-4).",
+  "canonical_output": true,
+  "all_19_selections_resolve": true,
+  "outcome_blind": true,
+  "packet_reads_target_outcome": false,
+  "cache_safe": true,
+  "cache_rehit_verified_zero_network": true,
+  "cost_bounded": true
+ },
+
+ "aggregate_accounting": {
+  "confirmed_calls": 3,
+  "total_input_tokens": 264940,
+  "total_output_tokens": 26170,
+  "total_tokens": 291106,
+  "attempt2_comparison": "attempt 2 (unbounded) totaled input 1309669 / output 32993 for the same 3 fixtures with 2/3 non-terminating; attempt 3 (bounded) totals input 264940 / output 26170 with 3/3 terminating -> ~5x reduction in input tokens and deterministic termination.",
+  "spend_is_scientific_experiment_spend": false,
+  "spend_note": "Canary/transport+orchestration validation spend, NOT experiment spend."
+ },
+
+ "champion_unchanged": true,
+ "champion_sha256": "0b8f5ff3dc4ddf15363d17989330b6f010197265ce8d2ee892cdc7ca410c00c9",
+ "target_outcomes_viewed": false,
+ "research_experiment_started": false,
+ "no_prompt_tuning_performed": true,
+ "no_football_quality_judgment_performed": true
+}
