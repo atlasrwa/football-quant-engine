@@ -27,7 +27,33 @@ from src.research.hypothesis_v8b1 import prompt as PR
 from src.research.hypothesis_v8b1 import search as SE
 
 CACHE_DIR = "/home/ubuntu/research/hypothesis_engine/out/v8b1_cache"
-MAX_TOOL_TURNS = 12   # generous ceiling on search_hypotheses calls before forcing a stop
+
+# --- DETERMINISTIC TERMINATION CONTRACT (V8B.1 orchestration amendment) ---
+# BOUNDED_SEARCH_THEN_FORCED_SUBMIT. Canary attempt 2 showed the auto-tool loop could search
+# indefinitely (2/3 fixtures hit the old turn ceiling without ever calling submit_selections,
+# with unbounded input-token growth). This is an interface/termination rule, NOT a football-
+# content change: the frozen research prompt, evidence packet, reasoning budget, hypothesis
+# universe, scorer, and controls are untouched.
+#
+#   * The model may call search_hypotheses up to MAX_SEARCH_CALLS times (auto tool choice,
+#     extended thinking ON exactly as frozen).
+#   * If it calls submit_selections at any point BEFORE the budget is exhausted, that is
+#     accepted immediately (the budget is a maximum, not a mandatory quota).
+#   * Once MAX_SEARCH_CALLS is reached without a submission, the runner issues EXACTLY ONE more
+#     Converse turn with toolChoice FORCED to submit_selections. On this model, forced tool
+#     choice is incompatible with extended thinking ("Thinking may not be enabled when
+#     tool_choice forces tool use"), so the forced turn disables thinking. Temperature is left
+#     at the frozen 1.0 (thinking-off permits any temperature; nothing about the reasoning
+#     content changes -- the forced turn asks only for the terminal action, not new research).
+#   * Forced submission means "report the best selections you currently support, including
+#     ZERO if none are justified" -- it NEVER means invent hypotheses. 0-8 selections valid.
+MAX_SEARCH_CALLS = 6
+FINAL_FORCED_SUBMIT_CALLS = 1
+# MAX_TOOL_TURNS is DERIVED mechanically, not chosen arbitrarily: worst case is one
+# search_hypotheses call per turn (MAX_SEARCH_CALLS turns) followed by the single forced-submit
+# turn. It is a defensive hard ceiling only; normal termination is by search budget or early
+# submit, never by hitting this.
+MAX_TOOL_TURNS = MAX_SEARCH_CALLS + FINAL_FORCED_SUBMIT_CALLS
 
 
 class RunnerUnavailable(Exception):
@@ -41,7 +67,9 @@ class CacheModelIdentityError(Exception):
 
 @dataclass
 class RunResult:
-    status: str   # OK | INVALID_NO_SUBMISSION | INVALID_SCHEMA | INVALID_UNKNOWN_HYPOTHESIS_ID | LLM_STATE_UNAVAILABLE
+    status: str   # OK | OK_ABSTAIN | INVALID_UNKNOWN_HYPOTHESIS_ID | INVALID_NO_SUBMISSION
+                  # | ORCHESTRATION_FORCED_SUBMIT_FAILED | ORCHESTRATION_TURN_CEILING
+                  # | LLM_STATE_UNAVAILABLE
     research_trace: Optional[dict]
     final_selections: list
     manifest: dict
@@ -162,29 +190,73 @@ def run_fixture(packet: dict, capability, *, model_id: str, region: str,
 
     returned_ids: set[str] = set()
     total_usage = {"inputTokens": 0, "outputTokens": 0, "totalTokens": 0}
+    search_calls = 0          # total search_hypotheses invocations across all turns
+    converse_calls = 0        # total Converse round trips (accounting)
     t0 = time.time()
 
+    def _acct(**extra):
+        """Deterministic operational accounting block (no scientific score)."""
+        return {"converse_calls": converse_calls, "search_calls": search_calls,
+                "usage": dict(total_usage), "latency_s": round(time.time() - t0, 3),
+                "cache_hit": False,
+                "max_search_calls": MAX_SEARCH_CALLS,
+                "max_tool_turns": MAX_TOOL_TURNS, **extra}
+
+    def _finalize_submission(submitted, termination_reason):
+        """Validate ids, persist, and return a terminal RunResult. 0 selections => OK_ABSTAIN.
+        NEVER fabricates: only ids the search tool actually returned this session are accepted."""
+        sels = submitted.get("final_selections", []) or []
+        problems = _validate_selection_ids(sels, returned_ids, capability)
+        if problems:
+            payload = {"status": "INVALID_UNKNOWN_HYPOTHESIS_ID",
+                       "research_trace": submitted.get("research_trace"),
+                       "final_selections": [],
+                       "manifest": {**base_manifest,
+                                    **_acct(termination_reason=termination_reason,
+                                            validation_problems=problems)}}
+            _save_cache(key, payload)
+            return RunResult(payload["status"], payload["research_trace"], [],
+                             payload["manifest"])
+        status = "OK_ABSTAIN" if len(sels) == 0 else "OK"
+        payload = {"status": status, "research_trace": submitted.get("research_trace"),
+                   "final_selections": sels,
+                   "manifest": {**base_manifest,
+                                **_acct(termination_reason=termination_reason)}}
+        _save_cache(key, payload)
+        return RunResult(status, payload["research_trace"], sels, payload["manifest"])
+
     for turn in range(max_tool_turns):
-        print(f"    [runner] turn {turn}: calling converse()...", flush=True)
+        # Deterministic termination contract: once the search budget is spent without a
+        # submission, force exactly one final submit_selections turn (thinking OFF, since this
+        # model forbids forced tool choice while thinking is enabled).
+        force_submit = search_calls >= MAX_SEARCH_CALLS
+        if force_submit:
+            tool_choice = {"tool": {"name": "submit_selections"}}
+            extra_fields = {}          # thinking disabled on the forced turn (API constraint)
+        else:
+            tool_choice = {"auto": {}}
+            extra_fields = {"thinking": config_stamp["thinking"]}
+
+        print(f"    [runner] turn {turn}: converse() force_submit={force_submit} "
+              f"search_calls={search_calls}...", flush=True)
         try:
+            converse_calls += 1
             resp = client.converse(
                 modelId=model_id, system=[{"text": system}], messages=messages,
                 inferenceConfig={"maxTokens": config_stamp["max_tokens"],
                                  "temperature": config_stamp["temperature"]},
-                additionalModelRequestFields={"thinking": config_stamp["thinking"]},
-                toolConfig={"tools": tools, "toolChoice": {"auto": {}}},
+                additionalModelRequestFields=extra_fields,
+                toolConfig={"tools": tools, "toolChoice": tool_choice},
             )
         except Exception as e:
-            # Persist whatever call accounting we accumulated on PRIOR turns before this turn
-            # raised (e.g. a read timeout). Without this the manifest reported usage=None even
-            # though earlier turns in the loop had already returned and been billed -- which is
-            # exactly why canary attempt 1 could not be accounted precisely (UNKNOWN_AFTER_SEND).
+            # Persist accounting accumulated on PRIOR turns before this turn raised (e.g. read
+            # timeout). Transport failure per frozen accounting semantics.
             return RunResult("LLM_STATE_UNAVAILABLE", None, [],
-                             {**base_manifest, "error": f"invoke_failed: {e}",
-                              "turn": turn, "usage_before_failure": dict(total_usage),
-                              "latency_s": round(time.time() - t0, 3),
-                              "call_state": "UNKNOWN_AFTER_SEND"})
-        print(f"    [runner] turn {turn}: converse() returned, stopReason={resp.get('stopReason')}", flush=True)
+                             {**base_manifest,
+                              **_acct(error=f"invoke_failed: {e}", turn=turn,
+                                      termination_reason="TRANSPORT_FAILURE",
+                                      call_state="UNKNOWN_AFTER_SEND")})
+        print(f"    [runner] turn {turn}: returned stopReason={resp.get('stopReason')}", flush=True)
         usage = resp.get("usage", {}) or {}
         for k in total_usage:
             total_usage[k] += usage.get(k, 0) or 0
@@ -193,67 +265,70 @@ def run_fixture(packet: dict, capability, *, model_id: str, region: str,
         messages.append(message)
         tool_uses = [b["toolUse"] for b in message["content"] if "toolUse" in b]
 
+        # A submit_selections anywhere in the turn's tool calls terminates (search or forced).
+        submitted = next((tu["input"] for tu in tool_uses
+                          if tu["name"] == "submit_selections"), None)
+        if submitted is not None:
+            reason = "FORCED_SUBMIT" if force_submit else "EARLY_SUBMIT"
+            # answer any sibling tool calls in this turn is unnecessary once submitted; the
+            # loop terminates here.
+            return _finalize_submission(submitted, reason)
+
+        if force_submit:
+            # We forced submit_selections but the model did not produce it. Explicit
+            # orchestration failure -- never fabricate a selection.
+            return RunResult("ORCHESTRATION_FORCED_SUBMIT_FAILED", None, [],
+                             {**base_manifest,
+                              **_acct(turn=turn, stop_reason=resp.get("stopReason"),
+                                      termination_reason="FORCED_SUBMIT_NOT_PRODUCED",
+                                      error="forced toolChoice=submit_selections but model "
+                                            "did not emit that tool call")})
+
         if not tool_uses:
+            # No tool call and not forcing yet: only terminal if the model explicitly ended.
             if resp.get("stopReason") == "end_turn":
                 return RunResult("INVALID_NO_SUBMISSION", None, [],
-                                 {**base_manifest, "cache_hit": False,
-                                  "latency_s": round(time.time() - t0, 3),
-                                  "usage": total_usage, "turns": turn + 1,
-                                  "reason": "model ended turn without calling any tool"})
+                                 {**base_manifest,
+                                  **_acct(turn=turn, termination_reason="ENDED_WITHOUT_TOOL",
+                                          reason="model ended turn without calling any tool")})
             continue
 
+        # Answer every search_hypotheses call locally (zero network, zero marginal cost).
         tool_results = []
-        submitted = None
         for tu in tool_uses:
             if tu["name"] == "search_hypotheses":
-                print(f"    [runner] turn {turn}: search_hypotheses({tu['input']})", flush=True)
+                search_calls += 1
                 q = SE.SearchQuery(**{k: v for k, v in tu["input"].items()
                                       if k in SE.SearchQuery.__dataclass_fields__})
                 results = SE.search(q, capability)
-                print(f"    [runner] turn {turn}: search returned {len(results)} results", flush=True)
+                print(f"    [runner] turn {turn}: search #{search_calls} -> "
+                      f"{len(results)} results", flush=True)
                 for r in results:
                     returned_ids.add(r["hypothesis_id"])
                 tool_results.append({"toolResult": {"toolUseId": tu["toolUseId"],
                                      "content": [{"json": {"results": results}}]}})
-            elif tu["name"] == "submit_selections":
-                submitted = tu["input"]
-                tool_results.append({"toolResult": {"toolUseId": tu["toolUseId"],
-                                     "content": [{"json": {"received": True}}]}})
             else:
                 tool_results.append({"toolResult": {"toolUseId": tu["toolUseId"],
                                      "content": [{"json": {"error": "unknown tool"}}],
                                      "status": "error"}})
-
-        if submitted is not None:
-            manifest = {**base_manifest, "cache_hit": False,
-                       "latency_s": round(time.time() - t0, 3), "usage": total_usage,
-                       "turns": turn + 1, "n_search_calls": len(returned_ids) and
-                       sum(1 for tu in tool_uses if tu["name"] == "search_hypotheses")}
-            problems = _validate_selection_ids(
-                submitted.get("final_selections", []), returned_ids, capability)
-            if problems:
-                payload = {"status": "INVALID_UNKNOWN_HYPOTHESIS_ID",
-                          "research_trace": submitted.get("research_trace"),
-                          "final_selections": [], "manifest": {**manifest,
-                          "validation_problems": problems}}
-                _save_cache(key, payload)
-                return RunResult(payload["status"], payload["research_trace"], [],
-                                 payload["manifest"])
-            payload = {"status": "OK", "research_trace": submitted.get("research_trace"),
-                      "final_selections": submitted.get("final_selections", []),
-                      "manifest": manifest}
-            _save_cache(key, payload)
-            return RunResult("OK", payload["research_trace"], payload["final_selections"],
-                             manifest)
-
         messages.append({"role": "user", "content": tool_results})
 
-    return RunResult("LLM_STATE_UNAVAILABLE", None, [],
-                     {**base_manifest, "error": f"exceeded max_tool_turns={max_tool_turns} "
-                     "without a submit_selections call", "usage": total_usage})
+    # Reaching here means the mechanically-derived hard ceiling was hit without the forced
+    # submit turn resolving -- treated as an explicit orchestration failure, never fabrication.
+    return RunResult("ORCHESTRATION_TURN_CEILING", None, [],
+                     {**base_manifest,
+                      **_acct(termination_reason="HARD_TURN_CEILING",
+                              error=f"exceeded mechanically-derived MAX_TOOL_TURNS="
+                                    f"{max_tool_turns} without terminal submission")})
 
 
 def version_stamp() -> dict:
-    return {"runner_version": "v8b1_runner_v1", "max_tool_turns": MAX_TOOL_TURNS,
+    return {"runner_version": "v8b1_runner_v2_bounded_search_forced_submit",
+            "max_search_calls": MAX_SEARCH_CALLS,
+            "final_forced_submit_calls": FINAL_FORCED_SUBMIT_CALLS,
+            "max_tool_turns": MAX_TOOL_TURNS,
+            "termination_contract": "BOUNDED_SEARCH_THEN_FORCED_SUBMIT",
+            "forced_submit_disables_thinking": True,
             "cache_dir": CACHE_DIR, "cross_model_cache_poisoning_guard": True,
-            "unknown_hypothesis_id_rejected": True}
+            "unknown_hypothesis_id_rejected": True,
+            "abstain_is_valid": True, "never_fabricates": True}
