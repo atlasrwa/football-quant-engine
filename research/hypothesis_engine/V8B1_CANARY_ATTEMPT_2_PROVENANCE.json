@@ -1,0 +1,95 @@
+{
+ "record_version": "v8b1_canary_attempt_provenance_v1",
+ "canary_attempt": 2,
+ "run_after": "transport-only repair (V8B1_TRANSPORT_AMENDMENT.json) + commit d4cbd63f0",
+ "raw_evidence_source": "research/hypothesis_engine/V8B1_CANARY_RESULTS.json (overwritten by this attempt; attempt-1 evidence preserved in git commit d4cbd63f0 and V8B1_CANARY_ATTEMPT_1_PROVENANCE.json)",
+ "model_id": "us.anthropic.claude-sonnet-4-6",
+ "region": "us-east-1",
+ "prompt_content_hash": "ae285113d4256b3a0306fae270fa2227383a37da55ba897b1a1b45e06853bb8f",
+ "canary_fixtures_reused": ["mt_012232342", "mt_406686877", "mt_581141428"],
+ "canary_fixture_reuse_note": "The canary fixture identity was frozen as 'first 3 of V8B1_FIXTURE_MANIFEST (deterministic)'. Per policy, frozen canary identity was NOT improvised away; reuse is documented here as T2 infrastructure testing. These 3 remain T2 and excluded from the PRIMARY sample.",
+
+ "transport_verdict": "PASS",
+ "transport_evidence": {
+  "read_timeouts_observed": 0,
+  "prior_attempt_failure_mode_read_timeout": "ELIMINATED",
+  "longest_successful_call_latency_s": 220.212,
+  "note": "220.2s > the old 90s read_timeout that killed attempt 1, and > the new value only because that 220s is the whole fixture session; each individual Converse turn returned well within read_timeout=300s. One full OK round trip proves transport + multi-turn loop + tool/search + structured output + canonical-id resolution + cache all work end to end."
+ },
+
+ "per_fixture": [
+  {
+   "fixture_id": "mt_012232342",
+   "status": "LLM_STATE_UNAVAILABLE",
+   "failure_class": "TURN_BUDGET_EXHAUSTED",
+   "error": "exceeded max_tool_turns=12 without a submit_selections call",
+   "transport_ok": true,
+   "usage": {"inputTokens": 542349, "outputTokens": 13267, "totalTokens": 555616},
+   "n_final_selections": 0,
+   "target_outcome_viewed": false
+  },
+  {
+   "fixture_id": "mt_406686877",
+   "status": "LLM_STATE_UNAVAILABLE",
+   "failure_class": "TURN_BUDGET_EXHAUSTED",
+   "error": "exceeded max_tool_turns=12 without a submit_selections call",
+   "transport_ok": true,
+   "usage": {"inputTokens": 392706, "outputTokens": 6304, "totalTokens": 399010},
+   "n_final_selections": 0,
+   "target_outcome_viewed": false
+  },
+  {
+   "fixture_id": "mt_581141428",
+   "status": "OK",
+   "failure_class": null,
+   "transport_ok": true,
+   "turns": 8,
+   "latency_s": 220.212,
+   "usage": {"inputTokens": 374614, "outputTokens": 13422, "totalTokens": 388036},
+   "n_final_selections": 6,
+   "all_selections_resolve_to_canonical_ir": true,
+   "structured_output_parsed": true,
+   "cache_written": true,
+   "cache_rehit_verified_zero_network": true,
+   "target_outcome_viewed": false
+  }
+ ],
+
+ "aggregate_accounting": {
+  "confirmed_calls": 3,
+  "confirmed_calls_note": "all 3 fixtures produced fully-accounted usage (unlike attempt 1); totals below are the model's own reported cumulative usage across the multi-turn session, not a billing figure",
+  "total_input_tokens": 1309669,
+  "total_output_tokens": 32993,
+  "total_tokens": 1342662,
+  "spend_is_scientific_experiment_spend": false,
+  "spend_note": "This is canary/transport-validation spend, NOT experiment spend. High input-token totals reflect the multi-turn loop re-sending the growing conversation each turn (packet ~8.2K but conversation accumulates search results across up to 12 turns; 'inputTokens' here is the sum over turns, so it counts re-sent context repeatedly)."
+ },
+
+ "new_non_transport_observation": {
+  "issue": "2 of 3 fixtures exhausted MAX_TOOL_TURNS=12 with only search_hypotheses calls and never emitted submit_selections; the runner correctly returned LLM_STATE_UNAVAILABLE (fail-closed, no fabrication).",
+  "classification": "NOT a transport failure. It is a research-loop turn-budget / model-behavior interaction.",
+  "why_not_fixed_here": "Raising MAX_TOOL_TURNS or nudging the prompt to submit earlier would be apparatus/prompt/behavior tuning done AFTER observing fixture behavior, which the transport-only mandate (and the no-mid-run-tuning rule) forbids. MAX_TOOL_TURNS lives in the transport module but changing it in response to observed selection behavior is outcome-adjacent and must be an explicit, separately-authorized decision, not a silent transport tweak.",
+  "input_token_cost_implication": "The multi-turn loop re-sends the full accumulated conversation each turn; a fixture that runs many search turns accumulates large input-token usage (542K on the worst fixture). Relevant to the 1000-fixture run economics and to the MAX_TOOL_TURNS decision.",
+  "options_for_user_decision": [
+   "A) Accept current behavior: fixtures that never submit are recorded as INVALID/UNAVAILABLE in the eventual attrition ledger; this is a legitimate outcome-blind attrition category if frozen BEFORE the experiment.",
+   "B) Adjust MAX_TOOL_TURNS as an explicit, pre-registered transport/runtime parameter (frozen before experiment, justified independently of any football content).",
+   "C) Any prompt-level change to encourage timely submission — NOT permitted under the current mandate; would require re-opening the frozen research protocol under a new authorization."
+  ]
+ },
+
+ "canary_success_criteria_ss9": {
+  "transport_completes": true,
+  "response_persisted_before_downstream": true,
+  "structured_research_output_parses": true,
+  "canonical_selections_resolve": true,
+  "no_target_outcome_in_request": true,
+  "cache_resume_works": true,
+  "call_accounting_unambiguous": true,
+  "no_double_billing_path": true,
+  "overall": "TRANSPORT_CRITERIA_ALL_MET; but 2/3 fixtures did not reach submit_selections due to a NON-TRANSPORT turn-budget/behavior interaction — reported, not tuned."
+ },
+
+ "target_outcomes_viewed": false,
+ "research_experiment_started": false,
+ "champion_touched": false
+}
