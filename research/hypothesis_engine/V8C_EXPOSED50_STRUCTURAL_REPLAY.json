@@ -1,0 +1,4959 @@
+{
+ "replay_version": "v8c_exposed50_structural_replay_v1",
+ "label": "V8C_EXPOSED50_STRUCTURAL_REPLAY",
+ "evidence_class": "DEVELOPMENT_APPARATUS_DIAGNOSTIC",
+ "evidence_class_note": "these 50 outcomes were opened in V8B.1; usable for support distributions, control-distinctness, endpoint reachability, aggregation debugging and real-corpus regression ONLY -- never to claim fresh Sonnet advantage, never to choose a threshold (V8C instruction 21)",
+ "apparatus": {
+  "pit_context": {
+   "pit_context_version": "v8c_pit_context_v1",
+   "repairs": "D-V8C-P0-CTXCUT",
+   "was": "single global cut at index.kick[int(len(index.kick)*0.7)] -- future information for every target before that cut, including the target's own row",
+   "now": "cut = index.kick[rec_i], strictly-before, rebuilt per target fixture",
+   "profile_axes": [
+    "goals_for",
+    "goals_against",
+    "shots_on_target_for",
+    "shots_on_target_against",
+    "possession_for",
+    "shots_against"
+   ],
+   "min_prior_matches_for_profile": 6,
+   "min_teams_for_terciles": 3,
+   "similarity_engine_already_pit_safe_upstream": true,
+   "modifies_v71_execution": false,
+   "reads_target_outcome": false
+  },
+  "pre_t": {
+   "pre_t_evaluability_version": "v8c_pre_t_evaluability_v1",
+   "repairs": [
+    "D-V8C-P1-MEASSPACE",
+    "D-V8C-P1-COMPADM"
+   ],
+   "statuses": [
+    "PRE_T_EVALUABLE",
+    "PRE_T_INSUFFICIENT_RAW_N",
+    "PRE_T_INSUFFICIENT_FIXTURES",
+    "PRE_T_INSUFFICIENT_OPPONENTS",
+    "PRE_T_INSUFFICIENT_EFFECTIVE_N",
+    "PRE_T_WEIGHT_CONCENTRATION",
+    "PRE_T_PROVIDER_UNSUPPORTED",
+    "PRE_T_COMPILER_INVALID",
+    "PRE_T_DEGENERATE_CONTRAST",
+    "PRE_T_NO_SCALE"
+   ],
+   "support_classifier": "v8b2_fixture_support_v1",
+   "scorer_reused": "v8b2_scorer_v1",
+   "compiler_reused": "v71_compiler_v1",
+   "thresholds_unchanged_from_v8b2": true,
+   "target_position_sealed_during_classification": true,
+   "consistency_invariant": "PRE_T_EVALUABLE => post-T status in {SCORE_OK, SCORE_REFUSED(observed unavailable)}",
+   "permitted_post_t_statuses": [
+    "SCORE_OK",
+    "SCORE_REFUSED"
+   ],
+   "reads_target_outcome": false,
+   "reads_effect_or_score_or_direction": false
+  },
+  "universe": {
+   "universe_version": "v8c_universe_v1",
+   "repairs": [
+    "D-V8C-P1-HUNIVERSE",
+    "D-V8C-P1-MEASSPACE"
+   ],
+   "enumerates_full_grammar_before_filtering": true,
+   "presentation_cap": 50,
+   "presentation_cap_applied_after_filter": true,
+   "ordering": "capability_status_rank, n_conditions, ir_id (all structural)",
+   "candidate_fields_added_vs_v8b1": [
+    "pre_t.status",
+    "pre_t.raw_n",
+    "pre_t.unique_fixtures",
+    "pre_t.unique_opponents",
+    "pre_t.effective_n",
+    "pre_t.weight_concentration",
+    "pre_t.baseline_n"
+   ],
+   "added_fields_are_structural_not_outcome": true,
+   "prompt_changed": false,
+   "reads_target_outcome": false
+  },
+  "controls": {
+   "controls_version": "v8c_controls_v1",
+   "successor_to": "v8b1_controls_v1",
+   "repairs": [
+    "D-V8C-P1-RIDENT",
+    "D-V8C-P1-HUNIVERSE"
+   ],
+   "match_dimensions": [
+    "target_metric",
+    "subject",
+    "side",
+    "comparator",
+    "n_conditions",
+    "capability_status"
+   ],
+   "relaxation_tiers": [
+    "EXACT",
+    "CONDITIONS_PM1",
+    "CAPABILITY_EITHER",
+    "MECHANISM_FAMILY",
+    "SIDE_EITHER",
+    "UNMATCHED"
+   ],
+   "r_only_new_hard_condition": "candidate_id != sonnet_id, applied per pair",
+   "r_identity_permitted": false,
+   "r_unmatched_status": "UNMATCHED_DISTINCT_CONTROL",
+   "h_ranks_over": "the entire PRE_T_EVALUABLE universe",
+   "h_formula_changed": false,
+   "h_coefficients": {
+    "coverage_supported": 2.0,
+    "coverage_restricted": 1.0,
+    "salience_first_condition": 1.0,
+    "complexity_penalty_per_extra_condition": 0.5,
+    "similarity_bonus": 0.5
+   },
+   "all_arms_share_one_universe": true,
+   "reads_outcomes": false,
+   "reads_llm_prose": false,
+   "tuned_against_sonnet_result": false
+  },
+  "aggregate": {
+   "aggregate_version": "v8c_aggregate_v1",
+   "repairs": [
+    "D-V8C-P1-INFSIZE"
+   ],
+   "arm_score_rule": "equal-weight mean of SCORE_OK only; None when zero SCORE_OK",
+   "null_is_not_zero": true,
+   "pairing_rule": "LISTWISE: fixture contributes only where BOTH sides are not None",
+   "one_value_per_fixture_per_endpoint": true,
+   "cross_fixture_pairing": false,
+   "fixture_substitution": false,
+   "block_rule": "G(n) = min(20, n // 5), no clamp up; contiguous in kickoff order",
+   "min_paired_fixtures_for_exact_inference": 15,
+   "min_fixtures_per_block": 5,
+   "min_clusters": 3,
+   "max_clusters": 20,
+   "inference_primitive": "v71_estimator_v2",
+   "inference_method": "EXACT_ENUMERATED_CLUSTER_SIGN_FLIP",
+   "invents_p_values": false
+  }
+ },
+ "n_fixtures": 50,
+ "new_sonnet_calls": 0,
+ "sealed_947_referenced": false,
+ "universe_summary": {
+  "admissible_per_fixture": [
+   19008
+  ],
+  "pre_t_evaluable_min": 860,
+  "pre_t_evaluable_max": 920,
+  "pre_t_evaluable_mean": 909.8,
+  "fixtures_with_zero_evaluable": 0,
+  "pre_t_status_totals": {
+   "PRE_T_COMPILER_INVALID": 70050,
+   "PRE_T_EVALUABLE": 45490,
+   "PRE_T_INSUFFICIENT_RAW_N": 794890,
+   "PRE_T_NO_SCALE": 370,
+   "PRE_T_PROVIDER_UNSUPPORTED": 39600
+  }
+ },
+ "sonnet_eligibility": {
+  "n_sonnet_selections_total": 249,
+  "n_pre_t_eligible": 5,
+  "n_pre_t_ineligible": 244,
+  "pre_t_evaluable_rate": 0.0201,
+  "ineligibility_reasons": {
+   "PRE_T_COMPILER_INVALID": 36,
+   "PRE_T_INSUFFICIENT_RAW_N": 208
+  },
+  "note": "eligibility is STRUCTURAL: it reads no target observation, no effect, no score and no direction"
+ },
+ "distinct_r_coverage": {
+  "selections_requiring_r_match": 5,
+  "distinct_matches": 5,
+  "unmatched": 0,
+  "matched_tiers": {
+   "CONDITIONS_PM1": 5
+  },
+  "identity_matches_v8c": 0,
+  "identity_matches_v8b1_same_inputs": 5,
+  "coverage_rate": 1.0
+ },
+ "h_coverage": {
+  "fixtures_with_h_selection": 4,
+  "fixtures_h_unavailable": 0
+ },
+ "post_t_status_counts": {
+  "S": {
+   "SCORE_OK": 5
+  },
+  "R": {
+   "SCORE_OK": 5
+  },
+  "H": {
+   "SCORE_OK": 5
+  }
+ },
+ "consistency_invariant": {
+  "rule": "PRE_T_EVALUABLE => post-T status in {SCORE_OK, SCORE_REFUSED(observed unavailable)}",
+  "n_checked": 15,
+  "n_violations": 0,
+  "violations": [],
+  "holds": true
+ },
+ "paired_coverage": {
+  "blocks": {
+   "n_fixtures": 50,
+   "target_n_blocks": 10,
+   "block_size": 5,
+   "n_blocks_actual": 10,
+   "block_sizes": {
+    "block_000": 5,
+    "block_001": 5,
+    "block_002": 5,
+    "block_003": 5,
+    "block_004": 5,
+    "block_005": 5,
+    "block_006": 5,
+    "block_007": 5,
+    "block_008": 5,
+    "block_009": 5
+   },
+   "within_estimator_small_cluster_bounds": true,
+   "below_exact_inference_size": false,
+   "min_paired_fixtures_for_exact_inference": 15,
+   "rule": "G(n) = min(MAX_ENUMERATED_G, n // MIN_FIXTURES_PER_BLOCK), no clamp up",
+   "derived_from": "estimator.SIGN_FLIP_MIN_CLUSTERS / estimator.MAX_ENUMERATED_G",
+   "frozen_before_any_outcome_opened": true
+  },
+  "S_vs_R": {
+   "control_arm": "R",
+   "paired_n": 4,
+   "n_blocks_spanned": 4,
+   "excluded_fixtures": {
+    "S_none": 0,
+    "control_none": 0,
+    "both_none": 46
+   },
+   "mean_diff": 0.0,
+   "median_diff": 0.0,
+   "stdev_diff": 0.0,
+   "pos_zero_neg": {
+    "positive": 0,
+    "zero": 4,
+    "negative": 0
+   },
+   "inference": {
+    "primary_p_value": 1.0,
+    "primary_method": "EXACT_ENUMERATED_CLUSTER_SIGN_FLIP",
+    "inference_status": "EXACT",
+    "n_clusters": 4,
+    "point_estimate": 0.0,
+    "clustered_se_descriptive_only": 0.0,
+    "normal_approx_p_is_not_used": true,
+    "enumeration": {
+     "enumerated": true,
+     "n_sign_vectors": 16
+    }
+   }
+  },
+  "S_vs_H": {
+   "control_arm": "H",
+   "paired_n": 4,
+   "n_blocks_spanned": 4,
+   "excluded_fixtures": {
+    "S_none": 0,
+    "control_none": 0,
+    "both_none": 46
+   },
+   "mean_diff": -0.6053573694563483,
+   "median_diff": -0.7434646009165723,
+   "stdev_diff": 0.7187486887417261,
+   "pos_zero_neg": {
+    "positive": 1,
+    "zero": 0,
+    "negative": 3
+   },
+   "inference": {
+    "primary_p_value": 0.375,
+    "primary_method": "EXACT_ENUMERATED_CLUSTER_SIGN_FLIP",
+    "inference_status": "EXACT",
+    "n_clusters": 4,
+    "point_estimate": -0.6053573694563483,
+    "clustered_se_descriptive_only": 0.4149697489247261,
+    "normal_approx_p_is_not_used": true,
+    "enumeration": {
+     "enumerated": true,
+     "n_sign_vectors": 16
+    }
+   }
+  },
+  "inference_reachability_S_vs_R": {
+   "n_paired_fixtures": 4,
+   "implied_n_blocks": 0,
+   "min_paired_fixtures_for_exact_inference": 15,
+   "expected_inference_status": "INSUFFICIENT_CLUSTERS_FOR_INFERENCE",
+   "semantics_defined": true,
+   "exact_enumeration_available": false,
+   "n_sign_vectors": 0,
+   "small_n_state_is_explicit": true,
+   "p_value_invented_when_underpowered": false
+  },
+  "inference_reachability_S_vs_H": {
+   "n_paired_fixtures": 4,
+   "implied_n_blocks": 0,
+   "min_paired_fixtures_for_exact_inference": 15,
+   "expected_inference_status": "INSUFFICIENT_CLUSTERS_FOR_INFERENCE",
+   "semantics_defined": true,
+   "exact_enumeration_available": false,
+   "n_sign_vectors": 0,
+   "small_n_state_is_explicit": true,
+   "p_value_invented_when_underpowered": false
+  }
+ },
+ "per_fixture": [
+  {
+   "fixture_id": "mt_624494939",
+   "competition": "champ",
+   "ledger": {
+    "n_shapes_enumerated": 21120,
+    "n_structurally_invalid": 2112,
+    "n_capability_excluded": 0,
+    "n_admissible": 19008,
+    "n_pre_t_evaluable": 900,
+    "pre_t_status_counts": {
+     "PRE_T_COMPILER_INVALID": 1350,
+     "PRE_T_EVALUABLE": 900,
+     "PRE_T_INSUFFICIENT_RAW_N": 15966,
+     "PRE_T_PROVIDER_UNSUPPORTED": 792
+    }
+   },
+   "n_admissible": 19008,
+   "n_pre_t_evaluable": 900,
+   "n_metrics_represented": 23,
+   "n_mechanism_types_represented": 5,
+   "sonnet_selections": [
+    {
+     "hypothesis_id": "2904990403f54082098f3ae199f119861a3eae4cb442d113ade71364ea2421c3",
+     "pre_t_status": "PRE_T_INSUFFICIENT_RAW_N",
+     "raw_n": 6,
+     "unique_fixtures": 6,
+     "unique_opponents": 6,
+     "effective_n": 6.0
+    },
+    {
+     "hypothesis_id": "0b1d6b849951fe3dea37cdef5f3ca43284e270af9c24eaf3321d5ffe74178ca0",
+     "pre_t_status": "PRE_T_INSUFFICIENT_RAW_N",
+     "raw_n": 5,
+     "unique_fixtures": 5,
+     "unique_opponents": 5,
+     "effective_n": 5.0
+    },
+    {
+     "hypothesis_id": "9b1ae577ce9e6822f03bd16f47faa0bac451f241efbabc161409bc1c02547d90",
+     "pre_t_status": "PRE_T_INSUFFICIENT_RAW_N",
+     "raw_n": 6,
+     "unique_fixtures": 6,
+     "unique_opponents": 6,
+     "effective_n": 6.0
+    },
+    {
+     "hypothesis_id": "bd96cfceb631f663f983aadd53e750938777849b112458c7ef2403d510759903",
+     "pre_t_status": "PRE_T_INSUFFICIENT_RAW_N",
+     "raw_n": 6,
+     "unique_fixtures": 6,
+     "unique_opponents": 6,
+     "effective_n": 6.0
+    },
+    {
+     "hypothesis_id": "248ddd68049ef5a5cbff12c1e8e4dad0e957616f79c3a999d813134d0754be7f",
+     "pre_t_status": "PRE_T_INSUFFICIENT_RAW_N",
+     "raw_n": 7,
+     "unique_fixtures": 7,
+     "unique_opponents": 7,
+     "effective_n": 7.0
+    },
+    {
+     "hypothesis_id": "1fdafcb8147dcd0b6eff5bdbd48ac80fc763b160a86750301fbc1d8a9927c336",
+     "pre_t_status": "PRE_T_INSUFFICIENT_RAW_N",
+     "raw_n": 10,
+     "unique_fixtures": 10,
+     "unique_opponents": 10,
+     "effective_n": 10.0
+    },
+    {
+     "hypothesis_id": "57dec42ff39d7340b5cc535cdc697b1d6e4a0ab0efe61d8d64ad4219f76ab401",
+     "pre_t_status": "PRE_T_INSUFFICIENT_RAW_N",
+     "raw_n": 7,
+     "unique_fixtures": 7,
+     "unique_opponents": 7,
+     "effective_n": 7.0
+    }
+   ],
+   "n_sonnet_total": 7,
+   "n_sonnet_pre_t_eligible": 0,
+   "r_k_valid": 0,
+   "r_matched": 0,
+   "r_unmatched": 0,
+   "r_identity_count_v8c": 0,
+   "r_identity_count_v8b1": 0,
+   "r_cross_pair_overlap": 0,
+   "h_status": "MATCHED",
+   "h_n_selected": 0,
+   "h_n_ranked_over": 900
+  },
+  {
+   "fixture_id": "mt_250070763",
+   "competition": "champ",
+   "ledger": {
+    "n_shapes_enumerated": 21120,
+    "n_structurally_invalid": 2112,
+    "n_capability_excluded": 0,
+    "n_admissible": 19008,
+    "n_pre_t_evaluable": 860,
+    "pre_t_status_counts": {
+     "PRE_T_COMPILER_INVALID": 1672,
+     "PRE_T_EVALUABLE": 860,
+     "PRE_T_INSUFFICIENT_RAW_N": 15684,
+     "PRE_T_PROVIDER_UNSUPPORTED": 792
+    }
+   },
+   "n_admissible": 19008,
+   "n_pre_t_evaluable": 860,
+   "n_metrics_represented": 23,
+   "n_mechanism_types_represented": 5,
+   "sonnet_selections": [
+    {
+     "hypothesis_id": "08937d0d98976fb63b6d1af4d95978090ea11ba490934c8e6ba598a34f922d12",
+     "pre_t_status": "PRE_T_INSUFFICIENT_RAW_N",
+     "raw_n": 4,
+     "unique_fixtures": 4,
+     "unique_opponents": 4,
+     "effective_n": 4.0
+    },
+    {
+     "hypothesis_id": "04915608e157c75b5055c4014f90052790a5218c41437bcb0f4ef13c845e95a9",
+     "pre_t_status": "PRE_T_INSUFFICIENT_RAW_N",
+     "raw_n": 7,
+     "unique_fixtures": 7,
+     "unique_opponents": 7,
+     "effective_n": 7.0
+    },
+    {
+     "hypothesis_id": "57dec42ff39d7340b5cc535cdc697b1d6e4a0ab0efe61d8d64ad4219f76ab401",
+     "pre_t_status": "PRE_T_INSUFFICIENT_RAW_N",
+     "raw_n": 6,
+     "unique_fixtures": 6,
+     "unique_opponents": 6,
+     "effective_n": 6.0
+    },
+    {
+     "hypothesis_id": "248ddd68049ef5a5cbff12c1e8e4dad0e957616f79c3a999d813134d0754be7f",
+     "pre_t_status": "PRE_T_INSUFFICIENT_RAW_N",
+     "raw_n": 4,
+     "unique_fixtures": 4,
+     "unique_opponents": 4,
+     "effective_n": 4.0
+    }
+   ],
+   "n_sonnet_total": 4,
+   "n_sonnet_pre_t_eligible": 0,
+   "r_k_valid": 0,
+   "r_matched": 0,
+   "r_unmatched": 0,
+   "r_identity_count_v8c": 0,
+   "r_identity_count_v8b1": 0,
+   "r_cross_pair_overlap": 0,
+   "h_status": "MATCHED",
+   "h_n_selected": 0,
+   "h_n_ranked_over": 860
+  },
+  {
+   "fixture_id": "mt_012232321",
+   "competition": "champ",
+   "ledger": {
+    "n_shapes_enumerated": 21120,
+    "n_structurally_invalid": 2112,
+    "n_capability_excluded": 0,
+    "n_admissible": 19008,
+    "n_pre_t_evaluable": 900,
+    "pre_t_status_counts": {
+     "PRE_T_COMPILER_INVALID": 1534,
+     "PRE_T_EVALUABLE": 900,
+     "PRE_T_INSUFFICIENT_RAW_N": 15762,
+     "PRE_T_NO_SCALE": 20,
+     "PRE_T_PROVIDER_UNSUPPORTED": 792
+    }
+   },
+   "n_admissible": 19008,
+   "n_pre_t_evaluable": 900,
+   "n_metrics_represented": 23,
+   "n_mechanism_types_represented": 5,
+   "sonnet_selections": [
+    {
+     "hypothesis_id": "038984e426fc52c2fba95c12e290c54185780489942a5ec778d799ecd664dcd5",
+     "pre_t_status": "PRE_T_INSUFFICIENT_RAW_N",
+     "raw_n": 6,
+     "unique_fixtures": 6,
+     "unique_opponents": 6,
+     "effective_n": 6.0
+    },
+    {
+     "hypothesis_id": "0dc9fcc03a10985fd65b003669e60dbea1cccb8cc0ba7704bffb4efcf47de552",
+     "pre_t_status": "PRE_T_INSUFFICIENT_RAW_N",
+     "raw_n": 7,
+     "unique_fixtures": 7,
+     "unique_opponents": 7,
+     "effective_n": 7.0
+    },
+    {
+     "hypothesis_id": "5bb5c8d5d9fc843ad5ff31ecc00cd5b72770955439b242219a15f3106d8d3379",
+     "pre_t_status": "PRE_T_INSUFFICIENT_RAW_N",
+     "raw_n": 6,
+     "unique_fixtures": 6,
+     "unique_opponents": 6,
+     "effective_n": 6.0
+    },
+    {
+     "hypothesis_id": "0fd6a82bfae4ed6008e1d0ad43fb7c1474221ec32ff724a60a66941def4d6f1a",
+     "pre_t_status": "PRE_T_INSUFFICIENT_RAW_N",
+     "raw_n": 7,
+     "unique_fixtures": 7,
+     "unique_opponents": 7,
+     "effective_n": 7.0
+    },
+    {
+     "hypothesis_id": "404c22b602ea1881c62bbb63d37fa8009f7bd865d5443be38ac3a9c63966f869",
+     "pre_t_status": "PRE_T_INSUFFICIENT_RAW_N",
+     "raw_n": 10,
+     "unique_fixtures": 10,
+     "unique_opponents": 10,
+     "effective_n": 10.0
+    }
+   ],
+   "n_sonnet_total": 5,
+   "n_sonnet_pre_t_eligible": 0,
+   "r_k_valid": 0,
+   "r_matched": 0,
+   "r_unmatched": 0,
+   "r_identity_count_v8c": 0,
+   "r_identity_count_v8b1": 0,
+   "r_cross_pair_overlap": 0,
+   "h_status": "MATCHED",
+   "h_n_selected": 0,
+   "h_n_ranked_over": 900
+  },
+  {
+   "fixture_id": "mt_367717168",
+   "competition": "champ",
+   "ledger": {
+    "n_shapes_enumerated": 21120,
+    "n_structurally_invalid": 2112,
+    "n_capability_excluded": 0,
+    "n_admissible": 19008,
+    "n_pre_t_evaluable": 860,
+    "pre_t_status_counts": {
+     "PRE_T_COMPILER_INVALID": 1396,
+     "PRE_T_EVALUABLE": 860,
+     "PRE_T_INSUFFICIENT_RAW_N": 15920,
+     "PRE_T_NO_SCALE": 40,
+     "PRE_T_PROVIDER_UNSUPPORTED": 792
+    }
+   },
+   "n_admissible": 19008,
+   "n_pre_t_evaluable": 860,
+   "n_metrics_represented": 22,
+   "n_mechanism_types_represented": 5,
+   "sonnet_selections": [
+    {
+     "hypothesis_id": "44ed4deff05b41387b3316b6a64481a5ef3145154924a2b2558d75855664c8b1",
+     "pre_t_status": "PRE_T_INSUFFICIENT_RAW_N",
+     "raw_n": 4,
+     "unique_fixtures": 4,
+     "unique_opponents": 4,
+     "effective_n": 4.0
+    },
+    {
+     "hypothesis_id": "0a48dd6d52a01687dc07f6d312063927242c5061cc419b27429d8b77479a628b",
+     "pre_t_status": "PRE_T_INSUFFICIENT_RAW_N",
+     "raw_n": 6,
+     "unique_fixtures": 6,
+     "unique_opponents": 6,
+     "effective_n": 6.0
+    },
+    {
+     "hypothesis_id": "6e3fb417d14cdaf5bb27a08ac446f8279a02772fd171f817e637ed3ace9ea48a",
+     "pre_t_status": "PRE_T_INSUFFICIENT_RAW_N",
+     "raw_n": 5,
+     "unique_fixtures": 5,
+     "unique_opponents": 5,
+     "effective_n": 5.0
+    },
+    {
+     "hypothesis_id": "4905f78810671df5ee60879a1e9ce833171772fcd692ecab91e7c0dd5b0f4002",
+     "pre_t_status": "PRE_T_INSUFFICIENT_RAW_N",
+     "raw_n": 6,
+     "unique_fixtures": 6,
+     "unique_opponents": 6,
+     "effective_n": 6.0
+    },
+    {
+     "hypothesis_id": "1bf95ca3d8a6e279a7916ce16a550d2d87513ba5f280802fcfa4ead3dc294c03",
+     "pre_t_status": "PRE_T_INSUFFICIENT_RAW_N",
+     "raw_n": 6,
+     "unique_fixtures": 6,
+     "unique_opponents": 6,
+     "effective_n": 6.0
+    },
+    {
+     "hypothesis_id": "36463fbd85e576a3e8b823ecbcbf25dd39e41236cb34293d0ac4c93c0ac3b560",
+     "pre_t_status": "PRE_T_INSUFFICIENT_RAW_N",
+     "raw_n": 6,
+     "unique_fixtures": 6,
+     "unique_opponents": 6,
+     "effective_n": 6.0
+    }
+   ],
+   "n_sonnet_total": 6,
+   "n_sonnet_pre_t_eligible": 0,
+   "r_k_valid": 0,
+   "r_matched": 0,
+   "r_unmatched": 0,
+   "r_identity_count_v8c": 0,
+   "r_identity_count_v8b1": 0,
+   "r_cross_pair_overlap": 0,
+   "h_status": "MATCHED",
+   "h_n_selected": 0,
+   "h_n_ranked_over": 860
+  },
+  {
+   "fixture_id": "mt_839909030",
+   "competition": "champ",
+   "ledger": {
+    "n_shapes_enumerated": 21120,
+    "n_structurally_invalid": 2112,
+    "n_capability_excluded": 0,
+    "n_admissible": 19008,
+    "n_pre_t_evaluable": 860,
+    "pre_t_status_counts": {
+     "PRE_T_COMPILER_INVALID": 1444,
+     "PRE_T_EVALUABLE": 860,
+     "PRE_T_INSUFFICIENT_RAW_N": 15892,
+     "PRE_T_NO_SCALE": 20,
+     "PRE_T_PROVIDER_UNSUPPORTED": 792
+    }
+   },
+   "n_admissible": 19008,
+   "n_pre_t_evaluable": 860,
+   "n_metrics_represented": 23,
+   "n_mechanism_types_represented": 5,
+   "sonnet_selections": [
+    {
+     "hypothesis_id": "248ddd68049ef5a5cbff12c1e8e4dad0e957616f79c3a999d813134d0754be7f",
+     "pre_t_status": "PRE_T_INSUFFICIENT_RAW_N",
+     "raw_n": 6,
+     "unique_fixtures": 6,
+     "unique_opponents": 6,
+     "effective_n": 6.0
+    },
+    {
+     "hypothesis_id": "57dec42ff39d7340b5cc535cdc697b1d6e4a0ab0efe61d8d64ad4219f76ab401",
+     "pre_t_status": "PRE_T_INSUFFICIENT_RAW_N",
+     "raw_n": 7,
+     "unique_fixtures": 7,
+     "unique_opponents": 7,
+     "effective_n": 7.0
+    },
+    {
+     "hypothesis_id": "8ba9a3178ebad9cdde97d733034e547851828f35fee3e94f40df78044b8e3332",
+     "pre_t_status": "PRE_T_INSUFFICIENT_RAW_N",
+     "raw_n": 6,
+     "unique_fixtures": 6,
+     "unique_opponents": 6,
+     "effective_n": 6.0
+    },
+    {
+     "hypothesis_id": "52b5a83449b38b455422a4dbc2d7cc0a53505c45ccedbde2b48518e78c2dada0",
+     "pre_t_status": "PRE_T_INSUFFICIENT_RAW_N",
+     "raw_n": 5,
+     "unique_fixtures": 5,
+     "unique_opponents": 5,
+     "effective_n": 5.0
+    },
+    {
+     "hypothesis_id": "1bb50026fe73ffb5bc30eacf49400ac29b40747217a5b8adff9f819aa039f636",
+     "pre_t_status": "PRE_T_INSUFFICIENT_RAW_N",
+     "raw_n": 6,
+     "unique_fixtures": 6,
+     "unique_opponents": 6,
+     "effective_n": 6.0
+    },
+    {
+     "hypothesis_id": "95c3e401ac48433bf14d40b56497569a26892ff6438fd855014fecc50a8c4701",
+     "pre_t_status": "PRE_T_INSUFFICIENT_RAW_N",
+     "raw_n": 7,
+     "unique_fixtures": 7,
+     "unique_opponents": 7,
+     "effective_n": 7.0
+    }
+   ],
+   "n_sonnet_total": 6,
+   "n_sonnet_pre_t_eligible": 0,
+   "r_k_valid": 0,
+   "r_matched": 0,
+   "r_unmatched": 0,
+   "r_identity_count_v8c": 0,
+   "r_identity_count_v8b1": 0,
+   "r_cross_pair_overlap": 0,
+   "h_status": "MATCHED",
+   "h_n_selected": 0,
+   "h_n_ranked_over": 860
+  },
+  {
+   "fixture_id": "mt_743353525",
+   "competition": "champ",
+   "ledger": {
+    "n_shapes_enumerated": 21120,
+    "n_structurally_invalid": 2112,
+    "n_capability_excluded": 0,
+    "n_admissible": 19008,
+    "n_pre_t_evaluable": 910,
+    "pre_t_status_counts": {
+     "PRE_T_COMPILER_INVALID": 1442,
+     "PRE_T_EVALUABLE": 910,
+     "PRE_T_INSUFFICIENT_RAW_N": 15854,
+     "PRE_T_NO_SCALE": 10,
+     "PRE_T_PROVIDER_UNSUPPORTED": 792
+    }
+   },
+   "n_admissible": 19008,
+   "n_pre_t_evaluable": 910,
+   "n_metrics_represented": 23,
+   "n_mechanism_types_represented": 5,
+   "sonnet_selections": [
+    {
+     "hypothesis_id": "248ddd68049ef5a5cbff12c1e8e4dad0e957616f79c3a999d813134d0754be7f",
+     "pre_t_status": "PRE_T_INSUFFICIENT_RAW_N",
+     "raw_n": 5,
+     "unique_fixtures": 5,
+     "unique_opponents": 5,
+     "effective_n": 5.0
+    },
+    {
+     "hypothesis_id": "1bb50026fe73ffb5bc30eacf49400ac29b40747217a5b8adff9f819aa039f636",
+     "pre_t_status": "PRE_T_INSUFFICIENT_RAW_N",
+     "raw_n": 6,
+     "unique_fixtures": 6,
+     "unique_opponents": 6,
+     "effective_n": 6.0
+    },
+    {
+     "hypothesis_id": "0fd6a82bfae4ed6008e1d0ad43fb7c1474221ec32ff724a60a66941def4d6f1a",
+     "pre_t_status": "PRE_T_INSUFFICIENT_RAW_N",
+     "raw_n": 7,
+     "unique_fixtures": 7,
+     "unique_opponents": 7,
+     "effective_n": 7.0
+    },
+    {
+     "hypothesis_id": "22e0f5d877c78389e45f0471c5e7aa3ea70a370bbdbd3e2d84722fe5ff49d607",
+     "pre_t_status": "PRE_T_INSUFFICIENT_RAW_N",
+     "raw_n": 7,
+     "unique_fixtures": 7,
+     "unique_opponents": 7,
+     "effective_n": 7.0
+    },
+    {
+     "hypothesis_id": "315d5c451b62799cf009c6699889967f2a683ffb1d040c03ed873dd4071a5ed9",
+     "pre_t_status": "PRE_T_INSUFFICIENT_RAW_N",
+     "raw_n": 7,
+     "unique_fixtures": 7,
+     "unique_opponents": 7,
+     "effective_n": 7.0
+    }
+   ],
+   "n_sonnet_total": 5,
+   "n_sonnet_pre_t_eligible": 0,
+   "r_k_valid": 0,
+   "r_matched": 0,
+   "r_unmatched": 0,
+   "r_identity_count_v8c": 0,
+   "r_identity_count_v8b1": 0,
+   "r_cross_pair_overlap": 0,
+   "h_status": "MATCHED",
+   "h_n_selected": 0,
+   "h_n_ranked_over": 910
+  },
+  {
+   "fixture_id": "mt_012232387",
+   "competition": "champ",
+   "ledger": {
+    "n_shapes_enumerated": 21120,
+    "n_structurally_invalid": 2112,
+    "n_capability_excluded": 0,
+    "n_admissible": 19008,
+    "n_pre_t_evaluable": 920,
+    "pre_t_status_counts": {
+     "PRE_T_COMPILER_INVALID": 1350,
+     "PRE_T_EVALUABLE": 920,
+     "PRE_T_INSUFFICIENT_RAW_N": 15946,
+     "PRE_T_PROVIDER_UNSUPPORTED": 792
+    }
+   },
+   "n_admissible": 19008,
+   "n_pre_t_evaluable": 920,
+   "n_metrics_represented": 23,
+   "n_mechanism_types_represented": 5,
+   "sonnet_selections": [
+    {
+     "hypothesis_id": "7dbd75bb2cf7df20d12503e49182584681e6b82c0d74b3e6345fde6b74d5c2d9",
+     "pre_t_status": "PRE_T_INSUFFICIENT_RAW_N",
+     "raw_n": 6,
+     "unique_fixtures": 6,
+     "unique_opponents": 6,
+     "effective_n": 6.0
+    },
+    {
+     "hypothesis_id": "0ac9e8e71982a5746676ba2b5771243cedf03144f052dd8b1d6d8d5e0610bd2f",
+     "pre_t_status": "PRE_T_INSUFFICIENT_RAW_N",
+     "raw_n": 11,
+     "unique_fixtures": 11,
+     "unique_opponents": 11,
+     "effective_n": 11.0
+    },
+    {
+     "hypothesis_id": "9575170e99a1bcc2578dc3df95de6ced6431482994413010255114c410cc5468",
+     "pre_t_status": "PRE_T_EVALUABLE",
+     "raw_n": 22,
+     "unique_fixtures": 22,
+     "unique_opponents": 22,
+     "effective_n": 22.0
+    },
+    {
+     "hypothesis_id": "1ad052794dbf6e2d40ed3e36c6cdfcaadf16ce6f15b7099616ab8ee5f98f5f53",
+     "pre_t_status": "PRE_T_INSUFFICIENT_RAW_N",
+     "raw_n": 5,
+     "unique_fixtures": 5,
+     "unique_opponents": 5,
+     "effective_n": 5.0
+    },
+    {
+     "hypothesis_id": "24ef760956e8555da8d32c80a910a2619a474cb88dacd7f5e5da3382dab7b75d",
+     "pre_t_status": "PRE_T_INSUFFICIENT_RAW_N",
+     "raw_n": 11,
+     "unique_fixtures": 11,
+     "unique_opponents": 11,
+     "effective_n": 11.0
+    },
+    {
+     "hypothesis_id": "65c35cb8f936e4adaed5f7f659764d45e4f3bd2dc7cdd974565b9c17e8a53de5",
+     "pre_t_status": "PRE_T_COMPILER_INVALID",
+     "raw_n": null,
+     "unique_fixtures": null,
+     "unique_opponents": null,
+     "effective_n": null
+    }
+   ],
+   "n_sonnet_total": 6,
+   "n_sonnet_pre_t_eligible": 1,
+   "r_k_valid": 1,
+   "r_matched": 1,
+   "r_unmatched": 0,
+   "r_identity_count_v8c": 0,
+   "r_identity_count_v8b1": 1,
+   "r_cross_pair_overlap": 0,
+   "h_status": "MATCHED",
+   "h_n_selected": 1,
+   "h_n_ranked_over": 920
+  },
+  {
+   "fixture_id": "mt_250070738",
+   "competition": "champ",
+   "ledger": {
+    "n_shapes_enumerated": 21120,
+    "n_structurally_invalid": 2112,
+    "n_capability_excluded": 0,
+    "n_admissible": 19008,
+    "n_pre_t_evaluable": 900,
+    "pre_t_status_counts": {
+     "PRE_T_COMPILER_INVALID": 1354,
+     "PRE_T_EVALUABLE": 900,
+     "PRE_T_INSUFFICIENT_RAW_N": 15942,
+     "PRE_T_NO_SCALE": 20,
+     "PRE_T_PROVIDER_UNSUPPORTED": 792
+    }
+   },
+   "n_admissible": 19008,
+   "n_pre_t_evaluable": 900,
+   "n_metrics_represented": 23,
+   "n_mechanism_types_represented": 5,
+   "sonnet_selections": [
+    {
+     "hypothesis_id": "248ddd68049ef5a5cbff12c1e8e4dad0e957616f79c3a999d813134d0754be7f",
+     "pre_t_status": "PRE_T_INSUFFICIENT_RAW_N",
+     "raw_n": 8,
+     "unique_fixtures": 8,
+     "unique_opponents": 8,
+     "effective_n": 8.0
+    },
+    {
+     "hypothesis_id": "0dc9fcc03a10985fd65b003669e60dbea1cccb8cc0ba7704bffb4efcf47de552",
+     "pre_t_status": "PRE_T_INSUFFICIENT_RAW_N",
+     "raw_n": 6,
+     "unique_fixtures": 6,
+     "unique_opponents": 6,
+     "effective_n": 6.0
+    },
+    {
+     "hypothesis_id": "2b1fa4388fc83475409a5519e81fc402beb712625a3fbe9d0b15ac3629a1cc83",
+     "pre_t_status": "PRE_T_INSUFFICIENT_RAW_N",
+     "raw_n": 7,
+     "unique_fixtures": 7,
+     "unique_opponents": 7,
+     "effective_n": 7.0
+    },
+    {
+     "hypothesis_id": "4905f78810671df5ee60879a1e9ce833171772fcd692ecab91e7c0dd5b0f4002",
+     "pre_t_status": "PRE_T_INSUFFICIENT_RAW_N",
+     "raw_n": 6,
+     "unique_fixtures": 6,
+     "unique_opponents": 6,
+     "effective_n": 6.0
+    },
+    {
+     "hypothesis_id": "6679ec8acb9ce6c63b6cd61912f10ed6cd3a9010194d5387b626b37a500de3bc",
+     "pre_t_status": "PRE_T_INSUFFICIENT_RAW_N",
+     "raw_n": 7,
+     "unique_fixtures": 7,
+     "unique_opponents": 7,
+     "effective_n": 7.0
+    },
+    {
+     "hypothesis_id": "0fd6a82bfae4ed6008e1d0ad43fb7c1474221ec32ff724a60a66941def4d6f1a",
+     "pre_t_status": "PRE_T_INSUFFICIENT_RAW_N",
+     "raw_n": 6,
+     "unique_fixtures": 6,
+     "unique_opponents": 6,
+     "effective_n": 6.0
+    }
+   ],
+   "n_sonnet_total": 6,
+   "n_sonnet_pre_t_eligible": 0,
+   "r_k_valid": 0,
+   "r_matched": 0,
+   "r_unmatched": 0,
+   "r_identity_count_v8c": 0,
+   "r_identity_count_v8b1": 0,
+   "r_cross_pair_overlap": 0,
+   "h_status": "MATCHED",
+   "h_n_selected": 0,
+   "h_n_ranked_over": 900
+  },
+  {
+   "fixture_id": "mt_581141465",
+   "competition": "champ",
+   "ledger": {
+    "n_shapes_enumerated": 21120,
+    "n_structurally_invalid": 2112,
+    "n_capability_excluded": 0,
+    "n_admissible": 19008,
+    "n_pre_t_evaluable": 920,
+    "pre_t_status_counts": {
+     "PRE_T_COMPILER_INVALID": 1258,
+     "PRE_T_EVALUABLE": 920,
+     "PRE_T_INSUFFICIENT_RAW_N": 16038,
+     "PRE_T_PROVIDER_UNSUPPORTED": 792
+    }
+   },
+   "n_admissible": 19008,
+   "n_pre_t_evaluable": 920,
+   "n_metrics_represented": 23,
+   "n_mechanism_types_represented": 5,
+   "sonnet_selections": [
+    {
+     "hypothesis_id": "8fc012dafe0e1b3b913aa821828467d70c0bc402265229123605196f266bd4f2",
+     "pre_t_status": "PRE_T_INSUFFICIENT_RAW_N",
+     "raw_n": 6,
+     "unique_fixtures": 6,
+     "unique_opponents": 6,
+     "effective_n": 6.0
+    },
+    {
+     "hypothesis_id": "b501a7965f77b9c492d9f7dc3801b043e87fea1e27b9837a810fec570c60e6e0",
+     "pre_t_status": "PRE_T_INSUFFICIENT_RAW_N",
+     "raw_n": 6,
+     "unique_fixtures": 6,
+     "unique_opponents": 6,
+     "effective_n": 6.0
+    },
+    {
+     "hypothesis_id": "674c0b5085e1ebe12079d80f264d1e7353c3dd93d3d561c0b30ab792451da909",
+     "pre_t_status": "PRE_T_INSUFFICIENT_RAW_N",
+     "raw_n": 7,
+     "unique_fixtures": 7,
+     "unique_opponents": 7,
+     "effective_n": 7.0
+    },
+    {
+     "hypothesis_id": "33dada7d970df9ab49906e8842034cdad55fc1ed20b241a471f4f6d4ab278c58",
+     "pre_t_status": "PRE_T_INSUFFICIENT_RAW_N",
+     "raw_n": 7,
+     "unique_fixtures": 7,
+     "unique_opponents": 7,
+     "effective_n": 7.0
+    }
+   ],
+   "n_sonnet_total": 4,
+   "n_sonnet_pre_t_eligible": 0,
+   "r_k_valid": 0,
+   "r_matched": 0,
+   "r_unmatched": 0,
+   "r_identity_count_v8c": 0,
+   "r_identity_count_v8b1": 0,
+   "r_cross_pair_overlap": 0,
+   "h_status": "MATCHED",
+   "h_n_selected": 0,
+   "h_n_ranked_over": 920
+  },
+  {
+   "fixture_id": "mt_978828203",
+   "competition": "champ",
+   "ledger": {
+    "n_shapes_enumerated": 21120,
+    "n_structurally_invalid": 2112,
+    "n_capability_excluded": 0,
+    "n_admissible": 19008,
+    "n_pre_t_evaluable": 910,
+    "pre_t_status_counts": {
+     "PRE_T_COMPILER_INVALID": 1304,
+     "PRE_T_EVALUABLE": 910,
+     "PRE_T_INSUFFICIENT_RAW_N": 15992,
+     "PRE_T_NO_SCALE": 10,
+     "PRE_T_PROVIDER_UNSUPPORTED": 792
+    }
+   },
+   "n_admissible": 19008,
+   "n_pre_t_evaluable": 910,
+   "n_metrics_represented": 23,
+   "n_mechanism_types_represented": 5,
+   "sonnet_selections": [
+    {
+     "hypothesis_id": "d99ddc4b118117633dc62de2f68dc3ba2f57e2bddd553f1edcc718945348de3b",
+     "pre_t_status": "PRE_T_INSUFFICIENT_RAW_N",
+     "raw_n": 7,
+     "unique_fixtures": 7,
+     "unique_opponents": 7,
+     "effective_n": 7.0
+    },
+    {
+     "hypothesis_id": "33dada7d970df9ab49906e8842034cdad55fc1ed20b241a471f4f6d4ab278c58",
+     "pre_t_status": "PRE_T_INSUFFICIENT_RAW_N",
+     "raw_n": 6,
+     "unique_fixtures": 6,
+     "unique_opponents": 6,
+     "effective_n": 6.0
+    },
+    {
+     "hypothesis_id": "ec33c1d281a3a39176a9900a6755670ffc8f8582c28809826de3480bf27cd31b",
+     "pre_t_status": "PRE_T_INSUFFICIENT_RAW_N",
+     "raw_n": 7,
+     "unique_fixtures": 7,
+     "unique_opponents": 7,
+     "effective_n": 7.0
+    },
+    {
+     "hypothesis_id": "25b601f13fe5b64694ba62b866c9b50301641d21b6e7b12217a034943eb6ad81",
+     "pre_t_status": "PRE_T_INSUFFICIENT_RAW_N",
+     "raw_n": 6,
+     "unique_fixtures": 6,
+     "unique_opponents": 6,
+     "effective_n": 6.0
+    },
+    {
+     "hypothesis_id": "95bc8dc08a0558a56beddca324aef79a13b2343a1249256b8ff75eee79f57330",
+     "pre_t_status": "PRE_T_INSUFFICIENT_RAW_N",
+     "raw_n": 7,
+     "unique_fixtures": 7,
+     "unique_opponents": 7,
+     "effective_n": 7.0
+    }
+   ],
+   "n_sonnet_total": 5,
+   "n_sonnet_pre_t_eligible": 0,
+   "r_k_valid": 0,
+   "r_matched": 0,
+   "r_unmatched": 0,
+   "r_identity_count_v8c": 0,
+   "r_identity_count_v8b1": 0,
+   "r_cross_pair_overlap": 0,
+   "h_status": "MATCHED",
+   "h_n_selected": 0,
+   "h_n_ranked_over": 910
+  },
+  {
+   "fixture_id": "mt_250070627",
+   "competition": "champ",
+   "ledger": {
+    "n_shapes_enumerated": 21120,
+    "n_structurally_invalid": 2112,
+    "n_capability_excluded": 0,
+    "n_admissible": 19008,
+    "n_pre_t_evaluable": 900,
+    "pre_t_status_counts": {
+     "PRE_T_COMPILER_INVALID": 1352,
+     "PRE_T_EVALUABLE": 900,
+     "PRE_T_INSUFFICIENT_RAW_N": 15944,
+     "PRE_T_NO_SCALE": 20,
+     "PRE_T_PROVIDER_UNSUPPORTED": 792
+    }
+   },
+   "n_admissible": 19008,
+   "n_pre_t_evaluable": 900,
+   "n_metrics_represented": 23,
+   "n_mechanism_types_represented": 5,
+   "sonnet_selections": [
+    {
+     "hypothesis_id": "c3ade2429f676067ea105dd96fc38972f253759918a7759711e1bf5eb4df8d3c",
+     "pre_t_status": "PRE_T_INSUFFICIENT_RAW_N",
+     "raw_n": 7,
+     "unique_fixtures": 8,
+     "unique_opponents": 7,
+     "effective_n": 7.0
+    },
+    {
+     "hypothesis_id": "34c54bf0213e33c46e50898c1699f571621a443162bbedc9ffc84e6fdb7a8c91",
+     "pre_t_status": "PRE_T_INSUFFICIENT_RAW_N",
+     "raw_n": 7,
+     "unique_fixtures": 8,
+     "unique_opponents": 7,
+     "effective_n": 7.0
+    },
+    {
+     "hypothesis_id": "ec33c1d281a3a39176a9900a6755670ffc8f8582c28809826de3480bf27cd31b",
+     "pre_t_status": "PRE_T_INSUFFICIENT_RAW_N",
+     "raw_n": 8,
+     "unique_fixtures": 8,
+     "unique_opponents": 7,
+     "effective_n": 8.0
+    },
+    {
+     "hypothesis_id": "038984e426fc52c2fba95c12e290c54185780489942a5ec778d799ecd664dcd5",
+     "pre_t_status": "PRE_T_INSUFFICIENT_RAW_N",
+     "raw_n": 8,
+     "unique_fixtures": 8,
+     "unique_opponents": 7,
+     "effective_n": 8.0
+    }
+   ],
+   "n_sonnet_total": 4,
+   "n_sonnet_pre_t_eligible": 0,
+   "r_k_valid": 0,
+   "r_matched": 0,
+   "r_unmatched": 0,
+   "r_identity_count_v8c": 0,
+   "r_identity_count_v8b1": 0,
+   "r_cross_pair_overlap": 0,
+   "h_status": "MATCHED",
+   "h_n_selected": 0,
+   "h_n_ranked_over": 900
+  },
+  {
+   "fixture_id": "mt_195565010",
+   "competition": "champ",
+   "ledger": {
+    "n_shapes_enumerated": 21120,
+    "n_structurally_invalid": 2112,
+    "n_capability_excluded": 0,
+    "n_admissible": 19008,
+    "n_pre_t_evaluable": 910,
+    "pre_t_status_counts": {
+     "PRE_T_COMPILER_INVALID": 1488,
+     "PRE_T_EVALUABLE": 910,
+     "PRE_T_INSUFFICIENT_RAW_N": 15808,
+     "PRE_T_NO_SCALE": 10,
+     "PRE_T_PROVIDER_UNSUPPORTED": 792
+    }
+   },
+   "n_admissible": 19008,
+   "n_pre_t_evaluable": 910,
+   "n_metrics_represented": 23,
+   "n_mechanism_types_represented": 5,
+   "sonnet_selections": [
+    {
+     "hypothesis_id": "33dada7d970df9ab49906e8842034cdad55fc1ed20b241a471f4f6d4ab278c58",
+     "pre_t_status": "PRE_T_INSUFFICIENT_RAW_N",
+     "raw_n": 6,
+     "unique_fixtures": 6,
+     "unique_opponents": 6,
+     "effective_n": 6.0
+    },
+    {
+     "hypothesis_id": "1ad052794dbf6e2d40ed3e36c6cdfcaadf16ce6f15b7099616ab8ee5f98f5f53",
+     "pre_t_status": "PRE_T_INSUFFICIENT_RAW_N",
+     "raw_n": 6,
+     "unique_fixtures": 6,
+     "unique_opponents": 6,
+     "effective_n": 6.0
+    },
+    {
+     "hypothesis_id": "9c9952fe97f0547df088df75b22568e142572d9de9a928fe58c2ce364f6889fe",
+     "pre_t_status": "PRE_T_INSUFFICIENT_RAW_N",
+     "raw_n": 6,
+     "unique_fixtures": 6,
+     "unique_opponents": 6,
+     "effective_n": 6.0
+    },
+    {
+     "hypothesis_id": "618f0042ed8137029206a89ef1fe903ad191d691b72689e89ed4b991076283b6",
+     "pre_t_status": "PRE_T_INSUFFICIENT_RAW_N",
+     "raw_n": 8,
+     "unique_fixtures": 8,
+     "unique_opponents": 8,
+     "effective_n": 8.0
+    },
+    {
+     "hypothesis_id": "cff8b78c426b7b3d6c7d77f9cde0717eedd43cb9d7b5c5a243be5f0969b47222",
+     "pre_t_status": "PRE_T_INSUFFICIENT_RAW_N",
+     "raw_n": 8,
+     "unique_fixtures": 8,
+     "unique_opponents": 8,
+     "effective_n": 8.0
+    },
+    {
+     "hypothesis_id": "8fc012dafe0e1b3b913aa821828467d70c0bc402265229123605196f266bd4f2",
+     "pre_t_status": "PRE_T_INSUFFICIENT_RAW_N",
+     "raw_n": 6,
+     "unique_fixtures": 6,
+     "unique_opponents": 6,
+     "effective_n": 6.0
+    }
+   ],
+   "n_sonnet_total": 6,
+   "n_sonnet_pre_t_eligible": 0,
+   "r_k_valid": 0,
+   "r_matched": 0,
+   "r_unmatched": 0,
+   "r_identity_count_v8c": 0,
+   "r_identity_count_v8b1": 0,
+   "r_cross_pair_overlap": 0,
+   "h_status": "MATCHED",
+   "h_n_selected": 0,
+   "h_n_ranked_over": 910
+  },
+  {
+   "fixture_id": "mt_406686899",
+   "competition": "champ",
+   "ledger": {
+    "n_shapes_enumerated": 21120,
+    "n_structurally_invalid": 2112,
+    "n_capability_excluded": 0,
+    "n_admissible": 19008,
+    "n_pre_t_evaluable": 900,
+    "pre_t_status_counts": {
+     "PRE_T_COMPILER_INVALID": 1396,
+     "PRE_T_EVALUABLE": 900,
+     "PRE_T_INSUFFICIENT_RAW_N": 15900,
+     "PRE_T_NO_SCALE": 20,
+     "PRE_T_PROVIDER_UNSUPPORTED": 792
+    }
+   },
+   "n_admissible": 19008,
+   "n_pre_t_evaluable": 900,
+   "n_metrics_represented": 23,
+   "n_mechanism_types_represented": 5,
+   "sonnet_selections": [
+    {
+     "hypothesis_id": "33dada7d970df9ab49906e8842034cdad55fc1ed20b241a471f4f6d4ab278c58",
+     "pre_t_status": "PRE_T_INSUFFICIENT_RAW_N",
+     "raw_n": 5,
+     "unique_fixtures": 5,
+     "unique_opponents": 5,
+     "effective_n": 5.0
+    },
+    {
+     "hypothesis_id": "4905f78810671df5ee60879a1e9ce833171772fcd692ecab91e7c0dd5b0f4002",
+     "pre_t_status": "PRE_T_INSUFFICIENT_RAW_N",
+     "raw_n": 7,
+     "unique_fixtures": 7,
+     "unique_opponents": 7,
+     "effective_n": 7.0
+    },
+    {
+     "hypothesis_id": "1ad052794dbf6e2d40ed3e36c6cdfcaadf16ce6f15b7099616ab8ee5f98f5f53",
+     "pre_t_status": "PRE_T_INSUFFICIENT_RAW_N",
+     "raw_n": 5,
+     "unique_fixtures": 5,
+     "unique_opponents": 5,
+     "effective_n": 5.0
+    },
+    {
+     "hypothesis_id": "7ee7908877ef00f80dc81378d633f539cbf966621aff1ed4d0bc27f605ba393a",
+     "pre_t_status": "PRE_T_INSUFFICIENT_RAW_N",
+     "raw_n": 7,
+     "unique_fixtures": 7,
+     "unique_opponents": 7,
+     "effective_n": 7.0
+    },
+    {
+     "hypothesis_id": "1640f6ef29fa383ddff16e54094e888d429fbd500d560db16b9291a06149cc57",
+     "pre_t_status": "PRE_T_INSUFFICIENT_RAW_N",
+     "raw_n": 7,
+     "unique_fixtures": 7,
+     "unique_opponents": 7,
+     "effective_n": 7.0
+    },
+    {
+     "hypothesis_id": "5200b6bddbf430b8f2e64aea97ed6013e4b08e3befb45ad05c835b8061de6ad8",
+     "pre_t_status": "PRE_T_INSUFFICIENT_RAW_N",
+     "raw_n": 5,
+     "unique_fixtures": 5,
+     "unique_opponents": 5,
+     "effective_n": 5.0
+    }
+   ],
+   "n_sonnet_total": 6,
+   "n_sonnet_pre_t_eligible": 0,
+   "r_k_valid": 0,
+   "r_matched": 0,
+   "r_unmatched": 0,
+   "r_identity_count_v8c": 0,
+   "r_identity_count_v8b1": 0,
+   "r_cross_pair_overlap": 0,
+   "h_status": "MATCHED",
+   "h_n_selected": 0,
+   "h_n_ranked_over": 900
+  },
+  {
+   "fixture_id": "mt_367717156",
+   "competition": "champ",
+   "ledger": {
+    "n_shapes_enumerated": 21120,
+    "n_structurally_invalid": 2112,
+    "n_capability_excluded": 0,
+    "n_admissible": 19008,
+    "n_pre_t_evaluable": 920,
+    "pre_t_status_counts": {
+     "PRE_T_COMPILER_INVALID": 1350,
+     "PRE_T_EVALUABLE": 920,
+     "PRE_T_INSUFFICIENT_RAW_N": 15946,
+     "PRE_T_PROVIDER_UNSUPPORTED": 792
+    }
+   },
+   "n_admissible": 19008,
+   "n_pre_t_evaluable": 920,
+   "n_metrics_represented": 23,
+   "n_mechanism_types_represented": 5,
+   "sonnet_selections": [
+    {
+     "hypothesis_id": "d27701d03ad0d03ad3a075e5340d99d07e177b9b143d2d79c8fdd6e1ec722c19",
+     "pre_t_status": "PRE_T_INSUFFICIENT_RAW_N",
+     "raw_n": 11,
+     "unique_fixtures": 11,
+     "unique_opponents": 11,
+     "effective_n": 11.0
+    },
+    {
+     "hypothesis_id": "a3b176f4f4d319ef971f6d1995338cb0ca582bf1596b9e28b02bdf7930f60b6c",
+     "pre_t_status": "PRE_T_INSUFFICIENT_RAW_N",
+     "raw_n": 11,
+     "unique_fixtures": 11,
+     "unique_opponents": 11,
+     "effective_n": 11.0
+    },
+    {
+     "hypothesis_id": "50c8cf7b30a944a001dc82c0737dbe93f3f1e21ea091cb057557937365dad3b9",
+     "pre_t_status": "PRE_T_INSUFFICIENT_RAW_N",
+     "raw_n": 11,
+     "unique_fixtures": 11,
+     "unique_opponents": 11,
+     "effective_n": 11.0
+    },
+    {
+     "hypothesis_id": "0d7eebcefae2b56becd13d4b58bb67e6e10ed98318f8d8f0f82262b620e20fe8",
+     "pre_t_status": "PRE_T_EVALUABLE",
+     "raw_n": 23,
+     "unique_fixtures": 23,
+     "unique_opponents": 22,
+     "effective_n": 23.0
+    },
+    {
+     "hypothesis_id": "4905f78810671df5ee60879a1e9ce833171772fcd692ecab91e7c0dd5b0f4002",
+     "pre_t_status": "PRE_T_INSUFFICIENT_RAW_N",
+     "raw_n": 8,
+     "unique_fixtures": 8,
+     "unique_opponents": 7,
+     "effective_n": 8.0
+    },
+    {
+     "hypothesis_id": "29db66e0689f9d97d284b0260bcf57f36faa5d72ad93fadeaed8fc0d72d5f9ac",
+     "pre_t_status": "PRE_T_INSUFFICIENT_RAW_N",
+     "raw_n": 11,
+     "unique_fixtures": 11,
+     "unique_opponents": 11,
+     "effective_n": 11.0
+    },
+    {
+     "hypothesis_id": "070128d1f2b469c30391f24316d548c24a51a0f9175de13e9ed873dfeea9cf6f",
+     "pre_t_status": "PRE_T_INSUFFICIENT_RAW_N",
+     "raw_n": 7,
+     "unique_fixtures": 7,
+     "unique_opponents": 7,
+     "effective_n": 7.0
+    },
+    {
+     "hypothesis_id": "ad0ba987854d64cfba7acde297d7c03975d795756b471a54362bdf7ed2600008",
+     "pre_t_status": "PRE_T_COMPILER_INVALID",
+     "raw_n": null,
+     "unique_fixtures": null,
+     "unique_opponents": null,
+     "effective_n": null
+    }
+   ],
+   "n_sonnet_total": 8,
+   "n_sonnet_pre_t_eligible": 1,
+   "r_k_valid": 1,
+   "r_matched": 1,
+   "r_unmatched": 0,
+   "r_identity_count_v8c": 0,
+   "r_identity_count_v8b1": 1,
+   "r_cross_pair_overlap": 0,
+   "h_status": "MATCHED",
+   "h_n_selected": 1,
+   "h_n_ranked_over": 920
+  },
+  {
+   "fixture_id": "mt_624494356",
+   "competition": "champ",
+   "ledger": {
+    "n_shapes_enumerated": 21120,
+    "n_structurally_invalid": 2112,
+    "n_capability_excluded": 0,
+    "n_admissible": 19008,
+    "n_pre_t_evaluable": 920,
+    "pre_t_status_counts": {
+     "PRE_T_COMPILER_INVALID": 1350,
+     "PRE_T_EVALUABLE": 920,
+     "PRE_T_INSUFFICIENT_RAW_N": 15946,
+     "PRE_T_PROVIDER_UNSUPPORTED": 792
+    }
+   },
+   "n_admissible": 19008,
+   "n_pre_t_evaluable": 920,
+   "n_metrics_represented": 23,
+   "n_mechanism_types_represented": 5,
+   "sonnet_selections": [
+    {
+     "hypothesis_id": "6ce2da44066b36810fa18265bc7157f698c9d4e2ec9761c8424fec7bba8ffb1f",
+     "pre_t_status": "PRE_T_COMPILER_INVALID",
+     "raw_n": null,
+     "unique_fixtures": null,
+     "unique_opponents": null,
+     "effective_n": null
+    },
+    {
+     "hypothesis_id": "7cd432f4750288ab680b179168568d8f3dac87238783f53a9e2b6ca9b7bbb412",
+     "pre_t_status": "PRE_T_COMPILER_INVALID",
+     "raw_n": null,
+     "unique_fixtures": null,
+     "unique_opponents": null,
+     "effective_n": null
+    },
+    {
+     "hypothesis_id": "234c9901970490d946ece0acf34ef18238ccab3deef7989873055d125504b988",
+     "pre_t_status": "PRE_T_INSUFFICIENT_RAW_N",
+     "raw_n": 7,
+     "unique_fixtures": 7,
+     "unique_opponents": 7,
+     "effective_n": 7.0
+    },
+    {
+     "hypothesis_id": "e3e85826bedacea2ce7c6248734be68cc571334a5e09aee018b7c2a049ea6f31",
+     "pre_t_status": "PRE_T_COMPILER_INVALID",
+     "raw_n": null,
+     "unique_fixtures": null,
+     "unique_opponents": null,
+     "effective_n": null
+    }
+   ],
+   "n_sonnet_total": 4,
+   "n_sonnet_pre_t_eligible": 0,
+   "r_k_valid": 0,
+   "r_matched": 0,
+   "r_unmatched": 0,
+   "r_identity_count_v8c": 0,
+   "r_identity_count_v8b1": 0,
+   "r_cross_pair_overlap": 0,
+   "h_status": "MATCHED",
+   "h_n_selected": 0,
+   "h_n_ranked_over": 920
+  },
+  {
+   "fixture_id": "mt_743353964",
+   "competition": "champ",
+   "ledger": {
+    "n_shapes_enumerated": 21120,
+    "n_structurally_invalid": 2112,
+    "n_capability_excluded": 0,
+    "n_admissible": 19008,
+    "n_pre_t_evaluable": 910,
+    "pre_t_status_counts": {
+     "PRE_T_COMPILER_INVALID": 1396,
+     "PRE_T_EVALUABLE": 910,
+     "PRE_T_INSUFFICIENT_RAW_N": 15900,
+     "PRE_T_NO_SCALE": 10,
+     "PRE_T_PROVIDER_UNSUPPORTED": 792
+    }
+   },
+   "n_admissible": 19008,
+   "n_pre_t_evaluable": 910,
+   "n_metrics_represented": 23,
+   "n_mechanism_types_represented": 5,
+   "sonnet_selections": [
+    {
+     "hypothesis_id": "565f748ef52c1c9807944e400d8602b9d5be40a7d47baf39a54d105c84b8aae3",
+     "pre_t_status": "PRE_T_COMPILER_INVALID",
+     "raw_n": null,
+     "unique_fixtures": null,
+     "unique_opponents": null,
+     "effective_n": null
+    },
+    {
+     "hypothesis_id": "7d74780a15a9aee518740c3f35951d4a47b8dee7c672483347b6d3c1b4ddb53b",
+     "pre_t_status": "PRE_T_COMPILER_INVALID",
+     "raw_n": null,
+     "unique_fixtures": null,
+     "unique_opponents": null,
+     "effective_n": null
+    },
+    {
+     "hypothesis_id": "7a4e5043b9db73e1bbf929effdd99933e80af5a1a885aa79dfdf6953ad4170e7",
+     "pre_t_status": "PRE_T_COMPILER_INVALID",
+     "raw_n": null,
+     "unique_fixtures": null,
+     "unique_opponents": null,
+     "effective_n": null
+    },
+    {
+     "hypothesis_id": "bc12e34d4b6b3bce928b838e569a0bd6060cd0855a031335000da315fd2929aa",
+     "pre_t_status": "PRE_T_COMPILER_INVALID",
+     "raw_n": null,
+     "unique_fixtures": null,
+     "unique_opponents": null,
+     "effective_n": null
+    },
+    {
+     "hypothesis_id": "58c3146e333c4f542eefbabfb46f4779d77183f54693156bda6da81502b459e6",
+     "pre_t_status": "PRE_T_COMPILER_INVALID",
+     "raw_n": null,
+     "unique_fixtures": null,
+     "unique_opponents": null,
+     "effective_n": null
+    },
+    {
+     "hypothesis_id": "16f9c1817bfbb717b5d77f47f8bc8add75b04417932ddb695f239df7c51028c2",
+     "pre_t_status": "PRE_T_COMPILER_INVALID",
+     "raw_n": null,
+     "unique_fixtures": null,
+     "unique_opponents": null,
+     "effective_n": null
+    }
+   ],
+   "n_sonnet_total": 6,
+   "n_sonnet_pre_t_eligible": 0,
+   "r_k_valid": 0,
+   "r_matched": 0,
+   "r_unmatched": 0,
+   "r_identity_count_v8c": 0,
+   "r_identity_count_v8b1": 0,
+   "r_cross_pair_overlap": 0,
+   "h_status": "MATCHED",
+   "h_n_selected": 0,
+   "h_n_ranked_over": 910
+  },
+  {
+   "fixture_id": "mt_839909574",
+   "competition": "champ",
+   "ledger": {
+    "n_shapes_enumerated": 21120,
+    "n_structurally_invalid": 2112,
+    "n_capability_excluded": 0,
+    "n_admissible": 19008,
+    "n_pre_t_evaluable": 910,
+    "pre_t_status_counts": {
+     "PRE_T_COMPILER_INVALID": 1534,
+     "PRE_T_EVALUABLE": 910,
+     "PRE_T_INSUFFICIENT_RAW_N": 15762,
+     "PRE_T_NO_SCALE": 10,
+     "PRE_T_PROVIDER_UNSUPPORTED": 792
+    }
+   },
+   "n_admissible": 19008,
+   "n_pre_t_evaluable": 910,
+   "n_metrics_represented": 23,
+   "n_mechanism_types_represented": 5,
+   "sonnet_selections": [
+    {
+     "hypothesis_id": "6fc118ff2cbb62f1a64a5cda7a563409c3b432455a0465020333841c05f84759",
+     "pre_t_status": "PRE_T_INSUFFICIENT_RAW_N",
+     "raw_n": 7,
+     "unique_fixtures": 7,
+     "unique_opponents": 7,
+     "effective_n": 7.0
+    },
+    {
+     "hypothesis_id": "8fc012dafe0e1b3b913aa821828467d70c0bc402265229123605196f266bd4f2",
+     "pre_t_status": "PRE_T_INSUFFICIENT_RAW_N",
+     "raw_n": 7,
+     "unique_fixtures": 7,
+     "unique_opponents": 7,
+     "effective_n": 7.0
+    },
+    {
+     "hypothesis_id": "1ad052794dbf6e2d40ed3e36c6cdfcaadf16ce6f15b7099616ab8ee5f98f5f53",
+     "pre_t_status": "PRE_T_INSUFFICIENT_RAW_N",
+     "raw_n": 7,
+     "unique_fixtures": 7,
+     "unique_opponents": 7,
+     "effective_n": 7.0
+    },
+    {
+     "hypothesis_id": "674c0b5085e1ebe12079d80f264d1e7353c3dd93d3d561c0b30ab792451da909",
+     "pre_t_status": "PRE_T_INSUFFICIENT_RAW_N",
+     "raw_n": 6,
+     "unique_fixtures": 6,
+     "unique_opponents": 6,
+     "effective_n": 6.0
+    },
+    {
+     "hypothesis_id": "618f0042ed8137029206a89ef1fe903ad191d691b72689e89ed4b991076283b6",
+     "pre_t_status": "PRE_T_INSUFFICIENT_RAW_N",
+     "raw_n": 8,
+     "unique_fixtures": 8,
+     "unique_opponents": 8,
+     "effective_n": 8.0
+    },
+    {
+     "hypothesis_id": "42606d1995717ff5d5885b39b09eee2cfd6c3ac295ad2b845c7d019589795bd4",
+     "pre_t_status": "PRE_T_INSUFFICIENT_RAW_N",
+     "raw_n": 8,
+     "unique_fixtures": 8,
+     "unique_opponents": 8,
+     "effective_n": 8.0
+    },
+    {
+     "hypothesis_id": "c3717b8170736661de37eb6c26809bdf45a4eaed76a3721cb910d9cdbcf0b309",
+     "pre_t_status": "PRE_T_INSUFFICIENT_RAW_N",
+     "raw_n": 5,
+     "unique_fixtures": 5,
+     "unique_opponents": 5,
+     "effective_n": 5.0
+    },
+    {
+     "hypothesis_id": "b501a7965f77b9c492d9f7dc3801b043e87fea1e27b9837a810fec570c60e6e0",
+     "pre_t_status": "PRE_T_INSUFFICIENT_RAW_N",
+     "raw_n": 7,
+     "unique_fixtures": 7,
+     "unique_opponents": 7,
+     "effective_n": 7.0
+    }
+   ],
+   "n_sonnet_total": 8,
+   "n_sonnet_pre_t_eligible": 0,
+   "r_k_valid": 0,
+   "r_matched": 0,
+   "r_unmatched": 0,
+   "r_identity_count_v8c": 0,
+   "r_identity_count_v8b1": 0,
+   "r_cross_pair_overlap": 0,
+   "h_status": "MATCHED",
+   "h_n_selected": 0,
+   "h_n_ranked_over": 910
+  },
+  {
+   "fixture_id": "mt_250070680",
+   "competition": "champ",
+   "ledger": {
+    "n_shapes_enumerated": 21120,
+    "n_structurally_invalid": 2112,
+    "n_capability_excluded": 0,
+    "n_admissible": 19008,
+    "n_pre_t_evaluable": 890,
+    "pre_t_status_counts": {
+     "PRE_T_COMPILER_INVALID": 1442,
+     "PRE_T_EVALUABLE": 890,
+     "PRE_T_INSUFFICIENT_RAW_N": 15854,
+     "PRE_T_NO_SCALE": 30,
+     "PRE_T_PROVIDER_UNSUPPORTED": 792
+    }
+   },
+   "n_admissible": 19008,
+   "n_pre_t_evaluable": 890,
+   "n_metrics_represented": 23,
+   "n_mechanism_types_represented": 5,
+   "sonnet_selections": [
+    {
+     "hypothesis_id": "9de90f1804adcde9dbd3add8349737c05857ab06f5038b300be7922cce5ec2c1",
+     "pre_t_status": "PRE_T_EVALUABLE",
+     "raw_n": 25,
+     "unique_fixtures": 25,
+     "unique_opponents": 23,
+     "effective_n": 25.0
+    },
+    {
+     "hypothesis_id": "d97aa2ab8173e47b638aec921615e798768134f77192f2d0d8e3b42ee69c32ce",
+     "pre_t_status": "PRE_T_EVALUABLE",
+     "raw_n": 25,
+     "unique_fixtures": 25,
+     "unique_opponents": 23,
+     "effective_n": 25.0
+    },
+    {
+     "hypothesis_id": "0188f3b23051e1a906dc766db34bc31e764f958810f6c9afa9e3e29b1f69dd70",
+     "pre_t_status": "PRE_T_INSUFFICIENT_RAW_N",
+     "raw_n": 7,
+     "unique_fixtures": 7,
+     "unique_opponents": 6,
+     "effective_n": 7.0
+    },
+    {
+     "hypothesis_id": "202a1647b7f7e091c0e7afe60bd67edc315eea592b2c4d0c352f4b7d608005d2",
+     "pre_t_status": "PRE_T_INSUFFICIENT_RAW_N",
+     "raw_n": 8,
+     "unique_fixtures": 8,
+     "unique_opponents": 7,
+     "effective_n": 8.0
+    }
+   ],
+   "n_sonnet_total": 4,
+   "n_sonnet_pre_t_eligible": 2,
+   "r_k_valid": 2,
+   "r_matched": 2,
+   "r_unmatched": 0,
+   "r_identity_count_v8c": 0,
+   "r_identity_count_v8b1": 2,
+   "r_cross_pair_overlap": 0,
+   "h_status": "MATCHED",
+   "h_n_selected": 2,
+   "h_n_ranked_over": 890
+  },
+  {
+   "fixture_id": "mt_367717813",
+   "competition": "champ",
+   "ledger": {
+    "n_shapes_enumerated": 21120,
+    "n_structurally_invalid": 2112,
+    "n_capability_excluded": 0,
+    "n_admissible": 19008,
+    "n_pre_t_evaluable": 920,
+    "pre_t_status_counts": {
+     "PRE_T_COMPILER_INVALID": 1350,
+     "PRE_T_EVALUABLE": 920,
+     "PRE_T_INSUFFICIENT_RAW_N": 15946,
+     "PRE_T_PROVIDER_UNSUPPORTED": 792
+    }
+   },
+   "n_admissible": 19008,
+   "n_pre_t_evaluable": 920,
+   "n_metrics_represented": 23,
+   "n_mechanism_types_represented": 5,
+   "sonnet_selections": [
+    {
+     "hypothesis_id": "729bf12ebca491ac1d66e9ee71986071f15952b6f3fc6d52ba224b944f7739c6",
+     "pre_t_status": "PRE_T_INSUFFICIENT_RAW_N",
+     "raw_n": 7,
+     "unique_fixtures": 7,
+     "unique_opponents": 6,
+     "effective_n": 7.0
+    },
+    {
+     "hypothesis_id": "8ba9a3178ebad9cdde97d733034e547851828f35fee3e94f40df78044b8e3332",
+     "pre_t_status": "PRE_T_INSUFFICIENT_RAW_N",
+     "raw_n": 8,
+     "unique_fixtures": 8,
+     "unique_opponents": 7,
+     "effective_n": 8.0
+    },
+    {
+     "hypothesis_id": "1632eb6f2dd7ab847d783bf5b0632bde85f5ab693d8ba67d54dd8b626fe170dd",
+     "pre_t_status": "PRE_T_INSUFFICIENT_RAW_N",
+     "raw_n": 7,
+     "unique_fixtures": 7,
+     "unique_opponents": 6,
+     "effective_n": 7.0
+    },
+    {
+     "hypothesis_id": "810553f1f570e7e9be793c3c833e8d1fc698cb62446dd0269f4e25aba2ed9192",
+     "pre_t_status": "PRE_T_INSUFFICIENT_RAW_N",
+     "raw_n": 11,
+     "unique_fixtures": 11,
+     "unique_opponents": 11,
+     "effective_n": 11.0
+    }
+   ],
+   "n_sonnet_total": 4,
+   "n_sonnet_pre_t_eligible": 0,
+   "r_k_valid": 0,
+   "r_matched": 0,
+   "r_unmatched": 0,
+   "r_identity_count_v8c": 0,
+   "r_identity_count_v8b1": 0,
+   "r_cross_pair_overlap": 0,
+   "h_status": "MATCHED",
+   "h_n_selected": 0,
+   "h_n_ranked_over": 920
+  },
+  {
+   "fixture_id": "mt_367717884",
+   "competition": "champ",
+   "ledger": {
+    "n_shapes_enumerated": 21120,
+    "n_structurally_invalid": 2112,
+    "n_capability_excluded": 0,
+    "n_admissible": 19008,
+    "n_pre_t_evaluable": 920,
+    "pre_t_status_counts": {
+     "PRE_T_COMPILER_INVALID": 1396,
+     "PRE_T_EVALUABLE": 920,
+     "PRE_T_INSUFFICIENT_RAW_N": 15900,
+     "PRE_T_PROVIDER_UNSUPPORTED": 792
+    }
+   },
+   "n_admissible": 19008,
+   "n_pre_t_evaluable": 920,
+   "n_metrics_represented": 23,
+   "n_mechanism_types_represented": 5,
+   "sonnet_selections": [
+    {
+     "hypothesis_id": "65c35cb8f936e4adaed5f7f659764d45e4f3bd2dc7cdd974565b9c17e8a53de5",
+     "pre_t_status": "PRE_T_COMPILER_INVALID",
+     "raw_n": null,
+     "unique_fixtures": null,
+     "unique_opponents": null,
+     "effective_n": null
+    },
+    {
+     "hypothesis_id": "d27701d03ad0d03ad3a075e5340d99d07e177b9b143d2d79c8fdd6e1ec722c19",
+     "pre_t_status": "PRE_T_INSUFFICIENT_RAW_N",
+     "raw_n": 13,
+     "unique_fixtures": 13,
+     "unique_opponents": 13,
+     "effective_n": 13.0
+    },
+    {
+     "hypothesis_id": "ad0ba987854d64cfba7acde297d7c03975d795756b471a54362bdf7ed2600008",
+     "pre_t_status": "PRE_T_COMPILER_INVALID",
+     "raw_n": null,
+     "unique_fixtures": null,
+     "unique_opponents": null,
+     "effective_n": null
+    },
+    {
+     "hypothesis_id": "5bc28de0ed98492fbc38315ec6f9870b1810396260e7acd5850a80e86fc5ceae",
+     "pre_t_status": "PRE_T_INSUFFICIENT_RAW_N",
+     "raw_n": 13,
+     "unique_fixtures": 13,
+     "unique_opponents": 13,
+     "effective_n": 13.0
+    },
+    {
+     "hypothesis_id": "34ccc17a8625dd46a5f62b4b90c91403929d58489cfcf5cd69ab6030d5557dc6",
+     "pre_t_status": "PRE_T_INSUFFICIENT_RAW_N",
+     "raw_n": 6,
+     "unique_fixtures": 6,
+     "unique_opponents": 6,
+     "effective_n": 6.0
+    },
+    {
+     "hypothesis_id": "7cd432f4750288ab680b179168568d8f3dac87238783f53a9e2b6ca9b7bbb412",
+     "pre_t_status": "PRE_T_COMPILER_INVALID",
+     "raw_n": null,
+     "unique_fixtures": null,
+     "unique_opponents": null,
+     "effective_n": null
+    },
+    {
+     "hypothesis_id": "3f33959db92b5fb272ddaaba54376af6a98c807dab207e030ad5d0df812b7f9b",
+     "pre_t_status": "PRE_T_INSUFFICIENT_RAW_N",
+     "raw_n": 9,
+     "unique_fixtures": 9,
+     "unique_opponents": 8,
+     "effective_n": 9.0
+    }
+   ],
+   "n_sonnet_total": 7,
+   "n_sonnet_pre_t_eligible": 0,
+   "r_k_valid": 0,
+   "r_matched": 0,
+   "r_unmatched": 0,
+   "r_identity_count_v8c": 0,
+   "r_identity_count_v8b1": 0,
+   "r_cross_pair_overlap": 0,
+   "h_status": "MATCHED",
+   "h_n_selected": 0,
+   "h_n_ranked_over": 920
+  },
+  {
+   "fixture_id": "mt_195565063",
+   "competition": "champ",
+   "ledger": {
+    "n_shapes_enumerated": 21120,
+    "n_structurally_invalid": 2112,
+    "n_capability_excluded": 0,
+    "n_admissible": 19008,
+    "n_pre_t_evaluable": 910,
+    "pre_t_status_counts": {
+     "PRE_T_COMPILER_INVALID": 1398,
+     "PRE_T_EVALUABLE": 910,
+     "PRE_T_INSUFFICIENT_RAW_N": 15898,
+     "PRE_T_NO_SCALE": 10,
+     "PRE_T_PROVIDER_UNSUPPORTED": 792
+    }
+   },
+   "n_admissible": 19008,
+   "n_pre_t_evaluable": 910,
+   "n_metrics_represented": 23,
+   "n_mechanism_types_represented": 5,
+   "sonnet_selections": [
+    {
+     "hypothesis_id": "67eb7e7ec21bf481d84224473e2f79e5de65a8989d27348e518d8c69090df396",
+     "pre_t_status": "PRE_T_INSUFFICIENT_RAW_N",
+     "raw_n": 8,
+     "unique_fixtures": 8,
+     "unique_opponents": 7,
+     "effective_n": 8.0
+    },
+    {
+     "hypothesis_id": "04915608e157c75b5055c4014f90052790a5218c41437bcb0f4ef13c845e95a9",
+     "pre_t_status": "PRE_T_INSUFFICIENT_RAW_N",
+     "raw_n": 8,
+     "unique_fixtures": 8,
+     "unique_opponents": 7,
+     "effective_n": 8.0
+    },
+    {
+     "hypothesis_id": "1ad052794dbf6e2d40ed3e36c6cdfcaadf16ce6f15b7099616ab8ee5f98f5f53",
+     "pre_t_status": "PRE_T_INSUFFICIENT_RAW_N",
+     "raw_n": 9,
+     "unique_fixtures": 9,
+     "unique_opponents": 7,
+     "effective_n": 9.0
+    },
+    {
+     "hypothesis_id": "95c3e401ac48433bf14d40b56497569a26892ff6438fd855014fecc50a8c4701",
+     "pre_t_status": "PRE_T_INSUFFICIENT_RAW_N",
+     "raw_n": 7,
+     "unique_fixtures": 7,
+     "unique_opponents": 7,
+     "effective_n": 7.0
+    }
+   ],
+   "n_sonnet_total": 4,
+   "n_sonnet_pre_t_eligible": 0,
+   "r_k_valid": 0,
+   "r_matched": 0,
+   "r_unmatched": 0,
+   "r_identity_count_v8c": 0,
+   "r_identity_count_v8b1": 0,
+   "r_cross_pair_overlap": 0,
+   "h_status": "MATCHED",
+   "h_n_selected": 0,
+   "h_n_ranked_over": 910
+  },
+  {
+   "fixture_id": "mt_743353951",
+   "competition": "champ",
+   "ledger": {
+    "n_shapes_enumerated": 21120,
+    "n_structurally_invalid": 2112,
+    "n_capability_excluded": 0,
+    "n_admissible": 19008,
+    "n_pre_t_evaluable": 920,
+    "pre_t_status_counts": {
+     "PRE_T_COMPILER_INVALID": 1580,
+     "PRE_T_EVALUABLE": 920,
+     "PRE_T_INSUFFICIENT_RAW_N": 15716,
+     "PRE_T_PROVIDER_UNSUPPORTED": 792
+    }
+   },
+   "n_admissible": 19008,
+   "n_pre_t_evaluable": 920,
+   "n_metrics_represented": 23,
+   "n_mechanism_types_represented": 5,
+   "sonnet_selections": [
+    {
+     "hypothesis_id": "6117ea4ed2caa065fcc67d98e4c5b86769a2ab0d5f86093a346c3095e07732de",
+     "pre_t_status": "PRE_T_INSUFFICIENT_RAW_N",
+     "raw_n": 13,
+     "unique_fixtures": 13,
+     "unique_opponents": 13,
+     "effective_n": 13.0
+    },
+    {
+     "hypothesis_id": "9b1ae577ce9e6822f03bd16f47faa0bac451f241efbabc161409bc1c02547d90",
+     "pre_t_status": "PRE_T_INSUFFICIENT_RAW_N",
+     "raw_n": 9,
+     "unique_fixtures": 9,
+     "unique_opponents": 7,
+     "effective_n": 9.0
+    },
+    {
+     "hypothesis_id": "ee42cfb0bcf61ca03495e7ed363d6614e3e4305a963b2ca7383f47dc357a758e",
+     "pre_t_status": "PRE_T_INSUFFICIENT_RAW_N",
+     "raw_n": 13,
+     "unique_fixtures": 13,
+     "unique_opponents": 13,
+     "effective_n": 13.0
+    },
+    {
+     "hypothesis_id": "c6418d77f193d485e386b67c17b8f267811bc6443d489bb58a44ad7e0d146f34",
+     "pre_t_status": "PRE_T_COMPILER_INVALID",
+     "raw_n": null,
+     "unique_fixtures": null,
+     "unique_opponents": null,
+     "effective_n": null
+    },
+    {
+     "hypothesis_id": "0a4aa1ca3fb438928cf867d17cbbd96607a65b6aae9e941c9f049fdca5b7a22d",
+     "pre_t_status": "PRE_T_COMPILER_INVALID",
+     "raw_n": null,
+     "unique_fixtures": null,
+     "unique_opponents": null,
+     "effective_n": null
+    },
+    {
+     "hypothesis_id": "1f0a486db0692b38bbd9fc39e78404f70e55b5f014704fc5e7b23660ce858193",
+     "pre_t_status": "PRE_T_INSUFFICIENT_RAW_N",
+     "raw_n": 13,
+     "unique_fixtures": 13,
+     "unique_opponents": 13,
+     "effective_n": 13.0
+    }
+   ],
+   "n_sonnet_total": 6,
+   "n_sonnet_pre_t_eligible": 0,
+   "r_k_valid": 0,
+   "r_matched": 0,
+   "r_unmatched": 0,
+   "r_identity_count_v8c": 0,
+   "r_identity_count_v8b1": 0,
+   "r_cross_pair_overlap": 0,
+   "h_status": "MATCHED",
+   "h_n_selected": 0,
+   "h_n_ranked_over": 920
+  },
+  {
+   "fixture_id": "mt_839909558",
+   "competition": "champ",
+   "ledger": {
+    "n_shapes_enumerated": 21120,
+    "n_structurally_invalid": 2112,
+    "n_capability_excluded": 0,
+    "n_admissible": 19008,
+    "n_pre_t_evaluable": 910,
+    "pre_t_status_counts": {
+     "PRE_T_COMPILER_INVALID": 1400,
+     "PRE_T_EVALUABLE": 910,
+     "PRE_T_INSUFFICIENT_RAW_N": 15896,
+     "PRE_T_NO_SCALE": 10,
+     "PRE_T_PROVIDER_UNSUPPORTED": 792
+    }
+   },
+   "n_admissible": 19008,
+   "n_pre_t_evaluable": 910,
+   "n_metrics_represented": 23,
+   "n_mechanism_types_represented": 5,
+   "sonnet_selections": [
+    {
+     "hypothesis_id": "565f748ef52c1c9807944e400d8602b9d5be40a7d47baf39a54d105c84b8aae3",
+     "pre_t_status": "PRE_T_COMPILER_INVALID",
+     "raw_n": null,
+     "unique_fixtures": null,
+     "unique_opponents": null,
+     "effective_n": null
+    },
+    {
+     "hypothesis_id": "7d74780a15a9aee518740c3f35951d4a47b8dee7c672483347b6d3c1b4ddb53b",
+     "pre_t_status": "PRE_T_COMPILER_INVALID",
+     "raw_n": null,
+     "unique_fixtures": null,
+     "unique_opponents": null,
+     "effective_n": null
+    },
+    {
+     "hypothesis_id": "bc12e34d4b6b3bce928b838e569a0bd6060cd0855a031335000da315fd2929aa",
+     "pre_t_status": "PRE_T_COMPILER_INVALID",
+     "raw_n": null,
+     "unique_fixtures": null,
+     "unique_opponents": null,
+     "effective_n": null
+    },
+    {
+     "hypothesis_id": "c26dd5d5d954fbcde17b72b24546f4687c4ddb03d8dbc248f01106439438461b",
+     "pre_t_status": "PRE_T_INSUFFICIENT_RAW_N",
+     "raw_n": 13,
+     "unique_fixtures": 13,
+     "unique_opponents": 13,
+     "effective_n": 13.0
+    },
+    {
+     "hypothesis_id": "ec5c76ebb9d658358f2bd85256044345aed9c7a9c88f088ad0d905b99eb9743a",
+     "pre_t_status": "PRE_T_COMPILER_INVALID",
+     "raw_n": null,
+     "unique_fixtures": null,
+     "unique_opponents": null,
+     "effective_n": null
+    },
+    {
+     "hypothesis_id": "58c3146e333c4f542eefbabfb46f4779d77183f54693156bda6da81502b459e6",
+     "pre_t_status": "PRE_T_COMPILER_INVALID",
+     "raw_n": null,
+     "unique_fixtures": null,
+     "unique_opponents": null,
+     "effective_n": null
+    }
+   ],
+   "n_sonnet_total": 6,
+   "n_sonnet_pre_t_eligible": 0,
+   "r_k_valid": 0,
+   "r_matched": 0,
+   "r_unmatched": 0,
+   "r_identity_count_v8c": 0,
+   "r_identity_count_v8b1": 0,
+   "r_cross_pair_overlap": 0,
+   "h_status": "MATCHED",
+   "h_n_selected": 0,
+   "h_n_ranked_over": 910
+  },
+  {
+   "fixture_id": "mt_367717872",
+   "competition": "champ",
+   "ledger": {
+    "n_shapes_enumerated": 21120,
+    "n_structurally_invalid": 2112,
+    "n_capability_excluded": 0,
+    "n_admissible": 19008,
+    "n_pre_t_evaluable": 920,
+    "pre_t_status_counts": {
+     "PRE_T_COMPILER_INVALID": 1350,
+     "PRE_T_EVALUABLE": 920,
+     "PRE_T_INSUFFICIENT_RAW_N": 15946,
+     "PRE_T_PROVIDER_UNSUPPORTED": 792
+    }
+   },
+   "n_admissible": 19008,
+   "n_pre_t_evaluable": 920,
+   "n_metrics_represented": 23,
+   "n_mechanism_types_represented": 5,
+   "sonnet_selections": [
+    {
+     "hypothesis_id": "187610c5a312bdba6050a154b937774e5a99d365ce220610b34787d5aad8a676",
+     "pre_t_status": "PRE_T_INSUFFICIENT_RAW_N",
+     "raw_n": 6,
+     "unique_fixtures": 6,
+     "unique_opponents": 5,
+     "effective_n": 6.0
+    },
+    {
+     "hypothesis_id": "1ad052794dbf6e2d40ed3e36c6cdfcaadf16ce6f15b7099616ab8ee5f98f5f53",
+     "pre_t_status": "PRE_T_INSUFFICIENT_RAW_N",
+     "raw_n": 6,
+     "unique_fixtures": 6,
+     "unique_opponents": 6,
+     "effective_n": 6.0
+    },
+    {
+     "hypothesis_id": "33dada7d970df9ab49906e8842034cdad55fc1ed20b241a471f4f6d4ab278c58",
+     "pre_t_status": "PRE_T_INSUFFICIENT_RAW_N",
+     "raw_n": 7,
+     "unique_fixtures": 7,
+     "unique_opponents": 6,
+     "effective_n": 7.0
+    },
+    {
+     "hypothesis_id": "565f748ef52c1c9807944e400d8602b9d5be40a7d47baf39a54d105c84b8aae3",
+     "pre_t_status": "PRE_T_COMPILER_INVALID",
+     "raw_n": null,
+     "unique_fixtures": null,
+     "unique_opponents": null,
+     "effective_n": null
+    },
+    {
+     "hypothesis_id": "7dbd75bb2cf7df20d12503e49182584681e6b82c0d74b3e6345fde6b74d5c2d9",
+     "pre_t_status": "PRE_T_INSUFFICIENT_RAW_N",
+     "raw_n": 6,
+     "unique_fixtures": 6,
+     "unique_opponents": 5,
+     "effective_n": 6.0
+    },
+    {
+     "hypothesis_id": "4905f78810671df5ee60879a1e9ce833171772fcd692ecab91e7c0dd5b0f4002",
+     "pre_t_status": "PRE_T_INSUFFICIENT_RAW_N",
+     "raw_n": 9,
+     "unique_fixtures": 9,
+     "unique_opponents": 7,
+     "effective_n": 9.0
+    }
+   ],
+   "n_sonnet_total": 6,
+   "n_sonnet_pre_t_eligible": 0,
+   "r_k_valid": 0,
+   "r_matched": 0,
+   "r_unmatched": 0,
+   "r_identity_count_v8c": 0,
+   "r_identity_count_v8b1": 0,
+   "r_cross_pair_overlap": 0,
+   "h_status": "MATCHED",
+   "h_n_selected": 0,
+   "h_n_ranked_over": 920
+  },
+  {
+   "fixture_id": "mt_581141218",
+   "competition": "champ",
+   "ledger": {
+    "n_shapes_enumerated": 21120,
+    "n_structurally_invalid": 2112,
+    "n_capability_excluded": 0,
+    "n_admissible": 19008,
+    "n_pre_t_evaluable": 920,
+    "pre_t_status_counts": {
+     "PRE_T_COMPILER_INVALID": 1396,
+     "PRE_T_EVALUABLE": 920,
+     "PRE_T_INSUFFICIENT_RAW_N": 15900,
+     "PRE_T_PROVIDER_UNSUPPORTED": 792
+    }
+   },
+   "n_admissible": 19008,
+   "n_pre_t_evaluable": 920,
+   "n_metrics_represented": 23,
+   "n_mechanism_types_represented": 5,
+   "sonnet_selections": [
+    {
+     "hypothesis_id": "36839ea3e96a5494053dee765de12bf908fc7c05d8d0a33035e4873db077939c",
+     "pre_t_status": "PRE_T_INSUFFICIENT_RAW_N",
+     "raw_n": 6,
+     "unique_fixtures": 6,
+     "unique_opponents": 6,
+     "effective_n": 6.0
+    },
+    {
+     "hypothesis_id": "1427975bdf8d7baad14d5cecbbd7b82b72c486192c2a32f16573f16f26d04725",
+     "pre_t_status": "PRE_T_INSUFFICIENT_RAW_N",
+     "raw_n": 7,
+     "unique_fixtures": 8,
+     "unique_opponents": 8,
+     "effective_n": 7.0
+    },
+    {
+     "hypothesis_id": "2a6ff1a283f39c37a52b0f277ac22d23be405cacb476e00cb5a500eb09453346",
+     "pre_t_status": "PRE_T_INSUFFICIENT_RAW_N",
+     "raw_n": 11,
+     "unique_fixtures": 11,
+     "unique_opponents": 8,
+     "effective_n": 11.0
+    },
+    {
+     "hypothesis_id": "44d64240bd6a93fc82016babe53518a5620ba0141b28cd3d919617a68903ad21",
+     "pre_t_status": "PRE_T_INSUFFICIENT_RAW_N",
+     "raw_n": 9,
+     "unique_fixtures": 9,
+     "unique_opponents": 7,
+     "effective_n": 9.0
+    }
+   ],
+   "n_sonnet_total": 4,
+   "n_sonnet_pre_t_eligible": 0,
+   "r_k_valid": 0,
+   "r_matched": 0,
+   "r_unmatched": 0,
+   "r_identity_count_v8c": 0,
+   "r_identity_count_v8b1": 0,
+   "r_cross_pair_overlap": 0,
+   "h_status": "MATCHED",
+   "h_n_selected": 0,
+   "h_n_ranked_over": 920
+  },
+  {
+   "fixture_id": "mt_406686767",
+   "competition": "champ",
+   "ledger": {
+    "n_shapes_enumerated": 21120,
+    "n_structurally_invalid": 2112,
+    "n_capability_excluded": 0,
+    "n_admissible": 19008,
+    "n_pre_t_evaluable": 920,
+    "pre_t_status_counts": {
+     "PRE_T_COMPILER_INVALID": 1350,
+     "PRE_T_EVALUABLE": 920,
+     "PRE_T_INSUFFICIENT_RAW_N": 15946,
+     "PRE_T_PROVIDER_UNSUPPORTED": 792
+    }
+   },
+   "n_admissible": 19008,
+   "n_pre_t_evaluable": 920,
+   "n_metrics_represented": 23,
+   "n_mechanism_types_represented": 5,
+   "sonnet_selections": [
+    {
+     "hypothesis_id": "248ddd68049ef5a5cbff12c1e8e4dad0e957616f79c3a999d813134d0754be7f",
+     "pre_t_status": "PRE_T_INSUFFICIENT_RAW_N",
+     "raw_n": 8,
+     "unique_fixtures": 8,
+     "unique_opponents": 7,
+     "effective_n": 8.0
+    },
+    {
+     "hypothesis_id": "3246409e0c5469d3e1300034e7aa87eeccaff6f788ed5dce6528345606a31e49",
+     "pre_t_status": "PRE_T_INSUFFICIENT_RAW_N",
+     "raw_n": 11,
+     "unique_fixtures": 11,
+     "unique_opponents": 9,
+     "effective_n": 11.0
+    },
+    {
+     "hypothesis_id": "1dbb45ecebf5925e9a95c24a678cf3f28ac97a6af9dc2dcadf42eb2396ef80bb",
+     "pre_t_status": "PRE_T_INSUFFICIENT_RAW_N",
+     "raw_n": 11,
+     "unique_fixtures": 11,
+     "unique_opponents": 9,
+     "effective_n": 11.0
+    },
+    {
+     "hypothesis_id": "57dec42ff39d7340b5cc535cdc697b1d6e4a0ab0efe61d8d64ad4219f76ab401",
+     "pre_t_status": "PRE_T_INSUFFICIENT_RAW_N",
+     "raw_n": 9,
+     "unique_fixtures": 9,
+     "unique_opponents": 7,
+     "effective_n": 9.0
+    },
+    {
+     "hypothesis_id": "3f33959db92b5fb272ddaaba54376af6a98c807dab207e030ad5d0df812b7f9b",
+     "pre_t_status": "PRE_T_INSUFFICIENT_RAW_N",
+     "raw_n": 13,
+     "unique_fixtures": 13,
+     "unique_opponents": 10,
+     "effective_n": 13.0
+    },
+    {
+     "hypothesis_id": "50614facccd8292cca2b49c330388712335e624340242387ddd4f96166b4d92b",
+     "pre_t_status": "PRE_T_INSUFFICIENT_RAW_N",
+     "raw_n": 12,
+     "unique_fixtures": 12,
+     "unique_opponents": 10,
+     "effective_n": 12.0
+    }
+   ],
+   "n_sonnet_total": 6,
+   "n_sonnet_pre_t_eligible": 0,
+   "r_k_valid": 0,
+   "r_matched": 0,
+   "r_unmatched": 0,
+   "r_identity_count_v8c": 0,
+   "r_identity_count_v8b1": 0,
+   "r_cross_pair_overlap": 0,
+   "h_status": "MATCHED",
+   "h_n_selected": 0,
+   "h_n_ranked_over": 920
+  },
+  {
+   "fixture_id": "mt_749907509",
+   "competition": "champ",
+   "ledger": {
+    "n_shapes_enumerated": 21120,
+    "n_structurally_invalid": 2112,
+    "n_capability_excluded": 0,
+    "n_admissible": 19008,
+    "n_pre_t_evaluable": 920,
+    "pre_t_status_counts": {
+     "PRE_T_COMPILER_INVALID": 1396,
+     "PRE_T_EVALUABLE": 920,
+     "PRE_T_INSUFFICIENT_RAW_N": 15900,
+     "PRE_T_PROVIDER_UNSUPPORTED": 792
+    }
+   },
+   "n_admissible": 19008,
+   "n_pre_t_evaluable": 920,
+   "n_metrics_represented": 23,
+   "n_mechanism_types_represented": 5,
+   "sonnet_selections": [
+    {
+     "hypothesis_id": "079a51bf997414b86bd2449911afedd762331ac0bbfe8012aefac15b1b436c3d",
+     "pre_t_status": "PRE_T_INSUFFICIENT_RAW_N",
+     "raw_n": 11,
+     "unique_fixtures": 11,
+     "unique_opponents": 8,
+     "effective_n": 11.0
+    },
+    {
+     "hypothesis_id": "0787f051cdece55af0ff40b9daa43e2a24f10bdbef6a564e44476f108ca17cb8",
+     "pre_t_status": "PRE_T_INSUFFICIENT_RAW_N",
+     "raw_n": 9,
+     "unique_fixtures": 9,
+     "unique_opponents": 8,
+     "effective_n": 9.0
+    },
+    {
+     "hypothesis_id": "00bc0d04733ae1f17c37c40ed90280d86b13360f2fef275d8e794d25af021bb0",
+     "pre_t_status": "PRE_T_INSUFFICIENT_RAW_N",
+     "raw_n": 8,
+     "unique_fixtures": 8,
+     "unique_opponents": 7,
+     "effective_n": 8.0
+    },
+    {
+     "hypothesis_id": "038984e426fc52c2fba95c12e290c54185780489942a5ec778d799ecd664dcd5",
+     "pre_t_status": "PRE_T_INSUFFICIENT_RAW_N",
+     "raw_n": 8,
+     "unique_fixtures": 8,
+     "unique_opponents": 7,
+     "effective_n": 8.0
+    },
+    {
+     "hypothesis_id": "040d4b567da672b5e5d9074ee411c4abe63cdc4a9c70d93b0432643cacc9ba16",
+     "pre_t_status": "PRE_T_INSUFFICIENT_RAW_N",
+     "raw_n": 8,
+     "unique_fixtures": 8,
+     "unique_opponents": 7,
+     "effective_n": 8.0
+    },
+    {
+     "hypothesis_id": "06f020262037e1493f8660c76f5edb03eba411595045ed6e016b37a98116d4bd",
+     "pre_t_status": "PRE_T_INSUFFICIENT_RAW_N",
+     "raw_n": 9,
+     "unique_fixtures": 9,
+     "unique_opponents": 7,
+     "effective_n": 9.0
+    },
+    {
+     "hypothesis_id": "0b4808bb41dc6cd5d3814e0dd347ea68e8c4c9f610b321a38857fffd9143397f",
+     "pre_t_status": "PRE_T_INSUFFICIENT_RAW_N",
+     "raw_n": 9,
+     "unique_fixtures": 9,
+     "unique_opponents": 7,
+     "effective_n": 9.0
+    },
+    {
+     "hypothesis_id": "0b2c2425445018424096e74a4676b62261d4e5fbba443d44ae7943646b44bd50",
+     "pre_t_status": "PRE_T_INSUFFICIENT_RAW_N",
+     "raw_n": 11,
+     "unique_fixtures": 11,
+     "unique_opponents": 9,
+     "effective_n": 11.0
+    }
+   ],
+   "n_sonnet_total": 8,
+   "n_sonnet_pre_t_eligible": 0,
+   "r_k_valid": 0,
+   "r_matched": 0,
+   "r_unmatched": 0,
+   "r_identity_count_v8c": 0,
+   "r_identity_count_v8b1": 0,
+   "r_cross_pair_overlap": 0,
+   "h_status": "MATCHED",
+   "h_n_selected": 0,
+   "h_n_ranked_over": 920
+  },
+  {
+   "fixture_id": "mt_406686750",
+   "competition": "champ",
+   "ledger": {
+    "n_shapes_enumerated": 21120,
+    "n_structurally_invalid": 2112,
+    "n_capability_excluded": 0,
+    "n_admissible": 19008,
+    "n_pre_t_evaluable": 920,
+    "pre_t_status_counts": {
+     "PRE_T_COMPILER_INVALID": 1442,
+     "PRE_T_EVALUABLE": 920,
+     "PRE_T_INSUFFICIENT_RAW_N": 15854,
+     "PRE_T_PROVIDER_UNSUPPORTED": 792
+    }
+   },
+   "n_admissible": 19008,
+   "n_pre_t_evaluable": 920,
+   "n_metrics_represented": 23,
+   "n_mechanism_types_represented": 5,
+   "sonnet_selections": [
+    {
+     "hypothesis_id": "9b1ae577ce9e6822f03bd16f47faa0bac451f241efbabc161409bc1c02547d90",
+     "pre_t_status": "PRE_T_INSUFFICIENT_RAW_N",
+     "raw_n": 9,
+     "unique_fixtures": 9,
+     "unique_opponents": 7,
+     "effective_n": 9.0
+    },
+    {
+     "hypothesis_id": "8afad8526e62f8ac3597c0cf398a0e4ae9eba15c613743f7bac097924d51c563",
+     "pre_t_status": "PRE_T_INSUFFICIENT_RAW_N",
+     "raw_n": 9,
+     "unique_fixtures": 9,
+     "unique_opponents": 7,
+     "effective_n": 9.0
+    },
+    {
+     "hypothesis_id": "8d80562c5cce65dc53277af3a53ca8f0e4e6c9bcd2623f5b8c5dbe1266b0fc87",
+     "pre_t_status": "PRE_T_INSUFFICIENT_RAW_N",
+     "raw_n": 9,
+     "unique_fixtures": 9,
+     "unique_opponents": 7,
+     "effective_n": 9.0
+    },
+    {
+     "hypothesis_id": "0b1d6b849951fe3dea37cdef5f3ca43284e270af9c24eaf3321d5ffe74178ca0",
+     "pre_t_status": "PRE_T_INSUFFICIENT_RAW_N",
+     "raw_n": 9,
+     "unique_fixtures": 9,
+     "unique_opponents": 7,
+     "effective_n": 9.0
+    },
+    {
+     "hypothesis_id": "16f9c1817bfbb717b5d77f47f8bc8add75b04417932ddb695f239df7c51028c2",
+     "pre_t_status": "PRE_T_COMPILER_INVALID",
+     "raw_n": null,
+     "unique_fixtures": null,
+     "unique_opponents": null,
+     "effective_n": null
+    },
+    {
+     "hypothesis_id": "2904990403f54082098f3ae199f119861a3eae4cb442d113ade71364ea2421c3",
+     "pre_t_status": "PRE_T_INSUFFICIENT_RAW_N",
+     "raw_n": 9,
+     "unique_fixtures": 9,
+     "unique_opponents": 7,
+     "effective_n": 9.0
+    },
+    {
+     "hypothesis_id": "37be8faa7a502021b81133d8b52fa399742ef7ae5face34f3512533c23556623",
+     "pre_t_status": "PRE_T_INSUFFICIENT_RAW_N",
+     "raw_n": 12,
+     "unique_fixtures": 12,
+     "unique_opponents": 9,
+     "effective_n": 12.0
+    },
+    {
+     "hypothesis_id": "a8985b9587fcf452305e447868dbca7a216ca848f6bae11d7a204375ed21c9a9",
+     "pre_t_status": "PRE_T_EVALUABLE",
+     "raw_n": 29,
+     "unique_fixtures": 29,
+     "unique_opponents": 23,
+     "effective_n": 29.0
+    }
+   ],
+   "n_sonnet_total": 8,
+   "n_sonnet_pre_t_eligible": 1,
+   "r_k_valid": 1,
+   "r_matched": 1,
+   "r_unmatched": 0,
+   "r_identity_count_v8c": 0,
+   "r_identity_count_v8b1": 1,
+   "r_cross_pair_overlap": 0,
+   "h_status": "MATCHED",
+   "h_n_selected": 1,
+   "h_n_ranked_over": 920
+  },
+  {
+   "fixture_id": "mt_978828893",
+   "competition": "champ",
+   "ledger": {
+    "n_shapes_enumerated": 21120,
+    "n_structurally_invalid": 2112,
+    "n_capability_excluded": 0,
+    "n_admissible": 19008,
+    "n_pre_t_evaluable": 920,
+    "pre_t_status_counts": {
+     "PRE_T_COMPILER_INVALID": 1442,
+     "PRE_T_EVALUABLE": 920,
+     "PRE_T_INSUFFICIENT_RAW_N": 15854,
+     "PRE_T_PROVIDER_UNSUPPORTED": 792
+    }
+   },
+   "n_admissible": 19008,
+   "n_pre_t_evaluable": 920,
+   "n_metrics_represented": 23,
+   "n_mechanism_types_represented": 5,
+   "sonnet_selections": [
+    {
+     "hypothesis_id": "5bf43cc4b8c6f49d3a2939671a1a944fad710865e672b031ed0078b3cac8d3d1",
+     "pre_t_status": "PRE_T_INSUFFICIENT_RAW_N",
+     "raw_n": 9,
+     "unique_fixtures": 9,
+     "unique_opponents": 7,
+     "effective_n": 9.0
+    },
+    {
+     "hypothesis_id": "234c9901970490d946ece0acf34ef18238ccab3deef7989873055d125504b988",
+     "pre_t_status": "PRE_T_INSUFFICIENT_RAW_N",
+     "raw_n": 9,
+     "unique_fixtures": 9,
+     "unique_opponents": 7,
+     "effective_n": 9.0
+    },
+    {
+     "hypothesis_id": "01c0eb701d6509a95e0e0480e775c97b5c8ad71ef61ddd15a1b8bf172cf0c23e",
+     "pre_t_status": "PRE_T_INSUFFICIENT_RAW_N",
+     "raw_n": 10,
+     "unique_fixtures": 10,
+     "unique_opponents": 8,
+     "effective_n": 10.0
+    },
+    {
+     "hypothesis_id": "3ab31257a52dc09a7ba31619af3eafa80e7a65c8a80566d4997b143a212dae17",
+     "pre_t_status": "PRE_T_INSUFFICIENT_RAW_N",
+     "raw_n": 9,
+     "unique_fixtures": 9,
+     "unique_opponents": 8,
+     "effective_n": 9.0
+    }
+   ],
+   "n_sonnet_total": 4,
+   "n_sonnet_pre_t_eligible": 0,
+   "r_k_valid": 0,
+   "r_matched": 0,
+   "r_unmatched": 0,
+   "r_identity_count_v8c": 0,
+   "r_identity_count_v8b1": 0,
+   "r_cross_pair_overlap": 0,
+   "h_status": "MATCHED",
+   "h_n_selected": 0,
+   "h_n_ranked_over": 920
+  },
+  {
+   "fixture_id": "mt_406686795",
+   "competition": "champ",
+   "ledger": {
+    "n_shapes_enumerated": 21120,
+    "n_structurally_invalid": 2112,
+    "n_capability_excluded": 0,
+    "n_admissible": 19008,
+    "n_pre_t_evaluable": 920,
+    "pre_t_status_counts": {
+     "PRE_T_COMPILER_INVALID": 1350,
+     "PRE_T_EVALUABLE": 920,
+     "PRE_T_INSUFFICIENT_RAW_N": 15946,
+     "PRE_T_PROVIDER_UNSUPPORTED": 792
+    }
+   },
+   "n_admissible": 19008,
+   "n_pre_t_evaluable": 920,
+   "n_metrics_represented": 23,
+   "n_mechanism_types_represented": 5,
+   "sonnet_selections": [],
+   "n_sonnet_total": 0,
+   "n_sonnet_pre_t_eligible": 0,
+   "r_k_valid": 0,
+   "r_matched": 0,
+   "r_unmatched": 0,
+   "r_identity_count_v8c": 0,
+   "r_identity_count_v8b1": 0,
+   "r_cross_pair_overlap": 0,
+   "h_status": "MATCHED",
+   "h_n_selected": 0,
+   "h_n_ranked_over": 920
+  },
+  {
+   "fixture_id": "mt_406671921",
+   "competition": "champ",
+   "ledger": {
+    "n_shapes_enumerated": 21120,
+    "n_structurally_invalid": 2112,
+    "n_capability_excluded": 0,
+    "n_admissible": 19008,
+    "n_pre_t_evaluable": 900,
+    "pre_t_status_counts": {
+     "PRE_T_COMPILER_INVALID": 1350,
+     "PRE_T_EVALUABLE": 900,
+     "PRE_T_INSUFFICIENT_RAW_N": 15946,
+     "PRE_T_NO_SCALE": 20,
+     "PRE_T_PROVIDER_UNSUPPORTED": 792
+    }
+   },
+   "n_admissible": 19008,
+   "n_pre_t_evaluable": 900,
+   "n_metrics_represented": 23,
+   "n_mechanism_types_represented": 5,
+   "sonnet_selections": [
+    {
+     "hypothesis_id": "565f748ef52c1c9807944e400d8602b9d5be40a7d47baf39a54d105c84b8aae3",
+     "pre_t_status": "PRE_T_COMPILER_INVALID",
+     "raw_n": null,
+     "unique_fixtures": null,
+     "unique_opponents": null,
+     "effective_n": null
+    },
+    {
+     "hypothesis_id": "58c3146e333c4f542eefbabfb46f4779d77183f54693156bda6da81502b459e6",
+     "pre_t_status": "PRE_T_COMPILER_INVALID",
+     "raw_n": null,
+     "unique_fixtures": null,
+     "unique_opponents": null,
+     "effective_n": null
+    },
+    {
+     "hypothesis_id": "16f9c1817bfbb717b5d77f47f8bc8add75b04417932ddb695f239df7c51028c2",
+     "pre_t_status": "PRE_T_COMPILER_INVALID",
+     "raw_n": null,
+     "unique_fixtures": null,
+     "unique_opponents": null,
+     "effective_n": null
+    }
+   ],
+   "n_sonnet_total": 3,
+   "n_sonnet_pre_t_eligible": 0,
+   "r_k_valid": 0,
+   "r_matched": 0,
+   "r_unmatched": 0,
+   "r_identity_count_v8c": 0,
+   "r_identity_count_v8b1": 0,
+   "r_cross_pair_overlap": 0,
+   "h_status": "MATCHED",
+   "h_n_selected": 0,
+   "h_n_ranked_over": 900
+  },
+  {
+   "fixture_id": "mt_012249732",
+   "competition": "champ",
+   "ledger": {
+    "n_shapes_enumerated": 21120,
+    "n_structurally_invalid": 2112,
+    "n_capability_excluded": 0,
+    "n_admissible": 19008,
+    "n_pre_t_evaluable": 910,
+    "pre_t_status_counts": {
+     "PRE_T_COMPILER_INVALID": 1442,
+     "PRE_T_EVALUABLE": 910,
+     "PRE_T_INSUFFICIENT_RAW_N": 15854,
+     "PRE_T_NO_SCALE": 10,
+     "PRE_T_PROVIDER_UNSUPPORTED": 792
+    }
+   },
+   "n_admissible": 19008,
+   "n_pre_t_evaluable": 910,
+   "n_metrics_represented": 23,
+   "n_mechanism_types_represented": 5,
+   "sonnet_selections": [],
+   "n_sonnet_total": 0,
+   "n_sonnet_pre_t_eligible": 0,
+   "r_k_valid": 0,
+   "r_matched": 0,
+   "r_unmatched": 0,
+   "r_identity_count_v8c": 0,
+   "r_identity_count_v8b1": 0,
+   "r_cross_pair_overlap": 0,
+   "h_status": "MATCHED",
+   "h_n_selected": 0,
+   "h_n_ranked_over": 910
+  },
+  {
+   "fixture_id": "mt_012249753",
+   "competition": "champ",
+   "ledger": {
+    "n_shapes_enumerated": 21120,
+    "n_structurally_invalid": 2112,
+    "n_capability_excluded": 0,
+    "n_admissible": 19008,
+    "n_pre_t_evaluable": 910,
+    "pre_t_status_counts": {
+     "PRE_T_COMPILER_INVALID": 1350,
+     "PRE_T_EVALUABLE": 910,
+     "PRE_T_INSUFFICIENT_RAW_N": 15946,
+     "PRE_T_NO_SCALE": 10,
+     "PRE_T_PROVIDER_UNSUPPORTED": 792
+    }
+   },
+   "n_admissible": 19008,
+   "n_pre_t_evaluable": 910,
+   "n_metrics_represented": 23,
+   "n_mechanism_types_represented": 5,
+   "sonnet_selections": [
+    {
+     "hypothesis_id": "1ad052794dbf6e2d40ed3e36c6cdfcaadf16ce6f15b7099616ab8ee5f98f5f53",
+     "pre_t_status": "PRE_T_INSUFFICIENT_RAW_N",
+     "raw_n": 10,
+     "unique_fixtures": 10,
+     "unique_opponents": 7,
+     "effective_n": 10.0
+    },
+    {
+     "hypothesis_id": "33dada7d970df9ab49906e8842034cdad55fc1ed20b241a471f4f6d4ab278c58",
+     "pre_t_status": "PRE_T_INSUFFICIENT_RAW_N",
+     "raw_n": 10,
+     "unique_fixtures": 10,
+     "unique_opponents": 7,
+     "effective_n": 10.0
+    },
+    {
+     "hypothesis_id": "0693c93355a07050c543fcf35e19d6ad4421337a3730787cf5b25a0797f4d628",
+     "pre_t_status": "PRE_T_INSUFFICIENT_RAW_N",
+     "raw_n": 14,
+     "unique_fixtures": 14,
+     "unique_opponents": 7,
+     "effective_n": 14.0
+    },
+    {
+     "hypothesis_id": "8fc012dafe0e1b3b913aa821828467d70c0bc402265229123605196f266bd4f2",
+     "pre_t_status": "PRE_T_INSUFFICIENT_RAW_N",
+     "raw_n": 10,
+     "unique_fixtures": 10,
+     "unique_opponents": 7,
+     "effective_n": 10.0
+    }
+   ],
+   "n_sonnet_total": 4,
+   "n_sonnet_pre_t_eligible": 0,
+   "r_k_valid": 0,
+   "r_matched": 0,
+   "r_unmatched": 0,
+   "r_identity_count_v8c": 0,
+   "r_identity_count_v8b1": 0,
+   "r_cross_pair_overlap": 0,
+   "h_status": "MATCHED",
+   "h_n_selected": 0,
+   "h_n_ranked_over": 910
+  },
+  {
+   "fixture_id": "mt_195507497",
+   "competition": "champ",
+   "ledger": {
+    "n_shapes_enumerated": 21120,
+    "n_structurally_invalid": 2112,
+    "n_capability_excluded": 0,
+    "n_admissible": 19008,
+    "n_pre_t_evaluable": 920,
+    "pre_t_status_counts": {
+     "PRE_T_COMPILER_INVALID": 1488,
+     "PRE_T_EVALUABLE": 920,
+     "PRE_T_INSUFFICIENT_RAW_N": 15808,
+     "PRE_T_PROVIDER_UNSUPPORTED": 792
+    }
+   },
+   "n_admissible": 19008,
+   "n_pre_t_evaluable": 920,
+   "n_metrics_represented": 23,
+   "n_mechanism_types_represented": 5,
+   "sonnet_selections": [],
+   "n_sonnet_total": 0,
+   "n_sonnet_pre_t_eligible": 0,
+   "r_k_valid": 0,
+   "r_matched": 0,
+   "r_unmatched": 0,
+   "r_identity_count_v8c": 0,
+   "r_identity_count_v8b1": 0,
+   "r_cross_pair_overlap": 0,
+   "h_status": "MATCHED",
+   "h_n_selected": 0,
+   "h_n_ranked_over": 920
+  },
+  {
+   "fixture_id": "mt_839956235",
+   "competition": "champ",
+   "ledger": {
+    "n_shapes_enumerated": 21120,
+    "n_structurally_invalid": 2112,
+    "n_capability_excluded": 0,
+    "n_admissible": 19008,
+    "n_pre_t_evaluable": 910,
+    "pre_t_status_counts": {
+     "PRE_T_COMPILER_INVALID": 1396,
+     "PRE_T_EVALUABLE": 910,
+     "PRE_T_INSUFFICIENT_RAW_N": 15900,
+     "PRE_T_NO_SCALE": 10,
+     "PRE_T_PROVIDER_UNSUPPORTED": 792
+    }
+   },
+   "n_admissible": 19008,
+   "n_pre_t_evaluable": 910,
+   "n_metrics_represented": 23,
+   "n_mechanism_types_represented": 5,
+   "sonnet_selections": [
+    {
+     "hypothesis_id": "57dec42ff39d7340b5cc535cdc697b1d6e4a0ab0efe61d8d64ad4219f76ab401",
+     "pre_t_status": "PRE_T_INSUFFICIENT_RAW_N",
+     "raw_n": 10,
+     "unique_fixtures": 10,
+     "unique_opponents": 8,
+     "effective_n": 10.0
+    },
+    {
+     "hypothesis_id": "248ddd68049ef5a5cbff12c1e8e4dad0e957616f79c3a999d813134d0754be7f",
+     "pre_t_status": "PRE_T_INSUFFICIENT_RAW_N",
+     "raw_n": 10,
+     "unique_fixtures": 10,
+     "unique_opponents": 7,
+     "effective_n": 10.0
+    },
+    {
+     "hypothesis_id": "351f0c3a3127b43148fd872381e5e40449dc22bdb398ff218240e2fbe8185749",
+     "pre_t_status": "PRE_T_INSUFFICIENT_RAW_N",
+     "raw_n": 10,
+     "unique_fixtures": 10,
+     "unique_opponents": 7,
+     "effective_n": 10.0
+    },
+    {
+     "hypothesis_id": "1bb50026fe73ffb5bc30eacf49400ac29b40747217a5b8adff9f819aa039f636",
+     "pre_t_status": "PRE_T_INSUFFICIENT_RAW_N",
+     "raw_n": 12,
+     "unique_fixtures": 12,
+     "unique_opponents": 7,
+     "effective_n": 12.0
+    },
+    {
+     "hypothesis_id": "8fc012dafe0e1b3b913aa821828467d70c0bc402265229123605196f266bd4f2",
+     "pre_t_status": "PRE_T_INSUFFICIENT_RAW_N",
+     "raw_n": 11,
+     "unique_fixtures": 11,
+     "unique_opponents": 7,
+     "effective_n": 11.0
+    }
+   ],
+   "n_sonnet_total": 5,
+   "n_sonnet_pre_t_eligible": 0,
+   "r_k_valid": 0,
+   "r_matched": 0,
+   "r_unmatched": 0,
+   "r_identity_count_v8c": 0,
+   "r_identity_count_v8b1": 0,
+   "r_cross_pair_overlap": 0,
+   "h_status": "MATCHED",
+   "h_n_selected": 0,
+   "h_n_ranked_over": 910
+  },
+  {
+   "fixture_id": "mt_012249717",
+   "competition": "champ",
+   "ledger": {
+    "n_shapes_enumerated": 21120,
+    "n_structurally_invalid": 2112,
+    "n_capability_excluded": 0,
+    "n_admissible": 19008,
+    "n_pre_t_evaluable": 920,
+    "pre_t_status_counts": {
+     "PRE_T_COMPILER_INVALID": 1304,
+     "PRE_T_EVALUABLE": 920,
+     "PRE_T_INSUFFICIENT_RAW_N": 15992,
+     "PRE_T_PROVIDER_UNSUPPORTED": 792
+    }
+   },
+   "n_admissible": 19008,
+   "n_pre_t_evaluable": 920,
+   "n_metrics_represented": 23,
+   "n_mechanism_types_represented": 5,
+   "sonnet_selections": [
+    {
+     "hypothesis_id": "f0a696cdf6d3a0a81a96834ec6c0239d945278bea19e5bfb32a611356d1c8179",
+     "pre_t_status": "PRE_T_INSUFFICIENT_RAW_N",
+     "raw_n": 11,
+     "unique_fixtures": 11,
+     "unique_opponents": 7,
+     "effective_n": 11.0
+    },
+    {
+     "hypothesis_id": "65c35cb8f936e4adaed5f7f659764d45e4f3bd2dc7cdd974565b9c17e8a53de5",
+     "pre_t_status": "PRE_T_COMPILER_INVALID",
+     "raw_n": null,
+     "unique_fixtures": null,
+     "unique_opponents": null,
+     "effective_n": null
+    },
+    {
+     "hypothesis_id": "77a809afc89ca29172c12d0e116700df94779ad5b86ae7057e714f3ef1cfe09c",
+     "pre_t_status": "PRE_T_INSUFFICIENT_RAW_N",
+     "raw_n": 10,
+     "unique_fixtures": 10,
+     "unique_opponents": 7,
+     "effective_n": 10.0
+    },
+    {
+     "hypothesis_id": "5201dd9350c994854c81d0e4f5507ef94d99d83ff80763d0576df84275121839",
+     "pre_t_status": "PRE_T_INSUFFICIENT_RAW_N",
+     "raw_n": 2,
+     "unique_fixtures": 2,
+     "unique_opponents": 1,
+     "effective_n": 2.0
+    },
+    {
+     "hypothesis_id": "37f7ae54e9f55c0a7d293025e03c71c1c4a2100d8a999da9a88c042c5b32b1a1",
+     "pre_t_status": "PRE_T_INSUFFICIENT_RAW_N",
+     "raw_n": 9,
+     "unique_fixtures": 9,
+     "unique_opponents": 6,
+     "effective_n": 9.0
+    },
+    {
+     "hypothesis_id": "729bf12ebca491ac1d66e9ee71986071f15952b6f3fc6d52ba224b944f7739c6",
+     "pre_t_status": "PRE_T_INSUFFICIENT_RAW_N",
+     "raw_n": 7,
+     "unique_fixtures": 7,
+     "unique_opponents": 6,
+     "effective_n": 7.0
+    },
+    {
+     "hypothesis_id": "6cb54970edc6e61c1a701b4b77881dbf917d1d6d4a4d4c82f0b7305d414ffc37",
+     "pre_t_status": "PRE_T_INSUFFICIENT_RAW_N",
+     "raw_n": 14,
+     "unique_fixtures": 14,
+     "unique_opponents": 9,
+     "effective_n": 14.0
+    },
+    {
+     "hypothesis_id": "0337d2732359375a1e90c2274073ce322803a98f247e91265afb5182215e10ca",
+     "pre_t_status": "PRE_T_INSUFFICIENT_RAW_N",
+     "raw_n": 11,
+     "unique_fixtures": 11,
+     "unique_opponents": 7,
+     "effective_n": 11.0
+    }
+   ],
+   "n_sonnet_total": 8,
+   "n_sonnet_pre_t_eligible": 0,
+   "r_k_valid": 0,
+   "r_matched": 0,
+   "r_unmatched": 0,
+   "r_identity_count_v8c": 0,
+   "r_identity_count_v8b1": 0,
+   "r_cross_pair_overlap": 0,
+   "h_status": "MATCHED",
+   "h_n_selected": 0,
+   "h_n_ranked_over": 920
+  },
+  {
+   "fixture_id": "mt_195507436",
+   "competition": "champ",
+   "ledger": {
+    "n_shapes_enumerated": 21120,
+    "n_structurally_invalid": 2112,
+    "n_capability_excluded": 0,
+    "n_admissible": 19008,
+    "n_pre_t_evaluable": 920,
+    "pre_t_status_counts": {
+     "PRE_T_COMPILER_INVALID": 1534,
+     "PRE_T_EVALUABLE": 920,
+     "PRE_T_INSUFFICIENT_RAW_N": 15762,
+     "PRE_T_PROVIDER_UNSUPPORTED": 792
+    }
+   },
+   "n_admissible": 19008,
+   "n_pre_t_evaluable": 920,
+   "n_metrics_represented": 23,
+   "n_mechanism_types_represented": 5,
+   "sonnet_selections": [
+    {
+     "hypothesis_id": "6b9433f0fcdb843e42171bb20ad6f5b2efa360f711d26ed5962d6ba92eaf7a97",
+     "pre_t_status": "PRE_T_INSUFFICIENT_RAW_N",
+     "raw_n": 13,
+     "unique_fixtures": 13,
+     "unique_opponents": 8,
+     "effective_n": 13.0
+    },
+    {
+     "hypothesis_id": "f0a696cdf6d3a0a81a96834ec6c0239d945278bea19e5bfb32a611356d1c8179",
+     "pre_t_status": "PRE_T_INSUFFICIENT_RAW_N",
+     "raw_n": 12,
+     "unique_fixtures": 12,
+     "unique_opponents": 8,
+     "effective_n": 12.0
+    },
+    {
+     "hypothesis_id": "248ddd68049ef5a5cbff12c1e8e4dad0e957616f79c3a999d813134d0754be7f",
+     "pre_t_status": "PRE_T_INSUFFICIENT_RAW_N",
+     "raw_n": 9,
+     "unique_fixtures": 9,
+     "unique_opponents": 7,
+     "effective_n": 9.0
+    },
+    {
+     "hypothesis_id": "6a1c884a7679ede38fbdb1add0723aefcbfe57681aafda96008cf9cbbeac6708",
+     "pre_t_status": "PRE_T_INSUFFICIENT_RAW_N",
+     "raw_n": 6,
+     "unique_fixtures": 6,
+     "unique_opponents": 3,
+     "effective_n": 6.0
+    },
+    {
+     "hypothesis_id": "08937d0d98976fb63b6d1af4d95978090ea11ba490934c8e6ba598a34f922d12",
+     "pre_t_status": "PRE_T_INSUFFICIENT_RAW_N",
+     "raw_n": 9,
+     "unique_fixtures": 9,
+     "unique_opponents": 7,
+     "effective_n": 9.0
+    },
+    {
+     "hypothesis_id": "693eda520fa636379abb86a7a98b97e62fe034b6aae776d28a2f0a4d170795bc",
+     "pre_t_status": "PRE_T_COMPILER_INVALID",
+     "raw_n": null,
+     "unique_fixtures": null,
+     "unique_opponents": null,
+     "effective_n": null
+    }
+   ],
+   "n_sonnet_total": 6,
+   "n_sonnet_pre_t_eligible": 0,
+   "r_k_valid": 0,
+   "r_matched": 0,
+   "r_unmatched": 0,
+   "r_identity_count_v8c": 0,
+   "r_identity_count_v8b1": 0,
+   "r_cross_pair_overlap": 0,
+   "h_status": "MATCHED",
+   "h_n_selected": 0,
+   "h_n_ranked_over": 920
+  },
+  {
+   "fixture_id": "mt_250068398",
+   "competition": "champ",
+   "ledger": {
+    "n_shapes_enumerated": 21120,
+    "n_structurally_invalid": 2112,
+    "n_capability_excluded": 0,
+    "n_admissible": 19008,
+    "n_pre_t_evaluable": 900,
+    "pre_t_status_counts": {
+     "PRE_T_COMPILER_INVALID": 1400,
+     "PRE_T_EVALUABLE": 900,
+     "PRE_T_INSUFFICIENT_RAW_N": 15896,
+     "PRE_T_NO_SCALE": 20,
+     "PRE_T_PROVIDER_UNSUPPORTED": 792
+    }
+   },
+   "n_admissible": 19008,
+   "n_pre_t_evaluable": 900,
+   "n_metrics_represented": 23,
+   "n_mechanism_types_represented": 5,
+   "sonnet_selections": [
+    {
+     "hypothesis_id": "4ea9161dbf00d3c971a13ad17b998fde200b85dd03e3a8fd97b79ef601db7922",
+     "pre_t_status": "PRE_T_INSUFFICIENT_RAW_N",
+     "raw_n": 11,
+     "unique_fixtures": 11,
+     "unique_opponents": 7,
+     "effective_n": 11.0
+    },
+    {
+     "hypothesis_id": "76197024c43f35c1930bb3590eead823f53b25a9b3f59514f8e3c7ecaed59f4f",
+     "pre_t_status": "PRE_T_INSUFFICIENT_RAW_N",
+     "raw_n": 10,
+     "unique_fixtures": 10,
+     "unique_opponents": 6,
+     "effective_n": 10.0
+    },
+    {
+     "hypothesis_id": "3d07236f1f588610480bad4af06ae3de4311a464269203a5a5f246f6510024bd",
+     "pre_t_status": "PRE_T_INSUFFICIENT_RAW_N",
+     "raw_n": 12,
+     "unique_fixtures": 12,
+     "unique_opponents": 7,
+     "effective_n": 12.0
+    },
+    {
+     "hypothesis_id": "234c9901970490d946ece0acf34ef18238ccab3deef7989873055d125504b988",
+     "pre_t_status": "PRE_T_INSUFFICIENT_RAW_N",
+     "raw_n": 10,
+     "unique_fixtures": 10,
+     "unique_opponents": 6,
+     "effective_n": 10.0
+    }
+   ],
+   "n_sonnet_total": 4,
+   "n_sonnet_pre_t_eligible": 0,
+   "r_k_valid": 0,
+   "r_matched": 0,
+   "r_unmatched": 0,
+   "r_identity_count_v8c": 0,
+   "r_identity_count_v8b1": 0,
+   "r_cross_pair_overlap": 0,
+   "h_status": "MATCHED",
+   "h_n_selected": 0,
+   "h_n_ranked_over": 900
+  },
+  {
+   "fixture_id": "mt_839956249",
+   "competition": "champ",
+   "ledger": {
+    "n_shapes_enumerated": 21120,
+    "n_structurally_invalid": 2112,
+    "n_capability_excluded": 0,
+    "n_admissible": 19008,
+    "n_pre_t_evaluable": 920,
+    "pre_t_status_counts": {
+     "PRE_T_COMPILER_INVALID": 1396,
+     "PRE_T_EVALUABLE": 920,
+     "PRE_T_INSUFFICIENT_RAW_N": 15900,
+     "PRE_T_PROVIDER_UNSUPPORTED": 792
+    }
+   },
+   "n_admissible": 19008,
+   "n_pre_t_evaluable": 920,
+   "n_metrics_represented": 23,
+   "n_mechanism_types_represented": 5,
+   "sonnet_selections": [
+    {
+     "hypothesis_id": "77fce0dcf8950a5a08b467c51ae651d61da77f98f29a0bfef64d953cefefcb33",
+     "pre_t_status": "PRE_T_INSUFFICIENT_RAW_N",
+     "raw_n": 1,
+     "unique_fixtures": 1,
+     "unique_opponents": 1,
+     "effective_n": 1.0
+    },
+    {
+     "hypothesis_id": "03c75c210b97c0d4d95338ef855ca0d075f9285ded101bdf49568a0b82af68e4",
+     "pre_t_status": "PRE_T_INSUFFICIENT_RAW_N",
+     "raw_n": 3,
+     "unique_fixtures": 3,
+     "unique_opponents": 3,
+     "effective_n": 3.0
+    },
+    {
+     "hypothesis_id": "47e453f893ca6e1ef2c55a359fc9c5c771d1fed27afdad2fd27e5142f43c56f3",
+     "pre_t_status": "PRE_T_INSUFFICIENT_RAW_N",
+     "raw_n": 4,
+     "unique_fixtures": 4,
+     "unique_opponents": 3,
+     "effective_n": 4.0
+    },
+    {
+     "hypothesis_id": "08937d0d98976fb63b6d1af4d95978090ea11ba490934c8e6ba598a34f922d12",
+     "pre_t_status": "PRE_T_INSUFFICIENT_RAW_N",
+     "raw_n": 9,
+     "unique_fixtures": 9,
+     "unique_opponents": 7,
+     "effective_n": 9.0
+    },
+    {
+     "hypothesis_id": "5f5d8e096d7765fef8423685b0eaf37290c0ceaf4fa7c362543d899191edd4e3",
+     "pre_t_status": "PRE_T_COMPILER_INVALID",
+     "raw_n": null,
+     "unique_fixtures": null,
+     "unique_opponents": null,
+     "effective_n": null
+    },
+    {
+     "hypothesis_id": "2b1fa4388fc83475409a5519e81fc402beb712625a3fbe9d0b15ac3629a1cc83",
+     "pre_t_status": "PRE_T_INSUFFICIENT_RAW_N",
+     "raw_n": 12,
+     "unique_fixtures": 12,
+     "unique_opponents": 8,
+     "effective_n": 12.0
+    }
+   ],
+   "n_sonnet_total": 6,
+   "n_sonnet_pre_t_eligible": 0,
+   "r_k_valid": 0,
+   "r_matched": 0,
+   "r_unmatched": 0,
+   "r_identity_count_v8c": 0,
+   "r_identity_count_v8b1": 0,
+   "r_cross_pair_overlap": 0,
+   "h_status": "MATCHED",
+   "h_n_selected": 0,
+   "h_n_ranked_over": 920
+  },
+  {
+   "fixture_id": "mt_581124532",
+   "competition": "champ",
+   "ledger": {
+    "n_shapes_enumerated": 21120,
+    "n_structurally_invalid": 2112,
+    "n_capability_excluded": 0,
+    "n_admissible": 19008,
+    "n_pre_t_evaluable": 910,
+    "pre_t_status_counts": {
+     "PRE_T_COMPILER_INVALID": 1442,
+     "PRE_T_EVALUABLE": 910,
+     "PRE_T_INSUFFICIENT_RAW_N": 15854,
+     "PRE_T_NO_SCALE": 10,
+     "PRE_T_PROVIDER_UNSUPPORTED": 792
+    }
+   },
+   "n_admissible": 19008,
+   "n_pre_t_evaluable": 910,
+   "n_metrics_represented": 23,
+   "n_mechanism_types_represented": 5,
+   "sonnet_selections": [
+    {
+     "hypothesis_id": "6412b61ca0d7af195477928be0e3aa2bbc953ff1e8853d52fff4e72e7222caf3",
+     "pre_t_status": "PRE_T_COMPILER_INVALID",
+     "raw_n": null,
+     "unique_fixtures": null,
+     "unique_opponents": null,
+     "effective_n": null
+    },
+    {
+     "hypothesis_id": "16f9c1817bfbb717b5d77f47f8bc8add75b04417932ddb695f239df7c51028c2",
+     "pre_t_status": "PRE_T_COMPILER_INVALID",
+     "raw_n": null,
+     "unique_fixtures": null,
+     "unique_opponents": null,
+     "effective_n": null
+    }
+   ],
+   "n_sonnet_total": 2,
+   "n_sonnet_pre_t_eligible": 0,
+   "r_k_valid": 0,
+   "r_matched": 0,
+   "r_unmatched": 0,
+   "r_identity_count_v8c": 0,
+   "r_identity_count_v8b1": 0,
+   "r_cross_pair_overlap": 0,
+   "h_status": "MATCHED",
+   "h_n_selected": 0,
+   "h_n_ranked_over": 910
+  },
+  {
+   "fixture_id": "mt_250067210",
+   "competition": "champ",
+   "ledger": {
+    "n_shapes_enumerated": 21120,
+    "n_structurally_invalid": 2112,
+    "n_capability_excluded": 0,
+    "n_admissible": 19008,
+    "n_pre_t_evaluable": 900,
+    "pre_t_status_counts": {
+     "PRE_T_COMPILER_INVALID": 1396,
+     "PRE_T_EVALUABLE": 900,
+     "PRE_T_INSUFFICIENT_RAW_N": 15900,
+     "PRE_T_NO_SCALE": 20,
+     "PRE_T_PROVIDER_UNSUPPORTED": 792
+    }
+   },
+   "n_admissible": 19008,
+   "n_pre_t_evaluable": 900,
+   "n_metrics_represented": 23,
+   "n_mechanism_types_represented": 5,
+   "sonnet_selections": [
+    {
+     "hypothesis_id": "2519be19994f06c5d0de51e4e6378dabea1b39f83f5d0349628c77efd399eea4",
+     "pre_t_status": "PRE_T_COMPILER_INVALID",
+     "raw_n": null,
+     "unique_fixtures": null,
+     "unique_opponents": null,
+     "effective_n": null
+    },
+    {
+     "hypothesis_id": "4c3aced1b46d28c39566f1c69c43156f3521b9546cfc313bc4fd8f7df67357ac",
+     "pre_t_status": "PRE_T_INSUFFICIENT_RAW_N",
+     "raw_n": 13,
+     "unique_fixtures": 13,
+     "unique_opponents": 8,
+     "effective_n": 13.0
+    },
+    {
+     "hypothesis_id": "16b2874f6ebbd4b0cddb5a937fd2ff120c156b31e3404f2ffddc207fa32237f3",
+     "pre_t_status": "PRE_T_INSUFFICIENT_RAW_N",
+     "raw_n": 13,
+     "unique_fixtures": 13,
+     "unique_opponents": 8,
+     "effective_n": 13.0
+    }
+   ],
+   "n_sonnet_total": 3,
+   "n_sonnet_pre_t_eligible": 0,
+   "r_k_valid": 0,
+   "r_matched": 0,
+   "r_unmatched": 0,
+   "r_identity_count_v8c": 0,
+   "r_identity_count_v8b1": 0,
+   "r_cross_pair_overlap": 0,
+   "h_status": "MATCHED",
+   "h_n_selected": 0,
+   "h_n_ranked_over": 900
+  },
+  {
+   "fixture_id": "mt_406678422",
+   "competition": "champ",
+   "ledger": {
+    "n_shapes_enumerated": 21120,
+    "n_structurally_invalid": 2112,
+    "n_capability_excluded": 0,
+    "n_admissible": 19008,
+    "n_pre_t_evaluable": 920,
+    "pre_t_status_counts": {
+     "PRE_T_COMPILER_INVALID": 1306,
+     "PRE_T_EVALUABLE": 920,
+     "PRE_T_INSUFFICIENT_RAW_N": 15990,
+     "PRE_T_PROVIDER_UNSUPPORTED": 792
+    }
+   },
+   "n_admissible": 19008,
+   "n_pre_t_evaluable": 920,
+   "n_metrics_represented": 23,
+   "n_mechanism_types_represented": 5,
+   "sonnet_selections": [
+    {
+     "hypothesis_id": "0dc13517479d5b8db9863f3da2a1295cc978ae4f5f2c42f64f603106f9b1336a",
+     "pre_t_status": "PRE_T_INSUFFICIENT_RAW_N",
+     "raw_n": 11,
+     "unique_fixtures": 11,
+     "unique_opponents": 7,
+     "effective_n": 11.0
+    },
+    {
+     "hypothesis_id": "05563d23918d89266c832cfe36742276b6dccfafc1e4daebb45a17b29336f3cf",
+     "pre_t_status": "PRE_T_INSUFFICIENT_RAW_N",
+     "raw_n": 10,
+     "unique_fixtures": 10,
+     "unique_opponents": 8,
+     "effective_n": 10.0
+    },
+    {
+     "hypothesis_id": "46251ecc4401e486c2d1a0d058f515e9558a70ecab4105a179006fb5e5bdb07c",
+     "pre_t_status": "PRE_T_INSUFFICIENT_RAW_N",
+     "raw_n": 11,
+     "unique_fixtures": 11,
+     "unique_opponents": 7,
+     "effective_n": 11.0
+    }
+   ],
+   "n_sonnet_total": 3,
+   "n_sonnet_pre_t_eligible": 0,
+   "r_k_valid": 0,
+   "r_matched": 0,
+   "r_unmatched": 0,
+   "r_identity_count_v8c": 0,
+   "r_identity_count_v8b1": 0,
+   "r_cross_pair_overlap": 0,
+   "h_status": "MATCHED",
+   "h_n_selected": 0,
+   "h_n_ranked_over": 920
+  },
+  {
+   "fixture_id": "mt_012243018",
+   "competition": "champ",
+   "ledger": {
+    "n_shapes_enumerated": 21120,
+    "n_structurally_invalid": 2112,
+    "n_capability_excluded": 0,
+    "n_admissible": 19008,
+    "n_pre_t_evaluable": 920,
+    "pre_t_status_counts": {
+     "PRE_T_COMPILER_INVALID": 1442,
+     "PRE_T_EVALUABLE": 920,
+     "PRE_T_INSUFFICIENT_RAW_N": 15854,
+     "PRE_T_PROVIDER_UNSUPPORTED": 792
+    }
+   },
+   "n_admissible": 19008,
+   "n_pre_t_evaluable": 920,
+   "n_metrics_represented": 23,
+   "n_mechanism_types_represented": 5,
+   "sonnet_selections": [
+    {
+     "hypothesis_id": "7d74780a15a9aee518740c3f35951d4a47b8dee7c672483347b6d3c1b4ddb53b",
+     "pre_t_status": "PRE_T_COMPILER_INVALID",
+     "raw_n": null,
+     "unique_fixtures": null,
+     "unique_opponents": null,
+     "effective_n": null
+    },
+    {
+     "hypothesis_id": "bc12e34d4b6b3bce928b838e569a0bd6060cd0855a031335000da315fd2929aa",
+     "pre_t_status": "PRE_T_COMPILER_INVALID",
+     "raw_n": null,
+     "unique_fixtures": null,
+     "unique_opponents": null,
+     "effective_n": null
+    },
+    {
+     "hypothesis_id": "7cd432f4750288ab680b179168568d8f3dac87238783f53a9e2b6ca9b7bbb412",
+     "pre_t_status": "PRE_T_COMPILER_INVALID",
+     "raw_n": null,
+     "unique_fixtures": null,
+     "unique_opponents": null,
+     "effective_n": null
+    },
+    {
+     "hypothesis_id": "cc63e5b4fa22a09fa3e9e923cb7a608c017678c0b19662367775f50026eaf9f0",
+     "pre_t_status": "PRE_T_COMPILER_INVALID",
+     "raw_n": null,
+     "unique_fixtures": null,
+     "unique_opponents": null,
+     "effective_n": null
+    }
+   ],
+   "n_sonnet_total": 4,
+   "n_sonnet_pre_t_eligible": 0,
+   "r_k_valid": 0,
+   "r_matched": 0,
+   "r_unmatched": 0,
+   "r_identity_count_v8c": 0,
+   "r_identity_count_v8b1": 0,
+   "r_cross_pair_overlap": 0,
+   "h_status": "MATCHED",
+   "h_n_selected": 0,
+   "h_n_ranked_over": 920
+  },
+  {
+   "fixture_id": "mt_581124517",
+   "competition": "champ",
+   "ledger": {
+    "n_shapes_enumerated": 21120,
+    "n_structurally_invalid": 2112,
+    "n_capability_excluded": 0,
+    "n_admissible": 19008,
+    "n_pre_t_evaluable": 920,
+    "pre_t_status_counts": {
+     "PRE_T_COMPILER_INVALID": 1396,
+     "PRE_T_EVALUABLE": 920,
+     "PRE_T_INSUFFICIENT_RAW_N": 15900,
+     "PRE_T_PROVIDER_UNSUPPORTED": 792
+    }
+   },
+   "n_admissible": 19008,
+   "n_pre_t_evaluable": 920,
+   "n_metrics_represented": 23,
+   "n_mechanism_types_represented": 5,
+   "sonnet_selections": [
+    {
+     "hypothesis_id": "1d4035181d86a8abf61ea130b27c80d2cad7d90feee3c0e897633efab96a3f6a",
+     "pre_t_status": "PRE_T_INSUFFICIENT_RAW_N",
+     "raw_n": 9,
+     "unique_fixtures": 9,
+     "unique_opponents": 6,
+     "effective_n": 9.0
+    },
+    {
+     "hypothesis_id": "320ebd585ad3a1a017d95a2941d638f62dbf9a329b1e57006825d8693d159357",
+     "pre_t_status": "PRE_T_INSUFFICIENT_RAW_N",
+     "raw_n": 10,
+     "unique_fixtures": 10,
+     "unique_opponents": 7,
+     "effective_n": 10.0
+    },
+    {
+     "hypothesis_id": "29297a6e0a5bd40be5da1a2405d2e6d06ba7d043409cc81ebbbe296c2b0b1161",
+     "pre_t_status": "PRE_T_INSUFFICIENT_RAW_N",
+     "raw_n": 10,
+     "unique_fixtures": 10,
+     "unique_opponents": 7,
+     "effective_n": 10.0
+    },
+    {
+     "hypothesis_id": "15a69e933666ed3c57e3923cc63d5400333ede0eb01eadc297832e50f758ddd5",
+     "pre_t_status": "PRE_T_INSUFFICIENT_RAW_N",
+     "raw_n": 11,
+     "unique_fixtures": 11,
+     "unique_opponents": 8,
+     "effective_n": 11.0
+    },
+    {
+     "hypothesis_id": "0faebee54667976c1f0cbdeed4413d4f12412920bf6fad4b6a69c7ac312aef9d",
+     "pre_t_status": "PRE_T_INSUFFICIENT_RAW_N",
+     "raw_n": 10,
+     "unique_fixtures": 10,
+     "unique_opponents": 7,
+     "effective_n": 10.0
+    },
+    {
+     "hypothesis_id": "00c87bce3d8bb94dd8053fb1d1311b0b581576e4f08d6e78025b5bda055e7854",
+     "pre_t_status": "PRE_T_INSUFFICIENT_RAW_N",
+     "raw_n": 17,
+     "unique_fixtures": 17,
+     "unique_opponents": 17,
+     "effective_n": 17.0
+    },
+    {
+     "hypothesis_id": "3c0e8ba688de1905a585c157ad0479cc0e92f4cde0ebcb369aff4fd43e05aa1a",
+     "pre_t_status": "PRE_T_INSUFFICIENT_RAW_N",
+     "raw_n": 10,
+     "unique_fixtures": 10,
+     "unique_opponents": 7,
+     "effective_n": 10.0
+    },
+    {
+     "hypothesis_id": "09c7fca72671097b137b0ccf045cce8d384b7594dabca5e198a6b4294b1ebbec",
+     "pre_t_status": "PRE_T_INSUFFICIENT_RAW_N",
+     "raw_n": 9,
+     "unique_fixtures": 9,
+     "unique_opponents": 6,
+     "effective_n": 9.0
+    }
+   ],
+   "n_sonnet_total": 8,
+   "n_sonnet_pre_t_eligible": 0,
+   "r_k_valid": 0,
+   "r_matched": 0,
+   "r_unmatched": 0,
+   "r_identity_count_v8c": 0,
+   "r_identity_count_v8b1": 0,
+   "r_cross_pair_overlap": 0,
+   "h_status": "MATCHED",
+   "h_n_selected": 0,
+   "h_n_ranked_over": 920
+  },
+  {
+   "fixture_id": "mt_839950896",
+   "competition": "champ",
+   "ledger": {
+    "n_shapes_enumerated": 21120,
+    "n_structurally_invalid": 2112,
+    "n_capability_excluded": 0,
+    "n_admissible": 19008,
+    "n_pre_t_evaluable": 920,
+    "pre_t_status_counts": {
+     "PRE_T_COMPILER_INVALID": 1442,
+     "PRE_T_EVALUABLE": 920,
+     "PRE_T_INSUFFICIENT_RAW_N": 15854,
+     "PRE_T_PROVIDER_UNSUPPORTED": 792
+    }
+   },
+   "n_admissible": 19008,
+   "n_pre_t_evaluable": 920,
+   "n_metrics_represented": 23,
+   "n_mechanism_types_represented": 5,
+   "sonnet_selections": [
+    {
+     "hypothesis_id": "7dbd75bb2cf7df20d12503e49182584681e6b82c0d74b3e6345fde6b74d5c2d9",
+     "pre_t_status": "PRE_T_INSUFFICIENT_RAW_N",
+     "raw_n": 10,
+     "unique_fixtures": 10,
+     "unique_opponents": 7,
+     "effective_n": 10.0
+    },
+    {
+     "hypothesis_id": "6e3fb417d14cdaf5bb27a08ac446f8279a02772fd171f817e637ed3ace9ea48a",
+     "pre_t_status": "PRE_T_INSUFFICIENT_RAW_N",
+     "raw_n": 10,
+     "unique_fixtures": 10,
+     "unique_opponents": 7,
+     "effective_n": 10.0
+    },
+    {
+     "hypothesis_id": "8f70eed1535f947712ea8dad1c1968d748681161ea29da286c6342ede594a554",
+     "pre_t_status": "PRE_T_INSUFFICIENT_RAW_N",
+     "raw_n": 12,
+     "unique_fixtures": 12,
+     "unique_opponents": 8,
+     "effective_n": 12.0
+    },
+    {
+     "hypothesis_id": "33dada7d970df9ab49906e8842034cdad55fc1ed20b241a471f4f6d4ab278c58",
+     "pre_t_status": "PRE_T_INSUFFICIENT_RAW_N",
+     "raw_n": 9,
+     "unique_fixtures": 9,
+     "unique_opponents": 6,
+     "effective_n": 9.0
+    },
+    {
+     "hypothesis_id": "130276d9b73498399258815a230f1d4b8e639c23f7b98b6bc0f661488a9b8368",
+     "pre_t_status": "PRE_T_INSUFFICIENT_RAW_N",
+     "raw_n": 12,
+     "unique_fixtures": 12,
+     "unique_opponents": 8,
+     "effective_n": 12.0
+    },
+    {
+     "hypothesis_id": "618f0042ed8137029206a89ef1fe903ad191d691b72689e89ed4b991076283b6",
+     "pre_t_status": "PRE_T_INSUFFICIENT_RAW_N",
+     "raw_n": 12,
+     "unique_fixtures": 12,
+     "unique_opponents": 8,
+     "effective_n": 12.0
+    }
+   ],
+   "n_sonnet_total": 6,
+   "n_sonnet_pre_t_eligible": 0,
+   "r_k_valid": 0,
+   "r_matched": 0,
+   "r_unmatched": 0,
+   "r_identity_count_v8c": 0,
+   "r_identity_count_v8b1": 0,
+   "r_cross_pair_overlap": 0,
+   "h_status": "MATCHED",
+   "h_n_selected": 0,
+   "h_n_ranked_over": 920
+  },
+  {
+   "fixture_id": "mt_250067252",
+   "competition": "champ",
+   "ledger": {
+    "n_shapes_enumerated": 21120,
+    "n_structurally_invalid": 2112,
+    "n_capability_excluded": 0,
+    "n_admissible": 19008,
+    "n_pre_t_evaluable": 920,
+    "pre_t_status_counts": {
+     "PRE_T_COMPILER_INVALID": 1396,
+     "PRE_T_EVALUABLE": 920,
+     "PRE_T_INSUFFICIENT_RAW_N": 15900,
+     "PRE_T_PROVIDER_UNSUPPORTED": 792
+    }
+   },
+   "n_admissible": 19008,
+   "n_pre_t_evaluable": 920,
+   "n_metrics_represented": 23,
+   "n_mechanism_types_represented": 5,
+   "sonnet_selections": [
+    {
+     "hypothesis_id": "06bd24ddbcdab26f0e8eadb0865671b25279e850d2f677b24e2f51e0f83cd760",
+     "pre_t_status": "PRE_T_INSUFFICIENT_RAW_N",
+     "raw_n": 10,
+     "unique_fixtures": 10,
+     "unique_opponents": 7,
+     "effective_n": 10.0
+    },
+    {
+     "hypothesis_id": "1d4035181d86a8abf61ea130b27c80d2cad7d90feee3c0e897633efab96a3f6a",
+     "pre_t_status": "PRE_T_INSUFFICIENT_RAW_N",
+     "raw_n": 13,
+     "unique_fixtures": 13,
+     "unique_opponents": 8,
+     "effective_n": 13.0
+    },
+    {
+     "hypothesis_id": "8a93d08550a033c39a81fc6634812cbb32f1ad066cd59cb7d5aaa4364150714f",
+     "pre_t_status": "PRE_T_INSUFFICIENT_RAW_N",
+     "raw_n": 11,
+     "unique_fixtures": 11,
+     "unique_opponents": 7,
+     "effective_n": 11.0
+    },
+    {
+     "hypothesis_id": "05563d23918d89266c832cfe36742276b6dccfafc1e4daebb45a17b29336f3cf",
+     "pre_t_status": "PRE_T_INSUFFICIENT_RAW_N",
+     "raw_n": 11,
+     "unique_fixtures": 11,
+     "unique_opponents": 7,
+     "effective_n": 11.0
+    },
+    {
+     "hypothesis_id": "3ab31257a52dc09a7ba31619af3eafa80e7a65c8a80566d4997b143a212dae17",
+     "pre_t_status": "PRE_T_INSUFFICIENT_RAW_N",
+     "raw_n": 14,
+     "unique_fixtures": 14,
+     "unique_opponents": 8,
+     "effective_n": 14.0
+    }
+   ],
+   "n_sonnet_total": 5,
+   "n_sonnet_pre_t_eligible": 0,
+   "r_k_valid": 0,
+   "r_matched": 0,
+   "r_unmatched": 0,
+   "r_identity_count_v8c": 0,
+   "r_identity_count_v8b1": 0,
+   "r_cross_pair_overlap": 0,
+   "h_status": "MATCHED",
+   "h_n_selected": 0,
+   "h_n_ranked_over": 920
+  },
+  {
+   "fixture_id": "mt_743395740",
+   "competition": "champ",
+   "ledger": {
+    "n_shapes_enumerated": 21120,
+    "n_structurally_invalid": 2112,
+    "n_capability_excluded": 0,
+    "n_admissible": 19008,
+    "n_pre_t_evaluable": 910,
+    "pre_t_status_counts": {
+     "PRE_T_COMPILER_INVALID": 1304,
+     "PRE_T_EVALUABLE": 910,
+     "PRE_T_INSUFFICIENT_RAW_N": 15992,
+     "PRE_T_NO_SCALE": 10,
+     "PRE_T_PROVIDER_UNSUPPORTED": 792
+    }
+   },
+   "n_admissible": 19008,
+   "n_pre_t_evaluable": 910,
+   "n_metrics_represented": 23,
+   "n_mechanism_types_represented": 5,
+   "sonnet_selections": [
+    {
+     "hypothesis_id": "4158bf84c02edd5d06c855d90ec51e0ea0ad5131c3628cfb365f5cad57e3be4f",
+     "pre_t_status": "PRE_T_INSUFFICIENT_RAW_N",
+     "raw_n": 9,
+     "unique_fixtures": 9,
+     "unique_opponents": 7,
+     "effective_n": 9.0
+    },
+    {
+     "hypothesis_id": "76197024c43f35c1930bb3590eead823f53b25a9b3f59514f8e3c7ecaed59f4f",
+     "pre_t_status": "PRE_T_INSUFFICIENT_RAW_N",
+     "raw_n": 10,
+     "unique_fixtures": 10,
+     "unique_opponents": 7,
+     "effective_n": 10.0
+    },
+    {
+     "hypothesis_id": "573230cbe07795c89e7a146a54e2b7c88302ab403e3275a6b98ba7f29b33b46c",
+     "pre_t_status": "PRE_T_INSUFFICIENT_RAW_N",
+     "raw_n": 11,
+     "unique_fixtures": 11,
+     "unique_opponents": 7,
+     "effective_n": 11.0
+    },
+    {
+     "hypothesis_id": "02c54e97fd02b8d72430fb7010498c84edf20afcd14494726ff97b2479cfb579",
+     "pre_t_status": "PRE_T_INSUFFICIENT_RAW_N",
+     "raw_n": 9,
+     "unique_fixtures": 9,
+     "unique_opponents": 7,
+     "effective_n": 9.0
+    },
+    {
+     "hypothesis_id": "4e2cd38215a2ed0d4cc008f8eaf209b178e6242d77652311b28fbe360121d226",
+     "pre_t_status": "PRE_T_INSUFFICIENT_RAW_N",
+     "raw_n": 9,
+     "unique_fixtures": 9,
+     "unique_opponents": 7,
+     "effective_n": 9.0
+    }
+   ],
+   "n_sonnet_total": 5,
+   "n_sonnet_pre_t_eligible": 0,
+   "r_k_valid": 0,
+   "r_matched": 0,
+   "r_unmatched": 0,
+   "r_identity_count_v8c": 0,
+   "r_identity_count_v8b1": 0,
+   "r_cross_pair_overlap": 0,
+   "h_status": "MATCHED",
+   "h_n_selected": 0,
+   "h_n_ranked_over": 910
+  },
+  {
+   "fixture_id": "mt_581124586",
+   "competition": "champ",
+   "ledger": {
+    "n_shapes_enumerated": 21120,
+    "n_structurally_invalid": 2112,
+    "n_capability_excluded": 0,
+    "n_admissible": 19008,
+    "n_pre_t_evaluable": 920,
+    "pre_t_status_counts": {
+     "PRE_T_COMPILER_INVALID": 1304,
+     "PRE_T_EVALUABLE": 920,
+     "PRE_T_INSUFFICIENT_RAW_N": 15992,
+     "PRE_T_PROVIDER_UNSUPPORTED": 792
+    }
+   },
+   "n_admissible": 19008,
+   "n_pre_t_evaluable": 920,
+   "n_metrics_represented": 23,
+   "n_mechanism_types_represented": 5,
+   "sonnet_selections": [
+    {
+     "hypothesis_id": "50c8cf7b30a944a001dc82c0737dbe93f3f1e21ea091cb057557937365dad3b9",
+     "pre_t_status": "PRE_T_INSUFFICIENT_RAW_N",
+     "raw_n": 18,
+     "unique_fixtures": 18,
+     "unique_opponents": 18,
+     "effective_n": 18.0
+    },
+    {
+     "hypothesis_id": "0fd6a82bfae4ed6008e1d0ad43fb7c1474221ec32ff724a60a66941def4d6f1a",
+     "pre_t_status": "PRE_T_INSUFFICIENT_RAW_N",
+     "raw_n": 12,
+     "unique_fixtures": 12,
+     "unique_opponents": 8,
+     "effective_n": 12.0
+    },
+    {
+     "hypothesis_id": "3246409e0c5469d3e1300034e7aa87eeccaff6f788ed5dce6528345606a31e49",
+     "pre_t_status": "PRE_T_INSUFFICIENT_RAW_N",
+     "raw_n": 15,
+     "unique_fixtures": 15,
+     "unique_opponents": 10,
+     "effective_n": 15.0
+    },
+    {
+     "hypothesis_id": "38c473e1d673d9d88a00a58a8c541bb4de9181bad2a213a9126d1d7d34782c9f",
+     "pre_t_status": "PRE_T_INSUFFICIENT_RAW_N",
+     "raw_n": 14,
+     "unique_fixtures": 14,
+     "unique_opponents": 8,
+     "effective_n": 14.0
+    }
+   ],
+   "n_sonnet_total": 4,
+   "n_sonnet_pre_t_eligible": 0,
+   "r_k_valid": 0,
+   "r_matched": 0,
+   "r_unmatched": 0,
+   "r_identity_count_v8c": 0,
+   "r_identity_count_v8b1": 0,
+   "r_cross_pair_overlap": 0,
+   "h_status": "MATCHED",
+   "h_n_selected": 0,
+   "h_n_ranked_over": 920
+  },
+  {
+   "fixture_id": "mt_978812969",
+   "competition": "champ",
+   "ledger": {
+    "n_shapes_enumerated": 21120,
+    "n_structurally_invalid": 2112,
+    "n_capability_excluded": 0,
+    "n_admissible": 19008,
+    "n_pre_t_evaluable": 920,
+    "pre_t_status_counts": {
+     "PRE_T_COMPILER_INVALID": 1304,
+     "PRE_T_EVALUABLE": 920,
+     "PRE_T_INSUFFICIENT_RAW_N": 15992,
+     "PRE_T_PROVIDER_UNSUPPORTED": 792
+    }
+   },
+   "n_admissible": 19008,
+   "n_pre_t_evaluable": 920,
+   "n_metrics_represented": 23,
+   "n_mechanism_types_represented": 5,
+   "sonnet_selections": [
+    {
+     "hypothesis_id": "06d056239cea15d290f946f93997b60f802b670093a5b0e37c379b28eda148dd",
+     "pre_t_status": "PRE_T_INSUFFICIENT_RAW_N",
+     "raw_n": 9,
+     "unique_fixtures": 9,
+     "unique_opponents": 7,
+     "effective_n": 9.0
+    },
+    {
+     "hypothesis_id": "3756e3ef1bd9c520af9751bc2090e1c67683bb917393c46f40bd33e25abd6bdd",
+     "pre_t_status": "PRE_T_INSUFFICIENT_RAW_N",
+     "raw_n": 11,
+     "unique_fixtures": 11,
+     "unique_opponents": 7,
+     "effective_n": 11.0
+    },
+    {
+     "hypothesis_id": "93bdec5066f2fec8f9af17235ff2cc0bbc77c95afd914814ac7b48a2fc0f107b",
+     "pre_t_status": "PRE_T_INSUFFICIENT_RAW_N",
+     "raw_n": 8,
+     "unique_fixtures": 8,
+     "unique_opponents": 6,
+     "effective_n": 8.0
+    },
+    {
+     "hypothesis_id": "df715482d86e4dfdc28de1ad3cd184f20113742f13ffd8fc3c5bbc6b717b5c80",
+     "pre_t_status": "PRE_T_INSUFFICIENT_RAW_N",
+     "raw_n": 9,
+     "unique_fixtures": 9,
+     "unique_opponents": 6,
+     "effective_n": 9.0
+    }
+   ],
+   "n_sonnet_total": 4,
+   "n_sonnet_pre_t_eligible": 0,
+   "r_k_valid": 0,
+   "r_matched": 0,
+   "r_unmatched": 0,
+   "r_identity_count_v8c": 0,
+   "r_identity_count_v8b1": 0,
+   "r_cross_pair_overlap": 0,
+   "h_status": "MATCHED",
+   "h_n_selected": 0,
+   "h_n_ranked_over": 920
+  },
+  {
+   "fixture_id": "mt_624439624",
+   "competition": "champ",
+   "ledger": {
+    "n_shapes_enumerated": 21120,
+    "n_structurally_invalid": 2112,
+    "n_capability_excluded": 0,
+    "n_admissible": 19008,
+    "n_pre_t_evaluable": 900,
+    "pre_t_status_counts": {
+     "PRE_T_COMPILER_INVALID": 1396,
+     "PRE_T_EVALUABLE": 900,
+     "PRE_T_INSUFFICIENT_RAW_N": 15900,
+     "PRE_T_NO_SCALE": 20,
+     "PRE_T_PROVIDER_UNSUPPORTED": 792
+    }
+   },
+   "n_admissible": 19008,
+   "n_pre_t_evaluable": 900,
+   "n_metrics_represented": 23,
+   "n_mechanism_types_represented": 5,
+   "sonnet_selections": [
+    {
+     "hypothesis_id": "248ddd68049ef5a5cbff12c1e8e4dad0e957616f79c3a999d813134d0754be7f",
+     "pre_t_status": "PRE_T_INSUFFICIENT_RAW_N",
+     "raw_n": 12,
+     "unique_fixtures": 12,
+     "unique_opponents": 8,
+     "effective_n": 12.0
+    },
+    {
+     "hypothesis_id": "33dada7d970df9ab49906e8842034cdad55fc1ed20b241a471f4f6d4ab278c58",
+     "pre_t_status": "PRE_T_INSUFFICIENT_RAW_N",
+     "raw_n": 11,
+     "unique_fixtures": 11,
+     "unique_opponents": 7,
+     "effective_n": 11.0
+    },
+    {
+     "hypothesis_id": "210c399ba9152988edbd06fdf849b6a54bc5019a1607805e441d472ec5bfadd5",
+     "pre_t_status": "PRE_T_INSUFFICIENT_RAW_N",
+     "raw_n": 11,
+     "unique_fixtures": 12,
+     "unique_opponents": 7,
+     "effective_n": 11.0
+    },
+    {
+     "hypothesis_id": "31eb61e72201b6a0b42f85c9309e55d0e8cc2c7f00a20b4bdc04dd0ba4b8b316",
+     "pre_t_status": "PRE_T_INSUFFICIENT_RAW_N",
+     "raw_n": 12,
+     "unique_fixtures": 12,
+     "unique_opponents": 8,
+     "effective_n": 12.0
+    },
+    {
+     "hypothesis_id": "702d204c6e200e6c4620b90918f41b02e5c2bdb965d44ac71bfae64d7f141570",
+     "pre_t_status": "PRE_T_INSUFFICIENT_RAW_N",
+     "raw_n": 11,
+     "unique_fixtures": 11,
+     "unique_opponents": 7,
+     "effective_n": 11.0
+    },
+    {
+     "hypothesis_id": "6fc118ff2cbb62f1a64a5cda7a563409c3b432455a0465020333841c05f84759",
+     "pre_t_status": "PRE_T_INSUFFICIENT_RAW_N",
+     "raw_n": 12,
+     "unique_fixtures": 12,
+     "unique_opponents": 7,
+     "effective_n": 12.0
+    }
+   ],
+   "n_sonnet_total": 6,
+   "n_sonnet_pre_t_eligible": 0,
+   "r_k_valid": 0,
+   "r_matched": 0,
+   "r_unmatched": 0,
+   "r_identity_count_v8c": 0,
+   "r_identity_count_v8b1": 0,
+   "r_cross_pair_overlap": 0,
+   "h_status": "MATCHED",
+   "h_n_selected": 0,
+   "h_n_ranked_over": 900
+  }
+ ],
+ "per_fixture_arm_scores": [
+  {
+   "fixture_id": "mt_624494939",
+   "S": null,
+   "S_n_score_ok": 0,
+   "S_n_selections": 0,
+   "S_ids": [],
+   "S_attrition": {},
+   "R": null,
+   "R_n_score_ok": 0,
+   "R_n_selections": 0,
+   "R_ids": [],
+   "R_attrition": {},
+   "H": null,
+   "H_n_score_ok": 0,
+   "H_n_selections": 0,
+   "H_ids": [],
+   "H_attrition": {}
+  },
+  {
+   "fixture_id": "mt_250070763",
+   "S": null,
+   "S_n_score_ok": 0,
+   "S_n_selections": 0,
+   "S_ids": [],
+   "S_attrition": {},
+   "R": null,
+   "R_n_score_ok": 0,
+   "R_n_selections": 0,
+   "R_ids": [],
+   "R_attrition": {},
+   "H": null,
+   "H_n_score_ok": 0,
+   "H_n_selections": 0,
+   "H_ids": [],
+   "H_attrition": {}
+  },
+  {
+   "fixture_id": "mt_012232321",
+   "S": null,
+   "S_n_score_ok": 0,
+   "S_n_selections": 0,
+   "S_ids": [],
+   "S_attrition": {},
+   "R": null,
+   "R_n_score_ok": 0,
+   "R_n_selections": 0,
+   "R_ids": [],
+   "R_attrition": {},
+   "H": null,
+   "H_n_score_ok": 0,
+   "H_n_selections": 0,
+   "H_ids": [],
+   "H_attrition": {}
+  },
+  {
+   "fixture_id": "mt_367717168",
+   "S": null,
+   "S_n_score_ok": 0,
+   "S_n_selections": 0,
+   "S_ids": [],
+   "S_attrition": {},
+   "R": null,
+   "R_n_score_ok": 0,
+   "R_n_selections": 0,
+   "R_ids": [],
+   "R_attrition": {},
+   "H": null,
+   "H_n_score_ok": 0,
+   "H_n_selections": 0,
+   "H_ids": [],
+   "H_attrition": {}
+  },
+  {
+   "fixture_id": "mt_839909030",
+   "S": null,
+   "S_n_score_ok": 0,
+   "S_n_selections": 0,
+   "S_ids": [],
+   "S_attrition": {},
+   "R": null,
+   "R_n_score_ok": 0,
+   "R_n_selections": 0,
+   "R_ids": [],
+   "R_attrition": {},
+   "H": null,
+   "H_n_score_ok": 0,
+   "H_n_selections": 0,
+   "H_ids": [],
+   "H_attrition": {}
+  },
+  {
+   "fixture_id": "mt_743353525",
+   "S": null,
+   "S_n_score_ok": 0,
+   "S_n_selections": 0,
+   "S_ids": [],
+   "S_attrition": {},
+   "R": null,
+   "R_n_score_ok": 0,
+   "R_n_selections": 0,
+   "R_ids": [],
+   "R_attrition": {},
+   "H": null,
+   "H_n_score_ok": 0,
+   "H_n_selections": 0,
+   "H_ids": [],
+   "H_attrition": {}
+  },
+  {
+   "fixture_id": "mt_012232387",
+   "S": -1.2701905920384031,
+   "S_n_score_ok": 1,
+   "S_n_selections": 1,
+   "S_ids": [
+    "9575170e99a1bcc2578dc3df95de6ced6431482994413010255114c410cc5468"
+   ],
+   "S_attrition": {},
+   "R": -1.2701905920384031,
+   "R_n_score_ok": 1,
+   "R_n_selections": 1,
+   "R_ids": [
+    "6437dd6eb0cba64030a36b2856fa6f1600726bc132644ce60574ac38208c0a36"
+   ],
+   "R_attrition": {},
+   "H": -0.08370748113693326,
+   "H_n_score_ok": 1,
+   "H_n_selections": 1,
+   "H_ids": [
+    "000b4660bdfe4301e51efeaf66a0c47a3d0c3ae5dd906847e7ceb08c086ff7b8"
+   ],
+   "H_attrition": {}
+  },
+  {
+   "fixture_id": "mt_250070738",
+   "S": null,
+   "S_n_score_ok": 0,
+   "S_n_selections": 0,
+   "S_ids": [],
+   "S_attrition": {},
+   "R": null,
+   "R_n_score_ok": 0,
+   "R_n_selections": 0,
+   "R_ids": [],
+   "R_attrition": {},
+   "H": null,
+   "H_n_score_ok": 0,
+   "H_n_selections": 0,
+   "H_ids": [],
+   "H_attrition": {}
+  },
+  {
+   "fixture_id": "mt_581141465",
+   "S": null,
+   "S_n_score_ok": 0,
+   "S_n_selections": 0,
+   "S_ids": [],
+   "S_attrition": {},
+   "R": null,
+   "R_n_score_ok": 0,
+   "R_n_selections": 0,
+   "R_ids": [],
+   "R_attrition": {},
+   "H": null,
+   "H_n_score_ok": 0,
+   "H_n_selections": 0,
+   "H_ids": [],
+   "H_attrition": {}
+  },
+  {
+   "fixture_id": "mt_978828203",
+   "S": null,
+   "S_n_score_ok": 0,
+   "S_n_selections": 0,
+   "S_ids": [],
+   "S_attrition": {},
+   "R": null,
+   "R_n_score_ok": 0,
+   "R_n_selections": 0,
+   "R_ids": [],
+   "R_attrition": {},
+   "H": null,
+   "H_n_score_ok": 0,
+   "H_n_selections": 0,
+   "H_ids": [],
+   "H_attrition": {}
+  },
+  {
+   "fixture_id": "mt_250070627",
+   "S": null,
+   "S_n_score_ok": 0,
+   "S_n_selections": 0,
+   "S_ids": [],
+   "S_attrition": {},
+   "R": null,
+   "R_n_score_ok": 0,
+   "R_n_selections": 0,
+   "R_ids": [],
+   "R_attrition": {},
+   "H": null,
+   "H_n_score_ok": 0,
+   "H_n_selections": 0,
+   "H_ids": [],
+   "H_attrition": {}
+  },
+  {
+   "fixture_id": "mt_195565010",
+   "S": null,
+   "S_n_score_ok": 0,
+   "S_n_selections": 0,
+   "S_ids": [],
+   "S_attrition": {},
+   "R": null,
+   "R_n_score_ok": 0,
+   "R_n_selections": 0,
+   "R_ids": [],
+   "R_attrition": {},
+   "H": null,
+   "H_n_score_ok": 0,
+   "H_n_selections": 0,
+   "H_ids": [],
+   "H_attrition": {}
+  },
+  {
+   "fixture_id": "mt_406686899",
+   "S": null,
+   "S_n_score_ok": 0,
+   "S_n_selections": 0,
+   "S_ids": [],
+   "S_attrition": {},
+   "R": null,
+   "R_n_score_ok": 0,
+   "R_n_selections": 0,
+   "R_ids": [],
+   "R_attrition": {},
+   "H": null,
+   "H_n_score_ok": 0,
+   "H_n_selections": 0,
+   "H_ids": [],
+   "H_attrition": {}
+  },
+  {
+   "fixture_id": "mt_367717156",
+   "S": -0.7405892074985925,
+   "S_n_score_ok": 1,
+   "S_n_selections": 1,
+   "S_ids": [
+    "0d7eebcefae2b56becd13d4b58bb67e6e10ed98318f8d8f0f82262b620e20fe8"
+   ],
+   "S_attrition": {},
+   "R": -0.7405892074985925,
+   "R_n_score_ok": 1,
+   "R_n_selections": 1,
+   "R_ids": [
+    "81e0e716b49187d064573f475290f136635a5b75cbd03abf1c32e9f914090ba1"
+   ],
+   "R_attrition": {},
+   "H": -0.4401431165669178,
+   "H_n_score_ok": 1,
+   "H_n_selections": 1,
+   "H_ids": [
+    "000b4660bdfe4301e51efeaf66a0c47a3d0c3ae5dd906847e7ceb08c086ff7b8"
+   ],
+   "H_attrition": {}
+  },
+  {
+   "fixture_id": "mt_624494356",
+   "S": null,
+   "S_n_score_ok": 0,
+   "S_n_selections": 0,
+   "S_ids": [],
+   "S_attrition": {},
+   "R": null,
+   "R_n_score_ok": 0,
+   "R_n_selections": 0,
+   "R_ids": [],
+   "R_attrition": {},
+   "H": null,
+   "H_n_score_ok": 0,
+   "H_n_selections": 0,
+   "H_ids": [],
+   "H_attrition": {}
+  },
+  {
+   "fixture_id": "mt_743353964",
+   "S": null,
+   "S_n_score_ok": 0,
+   "S_n_selections": 0,
+   "S_ids": [],
+   "S_attrition": {},
+   "R": null,
+   "R_n_score_ok": 0,
+   "R_n_selections": 0,
+   "R_ids": [],
+   "R_attrition": {},
+   "H": null,
+   "H_n_score_ok": 0,
+   "H_n_selections": 0,
+   "H_ids": [],
+   "H_attrition": {}
+  },
+  {
+   "fixture_id": "mt_839909574",
+   "S": null,
+   "S_n_score_ok": 0,
+   "S_n_selections": 0,
+   "S_ids": [],
+   "S_attrition": {},
+   "R": null,
+   "R_n_score_ok": 0,
+   "R_n_selections": 0,
+   "R_ids": [],
+   "R_attrition": {},
+   "H": null,
+   "H_n_score_ok": 0,
+   "H_n_selections": 0,
+   "H_ids": [],
+   "H_attrition": {}
+  },
+  {
+   "fixture_id": "mt_250070680",
+   "S": 0.3473454603710852,
+   "S_n_score_ok": 2,
+   "S_n_selections": 2,
+   "S_ids": [
+    "9de90f1804adcde9dbd3add8349737c05857ab06f5038b300be7922cce5ec2c1",
+    "d97aa2ab8173e47b638aec921615e798768134f77192f2d0d8e3b42ee69c32ce"
+   ],
+   "S_attrition": {},
+   "R": 0.3473454603710852,
+   "R_n_score_ok": 2,
+   "R_n_selections": 2,
+   "R_ids": [
+    "53877a9df42cdc59c3df5f27656b6f090a2155cd697f0d5044787afcd1361f64",
+    "c20d14768154668b1bc7f9e1c9700d65a2f46233fd3f930bab61b9b75dba36a6"
+   ],
+   "R_attrition": {},
+   "H": -0.07915310243377437,
+   "H_n_score_ok": 2,
+   "H_n_selections": 2,
+   "H_ids": [
+    "000b4660bdfe4301e51efeaf66a0c47a3d0c3ae5dd906847e7ceb08c086ff7b8",
+    "005956de4dccf653f6d0b77a6161ea7ecae482a27fa11aa83ee84bb0d5dd53cb"
+   ],
+   "H_attrition": {}
+  },
+  {
+   "fixture_id": "mt_367717813",
+   "S": null,
+   "S_n_score_ok": 0,
+   "S_n_selections": 0,
+   "S_ids": [],
+   "S_attrition": {},
+   "R": null,
+   "R_n_score_ok": 0,
+   "R_n_selections": 0,
+   "R_ids": [],
+   "R_attrition": {},
+   "H": null,
+   "H_n_score_ok": 0,
+   "H_n_selections": 0,
+   "H_ids": [],
+   "H_attrition": {}
+  },
+  {
+   "fixture_id": "mt_367717884",
+   "S": null,
+   "S_n_score_ok": 0,
+   "S_n_selections": 0,
+   "S_ids": [],
+   "S_attrition": {},
+   "R": null,
+   "R_n_score_ok": 0,
+   "R_n_selections": 0,
+   "R_ids": [],
+   "R_attrition": {},
+   "H": null,
+   "H_n_score_ok": 0,
+   "H_n_selections": 0,
+   "H_ids": [],
+   "H_attrition": {}
+  },
+  {
+   "fixture_id": "mt_195565063",
+   "S": null,
+   "S_n_score_ok": 0,
+   "S_n_selections": 0,
+   "S_ids": [],
+   "S_attrition": {},
+   "R": null,
+   "R_n_score_ok": 0,
+   "R_n_selections": 0,
+   "R_ids": [],
+   "R_attrition": {},
+   "H": null,
+   "H_n_score_ok": 0,
+   "H_n_selections": 0,
+   "H_ids": [],
+   "H_attrition": {}
+  },
+  {
+   "fixture_id": "mt_743353951",
+   "S": null,
+   "S_n_score_ok": 0,
+   "S_n_selections": 0,
+   "S_ids": [],
+   "S_attrition": {},
+   "R": null,
+   "R_n_score_ok": 0,
+   "R_n_selections": 0,
+   "R_ids": [],
+   "R_attrition": {},
+   "H": null,
+   "H_n_score_ok": 0,
+   "H_n_selections": 0,
+   "H_ids": [],
+   "H_attrition": {}
+  },
+  {
+   "fixture_id": "mt_839909558",
+   "S": null,
+   "S_n_score_ok": 0,
+   "S_n_selections": 0,
+   "S_ids": [],
+   "S_attrition": {},
+   "R": null,
+   "R_n_score_ok": 0,
+   "R_n_selections": 0,
+   "R_ids": [],
+   "R_attrition": {},
+   "H": null,
+   "H_n_score_ok": 0,
+   "H_n_selections": 0,
+   "H_ids": [],
+   "H_attrition": {}
+  },
+  {
+   "fixture_id": "mt_367717872",
+   "S": null,
+   "S_n_score_ok": 0,
+   "S_n_selections": 0,
+   "S_ids": [],
+   "S_attrition": {},
+   "R": null,
+   "R_n_score_ok": 0,
+   "R_n_selections": 0,
+   "R_ids": [],
+   "R_attrition": {},
+   "H": null,
+   "H_n_score_ok": 0,
+   "H_n_selections": 0,
+   "H_ids": [],
+   "H_attrition": {}
+  },
+  {
+   "fixture_id": "mt_581141218",
+   "S": null,
+   "S_n_score_ok": 0,
+   "S_n_selections": 0,
+   "S_ids": [],
+   "S_attrition": {},
+   "R": null,
+   "R_n_score_ok": 0,
+   "R_n_selections": 0,
+   "R_ids": [],
+   "R_attrition": {},
+   "H": null,
+   "H_n_score_ok": 0,
+   "H_n_selections": 0,
+   "H_ids": [],
+   "H_attrition": {}
+  },
+  {
+   "fixture_id": "mt_406686767",
+   "S": null,
+   "S_n_score_ok": 0,
+   "S_n_selections": 0,
+   "S_ids": [],
+   "S_attrition": {},
+   "R": null,
+   "R_n_score_ok": 0,
+   "R_n_selections": 0,
+   "R_ids": [],
+   "R_attrition": {},
+   "H": null,
+   "H_n_score_ok": 0,
+   "H_n_selections": 0,
+   "H_ids": [],
+   "H_attrition": {}
+  },
+  {
+   "fixture_id": "mt_749907509",
+   "S": null,
+   "S_n_score_ok": 0,
+   "S_n_selections": 0,
+   "S_ids": [],
+   "S_attrition": {},
+   "R": null,
+   "R_n_score_ok": 0,
+   "R_n_selections": 0,
+   "R_ids": [],
+   "R_attrition": {},
+   "H": null,
+   "H_n_score_ok": 0,
+   "H_n_selections": 0,
+   "H_ids": [],
+   "H_attrition": {}
+  },
+  {
+   "fixture_id": "mt_406686750",
+   "S": -0.017165978840087612,
+   "S_n_score_ok": 1,
+   "S_n_selections": 1,
+   "S_ids": [
+    "a8985b9587fcf452305e447868dbca7a216ca848f6bae11d7a204375ed21c9a9"
+   ],
+   "S_attrition": {},
+   "R": -0.017165978840087612,
+   "R_n_score_ok": 1,
+   "R_n_selections": 1,
+   "R_ids": [
+    "339c18dd0939717044f522bb0b9104426993203b2b16cea0b0763a935e772227"
+   ],
+   "R_attrition": {},
+   "H": 1.3438328599570208,
+   "H_n_score_ok": 1,
+   "H_n_selections": 1,
+   "H_ids": [
+    "000b4660bdfe4301e51efeaf66a0c47a3d0c3ae5dd906847e7ceb08c086ff7b8"
+   ],
+   "H_attrition": {}
+  },
+  {
+   "fixture_id": "mt_978828893",
+   "S": null,
+   "S_n_score_ok": 0,
+   "S_n_selections": 0,
+   "S_ids": [],
+   "S_attrition": {},
+   "R": null,
+   "R_n_score_ok": 0,
+   "R_n_selections": 0,
+   "R_ids": [],
+   "R_attrition": {},
+   "H": null,
+   "H_n_score_ok": 0,
+   "H_n_selections": 0,
+   "H_ids": [],
+   "H_attrition": {}
+  },
+  {
+   "fixture_id": "mt_406686795",
+   "S": null,
+   "S_n_score_ok": 0,
+   "S_n_selections": 0,
+   "S_ids": [],
+   "S_attrition": {},
+   "R": null,
+   "R_n_score_ok": 0,
+   "R_n_selections": 0,
+   "R_ids": [],
+   "R_attrition": {},
+   "H": null,
+   "H_n_score_ok": 0,
+   "H_n_selections": 0,
+   "H_ids": [],
+   "H_attrition": {}
+  },
+  {
+   "fixture_id": "mt_406671921",
+   "S": null,
+   "S_n_score_ok": 0,
+   "S_n_selections": 0,
+   "S_ids": [],
+   "S_attrition": {},
+   "R": null,
+   "R_n_score_ok": 0,
+   "R_n_selections": 0,
+   "R_ids": [],
+   "R_attrition": {},
+   "H": null,
+   "H_n_score_ok": 0,
+   "H_n_selections": 0,
+   "H_ids": [],
+   "H_attrition": {}
+  },
+  {
+   "fixture_id": "mt_012249732",
+   "S": null,
+   "S_n_score_ok": 0,
+   "S_n_selections": 0,
+   "S_ids": [],
+   "S_attrition": {},
+   "R": null,
+   "R_n_score_ok": 0,
+   "R_n_selections": 0,
+   "R_ids": [],
+   "R_attrition": {},
+   "H": null,
+   "H_n_score_ok": 0,
+   "H_n_selections": 0,
+   "H_ids": [],
+   "H_attrition": {}
+  },
+  {
+   "fixture_id": "mt_012249753",
+   "S": null,
+   "S_n_score_ok": 0,
+   "S_n_selections": 0,
+   "S_ids": [],
+   "S_attrition": {},
+   "R": null,
+   "R_n_score_ok": 0,
+   "R_n_selections": 0,
+   "R_ids": [],
+   "R_attrition": {},
+   "H": null,
+   "H_n_score_ok": 0,
+   "H_n_selections": 0,
+   "H_ids": [],
+   "H_attrition": {}
+  },
+  {
+   "fixture_id": "mt_195507497",
+   "S": null,
+   "S_n_score_ok": 0,
+   "S_n_selections": 0,
+   "S_ids": [],
+   "S_attrition": {},
+   "R": null,
+   "R_n_score_ok": 0,
+   "R_n_selections": 0,
+   "R_ids": [],
+   "R_attrition": {},
+   "H": null,
+   "H_n_score_ok": 0,
+   "H_n_selections": 0,
+   "H_ids": [],
+   "H_attrition": {}
+  },
+  {
+   "fixture_id": "mt_839956235",
+   "S": null,
+   "S_n_score_ok": 0,
+   "S_n_selections": 0,
+   "S_ids": [],
+   "S_attrition": {},
+   "R": null,
+   "R_n_score_ok": 0,
+   "R_n_selections": 0,
+   "R_ids": [],
+   "R_attrition": {},
+   "H": null,
+   "H_n_score_ok": 0,
+   "H_n_selections": 0,
+   "H_ids": [],
+   "H_attrition": {}
+  },
+  {
+   "fixture_id": "mt_012249717",
+   "S": null,
+   "S_n_score_ok": 0,
+   "S_n_selections": 0,
+   "S_ids": [],
+   "S_attrition": {},
+   "R": null,
+   "R_n_score_ok": 0,
+   "R_n_selections": 0,
+   "R_ids": [],
+   "R_attrition": {},
+   "H": null,
+   "H_n_score_ok": 0,
+   "H_n_selections": 0,
+   "H_ids": [],
+   "H_attrition": {}
+  },
+  {
+   "fixture_id": "mt_195507436",
+   "S": null,
+   "S_n_score_ok": 0,
+   "S_n_selections": 0,
+   "S_ids": [],
+   "S_attrition": {},
+   "R": null,
+   "R_n_score_ok": 0,
+   "R_n_selections": 0,
+   "R_ids": [],
+   "R_attrition": {},
+   "H": null,
+   "H_n_score_ok": 0,
+   "H_n_selections": 0,
+   "H_ids": [],
+   "H_attrition": {}
+  },
+  {
+   "fixture_id": "mt_250068398",
+   "S": null,
+   "S_n_score_ok": 0,
+   "S_n_selections": 0,
+   "S_ids": [],
+   "S_attrition": {},
+   "R": null,
+   "R_n_score_ok": 0,
+   "R_n_selections": 0,
+   "R_ids": [],
+   "R_attrition": {},
+   "H": null,
+   "H_n_score_ok": 0,
+   "H_n_selections": 0,
+   "H_ids": [],
+   "H_attrition": {}
+  },
+  {
+   "fixture_id": "mt_839956249",
+   "S": null,
+   "S_n_score_ok": 0,
+   "S_n_selections": 0,
+   "S_ids": [],
+   "S_attrition": {},
+   "R": null,
+   "R_n_score_ok": 0,
+   "R_n_selections": 0,
+   "R_ids": [],
+   "R_attrition": {},
+   "H": null,
+   "H_n_score_ok": 0,
+   "H_n_selections": 0,
+   "H_ids": [],
+   "H_attrition": {}
+  },
+  {
+   "fixture_id": "mt_581124532",
+   "S": null,
+   "S_n_score_ok": 0,
+   "S_n_selections": 0,
+   "S_ids": [],
+   "S_attrition": {},
+   "R": null,
+   "R_n_score_ok": 0,
+   "R_n_selections": 0,
+   "R_ids": [],
+   "R_attrition": {},
+   "H": null,
+   "H_n_score_ok": 0,
+   "H_n_selections": 0,
+   "H_ids": [],
+   "H_attrition": {}
+  },
+  {
+   "fixture_id": "mt_250067210",
+   "S": null,
+   "S_n_score_ok": 0,
+   "S_n_selections": 0,
+   "S_ids": [],
+   "S_attrition": {},
+   "R": null,
+   "R_n_score_ok": 0,
+   "R_n_selections": 0,
+   "R_ids": [],
+   "R_attrition": {},
+   "H": null,
+   "H_n_score_ok": 0,
+   "H_n_selections": 0,
+   "H_ids": [],
+   "H_attrition": {}
+  },
+  {
+   "fixture_id": "mt_406678422",
+   "S": null,
+   "S_n_score_ok": 0,
+   "S_n_selections": 0,
+   "S_ids": [],
+   "S_attrition": {},
+   "R": null,
+   "R_n_score_ok": 0,
+   "R_n_selections": 0,
+   "R_ids": [],
+   "R_attrition": {},
+   "H": null,
+   "H_n_score_ok": 0,
+   "H_n_selections": 0,
+   "H_ids": [],
+   "H_attrition": {}
+  },
+  {
+   "fixture_id": "mt_012243018",
+   "S": null,
+   "S_n_score_ok": 0,
+   "S_n_selections": 0,
+   "S_ids": [],
+   "S_attrition": {},
+   "R": null,
+   "R_n_score_ok": 0,
+   "R_n_selections": 0,
+   "R_ids": [],
+   "R_attrition": {},
+   "H": null,
+   "H_n_score_ok": 0,
+   "H_n_selections": 0,
+   "H_ids": [],
+   "H_attrition": {}
+  },
+  {
+   "fixture_id": "mt_581124517",
+   "S": null,
+   "S_n_score_ok": 0,
+   "S_n_selections": 0,
+   "S_ids": [],
+   "S_attrition": {},
+   "R": null,
+   "R_n_score_ok": 0,
+   "R_n_selections": 0,
+   "R_ids": [],
+   "R_attrition": {},
+   "H": null,
+   "H_n_score_ok": 0,
+   "H_n_selections": 0,
+   "H_ids": [],
+   "H_attrition": {}
+  },
+  {
+   "fixture_id": "mt_839950896",
+   "S": null,
+   "S_n_score_ok": 0,
+   "S_n_selections": 0,
+   "S_ids": [],
+   "S_attrition": {},
+   "R": null,
+   "R_n_score_ok": 0,
+   "R_n_selections": 0,
+   "R_ids": [],
+   "R_attrition": {},
+   "H": null,
+   "H_n_score_ok": 0,
+   "H_n_selections": 0,
+   "H_ids": [],
+   "H_attrition": {}
+  },
+  {
+   "fixture_id": "mt_250067252",
+   "S": null,
+   "S_n_score_ok": 0,
+   "S_n_selections": 0,
+   "S_ids": [],
+   "S_attrition": {},
+   "R": null,
+   "R_n_score_ok": 0,
+   "R_n_selections": 0,
+   "R_ids": [],
+   "R_attrition": {},
+   "H": null,
+   "H_n_score_ok": 0,
+   "H_n_selections": 0,
+   "H_ids": [],
+   "H_attrition": {}
+  },
+  {
+   "fixture_id": "mt_743395740",
+   "S": null,
+   "S_n_score_ok": 0,
+   "S_n_selections": 0,
+   "S_ids": [],
+   "S_attrition": {},
+   "R": null,
+   "R_n_score_ok": 0,
+   "R_n_selections": 0,
+   "R_ids": [],
+   "R_attrition": {},
+   "H": null,
+   "H_n_score_ok": 0,
+   "H_n_selections": 0,
+   "H_ids": [],
+   "H_attrition": {}
+  },
+  {
+   "fixture_id": "mt_581124586",
+   "S": null,
+   "S_n_score_ok": 0,
+   "S_n_selections": 0,
+   "S_ids": [],
+   "S_attrition": {},
+   "R": null,
+   "R_n_score_ok": 0,
+   "R_n_selections": 0,
+   "R_ids": [],
+   "R_attrition": {},
+   "H": null,
+   "H_n_score_ok": 0,
+   "H_n_selections": 0,
+   "H_ids": [],
+   "H_attrition": {}
+  },
+  {
+   "fixture_id": "mt_978812969",
+   "S": null,
+   "S_n_score_ok": 0,
+   "S_n_selections": 0,
+   "S_ids": [],
+   "S_attrition": {},
+   "R": null,
+   "R_n_score_ok": 0,
+   "R_n_selections": 0,
+   "R_ids": [],
+   "R_attrition": {},
+   "H": null,
+   "H_n_score_ok": 0,
+   "H_n_selections": 0,
+   "H_ids": [],
+   "H_attrition": {}
+  },
+  {
+   "fixture_id": "mt_624439624",
+   "S": null,
+   "S_n_score_ok": 0,
+   "S_n_selections": 0,
+   "S_ids": [],
+   "S_attrition": {},
+   "R": null,
+   "R_n_score_ok": 0,
+   "R_n_selections": 0,
+   "R_ids": [],
+   "R_attrition": {},
+   "H": null,
+   "H_n_score_ok": 0,
+   "H_n_selections": 0,
+   "H_ids": [],
+   "H_attrition": {}
+  }
+ ],
+ "champion_unchanged": true,
+ "champion_sha256": "0b8f5ff3dc4ddf15363d17989330b6f010197265ce8d2ee892cdc7ca410c00c9"
+}
