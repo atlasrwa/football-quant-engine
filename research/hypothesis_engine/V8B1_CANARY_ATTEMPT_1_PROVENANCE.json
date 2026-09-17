@@ -1,0 +1,75 @@
+{
+ "record_version": "v8b1_canary_attempt_provenance_v1",
+ "canary_attempt": 1,
+ "result": "TRANSPORT_READ_TIMEOUT",
+ "evaluative": false,
+ "target_outcomes_viewed": false,
+ "research_selections_returned": 0,
+ "note": "Durable provenance for the crashed-session canary. The raw evidence in V8B1_CANARY_RESULTS.json is NOT overwritten; this file records the operational/accounting interpretation of that same evidence. All three fixtures are classified T2_INFRASTRUCTURE_ONLY per the authorized decision and are EXCLUDED from the primary V8B.1 target sample; this exclusion does not propagate to any other fixture and does not alter the global taint taxonomy.",
+ "raw_evidence_source": "research/hypothesis_engine/V8B1_CANARY_RESULTS.json",
+ "model_id": "us.anthropic.claude-sonnet-4-6",
+ "region": "us-east-1",
+ "root_cause": "Per-Converse-call SDK read_timeout=90s in runner._bedrock_client is below the observed latency tail of a heavy Sonnet-4.6 call (extended thinking enabled, temperature 1.0). The working single-call golden_v3 baseline for the same model/maxTokens (no thinking) already had median 55.8s and max 118.8s per call; the runner's per-turn calls are strictly heavier and it makes up to MAX_TOOL_TURNS=12 such calls per fixture. Each fixture failed mid-loop at a turn (not on connect) with 'Read timeout on endpoint URL .../converse'.",
+ "requests": [
+  {
+   "fixture_id": "mt_012232342",
+   "packet_hash": "a4c192e6a857b13d75d7480c6abc7164dd59ce6dff5ed9ce899db05568b98b5e",
+   "status": "LLM_STATE_UNAVAILABLE",
+   "failed_at_turn": 6,
+   "created_unix": 1789576352,
+   "call_state": "UNKNOWN_AFTER_SEND",
+   "call_state_reason": "A read timeout was observed on the converse endpoint. A read timeout alone does not prove the request was not transmitted or not processed server-side; per policy this is UNKNOWN_AFTER_SEND, not NOT_SENT. No direct AWS evidence (request id / server-side log) is available to prove non-transmission.",
+   "accounting": {
+    "recorded_usage": null,
+    "recorded_usage_reason": "the timing-out turn raised before usage was folded into the returned manifest; prior-turn usage was accumulated in-process but not persisted on the early-return path",
+    "converse_turns_attempted_at_least": 6,
+    "billing_conservatively": "assume up to 6 Converse turns may have incurred cost (thinking + partial output), each possibly billed even though the final turn timed out client-side; treat as non-zero, unbounded-above-by-turn-count, and NOT part of the experiment's scientific spend"
+   }
+  },
+  {
+   "fixture_id": "mt_406686877",
+   "packet_hash": "278420b30793caa556071f8d08601c9f968a1ed6c13ee4e4fc0500f0f6402d37",
+   "status": "LLM_STATE_UNAVAILABLE",
+   "failed_at_turn": 11,
+   "created_unix": 1789576681,
+   "call_state": "UNKNOWN_AFTER_SEND",
+   "call_state_reason": "read timeout on converse endpoint; insufficient to declare NOT_SENT; no AWS request-id evidence available.",
+   "accounting": {
+    "recorded_usage": null,
+    "recorded_usage_reason": "same early-return path as above discarded final-turn usage",
+    "converse_turns_attempted_at_least": 11,
+    "billing_conservatively": "assume up to 11 Converse turns may have incurred cost; treat as non-zero and NOT part of scientific spend"
+   }
+  },
+  {
+   "fixture_id": "mt_581141428",
+   "packet_hash": "5f703ffc84cb877a6c82518001fb4efcf4802aafae2252d47f074afc9a6bb282",
+   "status": "LLM_STATE_UNAVAILABLE",
+   "failed_at_turn": 8,
+   "created_unix": 1789577054,
+   "call_state": "UNKNOWN_AFTER_SEND",
+   "call_state_reason": "read timeout on converse endpoint; insufficient to declare NOT_SENT; no AWS request-id evidence available.",
+   "accounting": {
+    "recorded_usage": null,
+    "recorded_usage_reason": "same early-return path as above discarded final-turn usage",
+    "converse_turns_attempted_at_least": 8,
+    "billing_conservatively": "assume up to 8 Converse turns may have incurred cost; treat as non-zero and NOT part of scientific spend"
+   }
+  }
+ ],
+ "aggregate_accounting": {
+  "confirmed_calls": 0,
+  "unknown_after_send_calls": 3,
+  "not_sent_calls": 0,
+  "spend_is_zero": false,
+  "spend_is_scientific_experiment_spend": false,
+  "spend_interpretation": "Non-zero, conservatively accounted: three fixtures each attempted multiple Converse turns (6, 11, 8) before a client-side read timeout. Per-turn usage was not persisted, so exact tokens/cost are UNKNOWN and are accounted conservatively as possibly-billed. None of this is experiment/research spend and none of it produced a research selection or exposed a target outcome."
+ },
+ "taint_decision_applied": {
+  "mt_012232342": "T2_INFRASTRUCTURE_ONLY",
+  "mt_406686877": "T2_INFRASTRUCTURE_ONLY",
+  "mt_581141428": "T2_INFRASTRUCTURE_ONLY",
+  "excluded_from_primary_v8b1_target_sample": true,
+  "exclusion_scope": "these three fixtures only; not propagated; global taint taxonomy unchanged"
+ }
+}
