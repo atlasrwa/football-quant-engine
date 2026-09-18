@@ -2,14 +2,21 @@
 
 REFUSES unless every gate condition holds. There is NO override flag, by design.
 
-NO PASS BY DEFINITION. Every boolean is bound to:
-    * an EVIDENCE ARTIFACT hash   (the file that demonstrates it)
-    * a PRODUCING CODE hash       (the module version that produced it)
-    * an INPUT IDENTITY hash      (corpus / manifest / capability matrix)
+NO PASS BY DEFINITION, and (v2) NO SELF-CERTIFICATION.
 
-A condition asserted without those three is itself a refusal reason. A hardcoded `true` cannot
-satisfy this builder, because the builder does not read booleans -- it reads artifacts and
-derives the booleans.
+v1 still had a hole the audit found: `_run_v8c_evidence.py` WROTE `p0_open = 0` and
+`p1_open = 0` into an artifact and this builder READ those fields and believed them. A
+hand-written `{"p0_open": 0}` passed. v1 also bound an artifact to the CURRENT code hashes
+instead of proving the artifact was PRODUCED BY them, so a stale artifact kept passing after
+the code beneath it changed.
+
+v2 closes both:
+
+  * `P0_OPEN_ZERO` / `P1_OPEN_ZERO` are DERIVED from `defect_ledger.evaluate(passed_node_ids)`,
+    which counts defects whose required pytest nodes did not PASS. No literal is read.
+  * every evidence artifact must EMBED `_provenance` (producer commit, module hashes, ledger
+    hash, corpus/capability hashes) and the builder recomputes those NOW and requires exact
+    equality. An artifact with no provenance block cannot satisfy any condition.
 
 ZERO SPEND. Reads no target outcome.
 """
@@ -19,7 +26,10 @@ import hashlib
 import json
 import os
 
-FREEZE_VERSION = "v8c_freeze_v1"
+from src.research.hypothesis_v8c import defect_ledger as DL
+from src.research.hypothesis_v8c import provenance as PROV
+
+FREEZE_VERSION = "v8c_freeze_v2"
 
 ROOT = "/home/ubuntu"
 ENG = f"{ROOT}/research/hypothesis_engine"
@@ -36,6 +46,7 @@ GATE_CONDITIONS = (
     "R_IDENTITY_ZERO", "R_CROSS_TREATMENT_OVERLAP_ZERO", "PAIR_IDENTITY_PRESERVED",
     "INFERENCE_SEMANTICS_PASS", "DETERMINISM_PASS", "CACHE_ISOLATION_PASS",
     "CHAMPION_UNCHANGED", "NO_SONNET_CALLS", "SEALED_947_OUTCOMES_NOT_VIEWED",
+    "LIVE_SEARCH_REACHABILITY_PASS",
 )
 
 #: Artifacts the gate needs. `required=True` means its absence is a refusal.
@@ -52,12 +63,15 @@ REQUIRED_ARTIFACTS = {
     "exposed50_replay": ("V8C_EXPOSED50_STRUCTURAL_REPLAY.json", True),
     "sealed947_preflight": ("V8C_SEALED947_STRUCTURAL_PREFLIGHT.json", True),
     "score_stability": ("V8C_SCORE_STABILITY_AUDIT.json", True),
+    "live_reachability": ("V8C_LIVE_SEARCH_REACHABILITY_REPORT.json", True),
 }
 
 #: Code modules whose hashes are bound into the manifest.
-CODE_MODULES = ("grammar", "pit_context", "compiler", "scorer", "cohort_stats", "pre_t",
-                "universe", "controls", "aggregate", "blind_index", "select_freeze",
-                "score_frozen", "packet", "runner", "cache", "env_semantics", "golden")
+CODE_MODULES = ("grammar", "pit_context", "historical_pit", "compiler", "scorer",
+                "cohort_stats", "pre_t", "universe", "controls", "aggregate",
+                "aggregate_blocks", "blind_index", "select_freeze", "score_frozen", "packet",
+                "runner", "cache", "env_semantics", "golden", "vintage", "receipt",
+                "defect_ledger", "provenance", "live_reachability")
 
 
 class FreezeRefused(Exception):
@@ -88,12 +102,38 @@ def collect_artifacts() -> dict:
     return out
 
 
-def _evidence(artifacts, key, code_keys, inputs):
-    """Bind one condition to artifact + code + input hashes (the §34 anti-'pass by definition'
-    requirement). Returns None when the evidence is absent, which the gate treats as FAIL."""
+def _load(artifacts, key):
     a = artifacts.get(key)
     if not a or not a["present"]:
         return None
+    try:
+        return json.load(open(f"{ENG}/{a['file']}"))
+    except Exception:
+        return None
+
+
+def _ledger_from_evidence(artifacts):
+    """Derive the ledger from the ACTUAL passed pytest node ids recorded in the evidence."""
+    d = _load(artifacts, "test_results")
+    if not d:
+        return None
+    passed = d.get("passed_node_ids")
+    if passed is None:
+        return None          # an artifact that does not list what PASSED cannot certify
+    return DL.evaluate(passed)
+
+
+def _evidence(artifacts, key, code_keys, inputs):
+    """Bind one condition to artifact + code + input hashes. Returns None when the evidence is
+    absent OR its embedded provenance does not match the current world -- both are FAIL."""
+    a = artifacts.get(key)
+    if not a or not a["present"]:
+        return None
+    payload = _load(artifacts, key)
+    if payload is not None:
+        pv = PROV.verify(payload)
+        if not pv["ok"]:
+            return {"__provenance_failed__": pv["mismatches"], "artifact": a["file"]}
     return {"artifact": a["file"], "artifact_sha256": a["sha256"],
             "producing_code": {k: code_keys[k]["sha256"] for k in code_keys},
             "input_identity": inputs}
@@ -115,6 +155,11 @@ def evaluate_gate(*, artifacts=None, code=None, inputs=None) -> dict:
             reasons.append(f"{name}: missing evidence artifact "
                            f"{REQUIRED_ARTIFACTS[art_key][0]}")
             return
+        if "__provenance_failed__" in ev:
+            conditions[name] = {"value": False, "evidence": ev,
+                                "why": f"stale evidence: {ev['__provenance_failed__']}"}
+            reasons.append(f"{name}: STALE EVIDENCE -- {ev['__provenance_failed__']}")
+            return
         try:
             payload = json.load(open(f"{ENG}/{artifacts[art_key]['file']}"))
             value = bool(extract(payload))
@@ -127,10 +172,27 @@ def evaluate_gate(*, artifacts=None, code=None, inputs=None) -> dict:
         if not value:
             reasons.append(f"{name}: evidence present but condition is FALSE")
 
-    need("P0_OPEN_ZERO", "test_results", ["select_freeze", "blind_index"],
-         lambda d: d.get("p0_open") == 0)
-    need("P1_OPEN_ZERO", "test_results", ["universe", "controls"],
-         lambda d: d.get("p1_open") == 0)
+    # ---- P0/P1 openness is DERIVED from the ledger, never read from an artifact --------
+    ledger = _ledger_from_evidence(artifacts)
+    for name, sev in (("P0_OPEN_ZERO", "p0_open"), ("P1_OPEN_ZERO", "p1_open")):
+        if ledger is None:
+            conditions[name] = {"value": False, "evidence": None,
+                                "why": "no passed-test evidence to evaluate the ledger against"}
+            reasons.append(f"{name}: no test-outcome evidence")
+            continue
+        val = ledger[sev] == 0
+        conditions[name] = {
+            "value": val,
+            "evidence": {"artifact": "V8C_TEST_RESULTS.json (passed node ids)",
+                         "artifact_sha256": artifacts["test_results"]["sha256"],
+                         "derivation": "defect_ledger.evaluate(passed_node_ids)",
+                         "ledger_hash": DL.ledger_hash(),
+                         "open_ids": ledger["open_ids"],
+                         "producing_code": {"defect_ledger": code["defect_ledger"]["sha256"]
+                                            if "defect_ledger" in code else None},
+                         "input_identity": inputs}}
+        if not val:
+            reasons.append(f"{name}: {ledger[sev]} still open -> {ledger['open_ids']}")
     need("PIT_PASS", "pit_results", ["pit_context", "blind_index"],
          lambda d: d.get("verdict") == "PASS")
     need("OUTCOME_SEAL_PASS", "test_results", ["select_freeze", "score_frozen"],
@@ -162,7 +224,10 @@ def evaluate_gate(*, artifacts=None, code=None, inputs=None) -> dict:
     need("SEALED_947_OUTCOMES_NOT_VIEWED", "sealed947_preflight", ["blind_index"],
          lambda d: d.get("sealed_947_outcomes_viewed") is False)
     need("NO_SONNET_CALLS", "test_results", ["runner"],
-         lambda d: d.get("new_sonnet_calls") == 0)
+         lambda d: d.get("sonnet_call_ledger", {}).get("total_calls") == 0)
+    need("LIVE_SEARCH_REACHABILITY_PASS", "live_reachability", ["live_reachability",
+                                                                "universe"],
+         lambda d: d.get("LIVE_UNREACHABLE_CANDIDATES") == 0)
 
     champ = sha_file(CHAMPION_PATH)
     champ_ok = champ == CHAMPION_EXPECTED
@@ -226,4 +291,8 @@ def version_stamp() -> dict:
             "code_modules_hashed": list(CODE_MODULES),
             "override_flag": None,
             "absent_evidence_evaluates_to": False,
-            "booleans_are_derived_from_artifacts_not_read_from_them": True}
+            "booleans_are_derived_from_artifacts_not_read_from_them": True,
+            "p0_p1_open_derived_from": "defect_ledger.evaluate(passed pytest node ids)",
+            "hand_written_p0_open_zero_can_pass": False,
+            "stale_artifact_from_older_code": "FAIL",
+            "ledger_hash": DL.ledger_hash()}
