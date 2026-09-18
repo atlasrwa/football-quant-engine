@@ -191,11 +191,31 @@ def _capability_fingerprint(capability) -> str:
     return hashlib.sha256(repr(payload).encode()).hexdigest()
 
 
+def _condition_set_fingerprint(condition_set) -> str:
+    """CONTENT hash of a condition set.
+
+    P1-L: the previous key used `len(condition_set)`, so two DIFFERENT condition sets of equal
+    length collided and the second caller silently received the first caller's resolution map.
+    Length is not identity.
+    """
+    # A condition_set is a list of SHAPES; each shape is a list of condition dicts. Both
+    # levels are canonicalised: the dict keys are sorted so key order cannot change the hash,
+    # and the conditions within a shape are sorted so a reordered conjunction is recognised as
+    # the same shape. The SHAPES themselves keep their declared order, because that order is
+    # part of the grammar's deterministic enumeration.
+    canonical = [[sorted((str(k), str(v)) for k, v in cond.items()) for cond in sorted(
+        shape, key=lambda c: sorted((str(k), str(v)) for k, v in c.items()))]
+        for shape in condition_set]
+    return hashlib.sha256(repr(canonical).encode()).hexdigest()
+
+
 def _resolver_key(capability, kw) -> tuple:
+    """Every component is a CONTENT hash or a canonical tuple. No object identity, no
+    length-only identity."""
     return (_capability_fingerprint(capability),
-            tuple(kw.get("metrics") or ()),
+            tuple(sorted(kw.get("metrics") or ())),
             tuple(kw.get("windows") or WINDOWS),
-            len(kw.get("condition_set") or CONDITION_SHAPES))
+            _condition_set_fingerprint(kw.get("condition_set") or CONDITION_SHAPES))
 
 
 def resolution_map(capability, **kw) -> dict:

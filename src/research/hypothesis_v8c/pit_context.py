@@ -51,8 +51,9 @@ from dataclasses import dataclass
 from src.research.hypothesis_v71 import execution as EX
 from src.research.hypothesis_v71 import invariants as INV
 from src.research.hypothesis_v71 import similarity as SIM
+from src.research.hypothesis_v8c import historical_pit as HPIT
 
-PIT_CONTEXT_VERSION = "v8c_pit_context_v2"
+PIT_CONTEXT_VERSION = "v8c_pit_context_v3"
 
 PROFILE_AXES = tuple(EX.PROFILE_AXES)
 
@@ -64,25 +65,48 @@ PROFILE_SEMANTIC = "(team, competition, axis, T)"
 
 @dataclass(frozen=True)
 class PitContext:
-    """The V8C context. Deliberately NOT `engine.Context`: the axis cache has a different key
-    arity, so a V8C context handed to the frozen compiler would silently miss every profile
-    lookup. A distinct type makes that a TypeError-shaped mistake rather than a silent one.
+    """The V8C context. Deliberately NOT `engine.Context`: `axis_cache` here is a
+    HistoricalProfileIndex, not a dict, so a V8C context handed to the frozen compiler fails
+    loudly instead of silently missing every profile lookup.
+
+    `axis_cache`   the H-TIME index the compiler uses to classify each historical match H
+                   from information strictly before H (P1-K).
+    `terciles` /   as-of-T bounds and profiles, retained ONLY to describe the TARGET's own
+    `target_profiles`  opponent in the evidence packet -- a target-time question, correctly
+                   answered with target-time information. The compiler no longer reads them.
     """
     index: object
-    terciles: dict          # (competition, axis) -> (lo, hi)
-    axis_cache: dict        # (team_id, competition, axis) -> mean
+    terciles: dict            # (competition, axis) -> (lo, hi)   [as of T, packet only]
+    axis_cache: object        # HistoricalProfileIndex             [H-time, compiler]
     similarity: object
     cut_unix: int
     rec_i: int
+    target_profiles: dict = None   # (team, competition, axis) -> mean [as of T, packet only]
+
+    @property
+    def historical(self):
+        """Explicit alias: the H-time index."""
+        return self.axis_cache
 
     def profile_cells(self) -> int:
-        return len(self.axis_cache)
+        return len(self.target_profiles or {})
 
     def tercile_cells(self) -> int:
         return len(self.terciles)
 
+    def target_band(self, team_id, competition, axis):
+        """The band of a team AS OF T. Used for the packet's description of the target's own
+        opponent -- never for classifying a historical match."""
+        mv = (self.target_profiles or {}).get((str(team_id), competition, axis))
+        bounds = self.terciles.get((competition, axis))
+        if mv is None or not bounds:
+            return None
+        lo, hi = bounds
+        return "LOW" if mv < lo else ("HIGH" if mv > hi else "MID")
 
-def build_pit_context(index, rec_i, *, similarity_engine=None) -> PitContext:
+
+def build_pit_context(index, rec_i, *, similarity_engine=None,
+                      historical=None) -> PitContext:
     """The context fitted STRICTLY BEFORE `index.kick[rec_i]`, keyed per competition.
 
     `similarity_engine` may be shared across targets: `SimilarityEngine` caches on
@@ -120,8 +144,11 @@ def build_pit_context(index, rec_i, *, similarity_engine=None) -> PitContext:
             if len(xs) >= MIN_TEAMS_FOR_TERCILES:
                 ter[(comp, axis)] = (xs[len(xs) // 3], xs[2 * len(xs) // 3])
     sim = similarity_engine if similarity_engine is not None else SIM.SimilarityEngine(index)
-    return PitContext(index=index, terciles=ter, axis_cache=cache, similarity=sim,
-                      cut_unix=cut, rec_i=int(rec_i))
+    # The H-time index is a property of the CORPUS, not of the target, so it is built once and
+    # shared. Passing it in is strongly preferred: rebuilding per target is correct but wasteful.
+    hp = historical if historical is not None else HPIT.HistoricalProfileIndex(index)
+    return PitContext(index=index, terciles=ter, axis_cache=hp, similarity=sim,
+                      cut_unix=cut, rec_i=int(rec_i), target_profiles=cache)
 
 
 def context_hash(ctx: PitContext) -> str:
@@ -134,7 +161,9 @@ def context_hash(ctx: PitContext) -> str:
         "cut_unix": ctx.cut_unix,
         "profile_semantic": PROFILE_SEMANTIC,
         "terciles": [[list(k), list(v)] for k, v in sorted(ctx.terciles.items())],
-        "axis_cache": [[list(k), round(v, 10)] for k, v in sorted(ctx.axis_cache.items())],
+        "target_profiles": [[list(k), round(v, 10)]
+                            for k, v in sorted((ctx.target_profiles or {}).items())],
+        "historical_pit_identity": ctx.axis_cache.identity_hash_before(ctx.cut_unix),
     }
     return hashlib.sha256(
         json.dumps(payload, sort_keys=True, default=str).encode()).hexdigest()
@@ -142,7 +171,10 @@ def context_hash(ctx: PitContext) -> str:
 
 def version_stamp() -> dict:
     return {"pit_context_version": PIT_CONTEXT_VERSION,
-            "repairs": ["D-V8C-P0-CTXCUT", "P1-PROFILE-COMP"],
+            "repairs": ["D-V8C-P0-CTXCUT", "P1-PROFILE-COMP", "P1-K"],
+            "historical_classification": HPIT.PROFILE_SEMANTIC,
+            "compiler_reads": "axis_cache (HistoricalProfileIndex), H-time",
+            "packet_reads": "terciles + target_profiles, as of T, target opponent only",
             "cut": "index.kick[rec_i], strictly-before, rebuilt per target fixture",
             "was_cut": "single global index.kick[int(len(index.kick)*0.7)]",
             "profile_semantic": PROFILE_SEMANTIC,

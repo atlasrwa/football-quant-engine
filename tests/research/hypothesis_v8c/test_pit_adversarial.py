@@ -73,7 +73,7 @@ def test_context_cut_is_strictly_before_the_target():
     assert ctx.cut_unix == int(env.index.kick[env.target_pos])
 
     checked = 0
-    for (tid, comp, axis), cached in ctx.axis_cache.items():
+    for (tid, comp, axis), cached in (ctx.target_profiles or {}).items():
         metric, side = INV.axis_metric_perspective(axis)
         if metric not in env.index.metrics:
             continue

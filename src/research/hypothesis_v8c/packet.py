@@ -129,18 +129,14 @@ def _recent_vs_long(index, team_id, metric, rec_i, recency_family, perspective) 
 
 
 def _opponent_profile_bands(opponent_id, ctx, competition) -> dict:
-    """The fixture opponent's band per axis, under the V8C (team, competition, axis, T)
-    semantic. `None` where the cell has no profile -- never imputed to MID."""
-    out = {}
-    for axis in PROFILE_AXES:
-        mv = ctx.axis_cache.get((str(opponent_id), competition, axis))
-        bounds = ctx.terciles.get((competition, axis))
-        if mv is None or bounds is None:
-            out[axis] = None
-            continue
-        lo, hi = bounds
-        out[axis] = "LOW" if mv < lo else ("HIGH" if mv > hi else "MID")
-    return out
+    """The TARGET fixture's opponent, banded AS OF T.
+
+    This is legitimately a target-time question -- "what kind of side are we about to face, as
+    assessed today" -- so it uses `ctx.target_band`, which reads the as-of-T profiles. The
+    H-time index exists for classifying HISTORICAL matches, where as-of-T information would be
+    hindsight (P1-K). `None` where the cell has no profile; never imputed to MID.
+    """
+    return {axis: ctx.target_band(opponent_id, competition, axis) for axis in PROFILE_AXES}
 
 
 def _similar_opponents(ctx, index, opponent_id, rec, rec_i) -> dict:

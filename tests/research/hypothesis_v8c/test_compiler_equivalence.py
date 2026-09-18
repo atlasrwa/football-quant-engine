@@ -47,7 +47,9 @@ def test_identical_without_opponent_profile(golden_env, golden_ctx):
     assert compared > 50, f"equivalence checked too few hypotheses ({compared})"
 
 
-def test_profile_lookup_uses_the_three_tuple_key():
-    """The whole point of the successor: the profile is resolved per competition."""
-    assert V8C.PROFILE_SEMANTIC == "(team, competition, axis, T)"
-    assert V8C.version_stamp()["axis_cache_key"] == "(team_id, competition, axis)"
+def test_profile_semantic_is_competition_and_H_time_coherent():
+    """Both rounds of the repair: per competition (round 1) and strictly before H (P1-K)."""
+    assert V8C.PROFILE_SEMANTIC == "(team, competition, axis, strictly-before-H)"
+    st = V8C.version_stamp()
+    assert st["profile_and_terciles_both_as_of_H"] is True
+    assert "P1-K" in st["repairs_round_2"]

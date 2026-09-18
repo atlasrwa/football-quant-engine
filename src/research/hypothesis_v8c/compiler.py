@@ -17,14 +17,13 @@ in more than one competition, so for those teams the band is a comparison betwee
 incommensurable quantities: a mean pooled over (say) Ligue 2 and Ligue 1, tested against Ligue
 1's thresholds.
 
-THE REPAIR
-----------
-The V8C semantic is `(team, competition, axis, T)`: the team's mean on that axis over its prior
-matches IN THAT COMPETITION, strictly before T, compared against THAT competition's terciles.
-Every term in the comparison now carries the same competition.
+THE REPAIR (two rounds)
+-----------------------
+Round 1 made the comparison competition-coherent. Round 2 (P1-K) made it HISTORICAL-TIME
+coherent: a historical match H is classified from information strictly BEFORE H, rather than
+from a profile as of T that contained post-H matches and H itself.
 
-    mv     = axis_cache.get((opponent_id, entry_competition, f.axis))
-    bounds = terciles.get((entry_competition, f.axis))
+    band = axis_cache.band_before(opponent_id, entry_competition, f.axis, entry_kickoff)
 
 A `(team, competition)` cell below the frozen `MIN_PRIOR_MATCHES_FOR_PROFILE` floor yields NO
 profile, and a match against an unprofiled opponent is EXCLUDED from the cohort -- never
@@ -59,7 +58,7 @@ axis_tercile_band = CO.axis_tercile_band
 assert_profile_reads_opponent = CO.assert_profile_reads_opponent
 _entity_id = CO._entity_id
 
-PROFILE_SEMANTIC = "(team, competition, axis, T)"
+PROFILE_SEMANTIC = "(team, competition, axis, strictly-before-H)"
 
 
 def _passes_filters(entry, filters, *, entity_id, target_is_home, rec,
@@ -86,12 +85,16 @@ def _passes_filters(entry, filters, *, entity_id, target_is_home, rec,
             got = entry[2] == rec.competition
         elif f.dimension == "opponent_profile":
             opponent_id = assert_profile_reads_opponent(entry, entity_id)
-            entry_competition = entry[2]          # <-- the ONE change: competition-coherent
-            mv = axis_cache.get((opponent_id, entry_competition, f.axis))
-            bounds = terciles.get((entry_competition, f.axis))
-            if mv is None or not bounds:
-                return False          # cannot evaluate this prior match: exclude it, never impute
-            got = axis_tercile_band(mv, bounds) == f.value
+            entry_competition = entry[2]
+            entry_kickoff = entry[1]
+            # P1-K: classify this HISTORICAL match H from information strictly BEFORE H.
+            # `axis_cache` is a HistoricalProfileIndex, so both the opponent's profile and the
+            # tercile bounds are as of H -- H itself and every post-H match are excluded.
+            band = axis_cache.band_before(opponent_id, entry_competition, f.axis,
+                                          entry_kickoff)
+            if band is None:
+                return False          # cannot classify from prior info: exclude, never impute
+            got = band == f.value
         else:                                          # unreachable: IR fails closed upstream
             raise INV.InvariantViolation(
                 [INV.SEMANTICALLY_AMBIGUOUS],
@@ -210,11 +213,13 @@ def version_stamp() -> dict:
     return {"compiler_version": COMPILER_VERSION,
             "successor_to": CO.COMPILER_VERSION,
             "repairs": ["P1-PROFILE-COMP"],
-            "only_behavioral_change": ("opponent_profile resolves the profile in the SAME "
-                                       "competition whose terciles it is tested against"),
+            "only_behavioral_change": ("opponent_profile classifies each historical match H "
+                                       "from information strictly before H, in H's own "
+                                       "competition"),
             "profile_semantic": PROFILE_SEMANTIC,
-            "axis_cache_key": "(team_id, competition, axis)",
-            "tercile_key": "(competition, axis)",
+            "axis_cache_type": "hypothesis_v8c.historical_pit.HistoricalProfileIndex",
+            "profile_and_terciles_both_as_of_H": True,
+            "repairs_round_2": ["P1-K"],
             "unprofiled_opponent": "EXCLUDED from the cohort, never imputed to MID",
             "reuses_frozen_unchanged": ["CompiledQuery", "is_plain", "_entity_id",
                                         "axis_tercile_band", "assert_profile_reads_opponent",
