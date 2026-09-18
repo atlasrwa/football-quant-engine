@@ -88,6 +88,25 @@ def test_llm_facing_projection_hides_support_statistics(golden_universe):
         UNI.assert_llm_safe(lf)
 
 
+def test_llm_facing_projection_RETAINS_every_structural_field(golden_universe):
+    """THE LIVE CONTROL for MEASSPACE.
+
+    The hiding test only asserts ABSENCE, so a projection that stripped everything would pass
+    it. Sonnet must still receive every structural field the arms reason and match on --
+    otherwise the treatment arm is answering a poorer question than R and H.
+    """
+    required = ("hypothesis_id", "structural_description", "target_metrics", "subject",
+                "side", "comparator", "window", "conditions", "complexity",
+                "research_family", "capability_status")
+    for c in golden_universe.evaluable[:25]:
+        lf = UNI.llm_facing(c)
+        for k in required:
+            assert k in lf, f"{k} was stripped from the Sonnet-facing view"
+        assert lf["complexity"] == c["complexity"]
+        assert lf["conditions"] == c["conditions"]
+        assert lf["hypothesis_id"] == c["hypothesis_id"]
+
+
 def test_search_results_are_llm_facing_by_default(golden_universe):
     page = UNI.search_evaluable(UNI.SearchQuery(max_results=5), golden_universe)
     for c in page["results"]:
