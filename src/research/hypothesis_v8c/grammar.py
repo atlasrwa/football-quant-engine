@@ -25,6 +25,7 @@ ZERO SPEND. Reads no corpus row and no target outcome -- this module is pure gra
 """
 from __future__ import annotations
 
+import hashlib
 import itertools
 
 from src.research.hypothesis_v71 import capability as CAP
@@ -170,13 +171,52 @@ def build_valid_irs(capability, **kw):
             yield spec, ir
 
 
+#: Memoized id -> IR maps, keyed by the grammar restriction they were built under. Building one
+#: walks the grammar ONCE; without it `resolve` was O(grammar) PER ID, which on a 15-fixture
+#: cohort meant millions of redundant IR builds and turned a seconds-long score into minutes.
+_RESOLVER_CACHE: dict = {}
+
+
+def _capability_fingerprint(capability) -> str:
+    """A CONTENT fingerprint of the capability contract.
+
+    Deliberately not `id(capability)`: CPython reuses addresses after garbage collection, so an
+    id-keyed cache can serve one contract's resolution map for a different contract that
+    happens to land at the same address. That would be a silent correctness fault, not a
+    performance one.
+    """
+    payload = sorted(
+        (m, capability.classify_metric(m)[0], tuple(sorted(capability.admissible_competitions(m))))
+        for m in CAP.METRIC_SEMANTICS)
+    return hashlib.sha256(repr(payload).encode()).hexdigest()
+
+
+def _resolver_key(capability, kw) -> tuple:
+    return (_capability_fingerprint(capability),
+            tuple(kw.get("metrics") or ()),
+            tuple(kw.get("windows") or WINDOWS),
+            len(kw.get("condition_set") or CONDITION_SHAPES))
+
+
+def resolution_map(capability, **kw) -> dict:
+    """The full {hypothesis_id: IR} map for one grammar restriction, built once and reused.
+
+    Correctness is unchanged: it is exactly the set `build_valid_irs` yields, so an id that
+    resolves here is an id the grammar genuinely produces, and an id that does not is genuinely
+    outside it.
+    """
+    key = _resolver_key(capability, kw)
+    got = _RESOLVER_CACHE.get(key)
+    if got is None:
+        got = {ir.ir_id(): ir for _spec, ir in build_valid_irs(capability, **kw)}
+        _RESOLVER_CACHE[key] = got
+    return got
+
+
 def resolve(hypothesis_id: str, capability, **kw):
-    """Canonical id -> IR, by re-walking the SAME grammar. Used to validate that a submitted
-    id corresponds to a real candidate rather than a free-floating string."""
-    for _spec, ir in build_valid_irs(capability, **kw):
-        if ir.ir_id() == hypothesis_id:
-            return ir
-    return None
+    """Canonical id -> IR, over the SAME grammar. Used to validate that a submitted id
+    corresponds to a real candidate rather than a free-floating string."""
+    return resolution_map(capability, **kw).get(hypothesis_id)
 
 
 def grammar_size(capability, **kw) -> dict:

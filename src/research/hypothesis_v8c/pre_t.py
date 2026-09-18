@@ -52,8 +52,8 @@ from src.research.hypothesis_v71 import invariants as INV
 from src.research.hypothesis_v71 import similarity as SIM
 from src.research.hypothesis_v8b2 import support as SUP
 from src.research.hypothesis_v8c import blind_index as BI
+from src.research.hypothesis_v8c import cohort_stats as CS
 from src.research.hypothesis_v8c import compiler as CO
-from src.research.hypothesis_v8c import scorer as SC
 
 PRE_T_VERSION = "v8c_pre_t_evaluability_v1"
 
@@ -86,10 +86,10 @@ _FAILURE_STATUS_ORDER = (
 )
 
 #: Post-T statuses a PRE_T_EVALUABLE hypothesis is permitted to reach (§8 invariant).
-PERMITTED_POST_T_STATUSES = (SC.SCORE_OK, SC.SCORE_REFUSED)
+PERMITTED_POST_T_STATUSES = (CS.SCORE_OK, CS.SCORE_REFUSED)
 #: ...and the ONLY permitted reason for the SCORE_REFUSED branch. Referenced from the scorer's
 #: own constant rather than copied, so the invariant cannot drift from the string it checks.
-PERMITTED_REFUSAL_REASON = SC.OBSERVED_UNAVAILABLE_REASON
+PERMITTED_REFUSAL_REASON = CS.OBSERVED_UNAVAILABLE_REASON
 
 
 @dataclass(frozen=True)
@@ -197,14 +197,14 @@ def classify_pre_t_evaluability(ir, index, rec_i, *, metric, terciles, axis_cach
             if cw <= 0 or bw <= 0:
                 return PreTEvaluability(status=PRE_T_COMPILER_INVALID, hypothesis_id=hid,
                                         reason="degenerate weights")
-            scales.append(SC._weighted_variance(q.cohort_values, q.cohort_weights))
+            scales.append(CS.weighted_variance(q.cohort_values, q.cohort_weights))
             last_q = q
     except (CO.CompileRefused, SIM.SimilarityRefused, INV.InvariantViolation) as e:
         return PreTEvaluability(status=PRE_T_COMPILER_INVALID, hypothesis_id=hid,
                                 reason=str(e))
 
     # ---- the frozen V8B.2 fixture-level support gate, computed pre-T ----------------------
-    uniq_opp = SC.unique_opponents_of_cohort(ir, blind, rec_i, last_q.cohort_fixtures)
+    uniq_opp = CS.unique_opponents_of_cohort(ir, blind, rec_i, last_q.cohort_fixtures)
     support = SUP.classify_fixture_support(
         raw_n=last_q.cohort_n,
         unique_fixtures=len(last_q.cohort_fixtures),
@@ -225,11 +225,11 @@ def classify_pre_t_evaluability(ir, index, rec_i, *, metric, terciles, axis_cach
 
     # ---- the frozen scale floor, also pre-T knowable --------------------------------------
     scale_var = sum(scales) / len(scales)
-    if scale_var is None or scale_var <= SC.ZERO_VARIANCE_FLOOR:
+    if scale_var is None or scale_var <= CS.ZERO_VARIANCE_FLOOR:
         return PreTEvaluability(status=PRE_T_NO_SCALE, scale_var=scale_var,
                                 reason=f"cohort has no pre-T dispersion to standardize by "
                                        f"(scale_var={scale_var!r} <= "
-                                       f"{SC.ZERO_VARIANCE_FLOOR})", **common)
+                                       f"{CS.ZERO_VARIANCE_FLOOR})", **common)
 
     return PreTEvaluability(status=PRE_T_EVALUABLE, scale_var=scale_var, **common)
 
@@ -247,7 +247,8 @@ def version_stamp() -> dict:
             "repairs": ["D-V8C-P1-MEASSPACE", "D-V8C-P1-COMPADM"],
             "statuses": list(ALL_STATUSES),
             "support_classifier": SUP.version_stamp()["fixture_support_version"],
-            "scorer_reused": SC.version_stamp()["scorer_version"],
+            "cohort_stats": CS.version_stamp()["cohort_stats_version"],
+            "imports_a_scorer": False,
             "compiler": CO.COMPILER_VERSION,
             "profile_semantic": CO.PROFILE_SEMANTIC,
             "thresholds_unchanged_from_v8b2": True,

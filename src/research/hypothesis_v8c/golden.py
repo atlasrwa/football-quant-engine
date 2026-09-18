@@ -92,17 +92,27 @@ class GoldenEnvironment:
     target_positions: tuple = ()
 
 
-def _base_dict(i, *, metrics, drop_metric=None, constant=False, target_null=False):
-    """One record's base block. `drop_metric` omits a metric entirely (provider NULL, which is
-    NOT zero); `constant` collapses dispersion; `target_null` is used for the NULL-target case."""
+def _base_dict(i, *, metrics, drop_metric=None, constant_metric=None, target_null=False):
+    """One record's base block.
+
+    `drop_metric`     omits exactly that metric (provider NULL, which is NOT zero)
+    `constant_metric` collapses dispersion for exactly THAT metric, leaving every other
+                      metric dispersed
+    `target_null`     omits every metric (the NULL-target case)
+
+    P1 GOLDEN repair: the previous signature took a boolean `constant` and applied it to
+    EVERY metric, so a `constant_metric="goals"` negative case silently mutated all five
+    metrics at once. A one-failure-at-a-time battery whose mutation changes several
+    dimensions cannot attribute the resulting failure to the dimension under test.
+    """
     base = {}
     for m in metrics:
         if m == drop_metric:
             continue
-        hf, af = _FIELD[m]
-        h, a = _PATTERNS[m](0 if constant else i)
         if target_null:
             continue
+        hf, af = _FIELD[m]
+        h, a = _PATTERNS[m](0 if m == constant_metric else i)
         base[hf] = h
         base[af] = a
     return base
@@ -141,22 +151,22 @@ def build_environment(*, n_prior_blocks: int = 40, n_opponents: int = 14,
         opp = f"tm_opp{i % n_opponents}"
         aopp = f"tm_aopp{i % n_opponents}"
         base_h = _base_dict(i, metrics=metrics, drop_metric=drop_metric,
-                            constant=(constant_metric is not None))
+                            constant_metric=constant_metric)
         recs.append(_rec(f"mt_h{i}", BASE_KICKOFF + idx * DAY, SUBJECT, opp, base_h, comp))
         idx += 1
         base_a = _base_dict(i + 7, metrics=metrics, drop_metric=drop_metric,
-                            constant=(constant_metric is not None))
+                            constant_metric=constant_metric)
         recs.append(_rec(f"mt_a{i}", BASE_KICKOFF + idx * DAY, aopp, SUBJECT, base_a, comp))
         idx += 1
         # Opponent-side history, so opponent profiles and terciles can be formed and the
         # OPPONENT_* comparators have something to read.
         base_o = _base_dict(i + 3, metrics=metrics, drop_metric=drop_metric,
-                            constant=(constant_metric is not None))
+                            constant_metric=constant_metric)
         recs.append(_rec(f"mt_o{i}", BASE_KICKOFF + idx * DAY, opp, TARGET_OPPONENT,
                          base_o, comp))
         idx += 1
         base_p = _base_dict(i + 5, metrics=metrics, drop_metric=drop_metric,
-                            constant=(constant_metric is not None))
+                            constant_metric=constant_metric)
         recs.append(_rec(f"mt_p{i}", BASE_KICKOFF + idx * DAY, TARGET_OPPONENT, aopp,
                          base_p, comp))
         idx += 1
@@ -185,7 +195,7 @@ def build_environment(*, n_prior_blocks: int = 40, n_opponents: int = 14,
                 recs.append(_rec(f"mt_t{t}o{j}", BASE_KICKOFF + (idx + j) * DAY, topp,
                                  f"tm_opp{j % n_opponents}",
                                  _base_dict(j + t, metrics=metrics, drop_metric=drop_metric,
-                                            constant=(constant_metric is not None)),
+                                            constant_metric=constant_metric),
                                  COMPS[j % len(COMPS)] if not single_competition else COMPS[0]))
     tk = tk + max(0, n_targets - 1) * 7 * DAY
 

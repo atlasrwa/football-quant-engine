@@ -45,7 +45,7 @@ import math
 import statistics
 
 from src.research.hypothesis_v71 import estimator as EST
-from src.research.hypothesis_v8c import scorer as SC
+from src.research.hypothesis_v8c import cohort_stats as SC
 
 AGGREGATE_VERSION = "v8c_aggregate_v2"
 
