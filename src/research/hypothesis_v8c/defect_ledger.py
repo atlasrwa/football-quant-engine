@@ -23,6 +23,11 @@ Every P0/P1 has an entry naming:
 `P0_OPEN` / `P1_OPEN` are then DERIVED by counting entries whose required evidence did not
 pass. No script can declare them; they are a function of test outcomes.
 
+`required_artifact` is an ADDITIONAL requirement, never a substitute for tests. A defect that
+declared only an artifact would close because a FILE EXISTS -- which is the same
+self-certification this ledger exists to prevent, wearing a different hat. Every entry that
+names an artifact also names tests that read its CONTENT.
+
 PROVENANCE
 ----------
 Every evidence artifact must embed the commit, module hashes and input hashes of the process
@@ -186,7 +191,13 @@ DEFECTS = [
          repair="V8C_FRESH_PILOT_POPULATION_RULE.md -- N=60 derived from the frozen inference "
                 "floor, structural eligibility only, first-N chronological, predeclared "
                 "shortfall handling; frozen BEFORE any 947 scan",
-         required_evidence=[],
+         required_evidence=[
+             f"{T}/test_pilot_rule.py::test_pilot_N_is_frozen_and_stated",
+             f"{T}/test_pilot_rule.py::test_pilot_N_is_consistent_with_the_frozen_inference_floor",
+             f"{T}/test_pilot_rule.py::test_eligibility_is_structural_only",
+             f"{T}/test_pilot_rule.py::test_ordering_and_selection_are_deterministic",
+             f"{T}/test_pilot_rule.py::test_shortfall_handling_is_predeclared",
+             f"{T}/test_pilot_rule.py::test_rule_was_frozen_before_any_sealed_scan"],
          required_artifact="V8C_FRESH_PILOT_POPULATION_RULE.md",
          expected_terminal="frozen rule before any 947 scan"),
 ]
