@@ -1,0 +1,108 @@
+{
+ "check": "v8c_dev_bundle_closure_equivalence_v2_CORRECTED",
+ "supersedes": "v8c_dev_bundle_closure_equivalence_v1",
+ "correction_note": "v1 said the closure was 'proven complete' on the strength of packet-hash identity and n_prior_records equality. That overstated it. n_prior_records equality is COUNT equality at each target position, not record identity or value equality, and a packet hash covers a BOUNDED PROJECTION of the prefix, not the whole prefix. This version states the verification scope exactly and lists what remains unestablished.",
+ "generated_utc": "2026-09-18T13:01:10.350291+00:00",
+ "source_code_commit": "e39fbe91ae7a00c8eb141f2b0121a8319ecdbe10",
+ "VERIFIED": {
+  "1_packet_hash_identity": {
+   "scope": "50/50 exposed fixtures",
+   "compared": "hypothesis_v8c.packet.build_packet(...)['packet_hash'], full corpus arm vs bundle-only arm",
+   "result": "identical 50/50",
+   "what_it_does_and_does_not_cover": "COVERS: the packet's bounded projection -- up to MAX_RAW_ROWS_PER_TEAM=40 raw prior match rows per team for the fixture's two teams, navigation summaries (long-run/home/away means over the full prior series of those two teams), recent_vs_long over the recency family, opponent identity and profile banding, and similarity-cohort membership. DOES NOT COVER: every byte of the historical prefix, nor teams not party to the fixture except as they enter competition terciles and baselines."
+  },
+  "2_prior_record_count_equality": {
+   "scope": "50/50 exposed fixtures",
+   "compared": "index.pos_of_fixture[fid] -- the target's position in chronological order, i.e. the COUNT of records sorting strictly before it",
+   "result": "identical 50/50",
+   "what_it_establishes": "COUNT equality only. The bundle has the same NUMBER of records before each target as the full corpus does. It does NOT by itself establish that they are the SAME records or carry the same values.",
+   "correction": "v1 called this a proof that the closure holds 'every record the full corpus holds before every target'. That inference was unsound on its own."
+  },
+  "3_universe_ledger_and_evaluable_ids": {
+   "scope": "3/50 exposed fixtures",
+   "fixtures": [
+    "mt_624494939",
+    "mt_250070763",
+    "mt_012232321"
+   ],
+   "compared": "hypothesis_v8c.universe.build_fixture_universe(...) ledger + sha256 of the ordered evaluable hypothesis-id tuple",
+   "result": "identical on all compared",
+   "why_not_all_50": "~140 s/fixture over ~202k admissible shapes; ~2 h per arm. Not run."
+  },
+  "4_per_fixture_stats_files_source_vs_bundle": {
+   "scope": "441/441 permitted per-fixture stats files",
+   "compared": "SHA256 of file BYTES, source cache vs bundle. Fixture-level permitted files only. Nothing parsed. No mixed season file opened.",
+   "result": "byte-identical 441/441, mismatches 0, source-absent 0",
+   "what_it_establishes": "TRUE SOURCE-SIDE VALUE EQUIVALENCE for the entire per-fixture statistics layer -- every match statistic the packet, profile, similarity, compiler and scorer paths consume from a stats payload. This is new in v2 and is the strongest source-anchored evidence in this bundle."
+  },
+  "5_side_files_source_vs_bundle": {
+   "scope": "3/3",
+   "files": [
+    "research/hypothesis_engine/V8B1_PILOT50_SELECTION_FREEZE.json",
+    "research/hypothesis_engine/V8B1_FIXTURE_MANIFEST.json",
+    "research/hypothesis_oos/out/v7/V7_COVERAGE_MATRIX.json"
+   ],
+   "compared": "SHA256 of file bytes, source vs bundle",
+   "result": "byte-identical 3/3",
+   "what_it_establishes": "the exposed-50 identity list, the fixture metadata manifest, and the provider capability + field-mapping contract are unmodified from source."
+  }
+ },
+ "NOT_ESTABLISHED": {
+  "L1_season_row_source_comparison": {
+   "status": "PENDING -- deliberately not performed",
+   "what_is_unverified": "Row-level source-vs-bundle value equivalence for the season fixture rows: each row's id, utc_date, home_team, away_team, competition_id, season_id, status, score, matchday, stage_name, is_neutral and the odds/xg availability flags.",
+   "narrowed_scope": "Applies to exactly ONE file. 12 of the 13 bundle season files contain ZERO rows (their leagues begin after the cutoff), so there is nothing to compare in them. The pending comparison covers `_all_fixtures_sn_343481.json` and its 441 rows.",
+   "why_pending": "Re-reading the source season file to hash its permitted rows would require json.load on a mixed file, materialising the sealed rows again. Per the correction instruction, that verification was STOPPED rather than performed. The seal was not weakened to close a verification gap.",
+   "what_IS_recorded_instead": "SOURCE_COMPARISON.json carries the SHA256 of the source season file's raw BYTES (hashed without parsing) alongside the bundle file's, as a provenance anchor identifying the exact source version the bundle was cut from.",
+   "how_it_could_be_closed": "A row-at-a-time incremental JSON parse (e.g. ijson) over the source file, hashing only rows whose id is in the 441 permitted set and discarding others without dereferencing their `score`. This still transiently parses excluded rows, so it is an improvement in granularity, not an elimination -- the seal owner should decide whether that trade is acceptable before it is run."
+  },
+  "L2_universe_coverage": {
+   "status": "PARTIAL",
+   "detail": "Universe ledger / evaluable-id equivalence compared on 3 of 50 fixtures. The remaining 47 are unverified at that layer."
+  },
+  "L3_full_prefix_identity": {
+   "status": "NOT ESTABLISHED",
+   "detail": "No check in this bundle enumerates the two arms' full prefix record sets and compares them element-by-element. Items 1, 2 and 4 together are strong circumstantial evidence -- identical bounded projections, identical counts, and byte-identical statistics files -- but they are not the same thing as full-prefix identity, and this report does not claim they are."
+  }
+ },
+ "method": {
+  "summary": "The same code path was run twice, differing ONLY in the cache root that multisrc_corpus.CACHE points at. Nothing under src/ was modified.",
+  "scorer_loaded": false,
+  "scorer_assertion": "sys.modules asserted free of 'scorer' and 'score_frozen' at entry and exit of both arms",
+  "model_calls": 0,
+  "network": false,
+  "champion_written": false,
+  "reserve_preflight_run": false,
+  "seal_disclosure": "The full-corpus arm DID load and read sealed fixtures' statistics. See SEAL_DISCLOSURE.json -- sections A, B and D. That arm was avoidable and is not repeated."
+ },
+ "arms": {
+  "full_corpus": {
+   "n_records": 5636
+  },
+  "bundle_only": {
+   "n_records": 441
+  }
+ },
+ "results_raw": {
+  "fixtures_resolved": {
+   "full": 50,
+   "bundle": 50,
+   "missing_from_bundle": []
+  },
+  "identical_packet_hash": "50/50",
+  "identical_pit_cut_unix": "50/50",
+  "identical_n_prior_records_COUNT": "50/50",
+  "fixtures_differing_in_any_compared_field": 0,
+  "packet_reads_target_outcome": [
+   false
+  ]
+ },
+ "reserve_boundary": {
+  "sealed_947_records_in_bundle": 0,
+  "sealed_outcomes_printed_or_exported": false,
+  "sealed_statistics_read_in_full_corpus_verification_arm": true,
+  "reserve_preflight_run": false,
+  "note": "The exposed-50 closure is a temporal prefix ending 2024-03-10T12:00:00Z; the earliest sealed fixture kicks off 2024-03-16T15:00:00Z. No reserve observation is required as historical context. See SEAL_DISCLOSURE.json for the full record."
+ },
+ "not_claimed": "This is a PACKAGING equivalence. It says nothing about V8C's scientific performance, about any effect direction or magnitude, or about the reserve."
+}

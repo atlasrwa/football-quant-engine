@@ -1,0 +1,82 @@
+{
+ "record": "v8c_dev_bundle_seal_disclosure_v1",
+ "generated_utc": "2026-09-18T13:00:51.647782+00:00",
+ "source_code_commit": "e39fbe91ae7a00c8eb141f2b0121a8319ecdbe10",
+ "why_this_exists": "The first version of this handoff stated 'no sealed outcome read' without qualification. That was wrong. Two operations materialised protected reserve data in process memory, and one of them additionally read sealed fixtures' metric values. This record states exactly what happened, separating memory residence from access, and access from disclosure.",
+ "A_materialised_in_process_memory": [
+  {
+   "operation": "extraction -- build_bundle.py",
+   "what": "json.load() on each of 13 `_all_fixtures_*.json` season files materialised each file's ENTIRE `fixtures` array as Python objects before any filter ran.",
+   "protected_content_materialised": "4882 excluded rows in total, of which the 947 sealed-reserve fixtures' rows were present with their `score` objects intact.",
+   "unavoidable_with_stdlib": true,
+   "note": "Python's stdlib json has no streaming parser; a row-at-a-time parse would need a third-party incremental parser (e.g. ijson), which was not used."
+  },
+  {
+   "operation": "equivalence verification -- fp2.py, FULL-CORPUS ARM ONLY",
+   "what": "corpus_index.load_records(include_fresh=True) built 5636 MatchRecord objects -- the entire corpus -- including all 947 sealed fixtures, each carrying adapted score fields (score_home/score_away) and the full per-fixture statistics payload read from its stats_*.json file.",
+   "protected_content_materialised": "all 947 sealed fixtures' scores and statistics",
+   "unavoidable": false,
+   "note": "AVOIDABLE. This arm was not required. The bundle-only arm plus the byte-level source-vs-bundle file comparison (SOURCE_COMPARISON.json) would have carried the packaging claim without loading the reserve at all. Running it was a process error."
+  }
+ ],
+ "B_accessed_by_subsequent_code": [
+  {
+   "operation": "extraction -- build_bundle.py",
+   "sealed_fields_read": "NONE",
+   "detail": "For an excluded row the code reads only `fx['id']` and `fx['utc_date']`. The `score` object of an excluded row is never dereferenced, copied or written. Included rows are appended verbatim.",
+   "confidence": "HIGH -- verifiable by inspection of the filter, which is reproduced in MANIFEST.sha256.json under mixed_file_handling."
+  },
+  {
+   "operation": "equivalence verification -- fp2.py, FULL-CORPUS ARM ONLY",
+   "sealed_fields_read": "YES -- sealed fixtures' metric values",
+   "detail": "PITIndex.__init__ evaluates self._read(rec, metric) for EVERY record and every contract metric, so the 947 sealed fixtures' metric values (goals, shots, possession and the rest of the METRIC_SEMANTICS block set) were read out of the materialised records into self.vals. comp_cum then accumulated those values into per-competition cumulative sums, and self.series indexed each sealed fixture's team, opponent and venue.",
+   "confidence": "HIGH -- this is unconditional library code, not a branch that might not have been taken."
+  }
+ ],
+ "C_printed_exported_scored_or_aggregated": {
+  "printed": {
+   "result": "NONE",
+   "evidence": "zero of the 947 sealed fixture ids appear in any of the four run logs (fp2_full.log, fp2_stage.log, fpU_full.log, fpU_stage.log). The only corpus-wide figure printed was the record count, 5636."
+  },
+  "exported": {
+   "result": "NONE",
+   "evidence": "fp2_full.json and fp2_stage.json each carry rows for exactly the 50 exposed fixtures; a substring scan for all 947 sealed ids finds 0 occurrences in either file. The bundle itself contains 0 sealed fixture rows and 0 sealed stats files, by set intersection over all 947 ids."
+  },
+  "scored": {
+   "result": "NONE",
+   "evidence": "no scorer module was ever imported. sys.modules was asserted free of 'scorer' and 'score_frozen' at entry AND exit of both arms of both runs."
+  },
+  "aggregated": {
+   "result": "QUALIFIED YES -- internally, never emitted",
+   "detail": "comp_cum per-competition cumulative sums inside the full-corpus arm included sealed fixtures' metric values. Those aggregates lived only in that process's memory, were never sliced at a position that could expose them to an exposed-50 read, were never written to any file, and the process has exited."
+  }
+ },
+ "D_did_the_full_corpus_run_load_sealed_statistics_or_outcomes": {
+  "answer": "YES, unambiguously",
+  "detail": "It loaded all 947 sealed fixtures' score fields and full statistics payloads, and PITIndex read their metric values into memory arrays and cumulative sums. Saying otherwise would be false."
+ },
+ "E_did_any_sealed_value_influence_an_emitted_number": {
+  "answer": "NO",
+  "argument": "Every PIT read slices the prefix strictly before the target's index position, and all 947 sealed fixtures sort strictly after all 50 exposed targets (earliest sealed kickoff 2024-03-16T15:00:00Z vs latest exposed 2024-03-10T12:00:00Z).",
+  "empirical_confirmation": "The 441-record arm contains ZERO sealed records and produced byte-identical outputs to the 5636-record arm on all 50 fixtures. Had any sealed value entered an emitted number, the two arms would necessarily differ.",
+  "confidence": "HIGH -- this one is empirically demonstrated, not merely argued."
+ },
+ "F_what_is_NOT_claimed": [
+  "NOT claimed: that no sealed outcome was ever resident in memory. It was.",
+  "NOT claimed: that no sealed statistic was ever read by library code. It was, in the full-corpus verification arm.",
+  "NOT claimed: that the reserve is scientifically contaminated. Memory residence and computation inside a process that has since exited is a different event from researcher or model exposure. No sealed value was rendered to a human, to this model, to any file, or to any model API. That call belongs to whoever owns the seal, made on this record."
+ ],
+ "G_open_uncertainty": {
+  "question": "Does the project's seal contract treat 'loaded into an ad hoc process that also touched the development cohort' as a breach?",
+  "considerations_both_ways": [
+   "TOWARD NO BREACH: the routine V8C path itself does this. harness.build() -> corpus_index.load_records() loads the whole corpus including the reserve, and the seal is enforced at READ time by blind_index.TargetBlindIndex, not at load time. The apparatus's own design therefore treats whole-corpus loading as compatible with the seal.",
+   "TOWARD CONCERN: the full-corpus arm was an ad hoc verification script, not a contract-governed path, and it did NOT wrap its reads in TargetBlindIndex. _run_v8c_sealed947_preflight.py states sealed outcomes are 'NEVER read'."
+  ],
+  "resolution": "NOT RESOLVED HERE. Flagged for the seal owner rather than decided by the agent that caused it."
+ },
+ "H_remediation_already_in_place": [
+  "The avoidable full-corpus arm has been killed and is not repeated in this correction.",
+  "The strengthened source-vs-bundle comparison (SOURCE_COMPARISON.json) hashes BYTES of permitted fixture-level files only. It parses nothing and never opens a mixed season file.",
+  "Row-level source comparison of the one mixed file that carries rows is recorded as PENDING rather than performed -- see EQUIVALENCE.json limitation L1."
+ ]
+}
