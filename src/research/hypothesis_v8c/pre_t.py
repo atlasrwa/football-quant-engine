@@ -47,13 +47,13 @@ from dataclasses import dataclass
 
 from src.research.hypothesis_v7 import pit as V7PIT
 from src.research.hypothesis_v71 import capability as CAP
-from src.research.hypothesis_v71 import compiler as CO
 from src.research.hypothesis_v71 import engine as ENG
 from src.research.hypothesis_v71 import invariants as INV
 from src.research.hypothesis_v71 import similarity as SIM
-from src.research.hypothesis_v8b2 import scorer as SC
 from src.research.hypothesis_v8b2 import support as SUP
 from src.research.hypothesis_v8c import blind_index as BI
+from src.research.hypothesis_v8c import compiler as CO
+from src.research.hypothesis_v8c import scorer as SC
 
 PRE_T_VERSION = "v8c_pre_t_evaluability_v1"
 
@@ -87,8 +87,9 @@ _FAILURE_STATUS_ORDER = (
 
 #: Post-T statuses a PRE_T_EVALUABLE hypothesis is permitted to reach (§8 invariant).
 PERMITTED_POST_T_STATUSES = (SC.SCORE_OK, SC.SCORE_REFUSED)
-#: ...and the ONLY permitted reason for the SCORE_REFUSED branch.
-PERMITTED_REFUSAL_REASON = "observed value or environment mean unavailable"
+#: ...and the ONLY permitted reason for the SCORE_REFUSED branch. Referenced from the scorer's
+#: own constant rather than copied, so the invariant cannot drift from the string it checks.
+PERMITTED_REFUSAL_REASON = SC.OBSERVED_UNAVAILABLE_REASON
 
 
 @dataclass(frozen=True)
@@ -247,7 +248,8 @@ def version_stamp() -> dict:
             "statuses": list(ALL_STATUSES),
             "support_classifier": SUP.version_stamp()["fixture_support_version"],
             "scorer_reused": SC.version_stamp()["scorer_version"],
-            "compiler_reused": CO.COMPILER_VERSION,
+            "compiler": CO.COMPILER_VERSION,
+            "profile_semantic": CO.PROFILE_SEMANTIC,
             "thresholds_unchanged_from_v8b2": True,
             "target_position_sealed_during_classification": True,
             "consistency_invariant": ("PRE_T_EVALUABLE => post-T status in {SCORE_OK, "

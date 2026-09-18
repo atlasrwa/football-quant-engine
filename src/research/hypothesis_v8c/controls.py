@@ -1,83 +1,176 @@
-"""V8C control arms (`v8c_controls_v1`) -- repairs P1 `D-V8C-P1-RIDENT` and
-`D-V8C-P1-HUNIVERSE`. See V8C_DISTINCT_BLIND_CONTROL_SPEC.md.
+"""V8C control arms (`v8c_controls_v2`) -- repairs P1 R CONTROL, P1 R PAIRING, P1 H.
 
-ARM R -- matched blind control, now a TRUE COUNTERFACTUAL
---------------------------------------------------------
-V8B.1's `controls.match_blind_control(shape, capability, exclude_ids)` seeded `exclude_ids`
-only with control ids ALREADY USED at that fixture. Sonnet's own id was never excluded, so the
-EXACT tier -- which matches on metric/subject/side/comparator/n_conditions/capability_status
-and then sorts by `hypothesis_id` -- would happily return Sonnet's own hypothesis. On the
-exposed 50 this happened at ALL FOUR paired fixtures: `R_ID == S_ID`, so `D_SR(T) == 0` by
-construction and the S-v-R endpoint measured nothing.
+ARM R -- a genuine distinct matched blind counterfactual
+-------------------------------------------------------
+Two defects, not one:
 
-V8C's ONLY new hard condition is the one §11 names:
+  1. V8B.1 seeded its exclusion set only with already-used control ids, so `R_ID == S_ID` was
+     permitted (5/5 identity collapse measured on the exposed 50).
+  2. V8C v1 excluded only the PAIRED Sonnet id. R could therefore return a DIFFERENT
+     hypothesis that Sonnet had also selected at the same fixture -- still treatment, wearing
+     a control label. V8C v2 excludes ALL Sonnet-selected ids at that fixture, so
+     cross-treatment overlap is structurally 0 and is ASSERTED, not merely reported.
 
-    candidate_id != Sonnet_id
+Nuisance matching is widened to everything the mission names: metric, subject, perspective,
+comparator, WINDOW, condition count, CONDITION FAMILY, similarity usage and capability class.
+V8B.1 matched six of those; `window` and `condition_family` are new because the V8C grammar
+now varies them, and an unmatched nuisance dimension is a confound in the paired difference.
 
-implemented literally, per pair, by seeding the exclusion set with `shape.hypothesis_id`. The
-frozen tier hierarchy is otherwise untouched and still walked in order:
+Relaxation tiers stay EXPLICIT and ORDERED, and the arm fails `UNMATCHED_DISTINCT_CONTROL`
+rather than fabricating a control.
 
-    EXACT -> CONDITIONS_PM1 -> CAPABILITY_EITHER -> MECHANISM_FAMILY -> SIDE_EITHER -> UNMATCHED
+R REMAINS BLIND. It reads no Sonnet prose, no mechanism summary, no research reason, no
+outcome, no observed effect and no scorer output -- only the structural shape and the set of
+ids to exclude.
 
-If no legitimate DISTINCT control exists, the arm reports `UNMATCHED_DISTINCT_CONTROL`. It
-does not fabricate one and it does not duplicate Sonnet (§10).
+ARM H -- unchanged formula, whole universe, NOT pair-matched
+------------------------------------------------------------
+`heuristic_score` and all five coefficients are imported byte-identically from
+`hypothesis_v8b1.controls`. H ranks over the ENTIRE pre-T evaluable universe. H is deliberately
+NOT pair-matched: it is a policy baseline ("what would a fixed deterministic ranker pick?"),
+so its endpoint keeps arm-mean semantics while S-v-R is pair-level. The two estimands are
+DIFFERENT and are named differently everywhere so they are never read as comparable.
 
-R REMAINS BLIND (§11). It reads no Sonnet prose, no mechanism summary, no research reason, no
-outcome, no observed effect and no scorer output -- only the six structural fields on
-`SonnetShape` (frozen type, imported unchanged: there is no prose field on it to read).
-
-ARM H -- same universe as S and R
----------------------------------
-`heuristic_score` and all five coefficients are imported BYTE-IDENTICALLY from
-`hypothesis_v8b1.controls`; the ranking formula is NOT redesigned and is not tuned against any
-outcome (§13). What changes is only the CANDIDATE SET: H now ranks over the whole
-PRE_T_EVALUABLE universe, the same set S searched and R matched within, instead of over the 50
-structurally-lowest ir_ids that survived the presentation cap.
-
-ZERO SPEND. No network. No CHAMPION. Reads no target outcome, ever.
+ZERO SPEND. Reads no target outcome, ever.
 """
 from __future__ import annotations
 
+from dataclasses import dataclass
+
 from src.research.hypothesis_v8b1 import controls as V8B1C
-from src.research.hypothesis_v8b1 import search as SE
 from src.research.hypothesis_v8c import universe as UNI
 
-CONTROLS_VERSION = "v8c_controls_v1"
+CONTROLS_VERSION = "v8c_controls_v2"
 
-#: Frozen, imported unchanged (§13) -- not restated, so they cannot drift.
-SonnetShape = V8B1C.SonnetShape
-shape_of = V8B1C.shape_of
+#: Frozen, imported unchanged -- the heuristic formula is NOT redesigned.
 heuristic_score = V8B1C.heuristic_score
-MATCH_DIMENSIONS = V8B1C.MATCH_DIMENSIONS
-RELAXATION_TIERS = V8B1C._RELAXATION_TIERS
 
 MATCHED = "MATCHED"
 UNMATCHED_DISTINCT_CONTROL = "UNMATCHED_DISTINCT_CONTROL"
 H_UNAVAILABLE_EMPTY_UNIVERSE = "H_UNAVAILABLE_EMPTY_UNIVERSE"
 
+#: Every nuisance dimension R matches on. Widened from V8B.1's six.
+MATCH_DIMENSIONS = ("target_metric", "subject", "perspective", "comparator", "window",
+                    "n_conditions", "condition_family", "uses_similarity",
+                    "capability_status")
 
-# ============================ Arm R: distinct matched blind =============================
-def match_distinct_blind_control(shape: SonnetShape, fixture_universe, exclude_ids) -> dict | None:
-    """One DISTINCT blind control for one Sonnet selection, from the pre-T evaluable universe.
+#: Ordered relaxation. Each tier drops exactly ONE nuisance constraint, so what was traded
+#: away to obtain a match is always legible in the frozen record.
+RELAXATION_TIERS = (
+    "EXACT",                  # every dimension matches
+    "CONDITION_FAMILY_ANY",   # drop condition_family
+    "CONDITIONS_PM1",         # ...and allow n_conditions +/- 1
+    "WINDOW_ANY",             # ...and allow any window
+    "CAPABILITY_EITHER",      # ...and allow either capability class
+    "PERSPECTIVE_EITHER",     # ...and allow either perspective
+    "UNMATCHED",
+)
 
-    `exclude_ids` carries the controls already used at this fixture. Sonnet's own id is added
-    to it unconditionally here -- that is the whole repair. Returns None only when the frozen
-    tier hierarchy is exhausted without a distinct candidate.
+
+@dataclass(frozen=True)
+class SonnetShape:
+    """The ONLY view of a Sonnet selection either control arm may see. There is deliberately
+    NO prose field on this type -- there is nothing to accidentally read."""
+    hypothesis_id: str
+    target_metric: str
+    subject: str
+    perspective: str
+    comparator: str
+    window: str
+    n_conditions: int
+    condition_family: str
+    uses_similarity: bool
+    capability_status: str
+
+
+def condition_family(conditions) -> str:
+    """A canonical, order-independent label for the condition SHAPE (not its values).
+
+    `venue+opponent_profile` and `opponent_profile+venue` are the same family; HOME vs AWAY is
+    not part of the family, because matching on the VALUE would leave R almost no candidates
+    while matching on the SHAPE controls the structural nuisance that matters.
     """
-    blocked = set(exclude_ids) | {shape.hypothesis_id}       # <-- the one new hard condition
+    if not conditions:
+        return "NONE"
+    return "+".join(sorted({c["dimension"] for c in conditions}))
+
+
+def shape_of(candidate: dict) -> SonnetShape:
+    return SonnetShape(
+        hypothesis_id=candidate["hypothesis_id"],
+        target_metric=candidate["target_metrics"][0],
+        subject=candidate["subject"],
+        perspective=candidate["side"],
+        comparator=candidate["comparator"],
+        window=candidate["window"],
+        n_conditions=candidate["complexity"]["n_conditions"],
+        condition_family=condition_family(candidate["conditions"]),
+        uses_similarity=bool(candidate["complexity"]["uses_similarity"]),
+        capability_status=candidate["capability_status"],
+    )
+
+
+def _tier_predicate(shape: SonnetShape, tier: str):
+    """The match predicate for one tier. Dimensions are dropped CUMULATIVELY down the order,
+    so a later tier is always strictly more permissive than an earlier one."""
+    drop = {
+        "EXACT": set(),
+        "CONDITION_FAMILY_ANY": {"condition_family"},
+        "CONDITIONS_PM1": {"condition_family", "n_conditions_exact"},
+        "WINDOW_ANY": {"condition_family", "n_conditions_exact", "window"},
+        "CAPABILITY_EITHER": {"condition_family", "n_conditions_exact", "window",
+                              "capability_status"},
+        "PERSPECTIVE_EITHER": {"condition_family", "n_conditions_exact", "window",
+                               "capability_status", "perspective"},
+    }[tier]
+
+    def ok(c: dict) -> bool:
+        # Never relaxed: these define the question being asked.
+        if c["target_metrics"][0] != shape.target_metric:
+            return False
+        if c["subject"] != shape.subject:
+            return False
+        if c["comparator"] != shape.comparator:
+            return False
+        if bool(c["complexity"]["uses_similarity"]) != shape.uses_similarity:
+            return False
+        if "perspective" not in drop and c["side"] != shape.perspective:
+            return False
+        if "window" not in drop and c["window"] != shape.window:
+            return False
+        if "capability_status" not in drop and c["capability_status"] != shape.capability_status:
+            return False
+        if "condition_family" not in drop and \
+                condition_family(c["conditions"]) != shape.condition_family:
+            return False
+        n = c["complexity"]["n_conditions"]
+        if "n_conditions_exact" in drop:
+            if abs(n - shape.n_conditions) > 1:
+                return False
+        elif n != shape.n_conditions:
+            return False
+        return True
+
+    return ok
+
+
+def match_distinct_blind_control(shape: SonnetShape, fixture_universe, exclude_ids) -> dict | None:
+    """One DISTINCT blind control for one Sonnet selection.
+
+    `exclude_ids` MUST already contain every Sonnet-selected id at this fixture plus every
+    control already used here. Returns None (UNMATCHED) when the ordered relaxation is
+    exhausted without a distinct candidate -- never a fabricated or duplicated one.
+    """
+    blocked = set(exclude_ids)
     for tier in RELAXATION_TIERS:
         if tier == "UNMATCHED":
             return None
-        kwargs = V8B1C._tier_query_kwargs(shape, tier)
-        if kwargs is None:
-            continue
-        q = SE.SearchQuery(max_results=UNI.PRESENTATION_CAP, **kwargs)
-        candidates = [c for c in UNI.search_evaluable(q, fixture_universe)
-                      if c["hypothesis_id"] not in blocked]
-        filtered = V8B1C._tier_filter(shape, tier, candidates)
-        if filtered:
-            filtered.sort(key=lambda c: c["hypothesis_id"])
-            picked = dict(filtered[0], matched_tier=tier)
+        pred = _tier_predicate(shape, tier)
+        cands = [c for c in fixture_universe.evaluable
+                 if c["hypothesis_id"] not in blocked and pred(c)]
+        if cands:
+            cands.sort(key=lambda c: c["hypothesis_id"])
+            picked = dict(cands[0], matched_tier=tier)
             assert picked["hypothesis_id"] != shape.hypothesis_id, (
                 "R identity collapse: the distinct-control exclusion failed")
             return picked
@@ -85,64 +178,78 @@ def match_distinct_blind_control(shape: SonnetShape, fixture_universe, exclude_i
 
 
 def blind_selections_for_fixture(sonnet_shapes, fixture_universe) -> dict:
-    """Arm R's full output for one fixture: one DISTINCT control per Sonnet selection, in
-    Sonnet's own order, sized to exactly `K_valid(T)`. UNMATCHED entries are included and
-    counted, never silently dropped (§10)."""
-    used, out = set(), []
+    """Arm R for one fixture: one DISTINCT control per Sonnet selection, in Sonnet's own order.
+
+    The exclusion set is seeded with ALL Sonnet ids at this fixture, so a control can never be
+    another arm-S selection. Emits the `(S_ID, R_ID, tier)` triple that must survive freeze,
+    scoring and aggregation (P1 R PAIRING).
+    """
+    sonnet_ids = {s.hypothesis_id for s in sonnet_shapes}
+    used, pairs = set(), []
     for shape in sonnet_shapes:
-        m = match_distinct_blind_control(shape, fixture_universe, used)
+        m = match_distinct_blind_control(shape, fixture_universe, sonnet_ids | used)
         if m is not None:
             used.add(m["hypothesis_id"])
-            out.append({"status": MATCHED, "sonnet_hypothesis_id": shape.hypothesis_id, **m})
+            pairs.append({"status": MATCHED, "s_id": shape.hypothesis_id,
+                          "r_id": m["hypothesis_id"], "tier": m["matched_tier"],
+                          "candidate": m})
         else:
-            out.append({"status": UNMATCHED_DISTINCT_CONTROL,
-                        "sonnet_hypothesis_id": shape.hypothesis_id})
-    identity = sum(1 for o in out
-                   if o.get("hypothesis_id") == o.get("sonnet_hypothesis_id"))
-    # Reported separately because a reviewer will ask: R's pick may legitimately coincide with
-    # a DIFFERENT Sonnet selection at the same fixture. That is not identity collapse -- the
-    # pair (S_i, R_i) is still distinct -- but it must be visible, not buried.
-    sonnet_ids = {s.hypothesis_id for s in sonnet_shapes}
-    cross = sum(1 for o in out
-                if o["status"] == MATCHED and o["hypothesis_id"] in sonnet_ids)
+            pairs.append({"status": UNMATCHED_DISTINCT_CONTROL, "s_id": shape.hypothesis_id,
+                          "r_id": None, "tier": "UNMATCHED", "candidate": None})
+
+    identity = sum(1 for p in pairs if p["r_id"] is not None and p["r_id"] == p["s_id"])
+    cross = sum(1 for p in pairs if p["r_id"] in sonnet_ids and p["r_id"] is not None)
+    # Structural, not aspirational: the exclusion seed makes both zero by construction.
+    assert identity == 0, f"R identity collapse: {identity}"
+    assert cross == 0, f"R selected a Sonnet-treated hypothesis: {cross}"
+
+    tiers = {}
+    for p in pairs:
+        tiers[p["tier"]] = tiers.get(p["tier"], 0) + 1
     return {"k_valid": len(sonnet_shapes),
-            "n_matched": sum(1 for o in out if o["status"] == MATCHED),
-            "n_unmatched": sum(1 for o in out if o["status"] == UNMATCHED_DISTINCT_CONTROL),
-            "identity_count": identity,
-            "cross_pair_overlap_count": cross,
-            "selections": out}
+            "n_matched": sum(1 for p in pairs if p["status"] == MATCHED),
+            "n_unmatched": sum(1 for p in pairs if p["status"] != MATCHED),
+            "identity_count": identity, "cross_treatment_overlap_count": cross,
+            "tiers": dict(sorted(tiers.items())), "pairs": pairs}
 
 
 # ============================== Arm H: deterministic heuristic ===========================
 def heuristic_selections_for_fixture(k_valid: int, fixture_universe) -> dict:
-    """Arm H's full output for one fixture: top-`k_valid` by the FROZEN `heuristic_score` over
-    the ENTIRE pre-T evaluable universe, tie-broken by hypothesis_id.
+    """Top-`k_valid` by the FROZEN `heuristic_score` over the ENTIRE evaluable universe.
 
-    The formula and its coefficients are V8B.1's, unchanged. Only the candidate set is
-    corrected, so that H answers the same question S and R answer."""
+    Not pair-matched by design: H is a policy baseline, so S-v-H keeps arm-mean semantics.
+    """
     candidates = list(fixture_universe.evaluable)
-    if not candidates:
-        return {"k_valid": k_valid, "n_selected": 0, "status": H_UNAVAILABLE_EMPTY_UNIVERSE,
-                "selections": []}
+    if not candidates or k_valid <= 0:
+        return {"k_valid": k_valid, "n_selected": 0,
+                "status": H_UNAVAILABLE_EMPTY_UNIVERSE if not candidates else MATCHED,
+                "n_ranked_over": len(candidates), "selections": []}
     scored = [(heuristic_score(c), c["hypothesis_id"], c) for c in candidates]
     scored.sort(key=lambda t: (-t[0], t[1]))
-    return {"k_valid": k_valid, "n_selected": len(scored[:k_valid]), "status": MATCHED,
+    top = scored[:k_valid]
+    return {"k_valid": k_valid, "n_selected": len(top), "status": MATCHED,
             "n_ranked_over": len(candidates),
-            "selections": [dict(c, heuristic_score=s) for s, _id, c in scored[:k_valid]]}
+            "selections": [dict(c, heuristic_score=s) for s, _id, c in top]}
 
 
 def version_stamp() -> dict:
     return {"controls_version": CONTROLS_VERSION,
             "successor_to": V8B1C.CONTROLS_VERSION,
-            "repairs": ["D-V8C-P1-RIDENT", "D-V8C-P1-HUNIVERSE"],
+            "repairs": ["P1-R-CONTROL", "P1-R-PAIRING", "P1-H"],
             "match_dimensions": list(MATCH_DIMENSIONS),
+            "match_dimensions_added_vs_v8b1": ["perspective", "window", "condition_family",
+                                               "uses_similarity"],
             "relaxation_tiers": list(RELAXATION_TIERS),
-            "r_only_new_hard_condition": "candidate_id != sonnet_id, applied per pair",
+            "r_excludes": "ALL Sonnet-selected ids at the fixture, plus used controls",
             "r_identity_permitted": False,
+            "r_cross_treatment_overlap_permitted": False,
+            "r_exclusion_is_asserted_not_reported": True,
             "r_unmatched_status": UNMATCHED_DISTINCT_CONTROL,
+            "r_emits_pair_triple": "(s_id, r_id, tier)",
+            "h_pair_matched": False,
             "h_ranks_over": "the entire PRE_T_EVALUABLE universe",
             "h_formula_changed": False,
             "h_coefficients": V8B1C.version_stamp()["heuristic_coefficients"],
-            "all_arms_share_one_universe": True,
+            "estimands": {"S_vs_R": "matched-pair level", "S_vs_H": "arm-mean level"},
             "reads_outcomes": False, "reads_llm_prose": False,
             "tuned_against_sonnet_result": False}
