@@ -1,0 +1,179 @@
+{
+ "status": "OK",
+ "research_trace": {
+  "behavioral_map": {
+   "team_a_attack": [
+    "Shots FOR long-run ~10.48, below league mean (~12.63); home shots slightly higher than away",
+    "SoT FOR long-run ~3.04, well below league mean (~4.25); away figure even lower at 2.64",
+    "Goals FOR long-run ~0.78, below league mean (~1.37); strong home/away split (home ~1.08 vs away ~0.50)",
+    "Big chances FOR long-run ~1.30, below league mean (~1.89); low chance creation overall",
+    "Possession FOR long-run ~42.70, materially below 50 mean; Team A plays without the ball",
+    "Corner kicks FOR long-run ~5.19, near league mean (~5.37)",
+    "Recent vs long-run: all metrics very stable; no meaningful recent regime shift"
+   ],
+   "team_a_defense": [
+    "Goals AGAINST long-run ~1.63, above league mean (~1.37); Team A concedes regularly",
+    "Final third entries AGAINST long-run ~62.48, substantially above league mean (~56.40); opponents get into Team A's final third easily",
+    "Big chances AGAINST long-run ~2.22, above league mean (~1.89); opponents create good quality chances",
+    "SoT AGAINST long-run ~3.89, near league mean but with high away split (away ~4.36)",
+    "Clearances FOR long-run ~19.44; high clearance volume consistent with low-block defensive posture",
+    "Fouls FOR long-run ~12.56, above league mean (~10.86); high fouling rate suggesting defensive pressure",
+    "Recent vs long-run: stable across all defensive metrics"
+   ],
+   "team_b_attack": [
+    "Goals FOR long-run ~1.52, above league mean (~1.37); consistent scorer home and away",
+    "Shots FOR long-run ~13.96, above league mean (~12.63); high volume attack",
+    "SoT FOR long-run ~4.41, at/above league mean (~4.25); slightly higher away (4.62)",
+    "Big chances FOR long-run ~2.23, above league mean (~1.89); away figure especially elevated at 2.83",
+    "Corner kicks FOR long-run ~6.93, substantially above league mean (~5.37); strong set-piece generation both home and away",
+    "Accurate crosses FOR long-run ~4.74, above league mean (~3.99)",
+    "Recent vs long-run: stable across attack metrics, no regime shift"
+   ],
+   "team_b_defense": [
+    "Goals AGAINST long-run ~1.07, well below league mean (~1.37); good defense overall",
+    "SoT AGAINST long-run ~4.07, near league mean; notable home/away split (home 3.29 vs away 4.92)",
+    "Big chances AGAINST long-run ~1.69, below league mean (~1.89)",
+    "Shots AGAINST long-run ~13.11; away figure elevated at 15.31 vs home 11.07",
+    "Clearances FOR long-run ~16.67, below league mean (~18.44); not a clearance-heavy team",
+    "Recent vs long-run: stable across all defensive metrics"
+   ]
+  },
+  "matchup_tensions": [
+   "Team B's strong attack (high shots, SoT, big chances, corners) faces Team A's leaky defense (above-avg goals conceded, high final third entries AGAINST)",
+   "Team A's weak attack (low SoT, low goals FOR) faces Team B's tight defense (low goals AGAINST, low shots AGAINST); strong suppression expected",
+   "Team B generates corners above league mean (6.93) vs Team A who concedes many final third entries; corner volume could be elevated",
+   "Team B's high possession tendency (50.48) vs Team A's low possession tendency (42.70); asymmetric control expected",
+   "Team A plays with low possession but compensates with high fouls and clearances; this could gift Team B set pieces",
+   "Opponent profile for Team A: Team B has HIGH goals_for, HIGH SoT_for, LOW goals_against, LOW shots_against - Team B is a strong offensive and defensive opponent"
+  ],
+  "similar_opponent_insights": [
+   "Team A's similar fixture opponents: tm_0196, tm_2064, tm_2674, tm_2814, tm_2949, tm_4023, tm_6387, tm_8651",
+   "Team B's similar fixture opponents: tm_0196, tm_2504, tm_2949, tm_4023, tm_6387, tm_7218, tm_7348, tm_9825",
+   "Overlap between both teams' similar opponent cohorts: tm_0196, tm_2949, tm_4023, tm_6387 - these teams are relevant comparators for both sides",
+   "The similarity axis most relevant is opponent defensive posture (LOW shots_against, LOW goals_against) for Team B's attack questions; Team B attacks well against teams profiled as LOW shots_against / LOW goals_for similar to Team A"
+  ],
+  "regime_questions": [
+   "Team A recent vs long-run: no divergence detected across any metric - long-run baseline appropriate",
+   "Team B recent vs long-run: no divergence detected across any metric - long-run baseline appropriate",
+   "No recent regime conditioning warranted for either team"
+  ],
+  "context_notes": [
+   "Competition is Championship (champ); both teams compete in same league environment",
+   "Team A plays at HOME; Team A scores significantly more at home than away (1.08 vs 0.50 goals FOR)",
+   "Team B plays AWAY; Team B's defensive metrics are less favorable away (shots AGAINST 15.31 away vs 11.07 home)",
+   "Team B's corner generation is high in both venues (home 6.71, away 7.15); away figure slightly higher",
+   "The opponent_profile of Team B (as seen from Team A's perspective): HIGH goals_for, HIGH SoT_for, LOW goals_against, LOW shots_against, LOW shots_on_target_against - this is a premium offensive profile",
+   "The opponent_profile of Team A (as seen from Team B's perspective): HIGH goals_against, LOW goals_for, MID possession_for, MID shots_against, MID shots_on_target_against, LOW shots_on_target_for - Team A is a weak attacking side"
+  ],
+  "discarded_candidates": [
+   {
+    "hypothesis_id_considered": "recent_regime_corners_team_b",
+    "reason": "No divergence between Team B recent and long-run corner figures; regime shift is not evidenced"
+   },
+   {
+    "hypothesis_id_considered": "team_a_shots_for_unconditional",
+    "reason": "Team A's shots FOR is below league mean; no compelling mechanism beyond simple average; no condition does useful work"
+   },
+   {
+    "hypothesis_id_considered": "team_b_goals_for_unconditional",
+    "reason": "Team B goals FOR is modestly above average; the conditional version against LOW goals_for opponents is more interesting but team A is LOW goals_for (per opponent profile), which aligns directly with the attack_x_defense mechanism"
+   },
+   {
+    "hypothesis_id_considered": "possession_home_team",
+    "reason": "Team A's low possession is a stable characteristic not specific to this matchup; conditioning on it does not add testable information beyond the baseline"
+   },
+   {
+    "hypothesis_id_considered": "clearances_away_team",
+    "reason": "Team B clearances are unremarkable; no mechanism to elevate clearance volume in this specific matchup"
+   }
+  ]
+ },
+ "final_selections": [
+  {
+   "hypothesis_id": "36839ea3e96a5494053dee765de12bf908fc7c05d8d0a33035e4873db077939c",
+   "evidence_refs": [
+    "team_b.raw_rows[corner_kicks].for.long_run_mean=6.9259",
+    "team_b.raw_rows[corner_kicks].for.away_mean=7.1538",
+    "team_a.competition_environment_mean.corner_kicks=5.3712",
+    "team_a.raw_rows[final_third_entries].against.long_run_mean=62.4815",
+    "team_a.opponent_profile_of_fixture_opponent.goals_against=LOW"
+   ],
+   "research_reason": "Team B generates substantially more corners than league average, and this is consistent away from home. Team A allows a high rate of final third entries (well above league mean) and the opponent profile characterises Team B as LOW goals_against. Testing whether Team B's corner generation is further elevated when facing HIGH goals_against opponents (Team A fits this profile) anchors the test in a real interaction mechanism beyond the simple baseline.",
+   "mechanism_summary": "High corner production by Team B is driven by final-third penetration. Facing a defensively soft team (Team A, HIGH goals_against profile) likely increases deep pressure and corner-forcing situations. The conditional test against HIGH goals_against opponents isolates whether this attack-on-defense interaction is replicable beyond Team B's overall corner average.",
+   "why_simple_average_is_insufficient": "Team B's overall corner average is already above league mean, but the simple average pools games against all opponent types. The condition on HIGH goals_against restricts to games where opponents have Team A's specific defensive profile, testing whether Team B's corner production is further amplified by defensive vulnerability rather than just representing Team B's general style.",
+   "support_warning": "Team B's corner generation is stable across home/away splits, but the subset of HIGH goals_against opponents may be limited in sample size. The mechanism requires that defensive softness translates to corners specifically, not just shots or goals."
+  },
+  {
+   "hypothesis_id": "1427975bdf8d7baad14d5cecbbd7b82b72c486192c2a32f16573f16f26d04725",
+   "evidence_refs": [
+    "team_b.raw_rows[big_chances].for.long_run_mean=2.2308",
+    "team_b.raw_rows[big_chances].for.away_mean=2.8333",
+    "team_a.competition_environment_mean.big_chances=1.8901",
+    "team_a.raw_rows[big_chances].for.long_run_mean=1.2963",
+    "team_b.opponent_profile_of_fixture_opponent.shots_on_target_for=LOW",
+    "team_a.opponent_profile_of_fixture_opponent.goals_against=LOW"
+   ],
+   "research_reason": "Team B's big chance creation is above league average overall, and notably elevated when playing away. Team A is characterised as a LOW shots_on_target_for opponent - a team that generates few dangerous shots itself. Testing whether Team B creates more big chances when the opponent is in the LOW shots_on_target_for tercile directly asks whether Team B exploits low-attacking opponents by gaining more attacking momentum and converting it into high-quality chances.",
+   "mechanism_summary": "When opponents are offensively weak (LOW shots_on_target_for, matching Team A's profile), Team B can dominate possession and transition phases, sustaining pressure that creates more big chances. The opponent's inability to generate its own dangerous shots reduces Team B's defensive burden, freeing them to commit more players forward and build sustained attacks.",
+   "why_simple_average_is_insufficient": "The simple average for Team B's big chances mixes games against strong and weak offensive opponents. The condition on LOW shots_on_target_for isolates the regime most analogous to this fixture, where Team B faces a side that cannot threaten them in return - potentially amplifying their attacking quality.",
+   "support_warning": "Big chances is an attacking quality metric subject to variation; away sample for Team B is only 13 games. The LOW shots_on_target_for condition may not be populated with enough historical observations to be stable."
+  },
+  {
+   "hypothesis_id": "2a6ff1a283f39c37a52b0f277ac22d23be405cacb476e00cb5a500eb09453346",
+   "evidence_refs": [
+    "team_b.raw_rows[shots_on_target].for.long_run_mean=4.4074",
+    "team_b.raw_rows[shots_on_target].for.away_mean=4.6154",
+    "team_a.competition_environment_mean.shots_on_target=4.2454",
+    "team_b.opponent_profile_of_fixture_opponent.shots_against=LOW",
+    "team_a.raw_rows[shots].for.long_run_mean=10.4815"
+   ],
+   "research_reason": "Team B generates above-league-mean SoT both overall and away. Team A is characterised as a LOW shots_against opponent (from Team B's perspective), meaning Team A does not concede many shots on average. Testing whether Team B maintains or exceeds its SoT production against LOW shots_against opponents (like Team A) asks whether Team B's attack can penetrate a typically shot-suppressing defense.",
+   "mechanism_summary": "Team A's LOW shots_against profile suggests they use low-block or organisational discipline to limit opponent shot attempts. If Team B's SoT output holds or rises against such opponents, it implies their shot quality (on-target conversion from attempts) is robust even when volume is constrained, pointing to efficient chance creation mechanisms.",
+   "why_simple_average_is_insufficient": "The overall SoT mean for Team B includes games against defensively permissive opponents who inflate volume. Conditioning on LOW shots_against isolates whether Team B's on-target efficiency holds specifically against compact defenses, which is the relevant regime for this fixture.",
+   "support_warning": "LOW shots_against opponents may not all share Team A's other characteristics (low possession, high clearances). The condition is one-dimensional and may not fully capture Team A's specific defensive posture."
+  },
+  {
+   "hypothesis_id": "44d64240bd6a93fc82016babe53518a5620ba0141b28cd3d919617a68903ad21",
+   "evidence_refs": [
+    "team_a.raw_rows[goals].against.long_run_mean=1.6296",
+    "team_a.raw_rows[goals].against.away_mean=1.8571",
+    "team_a.competition_environment_mean.goals=1.3727",
+    "team_b.raw_rows[possession].for.long_run_mean=50.4815",
+    "team_a.raw_rows[possession].for.long_run_mean=42.7037",
+    "team_a.opponent_profile_of_fixture_opponent.possession_for=HIGH"
+   ],
+   "research_reason": "Team A concedes above the league mean, and their own possession figure is well below 50% indicating they typically cede control. Team B's opponent profile characterizes them as HIGH possession (Team B has high possession). Testing whether Team A concedes more goals when facing HIGH possession_for opponents (like Team B) asks whether the volume and tempo that a possession-heavy team imposes further stretches Team A's porous defense.",
+   "mechanism_summary": "When Team A faces an opponent with HIGH possession_for, they spend more of the match in a defensive posture, increasing exposure to sustained pressure. Given their already-elevated goals AGAINST rate and high final third entries conceded, a possession-dominant opponent can cycle through attacking sequences more frequently, compounding Team A's defensive vulnerability.",
+   "why_simple_average_is_insufficient": "Team A's overall goals AGAINST baseline includes matches against low-possession opponents where Team A may hold shape more easily. Conditioning on HIGH possession_for opponents isolates the regime where Team A's low-block under sustained pressure is most exposed, which is structurally distinct from defensive performance against counterparts who also play without the ball.",
+   "support_warning": "Possession dominance does not automatically translate to goals; the mechanism depends on Team B's conversion efficiency once in possession, which introduces a second conditional layer. Sample of HIGH possession_for opponents facing Team A may be uneven."
+  }
+ ],
+ "manifest": {
+  "fixture_id": "mt_581141218",
+  "packet_hash": "8f8b8e957f08723c2f74ba7597b187a439430ecdee279e3cae000641166513d2",
+  "model_id": "us.anthropic.claude-sonnet-4-6",
+  "region": "us-east-1",
+  "prompt_content_hash": "ae285113d4256b3a0306fae270fa2227383a37da55ba897b1a1b45e06853bb8f",
+  "config_stamp": {
+   "max_tokens": 8192,
+   "temperature": 1.0,
+   "thinking": {
+    "budget_tokens": 4096,
+    "type": "enabled"
+   }
+  },
+  "created_unix": 1789615646,
+  "converse_calls": 3,
+  "search_calls": 6,
+  "usage": {
+   "inputTokens": 81340,
+   "outputTokens": 7052,
+   "totalTokens": 88392
+  },
+  "latency_s": 118.106,
+  "cache_hit": false,
+  "max_search_calls": 6,
+  "max_tool_turns": 7,
+  "termination_reason": "FORCED_SUBMIT"
+ }
+}

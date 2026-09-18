@@ -1,0 +1,225 @@
+{
+ "status": "OK",
+ "research_trace": {
+  "behavioral_map": {
+   "team_a_attack": [
+    "Shots FOR long_run 7.43 vs league mean 12.68 - severely below average attack volume",
+    "SoT FOR long_run 2.30 vs league mean 4.25 - well below average on-target output",
+    "Big chances FOR long_run 1.14 vs league mean 1.89 - limited quality chance creation",
+    "Possession FOR long_run 34.57 vs league mean 50.0 - clear low-possession identity, home 35.0, away 34.17",
+    "Corner kicks FOR long_run 3.61 vs league mean 5.39 - below average set-piece generation",
+    "Goals FOR long_run 0.87, home 1.27, away 0.50 - very low scoring, especially away",
+    "Final third entries FOR long_run 61.39 vs league mean 56.78 - above average territory entry despite low shots; shots don't convert from territory",
+    "Shots inside box FOR long_run 4.65 vs league mean 8.05 - low box presence",
+    "Recent vs long: all metrics virtually identical, no regime shift in attack"
+   ],
+   "team_a_defense": [
+    "Shots AGAINST long_run 16.17 vs league mean 12.68 - heavily concedes shot volume",
+    "SoT AGAINST long_run 6.30 vs league mean 4.25 - well above average on-target concession",
+    "Big chances AGAINST long_run 3.14 vs league mean 1.89 - poor at preventing quality chances",
+    "Goals AGAINST long_run 2.04, home 1.45, away 2.58 - high concession rate",
+    "Corner kicks AGAINST long_run 7.09 vs league mean 5.39 - well above average corners conceded",
+    "Clearances FOR long_run 21.43 vs league mean 18.21 - lots of defensive clearances but not preventing shots",
+    "Saves FOR long_run 4.17 vs league mean 2.86 - high GK activity, consistent with shots conceded",
+    "Recent vs long: stable, no improvement in recent games"
+   ],
+   "team_b_attack": [
+    "Shots FOR long_run 13.74 vs league mean 12.68 - above average",
+    "SoT FOR long_run 5.52 vs league mean 4.25 - well above average",
+    "Big chances FOR long_run 2.57 vs league mean 1.89 - above average quality creation",
+    "Goals FOR long_run 1.52, away 2.0 vs home 1.08 - higher away scoring than home",
+    "Possession FOR long_run 52.13, home 55.33, away 48.64 - slightly above average with venue split",
+    "Corner kicks FOR long_run 6.17 vs league mean 5.39 - above average",
+    "Shots inside box FOR long_run 9.96 vs league mean 8.05 - well above average inside-box volume",
+    "Recent vs long: all metrics very stable, no regime shift"
+   ],
+   "team_b_defense": [
+    "Shots AGAINST long_run 11.04 vs league mean 12.68 - below average shots conceded",
+    "SoT AGAINST long_run 3.91 vs league mean 4.25 - near average",
+    "Big chances AGAINST long_run 1.70 vs league mean 1.89 - below average",
+    "Goals AGAINST long_run 1.48, home 0.92 vs away 2.09 - much better at home than away defensively",
+    "Saves FOR long_run 2.48 vs league mean 2.86 - fewer saves needed, consistent with lower shots against",
+    "Clearances FOR long_run 15.78 vs league mean 18.21 - below average clearances, may indicate less defensive pressure",
+    "Recent vs long: stable"
+   ]
+  },
+  "matchup_tensions": [
+   "Team A attack (SoT FOR 2.30) faces Team B defense which is solid (SoT AGAINST 3.91) - Team A's already-weak attack faces a below-average SoT-conceder; structural suppression expected",
+   "Team B attack (SoT FOR 5.52, big chances 2.57) vs Team A defense (SoT AGAINST 6.30, big chances AGAINST 3.14) - Team B attacks into a very permissive defense; both metrics strongly favor Team B volume",
+   "Team A's opponent profile of Team B confirms: goals_for HIGH, shots_on_target_for HIGH, possession_for HIGH, goals_against LOW, shots_against LOW - Team B is a dominant side against which Team A typically struggles",
+   "Team B's opponent profile of Team A confirms: goals_against HIGH, shots_against HIGH, shots_on_target_against HIGH, goals_for LOW, possession_for LOW - Team A is exactly the type of weak opponent Team B should exploit",
+   "High corners conceded by Team A (7.09) against Team B which generates above-average corners (6.17) suggests corner asymmetry",
+   "Team A possession-territory tension: high final third entries (61.39) but very low shots (7.43) - territory does not translate to genuine threat"
+  ],
+  "similar_opponent_insights": [
+   "Team B's similar opponents to Team A (fixture opponent from B's perspective) include tm_0016, tm_2124, tm_2504, tm_2949, tm_5188, tm_6917, tm_7058, tm_7218 - these are identified as similar to Team A, all sharing the low-possession, high-shots-against, low-scoring profile that defines Team A",
+   "The similar-opponent cohort mechanism for Team B (AWAY) can test whether Team B's SoT FOR and big chances FOR are specifically elevated against opponents structurally similar to Team A - this is the most direct way to condition on the full multi-axis opponent similarity",
+   "Team A's similar opponents to Team B include tm_0016, tm_0196, tm_2814, tm_2949, tm_2954, tm_4023, tm_8651, tm_9685 - these represent the high-quality attacking opponents Team A typically faces and tends to concede against heavily"
+  ],
+  "regime_questions": [
+   "Recent vs long for Team A: no divergence on any metric - regime is stable; no recent-form story",
+   "Recent vs long for Team B: no divergence on any metric - regime is stable; no recent-form story",
+   "Venue effect for Team B: goals FOR away (2.0) notably higher than home (1.08) - but shots are also higher away (14.45 vs 13.08), this is explainable by shot volume not a separate regime; not enough divergence to motivate a recent-regime hypothesis"
+  ],
+  "context_notes": [
+   "Competition: champ (Championship) - both teams play in same competition, competition conditioning available",
+   "Team A is HOME, Team B is AWAY",
+   "Team A possession profile (34.57%) is extreme - almost 15 points below league mean - this will affect game flow structurally",
+   "Team B's opponent profile labels (HIGH goals_for, HIGH SoT_for, LOW goals_against, LOW shots_against) perfectly match Team A's structural weaknesses (HIGH goals_against, HIGH SoT_against, LOW goals_for, LOW SoT_for)",
+   "The attack_x_defense mechanism is the strongest structural mechanism: Team B attack profile conditioned on facing opponents with Team A's exact defensive profile (HIGH shots_on_target_against, HIGH goals_against) has strong conceptual grounding",
+   "Similar-opponent mechanism (SIMILAR_OPPONENT_COHORT) for Team B SoT FOR and big chances FOR tested without additional condition keeps the sample maximally informative"
+  ],
+  "discarded_candidates": [
+   {
+    "hypothesis_id_considered": "17e3099e0beaa8fccfbe70736db433902f3d60bdec711c3604743eb5caf44f88",
+    "reason": "Unconditional HOME_TEAM shots_on_target FOR baseline - no mechanism beyond simple average, fails adversarial test"
+   },
+   {
+    "hypothesis_id_considered": "501b2b69100d7382b5cffa2102f38bd9d22a0dc0268753efb03c57e0f325201d",
+    "reason": "HOME_TEAM venue-conditioned shots_on_target - venue split does not show meaningful divergence for Team A; also Team A is playing at home so AWAY conditioning is irrelevant"
+   },
+   {
+    "hypothesis_id_considered": "9b1ae577ce9e6822f03bd16f47faa0bac451f241efbabc161409bc1c02547d90",
+    "reason": "AWAY_TEAM SoT FOR conditioned on opponent LOW shots_on_target_against - Team A is HIGH not LOW shots_on_target_against, so this is wrong direction for the fixture opponent profile"
+   },
+   {
+    "hypothesis_id_considered": "4905f78810671df5ee60879a1e9ce833171772fcd692ecab91e7c0dd5b0f4002",
+    "reason": "AWAY_TEAM SoT FOR conditioned on opponent LOW possession - Team A is LOW possession opponent, this condition matches but the specific conditional mechanism is less discriminating than HIGH shots_on_target_against or HIGH goals_against"
+   },
+   {
+    "hypothesis_id_considered": "cff8b78c426b7b3d6c7d77f9cde0717eedd43cb9d7b5c5a243be5f0969b47222",
+    "reason": "Similar opponent big chances FOR without condition - unconditional version, weaker than the conditional version against HIGH shots_on_target_against opponents; however this is the cleanest test of the opponent-similarity axis"
+   },
+   {
+    "hypothesis_id_considered": "bc90a249e0abebab96a34de80c38fe289e76a69d41726f16589ebbf41935e5e8",
+    "reason": "AWAY_TEAM big chances FOR conditioned on opponent HIGH goals_for - Team A is LOW goals_for, this is wrong direction"
+   },
+   {
+    "hypothesis_id_considered": "aaa8ddf2fc3f02887ca06093f24b43fa0503ebd4a2dcf25e04a4c7d44e912c60",
+    "reason": "AWAY_TEAM big chances AGAINST similar opponent - Team B conceding big chances against Team A-like opponents is less interesting given Team A's very low attack output; the defense side of Team B is not where the signal lies"
+   }
+  ]
+ },
+ "final_selections": [
+  {
+   "hypothesis_id": "33dada7d970df9ab49906e8842034cdad55fc1ed20b241a471f4f6d4ab278c58",
+   "evidence_refs": [
+    "team_b.raw_rows.shots_on_target.for.long_run_mean=5.5217",
+    "team_b.raw_rows.shots_on_target.against.long_run_mean=3.913",
+    "team_a.raw_rows.shots_on_target.against.long_run_mean=6.3043",
+    "team_b.opponent_profile_of_fixture_opponent.goals_against=HIGH",
+    "team_b.opponent_profile_of_fixture_opponent.shots_on_target_against=HIGH",
+    "team_a.raw_rows.goals.against.long_run_mean=2.0435",
+    "team_b.competition_environment_mean.shots_on_target=4.25"
+   ],
+   "research_reason": "Team A is a HIGH goals_against opponent - among the weakest defensive profiles in the competition. Team B generates well-above-average SoT (5.52 vs league 4.25). The attack_x_defense mechanism tests whether Team B's SoT output is specifically amplified when the opponent concedes heavily - this condition directly maps to Team A's documented defensive weakness.",
+   "mechanism_summary": "A high-volume SoT attack (Team B) facing a defense that structurally concedes many goals should yield elevated SoT production. Team A concedes at well above league-average rate; Team B's SoT output conditioned on HIGH goals_against opponents isolates precisely this matchup scenario.",
+   "why_simple_average_is_insufficient": "Team B's unconditional SoT average includes games against well-organized defenses that suppress output. Conditioning on HIGH goals_against opponent filters to only games against similarly permissive defenses, which is structurally what Team A represents.",
+   "support_warning": "The HIGH goals_against tercile cutoff may include a broad range of opponents; the engine's actual tercile boundaries are unknown to us. If Team A is only marginally in the HIGH tercile, the conditional sample might not differ sharply from the unconditional."
+  },
+  {
+   "hypothesis_id": "1ad052794dbf6e2d40ed3e36c6cdfcaadf16ce6f15b7099616ab8ee5f98f5f53",
+   "evidence_refs": [
+    "team_b.raw_rows.shots_on_target.for.long_run_mean=5.5217",
+    "team_a.raw_rows.shots_on_target.against.long_run_mean=6.3043",
+    "team_a.competition_environment_mean.shots_on_target=4.25",
+    "team_b.opponent_profile_of_fixture_opponent.shots_on_target_against=HIGH",
+    "team_a.raw_rows.shots_on_target.against.home_mean=5.3636",
+    "team_a.raw_rows.shots_on_target.against.away_mean=7.1667"
+   ],
+   "research_reason": "Team A is a HIGH shots_on_target_against opponent - this is the most direct attack-meets-defense condition. Team B's SoT production conditioned on facing opponents who concede many SoT per game tests whether Team B further elevates its on-target output when the opposing goalkeeper faces high workload.",
+   "mechanism_summary": "An attack that creates high SoT volume (Team B) encountering a defense that structurally fails to limit SoT (Team A, 6.30 vs league 4.25) should find the path to goal especially open. The conditional mechanism links Team B's attacking efficiency to the opponent's inability to suppress on-target attempts.",
+   "why_simple_average_is_insufficient": "Team B's overall SoT mean includes games against competent defenses that suppress SoT. Restricting to HIGH shots_on_target_against opponents selects only games where the defense resembles Team A, yielding a more fixture-relevant estimate than an unconditional average.",
+   "support_warning": "SoT-against captures both defensive failure and opponent shot quality; the condition may conflate two separate mechanisms. Also, the home/away split in Team A's SoT-against data (5.36 home vs 7.17 away) suggests the home fixture is less extreme than the away average."
+  },
+  {
+   "hypothesis_id": "9c9952fe97f0547df088df75b22568e142572d9de9a928fe58c2ce364f6889fe",
+   "evidence_refs": [
+    "team_b.raw_rows.big_chances.for.long_run_mean=2.5652",
+    "team_a.raw_rows.big_chances.against.long_run_mean=3.1364",
+    "team_b.competition_environment_mean.big_chances=1.8944",
+    "team_b.opponent_profile_of_fixture_opponent.goals_against=HIGH",
+    "team_a.raw_rows.goals.against.long_run_mean=2.0435",
+    "team_a.raw_rows.big_chances.against.away_mean=3.4167"
+   ],
+   "research_reason": "Team A concedes big chances at double the league mean (3.14 vs 1.89). Team B creates big chances at above-league-average rate (2.57 vs 1.89). The attack_x_defense mechanism for big chances conditioned on HIGH goals_against opponents captures whether Team B's quality chance creation is specifically elevated against poor defensive sides like Team A.",
+   "mechanism_summary": "A team that regularly creates big chances (Team B) against a defense that routinely yields big chances (Team A, 3.14 vs league 1.89) represents an ideal structural match for amplified big-chance creation. Conditioning on HIGH goals_against opponent proxies for this type of porous defense.",
+   "why_simple_average_is_insufficient": "Team B's unconditional big chances average includes matches against organized defenses that suppress quality chances. Conditioning on opponents who concede many goals (HIGH goals_against) selects the permissive subset that Team A represents, producing a more discriminating comparison than a flat average.",
+   "support_warning": "Big chances is a semi-subjective stat that may have higher variance than shot counts. The goals_against condition is one step removed from big chances; a direct big_chances_against condition would be sharper but may not be available."
+  },
+  {
+   "hypothesis_id": "618f0042ed8137029206a89ef1fe903ad191d691b72689e89ed4b991076283b6",
+   "evidence_refs": [
+    "team_b.similar_to_fixture_opponent.similar_opponent_ids",
+    "team_b.raw_rows.shots_on_target.for.long_run_mean=5.5217",
+    "team_a.opponent_profile_of_fixture_opponent.shots_on_target_for=LOW",
+    "team_a.opponent_profile_of_fixture_opponent.goals_for=LOW",
+    "team_a.opponent_profile_of_fixture_opponent.possession_for=LOW",
+    "team_a.opponent_profile_of_fixture_opponent.shots_on_target_against=HIGH",
+    "team_b.competition_environment_mean.shots_on_target=4.25"
+   ],
+   "research_reason": "Team B has 8 identified similar-to-fixture-opponent teams (Team A's profile: LOW goals_for, LOW SoT_for, LOW possession, HIGH goals_against, HIGH SoT_against). The similar-opponent cohort mechanism tests Team B's SoT production specifically against this structurally homogeneous set of weak opponents, capturing the full multi-axis similarity in a single testable hypothesis.",
+   "mechanism_summary": "Team A occupies a distinct structural niche (very low possession, very low attack output, very high defensive concession). The similar-opponent cohort identifies teams historically resembling this profile. Testing Team B's SoT production in games against this cohort provides the most fixture-relevant baseline by conditioning on the full multivariate opponent fingerprint.",
+   "why_simple_average_is_insufficient": "A simple average blends Team B's performance against all opponents including strong, average and weak sides. The similar-opponent cohort isolates precisely the matches against teams most like Team A across multiple dimensions simultaneously, which no single-axis opponent_profile condition can replicate.",
+   "support_warning": "The similar-opponent cohort identity is engine-determined; we do not know how many of the 8 similar opponents appear in Team B's historical sample, which could limit the conditional subsample size."
+  },
+  {
+   "hypothesis_id": "cff8b78c426b7b3d6c7d77f9cde0717eedd43cb9d7b5c5a243be5f0969b47222",
+   "evidence_refs": [
+    "team_b.similar_to_fixture_opponent.similar_opponent_ids",
+    "team_b.raw_rows.big_chances.for.long_run_mean=2.5652",
+    "team_a.raw_rows.big_chances.against.long_run_mean=3.1364",
+    "team_b.competition_environment_mean.big_chances=1.8944",
+    "team_a.opponent_profile_of_fixture_opponent.goals_for=LOW",
+    "team_a.opponent_profile_of_fixture_opponent.goals_against=HIGH"
+   ],
+   "research_reason": "Team A concedes big chances at nearly twice the league mean. The similar-opponent cohort for Team B (big chances FOR) tests whether Team B generates more quality chances against teams structurally similar to Team A across all profiled dimensions, not just one axis.",
+   "mechanism_summary": "Big chance creation requires both an attacking team capable of exploiting space and a defense that yields space (high goals_against, low SoT_for, low possession). Team A embodies all these weaknesses. The similar-opponent cohort mechanism captures whether Team B systematically creates more big chances against this profile class.",
+   "why_simple_average_is_insufficient": "An unconditional average of Team B's big chances smooths over opponent quality differences. The similar-opponent cohort restricts to the closest structural matches to Team A, filtering out games where Team B created fewer big chances due to facing organized opposition.",
+   "support_warning": "Big chances is a constructed metric with inherent subjectivity; variance may be high and the similar-opponent sample size may be small if few of the 8 identified similar teams appear frequently in Team B's historical record."
+  },
+  {
+   "hypothesis_id": "8fc012dafe0e1b3b913aa821828467d70c0bc402265229123605196f266bd4f2",
+   "evidence_refs": [
+    "team_b.raw_rows.shots_on_target.for.long_run_mean=5.5217",
+    "team_a.raw_rows.shots.against.long_run_mean=16.1739",
+    "team_b.competition_environment_mean.shots=12.6763",
+    "team_b.opponent_profile_of_fixture_opponent.shots_against=HIGH",
+    "team_a.raw_rows.shots.against.home_mean=15.1818",
+    "team_a.raw_rows.shots.against.away_mean=17.0833"
+   ],
+   "research_reason": "Team A is a HIGH shots_against opponent (16.17 per game vs league 12.68). Team B produces above-average SoT. Testing Team B's SoT FOR conditioned on HIGH shots_against opponents identifies whether Team B's accurate shooting is specifically higher when opponents are structurally permissive of high shot volume - a complementary angle to the SoT_against condition.",
+   "mechanism_summary": "Teams that concede high shot volumes typically suffer from defensive compactness issues or high defensive line exposure. A quality attack like Team B (high SoT ratio) should generate even more SoT when the opponent structurally allows high shot volumes, because the defensive shape that permits many shots also permits quality shots.",
+   "why_simple_average_is_insufficient": "Team B's unconditional SoT average includes games against compact defenses. Restricting to HIGH shots_against opponents selects matches where the defensive structure is most similar to Team A's, testing whether the permissive defensive environment amplifies Team B's on-target output beyond the average.",
+   "support_warning": "High shots_against could reflect fast-paced matches with both teams shooting heavily (e.g., open games), not just defensive weakness. This could dilute the mechanism if Team B's SoT doesn't specifically increase in open games."
+  }
+ ],
+ "manifest": {
+  "fixture_id": "mt_195565010",
+  "packet_hash": "3691559dc4d255eee655c69b44ab9b3fd26bd7ce24d3075a128b0c015fc4a487",
+  "model_id": "us.anthropic.claude-sonnet-4-6",
+  "region": "us-east-1",
+  "prompt_content_hash": "ae285113d4256b3a0306fae270fa2227383a37da55ba897b1a1b45e06853bb8f",
+  "config_stamp": {
+   "max_tokens": 8192,
+   "temperature": 1.0,
+   "thinking": {
+    "budget_tokens": 4096,
+    "type": "enabled"
+   }
+  },
+  "created_unix": 1789614098,
+  "converse_calls": 4,
+  "search_calls": 6,
+  "usage": {
+   "inputTokens": 111141,
+   "outputTokens": 8644,
+   "totalTokens": 119785
+  },
+  "latency_s": 136.934,
+  "cache_hit": false,
+  "max_search_calls": 6,
+  "max_tool_turns": 7,
+  "termination_reason": "FORCED_SUBMIT"
+ }
+}

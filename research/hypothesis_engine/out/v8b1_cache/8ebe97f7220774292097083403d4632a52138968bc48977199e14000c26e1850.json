@@ -1,0 +1,212 @@
+{
+ "status": "OK",
+ "research_trace": {
+  "behavioral_map": {
+   "team_a_attack": [
+    "Home shots FOR substantially higher than away (raw_rows shots: home_mean vs away_mean), creating strong venue-conditioned attack volume pattern",
+    "Home SoT FOR (5.375) versus away (4.706) \u2014 home venue elevates accuracy as well as volume",
+    "Big chances FOR: home=2.357 vs away=1.313 \u2014 home environment nearly doubles big-chance creation",
+    "Final third entries FOR: home=58.875 vs away=46.412 \u2014 very large home/away split in territorial penetration",
+    "Possession FOR: home=60.0 vs away=50.06 \u2014 dominant home possession, near 50/50 away",
+    "Corner kicks FOR: home=6.3125 vs away=4.0 \u2014 home advantage clear in set-piece volume",
+    "Recent vs long: all metrics stable \u2014 no meaningful recent regime shift for Team A attack",
+    "Team A accurate crosses FOR: home=3.44, away=2.71, long_run=3.06 \u2014 lower crossing volume than Team B"
+   ],
+   "team_a_defense": [
+    "Shots AGAINST: home=10.5 vs away=15.7 \u2014 concedes many more shots when away; home defense is tighter",
+    "SoT AGAINST: home=3.125 vs away=4.471 \u2014 consistent with the shots gap",
+    "Goals AGAINST: home=1.0 vs away=1.529 \u2014 solid home defense",
+    "Clearances FOR: home=17.4 vs away=23.0 \u2014 clears more when away, consistent with deeper block",
+    "Tackles FOR: home=11.1 vs away=13.4 \u2014 more tackles away, consistent with defensive shape shifting",
+    "Opponent profile view of Team B: goals_against=LOW, shots_against=LOW \u2014 Team B is a compact defensive team"
+   ],
+   "team_b_attack": [
+    "Shots FOR: home=12.7, away=10.6, long_run=11.7 \u2014 moderate volume, limited away output",
+    "SoT FOR: home=3.765, away=3.0, long_run=3.394 \u2014 away SoT notably below home and below league baseline",
+    "Big chances FOR: home=2.471, away=1.8, long_run=2.156 \u2014 decent at home, lower away",
+    "Accurate crosses FOR: home=5.118, away=5.875, long_run=5.485 \u2014 notably HIGH crossing volume, elevated vs league mean (~3.95); crosses are more frequent away than at home \u2014 unusual pattern",
+    "Corner kicks FOR: home=6.294, away=5.563, long_run=5.939 \u2014 above league mean, consistent home/away",
+    "Final third entries FOR: home=50.2, away=50.9 \u2014 barely above baseline, venue-neutral",
+    "Possession FOR: home=53.7, away=49.0 \u2014 modest; away essentially 50/50",
+    "Opponent profile view of Team A: goals_for=HIGH, shots_against=HIGH, shots_on_target_for=HIGH \u2014 Team A is a high-volume attacking opponent that also concedes many shots"
+   ],
+   "team_b_defense": [
+    "Goals AGAINST: home=0.765, away=1.125, long_run=0.939 \u2014 strong defensive record; LOW rating from opponent profile",
+    "Shots AGAINST: home=9.588, away=11.563, long_run=10.545 \u2014 below league mean (~12.6); LOW opponent rating confirmed",
+    "SoT AGAINST: home=2.647, away=3.3125, long_run=2.970 \u2014 LOW concession, structurally compact",
+    "Clearances FOR (as defense): home=16.8, away=19.5, long_run=18.1 \u2014 average clearing work-rate",
+    "Ball recoveries FOR: home=50.1, away=53.0, long_run=51.5 \u2014 slightly below league mean (56.4)",
+    "Recent vs long: shots AGAINST stable, goals AGAINST stable \u2014 no regime shift in defense"
+   ]
+  },
+  "matchup_tensions": [
+   "Team A attacks with HIGH volume at home (shots ~15.5, SoT ~5.4) vs Team B whose defense concedes LOW shots and LOW goals \u2014 suppression tension: does Team A's home attack volume persist when facing a compact low-conceding defense?",
+   "Team B's opponent profile of Team A reads shots_against=HIGH, shots_on_target_for=HIGH \u2014 but Team B's own defense gives up LOW shots. These two views must be reconciled by the conditional engine, not by averaging.",
+   "Team B's accurate crosses FOR are elevated (~5.5 long_run vs league ~3.95), with AWAY crosses higher than home (5.875 vs 5.118) \u2014 unusual. Against a high-possession home team, does Team B rely on crossing more as a counter-attacking mechanism?",
+   "Team B's SoT FOR away is notably lower than home (3.0 vs 3.765), while crossing volume is sustained \u2014 possible volume-accuracy tension: high crossing volume but low conversion on target away from home.",
+   "Team A's possession advantage at home is large (60%), compressing Team B's time on the ball and potentially forcing more direct/crossing plays \u2014 feeds into the crossing mechanism for Team B."
+  ],
+  "similar_opponent_insights": [
+   "Team A's similar opponents to Team B: tm_0256, tm_2064, tm_2674, tm_2814, tm_2954, tm_4893, tm_6115, tm_8651 \u2014 these are teams that share Team B's defensive compactness profile (LOW goals_against, LOW shots_against) with HIGH possession and goals_for.",
+   "Team B's similar opponents to Team A: tm_2674, tm_2814, tm_2949, tm_2954, tm_4893, tm_5188, tm_7348, tm_9825 \u2014 overlap in tm_2674, tm_2814, tm_2954, tm_4893 suggests a common cohort relevant to both teams' conditional behavior.",
+   "The shared overlap (4 teams) in similar-opponent cohorts suggests the engine can cross-reference both teams' behavior against similar opponents for the same set of reference teams.",
+   "Team B's accurate crosses vs HIGH-possession opponents (Team A's profile = HIGH possession_for) is a well-motivated query given this specific fixture context."
+  ],
+  "regime_questions": [
+   "Team A recent vs long: all metrics are stable (shrunk values negligibly different from long_run). No regime-shift signal for Team A.",
+   "Team B recent vs long: shots FOR stable (11.719 vs 11.697 long), SoT FOR stable (3.407 vs 3.394), accurate crosses stable (5.518 vs 5.485). No meaningful recent regime shift.",
+   "No recent-regime hypothesis is warranted \u2014 both teams are stable, and regime queries would not add conditional structure beyond what venue and opponent-profile conditioning already captures."
+  ],
+  "context_notes": [
+   "Competition: Championship (champ). Both teams play in the same league environment (competition_environment_mean is identical for both teams).",
+   "Team A is HOME, Team B is AWAY. Home/away asymmetries are pronounced for Team A (large venue splits in shots, possession, big chances) but moderate for Team B.",
+   "touches_in_penalty_area has THIN coverage for both teams \u2014 excluded from analysis.",
+   "np_xg and xg: xg is RESTRICTED to 4 competitions but champ is one of them; however, per-side semantics unaudited for np_xg and xg has coverage issues in some leagues. For this champ fixture, xg admissibility is technically present, but given the policy and the fact that we have cleaner metrics, we avoid xg as primary signal.",
+   "Key structural insight: Team A's opponent profile view of Team B shows goals_against=LOW, shots_against=LOW \u2014 this is the lens through which the conditional engine will evaluate Team A's shot production against compact defenses. This is the most important conditioning dimension for Team A attack."
+  ],
+  "discarded_candidates": [
+   {
+    "hypothesis_id_considered": "8f0f768dbf87324ac731fcce6dcaf40aa4ce57e4eaa3b89d4438c76f728d0931",
+    "reason": "HOME_TEAM SoT venue conditioning (HOME vs overall) is a simple unconditional venue split with no opponent-quality conditioning. The interesting question is whether Team A's SoT holds up against compact defenses (LOW shots_against), not just whether they shoot more at home. Discarded in favor of the attack_x_defense conditioned version."
+   },
+   {
+    "hypothesis_id_considered": "4da78c33b0d2128d923f26fc6d41aa8bf981203afe3ff8eeeeadd9fbc01e0f59",
+    "reason": "HOME_TEAM shots venue conditioning is a plain home/away split with no opponent-quality conditioning. Same issue \u2014 too simple, no mechanism beyond venue effect."
+   },
+   {
+    "hypothesis_id_considered": "00c87bce3d8bb94dd8053fb1d1311b0b581576e4f08d6e78025b5bda055e7854",
+    "reason": "AWAY_TEAM SoT venue conditioning (AWAY vs overall) is unconditional. Team B's away SoT deficit is already captured in raw data; a simple venue split adds no mechanism."
+   },
+   {
+    "hypothesis_id_considered": "7126aba46909d7efa74ac2d53ea3b6d1b87bfa982dbb79198c077352157ffbcd",
+    "reason": "AWAY_TEAM accurate crosses unconditional baseline \u2014 no conditions, this is just an average. Discarded; conditioned versions on opponent profile are more informative."
+   },
+   {
+    "hypothesis_id_considered": "53c7ab6c7a9fc964c03a63356254d9dc506fac559b92f97460f3ff96046863a5",
+    "reason": "AWAY_TEAM accurate crosses at away venue \u2014 venue split alone does not capture the possession-forcing mechanism we identified. The opponent's possession_for=HIGH dimension is more relevant."
+   },
+   {
+    "hypothesis_id_considered": "7dbd75bb2cf7df20d12503e49182584681e6b82c0d74b3e6345fde6b74d5c2d9",
+    "reason": "HOME_TEAM SoT vs HIGH shots_on_target_against opponents \u2014 Team B is rated LOW on shots_on_target_against, not HIGH, so this condition is irrelevant to this fixture."
+   },
+   {
+    "hypothesis_id_considered": "6e3fb417d14cdaf5bb27a08ac446f8279a02772fd171f817e637ed3ace9ea48a",
+    "reason": "HOME_TEAM SoT vs HIGH shots_against opponents \u2014 Team B is rated LOW on shots_against, not HIGH. Condition does not match this fixture."
+   },
+   {
+    "hypothesis_id_considered": "1ad052794dbf6e2d40ed3e36c6cdfcaadf16ce6f15b7099616ab8ee5f98f5f53",
+    "reason": "AWAY_TEAM SoT vs HIGH shots_on_target_against opponents \u2014 Team A is rated MID on shots_on_target_against from Team B's perspective, not HIGH. Does not precisely match."
+   },
+   {
+    "hypothesis_id_considered": "33dada7d970df9ab49906e8842034cdad55fc1ed20b241a471f4f6d4ab278c58",
+    "reason": "AWAY_TEAM SoT vs HIGH goals_against opponents \u2014 Team A is rated MID on goals_against from Team B's perspective. Condition does not match this fixture."
+   },
+   {
+    "hypothesis_id_considered": "b643fa0c05a2fc024f95f1d50524f458dd7e0136780d1e672bece3b91e205f94",
+    "reason": "HOME_TEAM SoT vs MID goals_for opponents \u2014 Team B is rated HIGH on goals_for, not MID. Condition does not match."
+   }
+  ]
+ },
+ "final_selections": [
+  {
+   "hypothesis_id": "57dec42ff39d7340b5cc535cdc697b1d6e4a0ab0efe61d8d64ad4219f76ab401",
+   "evidence_refs": [
+    "team_a.raw_rows[shots_on_target].for.home_mean",
+    "team_a.raw_rows[shots_on_target].for.long_run_mean",
+    "team_a.opponent_profile_of_fixture_opponent.shots_against",
+    "team_b.raw_rows[shots_on_target].against.home_mean",
+    "team_b.raw_rows[shots_on_target].against.long_run_mean",
+    "team_a.competition_environment_mean.shots_on_target"
+   ],
+   "research_reason": "Team A's home SoT FOR is elevated vs its own long-run baseline, but Team B's defensive profile shows LOW shots_against. The key question is whether Team A's SoT production is suppressed when facing opponents with LOW shots_against defensive records. This is the primary attack-vs-defense tension of the fixture.",
+   "mechanism_summary": "Team A generates elevated shot-on-target volume at home generally. Team B's compact defense consistently suppresses opponent shot totals (LOW shots_against rating). When Team A faces opponents who historically allow few shots, its own SoT production may be pulled toward Team B's defensive baseline rather than Team A's home offensive baseline \u2014 measuring this conditional shift isolates the suppression mechanism.",
+   "why_simple_average_is_insufficient": "A simple average of Team A's SoT ignores that Team B's defensive structure sits in the LOW tercile of shots_against, which may compress Team A's typical home output. The opponent-profile conditioning separates 'facing compact defenses' from the broader distribution of opponents Team A has faced.",
+   "support_warning": "The condition (LOW shots_against) is an opponent-profile tercile assignment. If Team B's classification shifts near a tercile boundary, the conditional group may thin. Also, the suppression mechanism assumes Team B's compact structure translates to this specific home environment."
+  },
+  {
+   "hypothesis_id": "248ddd68049ef5a5cbff12c1e8e4dad0e957616f79c3a999d813134d0754be7f",
+   "evidence_refs": [
+    "team_a.raw_rows[shots_on_target].for.home_mean",
+    "team_a.raw_rows[shots_on_target].for.long_run_mean",
+    "team_a.opponent_profile_of_fixture_opponent.goals_against",
+    "team_b.raw_rows[goals].against.home_mean",
+    "team_b.raw_rows[goals].against.long_run_mean"
+   ],
+   "research_reason": "Team B's opponent profile shows goals_against=LOW \u2014 it concedes few goals. When Team A faces opponents with LOW goals_against records, does its SoT change relative to baseline? This captures whether Team A's shot quality/creation is affected by facing stingy defenses.",
+   "mechanism_summary": "A LOW goals_against opponent signals a defensive team that limits dangerous chances even when shots are taken. Team A's SoT vs such opponents may be impacted because the defense disrupts shot quality and location, not just volume \u2014 testing this distinguishes between shot volume suppression and shot accuracy impact.",
+   "why_simple_average_is_insufficient": "Team A's overall SoT average conflates matches against porous and compact defenses. Conditioning on opponents with LOW goals_against isolates whether Team A can generate quality chances against teams that specifically resist conceding, which is the profile Team B presents.",
+   "support_warning": "goals_against tercile is a coarser proxy than shot location metrics. The mechanism (defensive quality suppressing SoT) is plausible but the goals_against rating could also reflect finishing variance from opponents rather than pure defensive structure."
+  },
+  {
+   "hypothesis_id": "351f0c3a3127b43148fd872381e5e40449dc22bdb398ff218240e2fbe8185749",
+   "evidence_refs": [
+    "team_b.raw_rows[accurate_crosses].for.away_mean",
+    "team_b.raw_rows[accurate_crosses].for.home_mean",
+    "team_b.raw_rows[accurate_crosses].for.long_run_mean",
+    "team_a.competition_environment_mean.accurate_crosses",
+    "team_b.opponent_profile_of_fixture_opponent.possession_for",
+    "team_a.raw_rows[possession].for.home_mean"
+   ],
+   "research_reason": "Team B's accurate crossing volume (long_run ~5.5) substantially exceeds the league mean (~3.95). Team A's opponent profile from Team B's view shows possession_for=HIGH \u2014 Team A dominates possession at home. When Team B faces HIGH-possession opponents, it may be forced into a more counter-attacking, wide/crossing style. This tests whether Team B's crossing output changes against possession-dominant opponents.",
+   "mechanism_summary": "Against teams with HIGH possession_for, Team B will spend more time defending deep and launching quick transitions. Wide crossing attacks are a natural counter-attack outlet when an opponent dominates the ball. If Team B systematically increases crossing output against possession-heavy opponents, this reflects a tactical adaptation to defensive shape.",
+   "why_simple_average_is_insufficient": "Team B's overall crossing average already exceeds the league mean, but whether this is uniform or specifically elevated against possession-heavy teams is a structural question. The conditioning on possession_for=HIGH isolates the specific dynamic of this fixture rather than averaging over all opponent types.",
+   "support_warning": "possession_for=HIGH is Team B's view of Team A. Team A's home possession is ~60% \u2014 borderline HIGH tercile. If the tercile boundary sits near 55%, Team A may be MID rather than HIGH. The mechanism hinges on Team A's possession dominance forcing Team B into wide channels."
+  },
+  {
+   "hypothesis_id": "1bb50026fe73ffb5bc30eacf49400ac29b40747217a5b8adff9f819aa039f636",
+   "evidence_refs": [
+    "team_b.raw_rows[shots_on_target].for.away_mean",
+    "team_b.raw_rows[shots_on_target].for.long_run_mean",
+    "team_b.opponent_profile_of_fixture_opponent.goals_for",
+    "team_a.raw_rows[goals].for.home_mean",
+    "team_a.raw_rows[goals].for.long_run_mean"
+   ],
+   "research_reason": "Team B faces Team A whose opponent profile shows goals_for=HIGH. Team B's SoT FOR away (3.0) is already below its home figure (3.765). When Team B faces HIGH-goals_for opponents, does its own SoT output change? HIGH-scoring opponents often create open-game conditions, which may either elevate Team B's SoT (open game) or suppress it (Team B forces a defensive shape).",
+   "mechanism_summary": "Facing a HIGH-goals_for opponent can generate open play with more transitions, potentially creating SoT opportunities for Team B in transition. Alternatively, a HIGH-scoring home team may force Team B to be so defensively conservative that their own SoT suffers. This hypothesis tests the net direction of Team B SoT production against attacking opponents.",
+   "why_simple_average_is_insufficient": "Team B's overall SoT average combines games against defensively strong and poor opponents. Conditioning on opponents with HIGH goals_for directly addresses this fixture context where Team A is a high-scoring home side, isolating Team B's production adjustment in those specific match environments.",
+   "support_warning": "The mechanism direction is ambiguous \u2014 HIGH-scoring opponents could either open the game (helping Team B SoT) or force defensive posture (hurting it). This ambiguity is intentional; the test measures the actual conditional effect rather than assuming a direction."
+  },
+  {
+   "hypothesis_id": "8fc012dafe0e1b3b913aa821828467d70c0bc402265229123605196f266bd4f2",
+   "evidence_refs": [
+    "team_b.raw_rows[shots_on_target].for.away_mean",
+    "team_b.raw_rows[shots_on_target].for.long_run_mean",
+    "team_b.opponent_profile_of_fixture_opponent.shots_against",
+    "team_a.raw_rows[shots].against.home_mean",
+    "team_a.raw_rows[shots].against.long_run_mean"
+   ],
+   "research_reason": "Team B's view of Team A's opponent profile shows shots_against=HIGH \u2014 Team A allows a lot of shots against. If Team A concedes many shots, then Team B, even away, may find more shooting opportunities. This tests whether Team B's SoT FOR increases when facing teams with HIGH shots_against records.",
+   "mechanism_summary": "Opponents with HIGH shots_against tend to play more open defensive shapes or allow their opponents space to shoot. Team B playing against such a team may find more pockets of space to generate on-target efforts, even in an away context where their baseline SoT is lower. This mechanism is distinct from Team B's general attacking quality \u2014 it is specifically about opponent defensive permissiveness.",
+   "why_simple_average_is_insufficient": "Team B's away SoT baseline is pulled down by matches against compact defenses. Conditioning on HIGH shots_against opponents isolates the sub-distribution of matches where the opponent's defensive openness is similar to Team A's profile, providing a more accurate estimate of Team B's SoT in this fixture context.",
+   "support_warning": "Team A's shots_against rating being HIGH seems to conflict with Team B's defensive profile being LOW shots_against. These are from two different perspectives: Team A sees many shots against it, but Team B does not allow many shots. Both are consistently stated in their respective opponent_profile fields."
+  }
+ ],
+ "manifest": {
+  "fixture_id": "mt_839956235",
+  "packet_hash": "22efacb80c23e495fa41183be05f1d48c4d68754a63fb84fef225230148c12c5",
+  "model_id": "us.anthropic.claude-sonnet-4-6",
+  "region": "us-east-1",
+  "prompt_content_hash": "ae285113d4256b3a0306fae270fa2227383a37da55ba897b1a1b45e06853bb8f",
+  "config_stamp": {
+   "max_tokens": 8192,
+   "temperature": 1.0,
+   "thinking": {
+    "budget_tokens": 4096,
+    "type": "enabled"
+   }
+  },
+  "created_unix": 1789616831,
+  "converse_calls": 3,
+  "search_calls": 6,
+  "usage": {
+   "inputTokens": 66594,
+   "outputTokens": 7324,
+   "totalTokens": 73918
+  },
+  "latency_s": 121.583,
+  "cache_hit": false,
+  "max_search_calls": 6,
+  "max_tool_turns": 7,
+  "termination_reason": "FORCED_SUBMIT"
+ }
+}

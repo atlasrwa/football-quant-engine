@@ -148,8 +148,8 @@ def test_runner_rejects_an_id_never_returned_this_session(golden_universe, golde
     if real not in {c["hypothesis_id"] for c in
                     UNI.search_evaluable(UNI.SearchQuery(max_results=5),
                                          golden_universe)["results"]}:
-        assert res["status"] == RUN.INVALID_ID_NOT_RETURNED_THIS_SESSION
-        assert res["invalid"][0]["status"] == RUN.INVALID_ID_NOT_RETURNED_THIS_SESSION
+        assert res["status"] == RUN.INVALID_SUBMISSION
+        assert res["problems"][0]["reason"] == RUN.REASON_NOT_RETURNED
 
 
 def test_runner_rejects_a_fabricated_id(golden_universe, golden_env):
@@ -159,9 +159,11 @@ def test_runner_rejects_a_fabricated_id(golden_universe, golden_env):
 
     res = RUN.run_fixture(golden_universe, golden_env.capability, selector=selector,
                           grammar_kwargs=GRAMMAR_KW)
-    assert res["status"] == RUN.INVALID_ID_NOT_RETURNED_THIS_SESSION
-    assert res["research_yield"] == {"submitted": 1, "valid": 0, "invalid": 1}
-    assert res["valid"] == []
+    # Under the frozen P1-D contract a malformed element invalidates the whole submission.
+    assert res["status"] == RUN.INVALID_SUBMISSION
+    assert res["research_yield"] == {"submitted": 1, "accepted": 0, "rejected": 1,
+                                     "abstained": False}
+    assert res["accepted"] == []
 
 
 def test_runner_abstention_is_valid(golden_universe, golden_env):

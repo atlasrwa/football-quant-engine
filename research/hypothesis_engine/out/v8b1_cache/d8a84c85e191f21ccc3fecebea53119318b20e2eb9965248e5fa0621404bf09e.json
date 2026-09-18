@@ -1,0 +1,200 @@
+{
+ "status": "OK",
+ "research_trace": {
+  "behavioral_map": {
+   "team_a_attack": [
+    "Team A home shots substantially above away shots - a pronounced home/away split in shot volume (raw_rows shots FOR home_mean vs away_mean)",
+    "Team A home SoT also markedly higher than away SoT (raw_rows shots_on_target FOR home_mean vs away_mean)",
+    "Team A home corners clearly elevated vs away corners (raw_rows corner_kicks FOR home vs away)",
+    "Team A final_third_entries FOR stable and consistently high at both home and away venues - strong territorial pressure regardless of venue",
+    "Team A possession FOR: consistently above 50% at both home and away",
+    "Team A big chances FOR: higher at home than away - home advantage amplifies chance creation",
+    "Recent vs long: all Team A FOR metrics are essentially stable - no regime divergence"
+   ],
+   "team_a_defense": [
+    "Team A shots conceded: well below league environment mean, good defensive unit",
+    "Team A SoT conceded: below league mean at both venues",
+    "Team A goals conceded: below league mean, solid defensively",
+    "Team A clearances AGAINST: higher at home than away, suggesting more defensive pressure absorbed at home but managed well",
+    "Team A blocked shots FOR (defending): above average, suggesting structured last-ditch defense",
+    "Team A yellow cards AGAINST: above league mean, suggesting they do foul but opponents also commit fouls"
+   ],
+   "team_b_attack": [
+    "Team B shots FOR consistently high at both venues, above league mean",
+    "Team B possession FOR dominant away (59.54%) - unusual for an away team",
+    "Team B corners FOR high at away venue (7.31 away vs 6.15 home) - corners are actually higher away than home",
+    "Team B shots outside box FOR notably high (6.92 away, 6.23 long_run) - lots of long-range attempts",
+    "Team B shots inside box FOR also high and consistent (9.38 away, 9.92 home)",
+    "Team B big chances FOR: reasonable but not dramatically different from Team A",
+    "Recent vs long: all Team B FOR metrics stable - no regime divergence"
+   ],
+   "team_b_defense": [
+    "Team B goals conceded: low - below league mean (1.08 long_run vs 1.37 league)",
+    "Team B shots conceded: below league mean (10.62 vs 12.62)",
+    "Team B SoT conceded: below league mean (3.65 vs 4.24)",
+    "Team B clearances AGAINST: high (19.23) - indicating a lot of defensive action required",
+    "Team B yellow cards AGAINST opponent: notably elevated at away (3.15) vs league mean (2.20) - opponents foul Team B a lot when they play away",
+    "Team B tackles: high (19.54 against) - opponents tackle Team B heavily away"
+   ]
+  },
+  "matchup_tensions": [
+   "Both teams have above-average possession profiles - Team A ~53% overall, Team B ~58% overall; the away match will compress one of these heavily",
+   "Team A generates very high home shot volumes but Team B is a LOW shots conceded team per opponent_profile_of_fixture_opponent - direct attack-defense suppression conflict",
+   "Team A home shots advantage vs Team B's ability to suppress shots faced (shots_against=LOW in opponent profile)",
+   "Team B generates consistently high corners especially away (7.31) against Team A who concedes 6.38 corners away (but this is as the away team); at home Team A only concedes 3.62 corners",
+   "Team B possession dominance away may compress Team A's home shot volume advantage - volume tension",
+   "Team B outside-box shots are high; Team A has above-average blocked shots - potential suppression of outside-box danger"
+  ],
+  "similar_opponent_insights": [
+   "Team A faces an opponent profiled as: goals_against=LOW, goals_for=MID, possession_for=MID, shots_against=LOW, shots_on_target_against=LOW, shots_on_target_for=HIGH - Team B is characterized as a low-conceding, high-SoT team",
+   "Team B faces an opponent profiled as: goals_against=HIGH, goals_for=HIGH, possession_for=MID, shots_against=MID, shots_on_target_against=MID, shots_on_target_for=HIGH - Team A is characterized as high-scoring and high-conceding",
+   "Team A's similar opponent cohort (neighbors of Team B type): tm_0256, tm_2064, tm_2814, tm_2954, tm_4893, tm_6115, tm_8651, tm_8814 - these are teams similar to Team B in structure",
+   "Team B's similar opponent cohort (neighbors of Team A type): tm_0196, tm_2504, tm_2949, tm_4023, tm_4893, tm_6387, tm_7348, tm_9685"
+  ],
+  "regime_questions": [
+   "Team A recent vs long: essentially flat across all metrics - no genuine regime divergence, recent forms a stable picture",
+   "Team B recent vs long: also essentially flat - no meaningful regime shift - recent shrunk values nearly equal long run throughout",
+   "No genuine recent-vs-long divergence for either team warrants standalone selection - the evidence does not motivate a regime-change hypothesis"
+  ],
+  "context_notes": [
+   "Championship (champ) competition - domestic second tier in England, fully supported across all metrics",
+   "Team A playing at home - venue effect is structurally large for Team A in shots and SoT",
+   "Team B traveling away but has strong away possession profile, which is unusual and potentially resistant to home venue suppression",
+   "touches_in_penalty_area is THIN coverage for both teams (n=1-3) - discard any hypothesis using this metric"
+  ],
+  "discarded_candidates": [
+   {
+    "hypothesis_id_considered": "REGIME_CHANGE_TEAM_A",
+    "reason": "Recent vs long for Team A shows negligible divergence across all metrics - no statistical motivation for a recent regime hypothesis"
+   },
+   {
+    "hypothesis_id_considered": "REGIME_CHANGE_TEAM_B",
+    "reason": "Recent vs long for Team B also negligible - stable regime throughout, no meaningful divergence to test"
+   },
+   {
+    "hypothesis_id_considered": "TOUCHES_IN_PENALTY_AREA",
+    "reason": "Coverage is THIN for both teams (n=1-3 observations) - inadmissible for reliable hypothesis testing"
+   },
+   {
+    "hypothesis_id_considered": "XG_BASED_HYPOTHESES",
+    "reason": "xg is RESTRICTED to 4 competitions and has coverage issues in laliga2 - while champ is admissible, the admissible set is frozen to 4 competitions which reduces generalizability; also np_xg is UNSUPPORTED"
+   },
+   {
+    "hypothesis_id_considered": "SIMPLE_AVERAGE_SHOTS_TEAM_A",
+    "reason": "A simple average over all matches regardless of venue would wash out the large and structurally motivated home/away split in Team A shots - not informative"
+   },
+   {
+    "hypothesis_id_considered": "SIMPLE_AVERAGE_CORNERS_TEAM_B",
+    "reason": "Team B corners are above league mean generally, but the interesting finding is the away vs home split and how it interacts with Team A home defense of corners - searching for the conditional version"
+   }
+  ]
+ },
+ "final_selections": [
+  {
+   "hypothesis_id": "565f748ef52c1c9807944e400d8602b9d5be40a7d47baf39a54d105c84b8aae3",
+   "evidence_refs": [
+    "team_a.raw_rows[shots].for.home_mean",
+    "team_a.raw_rows[shots].for.away_mean",
+    "team_a.raw_rows[shots].for.long_run_mean",
+    "team_a.competition_environment_mean.shots"
+   ],
+   "research_reason": "Team A exhibits a very pronounced home/away split in shot volume - home shots are substantially above away shots, and both are above the league environment mean. This is among the strongest structural venue effects observed in the packet.",
+   "mechanism_summary": "At home, Team A generates markedly higher shot volume than away, consistent with territorial dominance under home crowd advantage. This is not merely a global average effect but a conditioned venue signal - testing the home baseline vs the overall baseline isolates the venue premium above the already-above-average general rate.",
+   "why_simple_average_is_insufficient": "Team A's away shot production is meaningfully below their home production; using the long-run mean conflates two structurally different behavioral regimes and dilutes the venue-conditioned signal that is strongly present in the raw data.",
+   "support_warning": "Team B is profiled as a LOW shots-conceded opponent, which may suppress Team A's shot volume below their home baseline - the venue effect might be partially offset by opponent quality."
+  },
+  {
+   "hypothesis_id": "7d74780a15a9aee518740c3f35951d4a47b8dee7c672483347b6d3c1b4ddb53b",
+   "evidence_refs": [
+    "team_a.raw_rows[shots_on_target].for.home_mean",
+    "team_a.raw_rows[shots_on_target].for.away_mean",
+    "team_a.raw_rows[shots_on_target].for.long_run_mean",
+    "team_a.competition_environment_mean.shots_on_target"
+   ],
+   "research_reason": "Team A home SoT is nearly double their away SoT, indicating the home venue substantially improves shot quality/accuracy - this is a larger split than shot volume alone and independent of the shots hypothesis.",
+   "mechanism_summary": "Home SoT elevation may reflect better positional play, more inside-box attempts, and reduced defensive pressure from opposing teams. The mechanism differs from raw shot volume: it captures both volume and conversion-to-frame accuracy, suggesting a genuine home territorial or psychological premium.",
+   "why_simple_average_is_insufficient": "The away mean SoT is below league average while the home mean is well above; pooling these produces a misleading mid-range figure that misrepresents either venue-specific behavior.",
+   "support_warning": "Team B's shots_on_target_against profile is LOW, meaning they suppress opponent SoT effectively - this could limit Team A's home SoT uplift."
+  },
+  {
+   "hypothesis_id": "bc12e34d4b6b3bce928b838e569a0bd6060cd0855a031335000da315fd2929aa",
+   "evidence_refs": [
+    "team_a.raw_rows[corner_kicks].for.home_mean",
+    "team_a.raw_rows[corner_kicks].for.away_mean",
+    "team_a.raw_rows[corner_kicks].for.long_run_mean",
+    "team_a.competition_environment_mean.corner_kicks"
+   ],
+   "research_reason": "Team A home corner count is substantially elevated relative to their away corner count - home corners near 6.77 vs away 4.0 - a major split that aligns with their overall home territorial dominance in shots and SoT.",
+   "mechanism_summary": "At home, Team A's high shot volume and inside-box activity generates more defensive clearances and blocked shots that lead to corners. The venue conditioning captures the set-piece delivery mechanism downstream of their home attacking pressure.",
+   "why_simple_average_is_insufficient": "The home/away corner split is as large as the shot split - using a pooled average would underestimate the home corner production and overestimate away, giving an unreliable prediction for a specifically home fixture.",
+   "support_warning": "Team B also generates high corners away (7.31 away mean) - the match may involve competing corner pressures on both sides, and team B's defensive structure may limit the situations that generate corners for Team A."
+  },
+  {
+   "hypothesis_id": "c26dd5d5d954fbcde17b72b24546f4687c4ddb03d8dbc248f01106439438461b",
+   "evidence_refs": [
+    "team_b.raw_rows[possession].for.away_mean",
+    "team_b.raw_rows[possession].for.home_mean",
+    "team_b.raw_rows[possession].for.long_run_mean",
+    "team_b.competition_environment_mean.possession"
+   ],
+   "research_reason": "Team B dominates possession away (59.54%) - well above league mean of 50% - and even slightly above their home possession. This is an unusual structural property for an away team and warrants conditional testing against the league baseline.",
+   "mechanism_summary": "Team B's possession dominance away suggests a pressing/build-up style that persists regardless of venue. Away from home, most teams concede possession, but Team B's structure resists this - implying their style is opponent-responsive rather than venue-dependent. Testing against league mean isolates whether this elevation is genuinely above-average territory control.",
+   "why_simple_average_is_insufficient": "The league baseline is exactly 50% by construction; Team B's away figure is substantially above this. A simple overall Team B average (58%) is also well above league mean, but the away-conditioned version is marginally higher, making the away-specific test cleaner for a fixture where they are playing away.",
+   "support_warning": "Team A also has above-average possession (~53%) - the two possession-dominant styles will conflict and one will be suppressed. The outcome may compress Team B's away possession advantage more than historical splits suggest."
+  },
+  {
+   "hypothesis_id": "ec5c76ebb9d658358f2bd85256044345aed9c7a9c88f088ad0d905b99eb9743a",
+   "evidence_refs": [
+    "team_b.raw_rows[corner_kicks].for.away_mean",
+    "team_b.raw_rows[corner_kicks].for.home_mean",
+    "team_b.raw_rows[corner_kicks].for.long_run_mean",
+    "team_b.competition_environment_mean.corner_kicks"
+   ],
+   "research_reason": "Team B generates more corners away (7.31) than at home (6.15) - unusual reversal of the typical home advantage pattern for corners. Both are above the league mean of 5.38, making this a team that systematically generates set-piece pressure regardless of venue.",
+   "mechanism_summary": "Team B's high away corner generation likely reflects their possession-based attacking style pushing into final thirds even away from home. Combined with their high outside-box shot volume, the mechanism involves sustained pressure that forces defensive clearances into corners. The away-conditioned baseline tests whether this unusually high away corner rate persists above their own overall mean.",
+   "why_simple_average_is_insufficient": "Team B's corners show an unusual venue-reversal (higher away than home) that the long-run mean obscures. For this away fixture, the away-conditioned figure is the relevant reference, not the pooled mean which includes the lower home figure.",
+   "support_warning": "Team A concedes only 3.62 corners at home (vs 6.38 away) - their home defensive structure is notably corner-resistant, which could suppress Team B's away corner generation below historical levels."
+  },
+  {
+   "hypothesis_id": "58c3146e333c4f542eefbabfb46f4779d77183f54693156bda6da81502b459e6",
+   "evidence_refs": [
+    "team_b.raw_rows[shots].for.away_mean",
+    "team_b.raw_rows[shots].for.home_mean",
+    "team_b.raw_rows[shots].for.long_run_mean",
+    "team_b.competition_environment_mean.shots"
+   ],
+   "research_reason": "Team B generates consistently high shot volumes away (16.31) - above the league mean and consistent with their home production. This represents a stable, venue-resistant attacking output, and testing it against their own overall baseline as the away-conditioned figure isolates whether the away figure is statistically distinct from the pooled mean.",
+   "mechanism_summary": "Team B's high possession away appears to translate into shot volume: their away shot count is higher than many home teams manage. The mechanism connects possession dominance to territorial entry and shot opportunity creation, with shots as the downstream output of their style. Away conditioning tests whether this shot generation is robust to the venue penalty most teams experience.",
+   "why_simple_average_is_insufficient": "Unlike most teams, Team B's away shot mean is close to or slightly above their home figure - the venue distinction matters here precisely because the expected away penalty does not appear to apply, and testing the conditioned vs. overall baseline captures that structural property.",
+   "support_warning": "Team A concedes very few shots at home (9.92) - their home defensive suppression could significantly limit Team B's away shot volume below historical levels vs. weaker opponents."
+  }
+ ],
+ "manifest": {
+  "fixture_id": "mt_839909558",
+  "packet_hash": "86444fe6bffb7d91d41d19640c796b39c97aed9dec8b17bfc1ea54a229321bc0",
+  "model_id": "us.anthropic.claude-sonnet-4-6",
+  "region": "us-east-1",
+  "prompt_content_hash": "ae285113d4256b3a0306fae270fa2227383a37da55ba897b1a1b45e06853bb8f",
+  "config_stamp": {
+   "max_tokens": 8192,
+   "temperature": 1.0,
+   "thinking": {
+    "budget_tokens": 4096,
+    "type": "enabled"
+   }
+  },
+  "created_unix": 1789615430,
+  "converse_calls": 3,
+  "search_calls": 6,
+  "usage": {
+   "inputTokens": 57498,
+   "outputTokens": 6672,
+   "totalTokens": 64170
+  },
+  "latency_s": 100.872,
+  "cache_hit": false,
+  "max_search_calls": 6,
+  "max_tool_turns": 7,
+  "termination_reason": "FORCED_SUBMIT"
+ }
+}

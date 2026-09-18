@@ -1,0 +1,213 @@
+{
+ "status": "OK",
+ "research_trace": {
+  "behavioral_map": {
+   "team_a_attack": [
+    "Team A (HOME) has very low shot production (long_run ~7.25, well below league mean ~12.67), low SoT (long_run ~2.25 vs league ~4.24), and low big chances (~1.09 vs league ~1.88). This is a structurally weak attacking side.",
+    "Team A possession is very low (~34.33), meaning they operate as a deep, defensive-minded, reactive team with limited ball.",
+    "Team A corners FOR are well below league mean (~3.46 vs ~5.39), consistent with limited attacking territory.",
+    "Recent-vs-long for Team A attack: virtually no regime shift across any metric \u2014 shots, SoT, corners, big chances all near-identical."
+   ],
+   "team_a_defense": [
+    "Team A concedes very high shots (~16.33 vs league ~12.67), very high SoT against (~6.25 vs league ~4.24), very high big chances against (~3.04 vs league ~1.88), and very high goals against (~1.96 vs league ~1.38).",
+    "Team A corners AGAINST are very high (~7.25 vs league ~5.39), indicating sustained pressure in their own defensive third.",
+    "Team A saves (FOR) are high (~4.21 vs league ~2.85), consistent with facing many SoT.",
+    "Team A clearances FOR are high (~21.67 vs league ~18.31), confirming deep defensive work under high pressure.",
+    "Home/away defensive split for Team A: shots against are slightly higher away (17.08) than home (15.58), but both are elevated versus league."
+   ],
+   "team_b_attack": [
+    "Team B (AWAY) has very high shot volume (~16.5 vs league ~12.67), high SoT (~5.25 vs league ~4.24), high big chances (~2.33 vs league ~1.88), and high shots inside box (~10.21 vs league ~8.03).",
+    "Team B possession is very high (~58.0 vs league ~50.0), consistent with a dominant, press-oriented attacking style.",
+    "Team B corners FOR are high (~6.875 vs league ~5.39). Away corners specifically (~7.25) are slightly above home (~6.5).",
+    "Team B blocked shots FOR are high (~6.08 vs league ~3.81), consistent with very high shot volume meeting defensive blocks.",
+    "Recent-vs-long for Team B attack: essentially stable \u2014 shots, SoT, big chances all show trivial shrinkage. No regime break."
+   ],
+   "team_b_defense": [
+    "Team B concedes low shots (~10.46 vs league ~12.67), low SoT (~3.67 vs league ~4.24), low big chances (~1.71 vs league ~1.88), and low goals (~1.13 vs league ~1.38).",
+    "Team B corners AGAINST are low (~4.21 vs league ~5.39), consistent with territorial dominance limiting opponent set-piece opportunity.",
+    "Team B opponent profile of Team A confirms: shots_against=HIGH, shots_on_target_against=HIGH, goals_against=HIGH \u2014 precisely mapping Team A's porous profile."
+   ]
+  },
+  "matchup_tensions": [
+   "Team B attacks with very high volume and quality vs Team A who defends very poorly \u2014 this is one of the clearest attack-x-defense compatibility signals in the packet.",
+   "Team B's opponent profile of Team A shows HIGH shots_against, HIGH shots_on_target_against, HIGH goals_against \u2014 all three highest-impact dimensions are aligned.",
+   "Team A's opponent profile of Team B shows LOW shots_on_target_for (Team B creates few SoT for opponents), suppressing Team A's attack further.",
+   "Corner asymmetry: Team B generates high corners (especially away), Team A concedes high corners \u2014 compound favorable setup for Team B set-piece volume.",
+   "Team A saves are high as a structural feature (frequently facing many SoT), and Team B SoT production is high \u2014 but Team A's GK saves metric FOR is large, meaning they have been functional at stopping shots they do face."
+  ],
+  "similar_opponent_insights": [
+   "Team B's similar opponents (as opponents of Team A) are identified \u2014 these are teams structurally similar to Team A (low-possession, high-shots-conceded). Querying Team B's performance vs this cohort tests whether the pattern holds across similar matchups.",
+   "The relevant axis for conditioning is Team A's defensive profile: HIGH shots_against, HIGH shots_on_target_against \u2014 matching Team B's opponent_profile_of_fixture_opponent perfectly. This justifies the similar_opponent + opponent_profile conditioned hypotheses."
+  ],
+  "regime_questions": [
+   "Team A: recent_shrunk vs long_run across all attack metrics are near-identical (shots 7.2417 vs 7.25, SoT 2.2633 vs 2.25). No evidence of a regime change \u2014 long-run baseline is the appropriate baseline.",
+   "Team B: recent_shrunk vs long_run also near-identical (shots 16.596 vs 16.5, SoT 5.2644 vs 5.25). No meaningful recent regime divergence. The long-run baseline is appropriate.",
+   "Recent-vs-long hypotheses are NOT selected because there is no genuine divergence in the evidence \u2014 they would add noise without mechanism."
+  ],
+  "context_notes": [
+   "Competition: Championship (champ). All selected metrics are admissible in champ.",
+   "Team A is HOME, Team B is AWAY. This context is relevant but Team B's shot and corner metrics are nearly as high away as at home, limiting the attenuation from away venue.",
+   "Team A's opponent_profile_of_fixture_opponent labels Team B as: goals_against=LOW, shots_against=LOW, shots_on_target_against=LOW, shots_on_target_for=HIGH \u2014 consistent with the raw data showing Team B defends well and attacks with high SoT.",
+   "Team B's opponent_profile_of_fixture_opponent labels Team A as: goals_against=HIGH, shots_against=HIGH, shots_on_target_against=HIGH \u2014 the three most critical dimensions for predicting Team B's attacking output."
+  ],
+  "discarded_candidates": [
+   {
+    "hypothesis_id_considered": "recent_regime_team_a_shots",
+    "reason": "Team A's recent_shrunk and long_run for shots are virtually identical (7.2417 vs 7.25). No genuine regime divergence exists in the evidence. A recent-vs-long hypothesis here would test noise."
+   },
+   {
+    "hypothesis_id_considered": "recent_regime_team_b_shots",
+    "reason": "Team B's recent_shrunk shots (16.596) are essentially the same as long_run (16.5). No genuine regime divergence. Selecting a recent hypothesis here would not be grounded in evidence."
+   },
+   {
+    "hypothesis_id_considered": "team_a_attack_volume",
+    "reason": "Team A's attack is so low and structurally consistent that conditioning on opponent type adds little. The weak signal and consistent suppression by any half-decent defence means the conditional test is not well-motivated."
+   },
+   {
+    "hypothesis_id_considered": "venue_conditioned_team_b_shots_home",
+    "reason": "Team B's shot production is nearly equal home (16.17) and away (16.83) \u2014 the away venue does not suppress their attack. A venue-conditioned hypothesis adds no incremental structure over the unconditional baseline."
+   }
+  ]
+ },
+ "final_selections": [
+  {
+   "hypothesis_id": "6fc118ff2cbb62f1a64a5cda7a563409c3b432455a0465020333841c05f84759",
+   "evidence_refs": [
+    "team_b.raw_rows[shots].for.long_run_mean",
+    "team_b.raw_rows[shots].for.away_mean",
+    "team_a.raw_rows[shots].against.long_run_mean",
+    "team_b.opponent_profile_of_fixture_opponent.shots_against",
+    "team_b.competition_environment_mean.shots"
+   ],
+   "research_reason": "Team B produces very high shot volume and Team A concedes a very high number of shots. Team B's opponent profile of the fixture opponent (Team A) shows shots_against=HIGH \u2014 exactly the tercile this hypothesis conditions on. Conditioning Team B's shot production on facing a HIGH-shots_against opponent tests whether the attack-x-defense structural alignment elevates output beyond Team B's unconditional baseline.",
+   "mechanism_summary": "A low-possession, high-shots-allowed side (Team A) gives a high-volume attacking team (Team B) more time and space in transition and open play, structurally increasing Team B's shot count beyond what an average opponent would permit.",
+   "why_simple_average_is_insufficient": "Team B's unconditional shot average includes matches against good defenses that suppress volume. The HIGH shots_against condition isolates matches where the opponent is specifically porous \u2014 the mechanism operates precisely in this subset, not across all opponents.",
+   "support_warning": "The similar-opponent cohort for Team A (as opponents Team B has faced) may be modest in size, diluting the conditional effect. Also, away venue could marginally reduce Team B's production relative to home matches."
+  },
+  {
+   "hypothesis_id": "8fc012dafe0e1b3b913aa821828467d70c0bc402265229123605196f266bd4f2",
+   "evidence_refs": [
+    "team_b.raw_rows[shots_on_target].for.long_run_mean",
+    "team_b.raw_rows[shots_on_target].for.away_mean",
+    "team_a.raw_rows[shots_on_target].against.long_run_mean",
+    "team_b.opponent_profile_of_fixture_opponent.shots_against",
+    "team_a.raw_rows[saves].for.long_run_mean"
+   ],
+   "research_reason": "Team B's SoT production is above league average while Team A concedes very high SoT. Team B's opponent profile of Team A shows shots_against=HIGH. Conditioning Team B's SoT on facing a HIGH-shots_against opponent connects Team B's quality conversion to Team A's permissive defensive environment.",
+   "mechanism_summary": "High shot volume enabled by a permissive defense translates into elevated SoT when the attacking team maintains consistent shot quality. Team A's high save count confirms they routinely face on-target attempts \u2014 the mechanism is the defensive environment enabling quantity which also elevates quality count.",
+   "why_simple_average_is_insufficient": "The unconditional mean blends matches where Team B faced disciplined defenses that restricted SoT. Restricting to HIGH shots_against opponents isolates the permissive-defense environment where the mechanism is active.",
+   "support_warning": "SoT can be suppressed even against porous defenses if the attacking team is less accurate away from home. Team B's away SoT (4.75) is slightly below home (5.75), which is a real attenuation risk."
+  },
+  {
+   "hypothesis_id": "1ad052794dbf6e2d40ed3e36c6cdfcaadf16ce6f15b7099616ab8ee5f98f5f53",
+   "evidence_refs": [
+    "team_b.raw_rows[shots_on_target].for.long_run_mean",
+    "team_a.raw_rows[shots_on_target].against.long_run_mean",
+    "team_b.opponent_profile_of_fixture_opponent.shots_on_target_against",
+    "team_a.opponent_profile_of_fixture_opponent.shots_on_target_for"
+   ],
+   "research_reason": "Team A's opponent profile as seen by Team B includes shots_on_target_against=HIGH. This hypothesis conditions Team B's SoT production on facing a HIGH shots_on_target_against opponent \u2014 the exact label of Team A. It tests the specific interaction between Team B's SoT generation and Team A's chronic vulnerability to on-target shots.",
+   "mechanism_summary": "A side that habitually concedes high SoT (Team A) either fails to block shots or allows opponents into high-quality central positions. An already high-SoT attacking team (Team B) facing such a defence should see further elevation of on-target output.",
+   "why_simple_average_is_insufficient": "The unconditional baseline includes matches where opponents had functional shot-stopping defenses. The HIGH shots_on_target_against condition isolates defenders who are structurally permissive to on-target shots \u2014 a distinct and relevant subset for this fixture.",
+   "support_warning": "HIGH shots_on_target_against opponents may be correlated with lower defensive quality overall, not specifically with allowing SoT. The conditioning axis may proxy for general defensive weakness rather than the specific channel of shot-on-target allowance."
+  },
+  {
+   "hypothesis_id": "674c0b5085e1ebe12079d80f264d1e7353c3dd93d3d561c0b30ab792451da909",
+   "evidence_refs": [
+    "team_b.raw_rows[corner_kicks].for.long_run_mean",
+    "team_b.raw_rows[corner_kicks].for.away_mean",
+    "team_a.raw_rows[corner_kicks].against.long_run_mean",
+    "team_b.opponent_profile_of_fixture_opponent.goals_against",
+    "team_a.competition_environment_mean.corner_kicks"
+   ],
+   "research_reason": "Team B generates high corners (especially away) while Team A concedes very high corners. Team A's goals_against=HIGH profile (as seen by Team B) reflects a porous side that is routinely pushed back into their own box. Conditioning Team B's corner production on facing a HIGH goals_against opponent tests whether that defensive vulnerability also compounds corner allowance.",
+   "mechanism_summary": "Teams with HIGH goals_against typically absorb sustained pressure and concede territorial control, which translates into more attacking corners for their opponents. A high-volume wide attacking team (Team B) facing this structure should see elevated corner generation.",
+   "why_simple_average_is_insufficient": "Team B's unconditional corner mean blends matches against sides that defend their box well and restrict corner-generating positions. HIGH goals_against opponents are specifically weak at maintaining defensive shape, enabling the corner-generation mechanism.",
+   "support_warning": "Corners are a somewhat noisy metric dependent on goalkeeper/defender decision-making (corner vs goal-kick). The mechanism connecting defensive weakness to corner allowance is real but not tightly causal."
+  },
+  {
+   "hypothesis_id": "618f0042ed8137029206a89ef1fe903ad191d691b72689e89ed4b991076283b6",
+   "evidence_refs": [
+    "team_b.raw_rows[shots_on_target].for.long_run_mean",
+    "team_a.similar_to_fixture_opponent.similar_opponent_ids",
+    "team_b.opponent_profile_of_fixture_opponent.shots_against",
+    "team_b.opponent_profile_of_fixture_opponent.shots_on_target_against",
+    "team_b.opponent_profile_of_fixture_opponent.goals_against"
+   ],
+   "research_reason": "Team A's similar_to_fixture_opponent cohort identifies eight teams structurally similar to Team A (from Team B's perspective). Measuring Team B's SoT production across this specific cohort tests whether Team B systematically elevates SoT when facing teams with Team A's structural profile \u2014 low possession, high shots conceded, high goals conceded \u2014 beyond what non-similar opponents produce.",
+   "mechanism_summary": "Teams similar to Team A share the same low-possession, defensively permissive profile. If Team B's SoT production is consistently higher against this cohort, it confirms a systematic interaction between Team B's attacking style and this class of opponents, not just a fixture-specific coincidence.",
+   "why_simple_average_is_insufficient": "The unconditional mean averages over all opponent types. The similar-opponent comparator specifically isolates Team B's record against opponents structurally indistinguishable from Team A, providing a more representative and mechanism-grounded baseline for this fixture.",
+   "support_warning": "Similar-opponent cohort size is fixed at 8 members; if Team B has limited prior exposure to this cohort, the conditional estimate is imprecise. The similarity axis is multi-dimensional and the engine selects neighbors on multiple dimensions simultaneously."
+  },
+  {
+   "hypothesis_id": "42606d1995717ff5d5885b39b09eee2cfd6c3ac295ad2b845c7d019589795bd4",
+   "evidence_refs": [
+    "team_b.raw_rows[corner_kicks].for.long_run_mean",
+    "team_b.raw_rows[corner_kicks].for.away_mean",
+    "team_a.raw_rows[corner_kicks].against.long_run_mean",
+    "team_a.similar_to_fixture_opponent.similar_opponent_ids",
+    "team_a.competition_environment_mean.corner_kicks"
+   ],
+   "research_reason": "Team B generates above-average corners (especially away) while Team A concedes well above the league mean in corners. Testing Team B's corner production specifically against opponents similar to Team A (identified via the similar_to_fixture_opponent cohort) assesses whether the high-corner-against profile of Team A's structural class systematically elevates Team B's corner output.",
+   "mechanism_summary": "Teams similar to Team A habitually cede territorial control and allow sustained pressure near their own box. This defensive pattern forces more corner-generating situations, and a wide, high-volume attacking team like Team B should exploit this systematically across the similar cohort.",
+   "why_simple_average_is_insufficient": "Team B's unconditional corner average includes matches against sides that defend well and restrict corner-generating wide approaches. The similar-opponent comparator isolates Team B's output specifically when facing the class of teams that routinely concede high corners, providing a richer baseline.",
+   "support_warning": "Cohort overlap \u2014 Team A's similar opponents may not all share the same extreme corners-against profile. The corner metric also has moderate match-to-match variance."
+  },
+  {
+   "hypothesis_id": "c3717b8170736661de37eb6c26809bdf45a4eaed76a3721cb910d9cdbcf0b309",
+   "evidence_refs": [
+    "team_a.raw_rows[shots_on_target].against.long_run_mean",
+    "team_a.raw_rows[shots_on_target].against.home_mean",
+    "team_b.raw_rows[shots_on_target].for.long_run_mean",
+    "team_b.opponent_profile_of_fixture_opponent.shots_on_target_against",
+    "team_a.competition_environment_mean.shots_on_target"
+   ],
+   "research_reason": "Team A concedes very high SoT and Team B's opponent profile labels Team A as HIGH shots_on_target_against. This hypothesis tests from the HOME_TEAM (Team A) defense side: does Team A concede even more SoT when facing opponents with HIGH shots_on_target_for (which Team B has)? The opponent profile of Team A from Team B's perspective shows shots_on_target_for=HIGH for Team B.",
+   "mechanism_summary": "Team A's structural defensive weakness (high SoT conceded) should compound when facing an opponent with high intrinsic SoT production. The interaction between Team A's poor shot-stopping environment and Team B's high SoT output is the core mechanism \u2014 testing it from Team A's AGAINST perspective provides a complementary confirmation.",
+   "why_simple_average_is_insufficient": "Team A's unconditional SoT-against average includes matches vs low-SoT opponents, which dilutes the signal. Conditioning on facing HIGH shots_on_target_for opponents isolates the regime where Team A's defensive weakness is most exposed \u2014 exactly matching Team B's profile.",
+   "support_warning": "This hypothesis and hypothesis 1ad052... are related (both concern Team B SoT vs Team A SoT defense) from different subjects. Care must be taken not to over-weight correlated evidence. The opponent_profile axis here (shots_on_target_for) is the relevant conditioning dimension."
+  },
+  {
+   "hypothesis_id": "b501a7965f77b9c492d9f7dc3801b043e87fea1e27b9837a810fec570c60e6e0",
+   "evidence_refs": [
+    "team_b.raw_rows[corner_kicks].for.long_run_mean",
+    "team_b.raw_rows[corner_kicks].for.away_mean",
+    "team_a.raw_rows[corner_kicks].against.long_run_mean",
+    "team_b.opponent_profile_of_fixture_opponent.shots_on_target_against",
+    "team_a.competition_environment_mean.corner_kicks"
+   ],
+   "research_reason": "Team B's opponent profile labels Team A as HIGH shots_on_target_against. A side that concedes many on-target shots is typically pinned in its defensive third and forces opponents into box-entry positions where corners arise. Conditioning Team B's corner production on facing a HIGH shots_on_target_against opponent tests whether this defensive profile specifically elevates corner yield for attacking teams.",
+   "mechanism_summary": "High shots_on_target_against for the defending team implies sustained attacking pressure into the box. Such sustained pressure, when converted to corner-generating situations (shots deflected wide, defenders clearing to corners), systematically elevates the attacker's corner count. Team B's high-possession, high-volume attack is well-suited to exploit this pattern.",
+   "why_simple_average_is_insufficient": "Team B's unconditional corner average blends all opponent types including well-organised sides that restrict box entry. The HIGH shots_on_target_against condition selects specifically for the permissive-box-access opponents, which is the mechanism enabling higher corner counts.",
+   "support_warning": "The connection between shots_on_target_against (a defense metric) and corners allowed is indirect \u2014 corners depend on specific shot trajectories and defensive clearance patterns, not just total SoT volume. Some noise is inherent."
+  }
+ ],
+ "manifest": {
+  "fixture_id": "mt_839909574",
+  "packet_hash": "f4240a8ad00a384e50817b56f796cd0954395a8dc204864ab633b3699d5c655e",
+  "model_id": "us.anthropic.claude-sonnet-4-6",
+  "region": "us-east-1",
+  "prompt_content_hash": "ae285113d4256b3a0306fae270fa2227383a37da55ba897b1a1b45e06853bb8f",
+  "config_stamp": {
+   "max_tokens": 8192,
+   "temperature": 1.0,
+   "thinking": {
+    "budget_tokens": 4096,
+    "type": "enabled"
+   }
+  },
+  "created_unix": 1789614684,
+  "converse_calls": 4,
+  "search_calls": 6,
+  "usage": {
+   "inputTokens": 118725,
+   "outputTokens": 8571,
+   "totalTokens": 127296
+  },
+  "latency_s": 133.679,
+  "cache_hit": false,
+  "max_search_calls": 6,
+  "max_tool_turns": 7,
+  "termination_reason": "FORCED_SUBMIT"
+ }
+}

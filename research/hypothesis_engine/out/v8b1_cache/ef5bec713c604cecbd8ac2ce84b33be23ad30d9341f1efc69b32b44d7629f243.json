@@ -1,0 +1,171 @@
+{
+ "status": "OK",
+ "research_trace": {
+  "behavioral_map": {
+   "team_a_attack": [
+    "Very high possession at home (raw_rows: possession home_mean ~67.8%, long_run ~64.5%), well above league env mean (50.0%)",
+    "Above-league shots FOR at home (raw_rows: shots home_mean ~15.9), league env mean ~12.6",
+    "Shots on target FOR very strong at home (raw_rows: SoT home_mean ~5.75, long_run ~5.2) vs league env (4.21)",
+    "Final third entries FOR dramatically higher at home (raw_rows: ~71.8 home vs ~54.0 away, long_run ~62.6) vs league env (56.6)",
+    "Big chances FOR above league at home (raw_rows: home ~3.17, long_run ~2.88) vs league env (1.86)",
+    "Corner kicks FOR show strong home/away split (raw_rows: home ~6.83, away ~3.77, long_run ~5.24)",
+    "Goals FOR above league (raw_rows: home ~1.92, away ~2.08, long_run 2.0) vs league env (1.36)",
+    "Recent vs long: all attack metrics extremely stable, no divergence"
+   ],
+   "team_a_defense": [
+    "Goals AGAINST very low (raw_rows: home ~0.50, away ~0.85, long_run ~0.68) vs league env (1.36)",
+    "Shots AGAINST below league at home (raw_rows: home ~9.25, long_run ~10.84) vs league env (12.6)",
+    "Shots on target AGAINST well below league (raw_rows: home ~3.17, long_run ~3.56) vs league env (4.21)",
+    "Clearances show strong away-leaning pattern (raw_rows: away ~20.7, home ~12.4, long_run ~16.7)",
+    "Corner kicks AGAINST: modest (raw_rows: home ~4.0, away ~5.31, long_run ~4.68)"
+   ],
+   "team_b_attack": [
+    "Very low possession (raw_rows: ~38.4% long_run) vs league env (50.0%)",
+    "Below-league shots FOR (raw_rows: long_run ~10.52) vs league env (12.6); worse away (9.5 vs 11.5 home)",
+    "Shots on target FOR weak: home ~4.23, away ~2.75, long_run ~3.52 \u2014 notably weak away",
+    "Big chances FOR below league (raw_rows: long_run ~1.33) vs league env (1.86)",
+    "Accurate crosses FOR above league (raw_rows: long_run ~5.12) vs league env (3.98) \u2014 cross-reliant despite low possession",
+    "Goals FOR below league (raw_rows: long_run ~1.0) vs league env (1.36)",
+    "Recent vs long: all metrics very stable"
+   ],
+   "team_b_defense": [
+    "Goals AGAINST above league (raw_rows: long_run ~1.6) vs league env (1.36); worse away (1.67)",
+    "Shots AGAINST above league (raw_rows: long_run ~14.48) vs league env (12.6); much worse away (15.9 vs 13.2 home)",
+    "Shots on target AGAINST above league (raw_rows: long_run ~4.72) vs league env (4.21); much worse away (5.58 vs 3.92 home)",
+    "Corner kicks AGAINST well above league (raw_rows: long_run ~6.28, away ~7.08) vs league env (5.37)",
+    "Big chances AGAINST above league (raw_rows: long_run ~2.46) vs league env (1.86); worse away (2.67)",
+    "Clearances FOR high (raw_rows: long_run ~22.28) \u2014 absorbing pressure defensively"
+   ]
+  },
+  "matchup_tensions": [
+   "Team A's very high home possession/final-third-entries attacks directly into Team B's permissive defensive profile away (high shots against, high SoT against, high corners against away)",
+   "Team A's corner production at home (raw_rows: ~6.83 home) meets an opponent (Team B) that concedes corners at a high rate away (raw_rows: ~7.08/game away)",
+   "Team B's low shots on target away (raw_rows: ~2.75) faces Team A's very strong defensive record at home (SoT against ~3.17) \u2014 mutual suppression of Team B attack",
+   "Team B's cross-reliant attack (accurate crosses ~5.12 long run, above league) is structurally at odds with low shots on target \u2014 volume of delivery does not translate to shot quality",
+   "Team A's home big chances (~3.17) vs Team B allowing 2.67 big chances away \u2014 both above league, indicating an elevated offensive opportunity environment for Team A at home"
+  ],
+  "similar_opponent_insights": [
+   "Team A's similar opponent cohort for fixture opponent: tm_0016, tm_2124, tm_2814, tm_2954, tm_5188, tm_6115, tm_6387, tm_8651 \u2014 axis of similarity likely the LOW goals_for / LOW possession / HIGH shots_against profile of Team B (opponent_profile_of_fixture_opponent from Team A's perspective: goals_against HIGH, goals_for LOW, possession_for LOW, shots_against HIGH)",
+   "Team B's similar opponent cohort: tm_0256, tm_2674, tm_2814, tm_2954, tm_6115, tm_6387, tm_8651, tm_8814 \u2014 5 teams appear in both cohorts (tm_2814, tm_2954, tm_6115, tm_6387, tm_8651), meaning both teams share a substantial cohort of comparable opponents; this common axis likely reflects the high-possession, attacking profile of Team A as fixture opponent from Team B's view"
+  ],
+  "regime_questions": [
+   "Recent vs long for Team A: all shrunk estimates extremely close to long_run means across all metrics \u2014 no divergent recent regime detected",
+   "Recent vs long for Team B: similarly stable, no meaningful divergence \u2014 recent-regime hypotheses not motivated by evidence"
+  ],
+  "context_notes": [
+   "Fixture is in the Championship (champ), home venue for Team A",
+   "Team A's home vs away splits are dramatic across attack metrics (possession, final third entries, SoT, corners), making venue-conditioned hypotheses the most mechanistically motivated",
+   "Team B's away splits are weaker than home across nearly every attack and defensive metric, reinforcing the venue dimension",
+   "touches_in_penalty_area has THIN coverage for both teams and is excluded from candidate selection",
+   "xg is admissible in champ but np_xg is not; xg is restricted (0 coverage in ligue2) so not used here"
+  ],
+  "discarded_candidates": [
+   {
+    "hypothesis_id_considered": "RECENT_REGIME_ANY",
+    "reason": "Recent vs long deltas for both teams are negligible (shrunk estimates within noise of long_run means across all metrics). No recent regime shift is evidenced, so recent-vs-long hypotheses would be mechanistically unmotivated."
+   },
+   {
+    "hypothesis_id_considered": "TOUCHES_IN_PENALTY_AREA_ANY",
+    "reason": "Both teams have THIN coverage (n=2 for Team A, n=2 for Team B) on touches_in_penalty_area; insufficient data to support reliable hypothesis testing."
+   },
+   {
+    "hypothesis_id_considered": "TEAM_B_SHOTS_ON_TARGET_FOR_AT_HOME_VENUE",
+    "reason": "Budget exhausted before AWAY_TEAM venue-conditioned SoT FOR search completed. However, the evidence shows Team B's SoT FOR away (2.75) is notably below their home (4.23) and below league (4.21). Could be a valid candidate but no hypothesis_id was retrieved."
+   },
+   {
+    "hypothesis_id_considered": "0b6da00bc15ae40d441b25fdfa03f05bcb49c8aa5ae690bc12906e8a76db80db",
+    "reason": "HOME_TEAM SoT concession conditioned on opponent shots_on_target_for LOW \u2014 Team B's profile is MID not LOW (shots_on_target_for: MID in opponent_profile), so condition is mismatched to actual fixture profile."
+   },
+   {
+    "hypothesis_id_considered": "17556895be65c89500048beb8b0b38a6479fedbef471a40b0ac982a3cfc1dbd0",
+    "reason": "HOME_TEAM SoT concession conditioned on opponent goals_for LOW \u2014 Team B does have LOW goals_for profile, making this plausible, but it tests Team A concession, which is already low. The mechanism is less clear-cut than testing Team A's offensive output."
+   }
+  ]
+ },
+ "final_selections": [
+  {
+   "hypothesis_id": "9de90f1804adcde9dbd3add8349737c05857ab06f5038b300be7922cce5ec2c1",
+   "evidence_refs": [
+    "team_a.raw_rows[shots_on_target].for.home_mean",
+    "team_a.raw_rows[shots_on_target].for.long_run_mean",
+    "team_a.competition_environment_mean.shots_on_target",
+    "team_a.raw_rows[possession].for.home_mean",
+    "team_a.raw_rows[final_third_entries].for.home_mean"
+   ],
+   "research_reason": "Team A's shots on target production at home is substantially above its own overall long-run average, driven by a strong home possession and final-third-entry profile. The venue-conditioned baseline isolates whether the home environment is a systematic driver rather than noise.",
+   "mechanism_summary": "High home possession (raw_rows) enables sustained attacking phases, translating to elevated final-third entries at home. More sustained pressure in the final third converts into a higher rate of shots on target at home than away, creating a genuine venue-conditioned production uplift above the undifferentiated long-run mean.",
+   "why_simple_average_is_insufficient": "Team A's home and away SoT production differ materially (raw_rows). A simple average blends these two distinct environments and would understate the home-specific elevation. The venue-conditioned comparator isolates this structural split.",
+   "support_warning": "Both home and away sample sizes are adequate (n=12/13), but home/away imbalance means venue-conditioned estimates may carry moderate variance."
+  },
+  {
+   "hypothesis_id": "d97aa2ab8173e47b638aec921615e798768134f77192f2d0d8e3b42ee69c32ce",
+   "evidence_refs": [
+    "team_a.raw_rows[corner_kicks].for.home_mean",
+    "team_a.raw_rows[corner_kicks].for.away_mean",
+    "team_a.raw_rows[corner_kicks].for.long_run_mean",
+    "team_a.competition_environment_mean.corner_kicks",
+    "team_a.raw_rows[final_third_entries].for.home_mean"
+   ],
+   "research_reason": "Team A's corner production at home is dramatically higher than away (raw_rows), with the home mean substantially above both the long-run mean and the league environment. The venue-conditioned test evaluates whether this home corner elevation is a persistent structural feature.",
+   "mechanism_summary": "Team A's high home possession and extensive final-third entries (raw_rows) create more sustained attacking pressure near the opposition box, leading to more corners via blocked shots and clearances off the line. Away from home, possession and pressure drop, so corners generated also drop \u2014 this is a venue-driven structural mechanism, not randomness.",
+   "why_simple_average_is_insufficient": "The home/away split for Team A corners is among the largest in the data (raw_rows). The long-run mean averages two very different distributions; the venue-conditioned comparator correctly isolates the home component.",
+   "support_warning": "Corner production can be volatile match to match even when the underlying structural tendency is real."
+  },
+  {
+   "hypothesis_id": "0188f3b23051e1a906dc766db34bc31e764f958810f6c9afa9e3e29b1f69dd70",
+   "evidence_refs": [
+    "team_a.raw_rows[shots_on_target].for.home_mean",
+    "team_a.opponent_profile_of_fixture_opponent.goals_against",
+    "team_b.raw_rows[goals].against.away_mean",
+    "team_b.raw_rows[goals].against.long_run_mean",
+    "team_a.competition_environment_mean.shots_on_target"
+   ],
+   "research_reason": "Team B's goals_against profile is classified HIGH (opponent_profile_of_fixture_opponent from Team A's view). This hypothesis tests whether Team A's SoT production is further elevated when the opponent is in the HIGH goals_against tercile \u2014 a direct opponent-dependent conditional structure, not just a venue average.",
+   "mechanism_summary": "A HIGH goals_against opponent (Team B) is susceptible to conceding because of structural defensive weakness away (raw_rows: above-league shots/SoT against, above-league goals against). Against such opponents, Team A's already-elevated home attack is likely to generate more shots on target than its venue-only average. The condition creates a genuine opponent-quality filter rather than a blind average.",
+   "why_simple_average_is_insufficient": "The unconditional venue baseline includes games against well-organized defenses. Conditioning on opponents with HIGH goals_against profiles isolates a more vulnerable defensive cohort that matches Team B's actual profile, making the comparison more information-rich.",
+   "support_warning": "The opponent_profile condition uses similar-opponent cohort membership; cohort size not explicitly reported here, so conditional sample size may be smaller."
+  },
+  {
+   "hypothesis_id": "202a1647b7f7e091c0e7afe60bd67edc315eea592b2c4d0c352f4b7d608005d2",
+   "evidence_refs": [
+    "team_a.raw_rows[corner_kicks].for.home_mean",
+    "team_a.opponent_profile_of_fixture_opponent.shots_against",
+    "team_b.raw_rows[shots].against.away_mean",
+    "team_b.raw_rows[corner_kicks].against.away_mean",
+    "team_b.competition_environment_mean.corner_kicks"
+   ],
+   "research_reason": "Team B's shots_against profile is HIGH (opponent_profile from Team A's view). This hypothesis conditions Team A's corner production on opponents with HIGH shots_against profiles \u2014 teams that absorb a lot of offensive pressure and consequently concede more corners. Team B shows HIGH shots_against and also concedes a high corner rate away (raw_rows).",
+   "mechanism_summary": "Teams that face HIGH shots_against are structurally besieged, which means attackers generate many blocked/deflected shots and clearances that result in corners. Team A pressing deeply into Team B's defensive block creates repeated corner-generating situations. Conditioning corners FOR on HIGH shots_against opponents isolates this mechanism specifically.",
+   "why_simple_average_is_insufficient": "Teams that allow high shot volumes necessarily create more corner-generating defensive situations than the average opponent. Blending all opponent types obscures this mechanism; the opponent-profile condition activates the structural link between opponent defensive fragility and corner generation.",
+   "support_warning": "Corner counts have high match-to-match variance; single-game realization may deviate significantly even when the structural tendency is well-supported."
+  }
+ ],
+ "manifest": {
+  "fixture_id": "mt_250070680",
+  "packet_hash": "a9ec37224476e22707d393f54d47954b782028cfb83d59d9930f7878b42391c0",
+  "model_id": "us.anthropic.claude-sonnet-4-6",
+  "region": "us-east-1",
+  "prompt_content_hash": "ae285113d4256b3a0306fae270fa2227383a37da55ba897b1a1b45e06853bb8f",
+  "config_stamp": {
+   "max_tokens": 8192,
+   "temperature": 1.0,
+   "thinking": {
+    "budget_tokens": 4096,
+    "type": "enabled"
+   }
+  },
+  "created_unix": 1789614817,
+  "converse_calls": 3,
+  "search_calls": 6,
+  "usage": {
+   "inputTokens": 61386,
+   "outputTokens": 7544,
+   "totalTokens": 68930
+  },
+  "latency_s": 107.663,
+  "cache_hit": false,
+  "max_search_calls": 6,
+  "max_tool_turns": 7,
+  "termination_reason": "FORCED_SUBMIT"
+ }
+}

@@ -1,0 +1,190 @@
+{
+ "status": "OK",
+ "research_trace": {
+  "behavioral_map": {
+   "team_a_attack": [
+    "Shot volume FOR at home (raw_rows shots home_mean) vs away shows home advantage; long_run near league mean",
+    "SoT FOR: home mean notably higher than away mean; long_run below league mean (4.26) \u2014 moderate quality",
+    "Goals FOR long_run above league mean (1.37) \u2014 decent conversion despite sub-league SoT",
+    "Accurate crosses FOR: away mean higher than home; possible wide-channel outlet on the road",
+    "Big chances FOR near league mean; corner_kicks FOR consistent home/away (stable ~5.3)",
+    "Final third entries FOR below league mean (56.9) despite adequate goals \u2014 direct/efficient style implied",
+    "Recent vs long: all metrics essentially flat \u2014 no regime shift"
+   ],
+   "team_a_defense": [
+    "SoT AGAINST long_run well below league mean (4.26) \u2014 genuinely tight defensive record",
+    "Goals AGAINST long_run below league mean (1.37) \u2014 strong defensive record",
+    "Clearances AGAINST home_mean above long_run \u2014 home clearances spike, suggests aerial/set-piece load",
+    "Shots AGAINST home_mean notably lower than away_mean \u2014 better defended at home",
+    "Corners AGAINST home ~5.1, away ~4.3 \u2014 consistent, near league mean"
+   ],
+   "team_b_attack": [
+    "Final third entries FOR long_run well above league mean (56.9) \u2014 dominant territorial presence",
+    "Goals FOR long_run (0.95) well below league mean (1.37) \u2014 severe territory-to-goals inefficiency",
+    "SoT FOR long_run ~3.1 \u2014 below league mean (4.26) despite high territory \u2014 poor conversion pipeline",
+    "Big chances FOR long_run (1.67) near league mean \u2014 volume reaches box but fails to convert",
+    "Fouls FOR long_run (13.4) and yellow cards (2.76) well above league mean \u2014 physical/disruptive style",
+    "Ball recoveries FOR very high (63.9 vs 58.8) \u2014 pressing/recovery-oriented team",
+    "Recent vs long: essentially stable across all metrics"
+   ],
+   "team_b_defense": [
+    "SoT AGAINST away_mean (6.0) dramatically higher than home_mean (3.55) \u2014 very vulnerable away",
+    "Goals AGAINST away_mean (1.6) vs home_mean (1.18) \u2014 away significantly more porous",
+    "Corners AGAINST away_mean (7.0) vs home_mean (3.36) \u2014 massive split; concede far more corners away",
+    "Clearances AGAINST home_mean (24.9) vs away_mean (15.9) \u2014 much more defensive home than away",
+    "Saves FOR away_mean (4.3) vs home_mean (2.36) \u2014 GK much busier away, confirms leaky away defense"
+   ]
+  },
+  "matchup_tensions": [
+   "Team B has high territorial dominance (final_third_entries) but fails to convert \u2014 meets Team A's tight defense which is already below-average SoT allowed; this could amplify Team B's scoring drought",
+   "Team A's home defense concedes well below league average SoT and goals; Team B already scores poorly even against weaker defenses",
+   "Team B's away defense concedes SoT at nearly double league average \u2014 Team A at home produces reasonable SoT; the two combine to suggest above-average SoT opportunity for Team A",
+   "Team B corners AGAINST away (7.0) is huge vs their home figure (3.36); Team A corners FOR are consistent at ~5.3 home; in this fixture Team A at home vs Team B away corners could be elevated",
+   "Team B's opponent profile for Team A shows goals_for=HIGH, shots_against=LOW, shots_on_target_against=LOW \u2014 Team A's defensive quality is recognised as exceptional from the opponent perspective"
+  ],
+  "similar_opponent_insights": [
+   "Team A's similar_to_fixture_opponent IDs represent teams resembling Team B; the opponent_profile of Team B shows goals_for=LOW, shots_on_target_for=MID \u2014 Team A has faced opponents with this profile before",
+   "Team B's similar_to_fixture_opponent IDs represent teams resembling Team A; the opponent_profile of Team A shows goals_for=HIGH, shots_against=LOW \u2014 Team B has faced dominant defensive opponents before; their SoT production against such opponents is the key testable question"
+  ],
+  "regime_questions": [
+   "Recent vs long for both teams shows negligible divergence across all metrics \u2014 shrinkage barely moves from long-run; NO regime shift hypothesis is motivated",
+   "Home/away splits explain apparent variation better than any recent trend"
+  ],
+  "context_notes": [
+   "Competition is Championship (champ) \u2014 physically demanding, supported across all metrics",
+   "Team A is home; Team B is away; the home/away split is critical for Team B's defensive record (SoT against 6.0 away vs 3.55 home)",
+   "touches_in_penalty_area has THIN coverage for both teams \u2014 cannot be used",
+   "xg UNSUPPORTED for per-side analysis; np_xg also UNSUPPORTED",
+   "Team B's opponent profile seen by Team A: goals_for=LOW, shots_against=MID, shots_on_target_for=MID \u2014 directly supports a conditional SoT hypothesis for Team A"
+  ],
+  "discarded_candidates": [
+   {
+    "hypothesis_id_considered": "recent_vs_long_any",
+    "reason": "Recent and long-run figures are essentially identical for both teams across all metrics \u2014 shrinkage changes are trivial. No genuine regime shift is evident; selecting a recent-vs-long hypothesis would be purely mechanical with no evidential motivation."
+   },
+   {
+    "hypothesis_id_considered": "touches_in_penalty_area",
+    "reason": "THIN coverage for both teams (n=1 each) \u2014 statistically useless regardless of any search result."
+   },
+   {
+    "hypothesis_id_considered": "xg_or_np_xg",
+    "reason": "Both explicitly UNSUPPORTED in capability envelope; excluded."
+   },
+   {
+    "hypothesis_id_considered": "corner_kicks_FOR_home_team_conditional_on_goals_for_LOW",
+    "reason": "Team B's goals_for is LOW per opponent profile, which does match. However, Team A's corner production is very stable home/away (both ~5.3) and near league mean \u2014 there is limited behavioral variation to detect. Condition may not add structural value beyond Team A's baseline."
+   },
+   {
+    "hypothesis_id_considered": "team_b_fouls_yellow_cards",
+    "reason": "Team B's yellow cards and fouls are above average, but these are for their own committed fouls, not a matchup-dependent mechanism in this framework. The opponent profile does not specifically key to this."
+   }
+  ]
+ },
+ "final_selections": [
+  {
+   "hypothesis_id": "248ddd68049ef5a5cbff12c1e8e4dad0e957616f79c3a999d813134d0754be7f",
+   "evidence_refs": [
+    "team_a.raw_rows[shots_on_target].for.home_mean",
+    "team_a.raw_rows[shots_on_target].for.long_run_mean",
+    "team_a.opponent_profile_of_fixture_opponent.goals_against",
+    "team_b.raw_rows[goals].for.long_run_mean",
+    "team_b.raw_rows[goals].for.away_mean",
+    "team_a.competition_environment_mean.shots_on_target"
+   ],
+   "research_reason": "Team A faces an opponent (Team B) whose opponent_profile dimension goals_against is LOW \u2014 Team B seldom concedes. The question is whether Team A's SoT production, when conditioned on facing a low-goals_against opponent, diverges from its unconditional baseline. Team A already has below-league-average SoT (long_run below competition mean); meeting a defensively conservative opponent could further suppress or alternatively reveal that this pairing is its natural context.",
+   "mechanism_summary": "When Team A faces an opponent that defends conservatively (LOW goals_against), the attacking channel is narrower; any structural change in Team A's SoT production under this condition captures whether their shot quality or volume is systematically opponent-responsive rather than constant.",
+   "why_simple_average_is_insufficient": "Team A's unconditional SoT average mixes matches against open and tight defenses; conditioning on LOW goals_against isolates performance specifically against the type of opponent present in this fixture, which may behave differently from the pooled average.",
+   "support_warning": "Team A's SoT production is already below league mean unconditionally; small sample within the LOW goals_against tercile could reduce statistical power."
+  },
+  {
+   "hypothesis_id": "1bb50026fe73ffb5bc30eacf49400ac29b40747217a5b8adff9f819aa039f636",
+   "evidence_refs": [
+    "team_b.raw_rows[shots_on_target].for.long_run_mean",
+    "team_b.raw_rows[shots_on_target].for.away_mean",
+    "team_b.opponent_profile_of_fixture_opponent.goals_for",
+    "team_a.raw_rows[goals].for.long_run_mean",
+    "team_a.raw_rows[goals].for.home_mean",
+    "team_b.competition_environment_mean.shots_on_target"
+   ],
+   "research_reason": "Team B faces an opponent (Team A) whose opponent_profile dimension goals_for is HIGH. The question is whether Team B's SoT production changes when facing a high-scoring opponent \u2014 such opponents often suppress opponents through game-state dynamics, or alternatively force open play. Team B already undershoots league mean SoT; this condition asks if facing HIGH goals_for opponents changes that pattern.",
+   "mechanism_summary": "Facing a high-scoring opponent (HIGH goals_for) may alter Team B's tactical setup \u2014 deeper defensive block when chasing game states, or more open play if forced to attack. Either pathway could systematically shift Team B's SoT production from its unconditional baseline, capturing opponent-induced behaviour change.",
+   "why_simple_average_is_insufficient": "Team B's unconditional SoT average masks the specific scenario of facing a prolific opponent; the conditional comparison isolates exactly the cohort of matches that structurally resemble this fixture.",
+   "support_warning": "Team B's SoT production shows very limited variation (away 3.0, home 3.18) \u2014 the conditional effect may be small and hard to distinguish from noise."
+  },
+  {
+   "hypothesis_id": "0fd6a82bfae4ed6008e1d0ad43fb7c1474221ec32ff724a60a66941def4d6f1a",
+   "evidence_refs": [
+    "team_a.raw_rows[shots_on_target].against.long_run_mean",
+    "team_a.raw_rows[shots_on_target].against.home_mean",
+    "team_a.raw_rows[shots_on_target].against.away_mean",
+    "team_a.opponent_profile_of_fixture_opponent.goals_for",
+    "team_b.raw_rows[goals].for.long_run_mean",
+    "team_a.competition_environment_mean.shots_on_target"
+   ],
+   "research_reason": "Team A faces Team B whose goals_for is LOW per opponent profile. The question is whether Team A's SoT conceded (AGAINST) is systematically different when facing a LOW goals_for opponent versus the rest of their schedule. Team A already concedes very few SoT; understanding if this is further suppressed against low-scoring opponents tests the structural independence of their defensive record.",
+   "mechanism_summary": "A LOW goals_for opponent may generate fewer threatening situations, allowing Team A's defence to operate with less pressure and potentially concede even fewer SoT. Alternatively, if Team A's defensive record is inherent rather than opponent-dependent, no conditional difference should emerge \u2014 the falsifier.",
+   "why_simple_average_is_insufficient": "Team A's unconditional SoT AGAINST average (~2.8) already appears strong; this hypothesis tests whether that figure is inflated or deflated by the quality of opposition faced, which requires conditioning on the specific opponent type present in this fixture.",
+   "support_warning": "Team A's SoT AGAINST is already at the low end of the league distribution; the conditional window for LOW goals_for opponents may have limited variance to detect."
+  },
+  {
+   "hypothesis_id": "22e0f5d877c78389e45f0471c5e7aa3ea70a370bbdbd3e2d84722fe5ff49d607",
+   "evidence_refs": [
+    "team_a.raw_rows[goals].against.long_run_mean",
+    "team_a.raw_rows[goals].against.home_mean",
+    "team_a.raw_rows[goals].against.away_mean",
+    "team_a.opponent_profile_of_fixture_opponent.goals_for",
+    "team_b.raw_rows[goals].for.long_run_mean",
+    "team_b.raw_rows[goals].for.away_mean",
+    "team_a.competition_environment_mean.goals"
+   ],
+   "research_reason": "Team A's opponent (Team B) has goals_for=LOW in the opponent_profile. Team A already concedes below league average goals. This tests whether Team A's goals conceded changes specifically when facing a LOW goals_for opponent \u2014 directly relevant since Team B is a historically low-scoring side.",
+   "mechanism_summary": "Against a team characterised by low goal output, Team A's defensive structure may face lower-quality attacks, potentially reducing goals conceded further. The mechanism is opponent attack quality feeding into Team A's already-tight defensive record. If the condition has no effect, Team A's defensive quality is truly inherent and opponent-blind.",
+   "why_simple_average_is_insufficient": "Team A's unconditional goals conceded (~1.0 long-run) averages across all opponent attack qualities; isolating LOW goals_for opponents specifically tests whether Team A's defensive record is driven by easy fixtures or is genuinely structural.",
+   "support_warning": "Goals is a low-frequency metric; even conditional on LOW goals_for opponents the within-group variance may be high, reducing power."
+  },
+  {
+   "hypothesis_id": "315d5c451b62799cf009c6699889967f2a683ffb1d040c03ed873dd4071a5ed9",
+   "evidence_refs": [
+    "team_b.raw_rows[shots_on_target].for.long_run_mean",
+    "team_b.raw_rows[shots_on_target].for.home_mean",
+    "team_b.raw_rows[shots_on_target].for.away_mean",
+    "team_b.raw_rows[final_third_entries].for.long_run_mean",
+    "team_b.raw_rows[possession].for.long_run_mean",
+    "team_b.opponent_profile_of_fixture_opponent.possession_for",
+    "team_b.competition_environment_mean.shots_on_target"
+   ],
+   "research_reason": "Team B faces an opponent (Team A) with possession_for=HIGH in the opponent profile. Team B already has high final_third_entries but poor SoT production. When facing a HIGH possession opponent, Team B may see less ball and have to work harder for shots; or possession battles may produce different shot profiles. This tests whether Team B's SoT production is systematically different vs high-possession opponents.",
+   "mechanism_summary": "Facing a HIGH possession opponent typically forces the lower-possession side into a reactive shape; if Team B's SoT production is systematically lower in such matches (less time on ball), it would confirm a structural suppression mechanism relevant to this specific fixture context.",
+   "why_simple_average_is_insufficient": "Team B's unconditional SoT average conflates matches where they had possession dominance versus matches where they were dispossessed; conditioning on HIGH possession_for opponents isolates the specific tactical context of this fixture.",
+   "support_warning": "Team B's possession_for long-run is 52.2 \u2014 only modestly above average \u2014 so the possession_for=HIGH opponent condition may not produce a large conditional sample or strong contrast."
+  }
+ ],
+ "manifest": {
+  "fixture_id": "mt_743353525",
+  "packet_hash": "1586abecf6a31782d4e1ad578da5177c6160f78340c82f3f76945c84858cdf78",
+  "model_id": "us.anthropic.claude-sonnet-4-6",
+  "region": "us-east-1",
+  "prompt_content_hash": "ae285113d4256b3a0306fae270fa2227383a37da55ba897b1a1b45e06853bb8f",
+  "config_stamp": {
+   "max_tokens": 8192,
+   "temperature": 1.0,
+   "thinking": {
+    "budget_tokens": 4096,
+    "type": "enabled"
+   }
+  },
+  "created_unix": 1789613383,
+  "converse_calls": 4,
+  "search_calls": 6,
+  "usage": {
+   "inputTokens": 106478,
+   "outputTokens": 7414,
+   "totalTokens": 113892
+  },
+  "latency_s": 120.367,
+  "cache_hit": false,
+  "max_search_calls": 6,
+  "max_tool_turns": 7,
+  "termination_reason": "FORCED_SUBMIT"
+ }
+}

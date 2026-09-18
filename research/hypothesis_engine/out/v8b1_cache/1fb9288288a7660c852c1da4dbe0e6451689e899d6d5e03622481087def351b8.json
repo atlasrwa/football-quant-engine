@@ -1,0 +1,224 @@
+{
+ "status": "OK",
+ "research_trace": {
+  "behavioral_map": {
+   "team_a_attack": [
+    "Team A (HOME) shots FOR long_run above league env mean (raw_rows shots for long_run_mean vs competition_environment_mean). Big chances FOR well above league env mean, suggesting meaningful quality creation.",
+    "Team A possession FOR long_run clearly above league env mean (50.0), indicating a possession-dominant style that generates the ball progression seen in final_third_entries.",
+    "Team A big chances FOR long_run notably above league env mean (1.9185), reinforcing quality of attack.",
+    "Team A shots on target FOR long_run above league env mean (4.23), consistent with attack quality.",
+    "Home vs away split: Team A shots home_mean higher than away_mean; big chances higher at home. Home performance is meaningfully stronger."
+   ],
+   "team_a_defense": [
+    "Team A shots AGAINST long_run substantially above league env mean (12.74) \u2014 Team A concedes more shots volume than average, indicating a porous defensive structure.",
+    "Team A shots on target AGAINST long_run above league env mean (4.23) \u2014 concedes quality chances, not just peripheral attempts.",
+    "Team A goals AGAINST long_run above league env mean (1.37) \u2014 higher-than-average concession rate.",
+    "Team A corners AGAINST long_run above league env mean (5.42) \u2014 concedes more set-piece delivery opportunities.",
+    "Team A interceptions AGAINST long_run (12.95) substantially above league env mean (9.66) \u2014 opponents disrupt Team A's build-up frequently, suggesting their passing patterns are readable."
+   ],
+   "team_b_attack": [
+    "Team B (AWAY) shots FOR long_run below league env mean (12.74) \u2014 an attack generating fewer shots than average.",
+    "Team B shots on target FOR long_run below league env mean (4.23) \u2014 shot quality is also suppressed.",
+    "Team B goals FOR long_run below league env mean (1.37) \u2014 converting fewer than average.",
+    "Team B home vs away SoT split: home_mean 4.4 vs away_mean 2.6 \u2014 a large venue-conditioned split. Away SoT production falls sharply from home baseline.",
+    "Team B final_third_entries FOR long_run above league env mean (57.13) \u2014 decent territory but fails to convert entries into shots/goals."
+   ],
+   "team_b_defense": [
+    "Team B shots AGAINST long_run below league env mean (12.74) \u2014 concedes fewer shots than average, indicating organized defensive structure.",
+    "Team B shots on target AGAINST long_run below league env mean (4.23) \u2014 restricts quality as well as volume.",
+    "Team B goals AGAINST long_run below league env mean (1.37) \u2014 solid defensive record overall.",
+    "Team B clearances FOR long_run near env mean \u2014 no strong signal of overloaded backline.",
+    "Team B tackles FOR long_run slightly above env mean \u2014 active defensive pressing."
+   ]
+  },
+  "matchup_tensions": [
+   "Team A has a porous defense (shots/SoT/goals conceded above env) facing a Team B attack that generates below-average shots and goals \u2014 the question is whether Team B's poor attack exploits Team A's defensive weakness or is suppressed by it.",
+   "Team B has a large home/away split on shots on target (away SoT mean well below home mean and below long-run mean). As the away team, this split is the dominant expected conditioner on their shot quality output.",
+   "Team A generates big chances above the league env mean but faces Team B, whose defense concedes fewer shots and goals than average \u2014 attack quality vs defensive solidity tension.",
+   "Team A has above-average interceptions AGAINST \u2014 opponents intercept their passes frequently. Team B, though low in shot generation, has decent territorial entries (final_third_entries above env). Can Team B's pressing disrupt Team A build-up without generating shots themselves?"
+  ],
+  "similar_opponent_insights": [
+   "Team A's similar opponent cohort includes tm_0016 and tm_6387 (shared with Team B). The opponent_profile of fixture opponent for Team A shows: goals_against LOW, shots_against LOW, shots_on_target_against LOW \u2014 implying Team A's historical opponents have been harder-to-score-against, making Team B's low-goal-against profile a familiar challenge type.",
+   "Team B's opponent_profile_of_fixture_opponent shows all MID across dimensions for Team A \u2014 a balanced opponent profile. This means Team B has historically faced teams of similar profile to Team A and the conditional hypotheses using MID tercile conditions are the most fixture-appropriate.",
+   "Similar opponent search budget exhausted before dedicated similar_opponent mechanism queries could be run for corners/big chances. Key findings from attack_x_defense queries are used instead."
+  ],
+  "regime_questions": [
+   "Team A recent_shrunk values are nearly identical to long_run across all metrics \u2014 no divergent recent regime detected. Shrinkage has returned estimates to long-run means.",
+   "Team B recent_shrunk values are nearly identical to long_run across all metrics \u2014 stable performance, no meaningful recent regime shift.",
+   "No regime-shift hypothesis is warranted for either team. Recent vs long only merits selection if genuinely divergent \u2014 it is not here."
+  ],
+  "context_notes": [
+   "Competition is Championship (champ) \u2014 all selected metrics are admissible in this competition.",
+   "Team B plays this fixture away from home. Their SoT home/away split is the single most pronounced venue signal in the evidence packet.",
+   "Team A's opponent_profile_of_fixture_opponent for Team B (away team's profile) shows goals_against LOW, shots_against LOW, shots_on_target_against LOW \u2014 meaning Team B has a better-than-average defensive record, which is relevant when considering whether Team A's above-average shot generation will be suppressed.",
+   "Team B's opponent_profile_of_fixture_opponent for Team A shows all MID dimensions \u2014 a balanced opponent, meaning Team B has seen similar teams before and the MID-conditioned attack_x_defense hypotheses map cleanly onto this fixture."
+  ],
+  "discarded_candidates": [
+   {
+    "hypothesis_id_considered": "17e3099e0beaa8fccfbe70736db433902f3d60bdec711c3604743eb5caf44f88",
+    "reason": "Unconditional subject overall baseline for Team A SoT FOR \u2014 no conditional structure, simply Team A's overall mean vs itself. Adds no information beyond a trivial self-comparison. Adversarial check: this is exactly the 'simple average' the protocol flags as insufficient."
+   },
+   {
+    "hypothesis_id_considered": "5d3d07984587a2717c261178bbed5d4cd131bae1ac59efbbc24326519750631a",
+    "reason": "Unconditional Team A SoT AGAINST vs overall baseline \u2014 trivial self-comparison, no conditional mechanism. Discarded as simple average."
+   },
+   {
+    "hypothesis_id_considered": "a8985b9587fcf452305e447868dbca7a216ca848f6bae11d7a204375ed21c9a9",
+    "reason": "Team B shots FOR vs venue baseline \u2014 unconditional venue comparison with no opponent-type conditioning. The venue split is real but without an opponent profile condition this is too coarse. The more specific away+opponent-profile conditioned versions are available."
+   },
+   {
+    "hypothesis_id_considered": "16f9c1817bfbb717b5d77f47f8bc8add75b04417932ddb695f239df7c51028c2",
+    "reason": "Team B SoT FOR away vs venue baseline \u2014 pure venue conditioning with no opponent profile. This is effectively a historical home/away average split. The mechanism (away SoT suppression against an opponent with LOW shots_against/SoT_against) is richer. Discarded in favour of the opponent-profile-conditioned version."
+   },
+   {
+    "hypothesis_id_considered": "8ba9a3178ebad9cdde97d733034e547851828f35fee3e94f40df78044b8e3332",
+    "reason": "Home team SoT FOR vs HIGH possession_for opponent \u2014 Team B possession long_run is MID (48.45%), not HIGH. The HIGH condition does not map to this fixture's opponent profile."
+   },
+   {
+    "hypothesis_id_considered": "1dbb45ecebf5925e9a95c24a678cf3f28ac97a6af9dc2dcadf42eb2396ef80bb",
+    "reason": "Home team SoT FOR conditioned on opponent MID possession_for \u2014 Team B is MID possession so condition is fixture-relevant, but the mechanism for Team A's SoT changing in response to opponent possession is weak here since Team A is also above-50% possession; both teams are MID-ish. Low mechanism strength."
+   },
+   {
+    "hypothesis_id_considered": "4158bf84c02edd5d06c855d90ec51e0ea0ad5131c3628cfb365f5cad57e3be4f",
+    "reason": "Home team SoT FOR vs HIGH goals_against opponent \u2014 Team B is LOW in goals_against, not HIGH. Condition does not match the fixture."
+   },
+   {
+    "hypothesis_id_considered": "315d5c451b62799cf009c6699889967f2a683ffb1d040c03ed873dd4071a5ed9",
+    "reason": "Away team SoT FOR vs HIGH possession_for opponent \u2014 Team A possession is above 50% but opponent_profile for Team B shows Team A as MID, not HIGH. Condition fit is weak."
+   },
+   {
+    "hypothesis_id_considered": "1bb50026fe73ffb5bc30eacf49400ac29b40747217a5b8adff9f819aa039f636",
+    "reason": "Away team SoT FOR vs HIGH goals_for opponent \u2014 Team A's opponent_profile dimension goals_for for Team B shows MID. HIGH condition is a mismatch."
+   }
+  ]
+ },
+ "final_selections": [
+  {
+   "hypothesis_id": "2904990403f54082098f3ae199f119861a3eae4cb442d113ade71364ea2421c3",
+   "evidence_refs": [
+    "team_b.raw_rows[shots_on_target].for.away_mean",
+    "team_b.raw_rows[shots_on_target].for.home_mean",
+    "team_b.raw_rows[shots_on_target].for.long_run_mean",
+    "team_b.opponent_profile_of_fixture_opponent.shots_on_target_against",
+    "team_a.raw_rows[shots_on_target].against.long_run_mean",
+    "competition_environment_mean.shots_on_target"
+   ],
+   "research_reason": "Team B's SoT away_mean is substantially below their home_mean and below the league env mean. The fixture opponent (Team A) has a LOW shots_on_target_against profile \u2014 meaning Team A is in the bottom tercile for shots on target conceded relative to Team B's historical opponents. This combines venue suppression with a defensively tight opponent profile, creating a double-pressure mechanism on Team B's away SoT production.",
+   "mechanism_summary": "Team B generates significantly fewer shots on target in away fixtures. When the away opponent also profiles as LOW shots_on_target_against (a harder defensive surface to generate SoT against), this compounds the already observed away venue suppression. The engine compares Team B's SoT in prior away games against LOW SoT-conceding opponents vs their overall away baseline.",
+   "why_simple_average_is_insufficient": "A simple long-run average (3.5 SoT) or even a raw venue split masks the conditional interaction: Team B's away suppression may be stronger or weaker depending on the defensive profile of the opponent. The LOW shots_on_target_against condition isolates whether the venue effect is amplified by a defensively resistant opponent \u2014 this is a testable conditional mechanism, not a mean.",
+   "support_warning": "Team B big_chances has THIN coverage (n=9 per split), limiting the richness of related quality metrics. The shots_on_target metric itself has ADEQUATE coverage."
+  },
+  {
+   "hypothesis_id": "0b1d6b849951fe3dea37cdef5f3ca43284e270af9c24eaf3321d5ffe74178ca0",
+   "evidence_refs": [
+    "team_b.raw_rows[shots_on_target].for.away_mean",
+    "team_b.raw_rows[shots_on_target].for.long_run_mean",
+    "team_b.opponent_profile_of_fixture_opponent.shots_against",
+    "team_a.raw_rows[shots].against.long_run_mean",
+    "competition_environment_mean.shots"
+   ],
+   "research_reason": "Team B's away SoT is suppressed, and Team A's opponent_profile as seen by Team B is LOW on shots_against dimension \u2014 meaning Team A allows fewer shots overall to opponents. This is a related but distinct axis of opponent defensive compactness from SoT_against. Querying against the LOW shots_against condition tests whether Team B's total shot volume (converted to SoT) is uniformly lower against compact defences that limit overall shot attempts.",
+   "mechanism_summary": "When Team B plays away against opponents who historically allow very few shots (LOW shots_against profile), their already-suppressed away SoT may be further reduced because fewer ball entries translate into shot opportunities. The away venue suppression interacts with the opponent's shot-volume-limiting defensive style.",
+   "why_simple_average_is_insufficient": "The opponent's shots_against profile is a structural defensive property independent of venue. A venue-split average only conditions on location; conditioning additionally on shots_against tercile captures the joint effect of away displacement and opponent defensive compactness \u2014 a mechanism not visible in either split alone.",
+   "support_warning": "This question conditions on a different defensive dimension than the SoT_against version above; both are submitted because they are not redundant \u2014 one is about SoT suppression, one about total shot volume suppression."
+  },
+  {
+   "hypothesis_id": "9b1ae577ce9e6822f03bd16f47faa0bac451f241efbabc161409bc1c02547d90",
+   "evidence_refs": [
+    "team_b.raw_rows[shots_on_target].for.away_mean",
+    "team_b.raw_rows[shots_on_target].for.long_run_mean",
+    "team_b.opponent_profile_of_fixture_opponent.shots_on_target_against",
+    "team_a.raw_rows[shots_on_target].against.long_run_mean",
+    "competition_environment_mean.shots_on_target"
+   ],
+   "research_reason": "This is the unconditional conditional version of the double-suppression question: does Team B's SoT production, conditioned on opponents with LOW shots_on_target_against profile, differ from their baseline across all opponents? Team A's shots_on_target_against is LOW relative to Team B's historical opponent pool \u2014 this directly tests whether Team B is differentially suppressed by defensively tight opponent types, independent of venue.",
+   "mechanism_summary": "Team B's SoT output is already below-average. When opposing teams profile as LOW in shots_on_target_against, this signals a compact, shot-suppressing defence. The conditional vs baseline comparison isolates whether Team B is systematically held below their own mean in these matchups \u2014 a structural defensive suppression mechanism.",
+   "why_simple_average_is_insufficient": "Team B's overall SoT mean of 3.5 masks heterogeneity by opponent defensive profile. If compact defences (LOW SoT_against) disproportionately suppress Team B, the conditional mean will diverge from the overall baseline. A simple average cannot capture this differential suppression pattern.",
+   "support_warning": "Team B big_chances coverage is THIN (n=9), so corroborating quality metrics have limited support. The shots_on_target metric coverage is ADEQUATE."
+  },
+  {
+   "hypothesis_id": "bd96cfceb631f663f983aadd53e750938777849b112458c7ef2403d510759903",
+   "evidence_refs": [
+    "team_a.raw_rows[shots_on_target].for.home_mean",
+    "team_a.raw_rows[shots_on_target].for.long_run_mean",
+    "team_a.opponent_profile_of_fixture_opponent.shots_on_target_against",
+    "team_b.raw_rows[shots_on_target].against.long_run_mean",
+    "competition_environment_mean.shots_on_target"
+   ],
+   "research_reason": "Team A's SoT production is above the league env mean and better at home. Their opponent (Team B) profiles as LOW on shots_on_target_against from Team A's perspective \u2014 meaning Team B is a defensive opponent type that limits shot quality. This tests whether Team A's SoT is maintained or elevated even against LOW shots_on_target_against opponents compared to their baseline, i.e., whether their attack quality overrides compact opposition.",
+   "mechanism_summary": "Team A generates above-average SoT overall and at home. When the opponent is a LOW shots_on_target_against type (restricts opponents' quality shots), the question is whether Team A's possession-dominant build-up still produces elevated SoT. The conditional comparison reveals whether Team A's attack is robust to defensively compact opponents or dependent on permissive ones.",
+   "why_simple_average_is_insufficient": "Team A's mean SoT is an aggregate across all opponent types. A LOW shots_on_target_against opponent type specifically pressures attacking SoT output; whether Team A maintains or exceeds their baseline against such defences is a conditional structural question that a simple average obscures.",
+   "support_warning": "No thinness concerns for Team A shots_on_target \u2014 coverage is ADEQUATE. This question is the symmetric mirror of Team B's suppression question."
+  },
+  {
+   "hypothesis_id": "248ddd68049ef5a5cbff12c1e8e4dad0e957616f79c3a999d813134d0754be7f",
+   "evidence_refs": [
+    "team_a.raw_rows[shots_on_target].for.home_mean",
+    "team_a.raw_rows[shots_on_target].for.long_run_mean",
+    "team_a.opponent_profile_of_fixture_opponent.goals_against",
+    "team_b.raw_rows[goals].against.long_run_mean",
+    "competition_environment_mean.goals"
+   ],
+   "research_reason": "Team A's opponent_profile_of_fixture_opponent shows goals_against as LOW \u2014 Team B concedes goals at a lower rate than the typical Team A opponent. This tests whether Team A's SoT production is suppressed when facing a LOW goals_against opponent (tighter defensive record) vs the rest of their baseline. It uses a distinct dimension (goals_against rather than shots_on_target_against) to corroborate or challenge the shot-suppression finding.",
+   "mechanism_summary": "A LOW goals_against opponent signals an organised defence that converts shot volume into fewer conceded goals \u2014 a quality defensive trait. The mechanism is whether Team A's shot-on-target rate is differentially impacted by such opponents, capturing whether their attack converts entries into quality shots against defensively superior sides.",
+   "why_simple_average_is_insufficient": "The goals_against tercile of the opponent is a different conditioning axis from shots_on_target_against \u2014 it captures defensive conversion efficiency. Neither a simple SoT mean nor a single opponent-profile condition covers both dimensions simultaneously. This adds an independent defensive-quality lens.",
+   "support_warning": "Team B big_chances THIN but the key metric here is SoT FOR for Team A, which has ADEQUATE coverage."
+  },
+  {
+   "hypothesis_id": "1fdafcb8147dcd0b6eff5bdbd48ac80fc763b160a86750301fbc1d8a9927c336",
+   "evidence_refs": [
+    "team_b.raw_rows[shots_on_target].for.away_mean",
+    "team_b.raw_rows[shots_on_target].for.long_run_mean",
+    "team_b.opponent_profile_of_fixture_opponent.goals_against",
+    "team_a.raw_rows[goals].against.long_run_mean",
+    "competition_environment_mean.goals"
+   ],
+   "research_reason": "Team A's goals_against profile is MID from Team B's perspective. This tests whether Team B's SoT production when facing a MID goals_against opponent differs from their baseline. The MID condition is the most precise match to Team A's actual defensive profile as characterised in Team B's opponent_profile_of_fixture_opponent. It tests the interaction of Team B's below-average SoT with a median-quality defensive opponent.",
+   "mechanism_summary": "Team B's overall SoT is below average. Against a MID goals_against opponent (neither extremely tight nor leaky), the conditional question is whether Team B's production converges toward or diverges from its overall mean \u2014 revealing whether their suppression is uniform across opponent defensive quality levels or specifically tied to tight defences.",
+   "why_simple_average_is_insufficient": "A simple SoT average includes matches against both high- and low-conceding opponents. Isolating MID goals_against opponents (the specific profile of the fixture opponent per Team B's data) creates a structurally homogeneous comparison class not visible in the aggregate.",
+   "support_warning": "Team B big_chances THIN coverage. SoT FOR coverage ADEQUATE."
+  },
+  {
+   "hypothesis_id": "57dec42ff39d7340b5cc535cdc697b1d6e4a0ab0efe61d8d64ad4219f76ab401",
+   "evidence_refs": [
+    "team_a.raw_rows[shots_on_target].for.home_mean",
+    "team_a.raw_rows[shots_on_target].for.long_run_mean",
+    "team_a.opponent_profile_of_fixture_opponent.shots_against",
+    "team_b.raw_rows[shots].against.long_run_mean",
+    "competition_environment_mean.shots"
+   ],
+   "research_reason": "From Team A's perspective, their fixture opponent (Team B) profiles as LOW on shots_against \u2014 Team B is a compact defensive type that limits total shot volume against them. This tests whether Team A's SoT FOR is suppressed when they face LOW shots_against opponents compared to their own baseline, conditioning on the volume-limiting defensive dimension.",
+   "mechanism_summary": "A LOW shots_against opponent constrains the total shot environment for attackers. Team A's above-average SoT production may be tested when opponents limit total shot attempts. The conditional mechanism is whether Team A can maintain shot quality (SoT) when the opponent's style restricts shot volume \u2014 relevant because Team A's shots AGAINST metric suggests open games when they play, creating an apparent tension with Team B's compact defensive record.",
+   "why_simple_average_is_insufficient": "Team A's SoT baseline includes all opponent types; a LOW shots_against opponent is a structurally distinct context. Whether Team A can still generate SoT against compact shot-suppressing defences is a conditional structural question distinct from their mean. The compactness dimension (shots_against) is orthogonal to the quality dimension (shots_on_target_against).",
+   "support_warning": "All metrics used have ADEQUATE coverage. The LOW shots_against condition for Team B's profile as seen from Team A's opponent perspective is the strongest dimension matching Team B's compact defensive identity."
+  }
+ ],
+ "manifest": {
+  "fixture_id": "mt_624494939",
+  "packet_hash": "481053aab6aa2708e092770aeaf15f31d4d1910ac03d5de658dc7f72f524dd00",
+  "model_id": "us.anthropic.claude-sonnet-4-6",
+  "region": "us-east-1",
+  "prompt_content_hash": "ae285113d4256b3a0306fae270fa2227383a37da55ba897b1a1b45e06853bb8f",
+  "config_stamp": {
+   "max_tokens": 8192,
+   "temperature": 1.0,
+   "thinking": {
+    "budget_tokens": 4096,
+    "type": "enabled"
+   }
+  },
+  "created_unix": 1789612717,
+  "converse_calls": 3,
+  "search_calls": 6,
+  "usage": {
+   "inputTokens": 81497,
+   "outputTokens": 9482,
+   "totalTokens": 90979
+  },
+  "latency_s": 151.325,
+  "cache_hit": false,
+  "max_search_calls": 6,
+  "max_tool_turns": 7,
+  "termination_reason": "FORCED_SUBMIT"
+ }
+}

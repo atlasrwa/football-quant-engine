@@ -42,7 +42,7 @@ from src.research.hypothesis_v8c import cache as CACHE
 from src.research.hypothesis_v8c import grammar as GR
 from src.research.hypothesis_v8c import universe as UNI
 
-RUNNER_VERSION = "v8c_runner_v1"
+RUNNER_VERSION = "v8c_runner_v2"
 ORCHESTRATION_VERSION = "v8c_bounded_search_then_forced_submit_v1"
 SEARCH_TOOL_VERSION = UNI.UNIVERSE_VERSION
 
@@ -51,16 +51,34 @@ MAX_SEARCH_CALLS = 6
 FINAL_FORCED_SUBMIT_CALLS = 1
 MAX_TOOL_TURNS = MAX_SEARCH_CALLS + FINAL_FORCED_SUBMIT_CALLS
 
+#: P1-D FROZEN SUBMISSION CONTRACT.
+#:
+#: MAX_SELECTIONS is 8, inherited from the V8B.1 orchestration amendment's stated "0-8
+#: selections valid". It is restated here as a HARD contract rather than prose.
+MAX_SELECTIONS = 8
+
 OK = "OK"
 OK_ABSTAIN = "OK_ABSTAIN"
-INVALID_UNKNOWN_HYPOTHESIS_ID = "INVALID_UNKNOWN_HYPOTHESIS_ID"
-INVALID_ID_NOT_RETURNED_THIS_SESSION = "INVALID_ID_NOT_RETURNED_THIS_SESSION"
-INVALID_ID_RESOLVES_TO_DIFFERENT_IR = "INVALID_ID_RESOLVES_TO_DIFFERENT_IR"
+INVALID_SUBMISSION = "INVALID_SUBMISSION"
 SEARCH_BUDGET_EXHAUSTED = "SEARCH_BUDGET_EXHAUSTED"
 
-TERMINAL_SELECTION_STATUSES = (OK, OK_ABSTAIN, INVALID_UNKNOWN_HYPOTHESIS_ID,
-                               INVALID_ID_NOT_RETURNED_THIS_SESSION,
-                               INVALID_ID_RESOLVES_TO_DIFFERENT_IR)
+#: Per-id reasons, reported inside an INVALID_SUBMISSION rather than as fixture statuses.
+REASON_DUPLICATE = "DUPLICATE_ID"
+REASON_NOT_RETURNED = "ID_NOT_RETURNED_THIS_SESSION"
+REASON_UNKNOWN = "UNKNOWN_HYPOTHESIS_ID"
+REASON_DIFFERENT_IR = "ID_RESOLVES_TO_DIFFERENT_IR"
+REASON_OVER_CAP = "EXCEEDS_MAX_SELECTIONS"
+
+TERMINAL_SELECTION_STATUSES = (OK, OK_ABSTAIN, INVALID_SUBMISSION)
+
+#: THE ALL-OR-NOTHING RULE, preregistered here.
+#:
+#: A response containing [valid_id, fabricated_id] is NOT silently converted into a clean
+#: one-selection treatment. Partial acceptance would mean the treatment arm's content depends
+#: on which of the model's ids happened to survive validation -- an outcome-independent but
+#: undeclared filter on the treatment. The whole fixture's treatment is INVALID_SUBMISSION
+#: with ZERO accepted selections, and it is counted in research yield.
+PARTIAL_ACCEPTANCE = False
 
 #: The tool contract. Hashed into the cache identity, so changing it invalidates the cache.
 TOOL_SCHEMAS = [
@@ -114,42 +132,68 @@ class SearchSession:
 
 def validate_submission(submitted_ids, session: SearchSession, capability,
                         grammar_kwargs=None) -> dict:
-    """Three explicit checks. No silent drops, ever (P1 INVALID-S)."""
+    """The FROZEN P1-D contract. All-or-nothing: any malformed element invalidates the whole
+    fixture's treatment (PARTIAL_ACCEPTANCE = False).
+
+    Checks, all explicit, none silent:
+      * <= MAX_SELECTIONS
+      * ids UNIQUE
+      * every id RETURNED by this live session's search tool
+      * every id present in THIS fixture's evaluable universe
+      * every id RESOLVES under the V8C grammar
+      * canonical id ROUND-TRIPS
+      * zero selections is a LEGAL abstention
+    """
     gkw = grammar_kwargs or {}
     by_id = {c["hypothesis_id"]: c for c in session.fixture_universe.evaluable}
-    valid, invalid = [], []
-    for hid in submitted_ids:
+    ids = list(submitted_ids)
+    problems = []
+
+    if not ids:
+        return {"status": OK_ABSTAIN, "accepted": [], "problems": [],
+                "n_submitted": 0, "partial_acceptance": PARTIAL_ACCEPTANCE,
+                "research_yield": {"submitted": 0, "accepted": 0, "rejected": 0,
+                                   "abstained": True}}
+
+    if len(ids) > MAX_SELECTIONS:
+        problems.append({"hypothesis_id": None, "reason": REASON_OVER_CAP,
+                         "detail": f"{len(ids)} submitted, cap {MAX_SELECTIONS}"})
+
+    seen = set()
+    for hid in ids:
+        if hid in seen:
+            problems.append({"hypothesis_id": hid, "reason": REASON_DUPLICATE,
+                             "detail": "id submitted more than once"})
+            continue
+        seen.add(hid)
         if hid not in session.returned_ids:
-            invalid.append({"hypothesis_id": hid,
-                            "status": INVALID_ID_NOT_RETURNED_THIS_SESSION,
-                            "reason": "id was never returned by this session's search tool"})
+            problems.append({"hypothesis_id": hid, "reason": REASON_NOT_RETURNED,
+                             "detail": "never returned by this session's search tool"})
             continue
         if hid not in by_id:
-            invalid.append({"hypothesis_id": hid, "status": INVALID_UNKNOWN_HYPOTHESIS_ID,
-                            "reason": "id is not in this fixture's PRE_T_EVALUABLE universe"})
+            problems.append({"hypothesis_id": hid, "reason": REASON_UNKNOWN,
+                             "detail": "not in this fixture's PRE_T_EVALUABLE universe"})
             continue
         ir = GR.resolve(hid, capability, **gkw)
         if ir is None:
-            invalid.append({"hypothesis_id": hid, "status": INVALID_UNKNOWN_HYPOTHESIS_ID,
-                            "reason": "id does not resolve under the V8C grammar"})
+            problems.append({"hypothesis_id": hid, "reason": REASON_UNKNOWN,
+                             "detail": "does not resolve under the V8C grammar"})
             continue
         if ir.ir_id() != hid:
-            invalid.append({"hypothesis_id": hid,
-                            "status": INVALID_ID_RESOLVES_TO_DIFFERENT_IR,
-                            "reason": f"resolves to {ir.ir_id()!r}"})
-            continue
-        valid.append(hid)
+            problems.append({"hypothesis_id": hid, "reason": REASON_DIFFERENT_IR,
+                             "detail": f"resolves to {ir.ir_id()!r}"})
 
-    if valid:
-        status = OK
-    elif not submitted_ids:
-        status = OK_ABSTAIN
-    else:
-        status = invalid[0]["status"]
-    return {"status": status, "valid": valid, "invalid": invalid,
-            "n_submitted": len(submitted_ids),
-            "research_yield": {"submitted": len(submitted_ids), "valid": len(valid),
-                               "invalid": len(invalid)}}
+    if problems:
+        # ALL-OR-NOTHING: zero accepted treatment selections for this fixture.
+        return {"status": INVALID_SUBMISSION, "accepted": [], "problems": problems,
+                "n_submitted": len(ids), "partial_acceptance": PARTIAL_ACCEPTANCE,
+                "research_yield": {"submitted": len(ids), "accepted": 0,
+                                   "rejected": len(ids), "abstained": False}}
+
+    return {"status": OK, "accepted": list(ids), "problems": [],
+            "n_submitted": len(ids), "partial_acceptance": PARTIAL_ACCEPTANCE,
+            "research_yield": {"submitted": len(ids), "accepted": len(ids), "rejected": 0,
+                               "abstained": False}}
 
 
 def cache_identity_for(*, fixture_universe, pit_context_hash, packet_hash, prompt_hash,
@@ -176,6 +220,7 @@ def run_fixture(fixture_universe, capability, *, selector, grammar_kwargs=None) 
     submitted = list(selector(session))
     result = validate_submission(submitted, session, capability,
                                  grammar_kwargs=grammar_kwargs)
+    result["valid"] = result["accepted"]        # back-compat alias for existing callers
     result["search_calls_used"] = session.search_calls_used
     result["n_ids_returned_this_session"] = len(session.returned_ids)
     result["search_trace"] = session.calls
@@ -190,9 +235,16 @@ def version_stamp() -> dict:
             "uses_v8b1_search": False,
             "search_returns_llm_facing_projection_only": True,
             "search_is_paginated": True,
-            "validation_checks": ["returned-by-this-session", "resolves-under-v8c-grammar",
+            "validation_checks": ["max-selections", "unique-ids", "returned-by-this-session",
+                                  "in-this-fixture-universe", "resolves-under-v8c-grammar",
                                   "canonical-id-round-trips"],
             "terminal_selection_statuses": list(TERMINAL_SELECTION_STATUSES),
+            "max_selections": MAX_SELECTIONS,
+            "partial_acceptance": PARTIAL_ACCEPTANCE,
+            "invalid_response_policy": ("INVALID_SUBMISSION with ZERO accepted selections; a "
+                                        "mixed valid/invalid response is never converted into "
+                                        "a clean partial treatment"),
+            "abstention_is_legal": True,
             "silent_drop_of_invalid_id": False,
             "max_search_calls": MAX_SEARCH_CALLS,
             "tool_schema_hash": CACHE.tool_schema_hash(TOOL_SCHEMAS),
