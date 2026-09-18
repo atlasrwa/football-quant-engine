@@ -52,6 +52,33 @@ def test_research_family_is_total_and_prose_free():
     assert "V8B1_SEARCH" not in fams
 
 
+def test_resolver_key_does_not_collide_on_equal_length(golden_env):
+    """P1-L: the key hashed `len(condition_set)`, so two DIFFERENT sets of EQUAL length
+    collided and the second caller silently received the first caller's resolution map."""
+    cap = golden_env.capability
+    a = [[{"dimension": "historical_venue_conditioning", "value": "HOME"}]]
+    b = [[{"dimension": "historical_venue_conditioning", "value": "AWAY"}]]
+    assert len(a) == len(b) == 1
+
+    ka = GR._resolver_key(cap, {"condition_set": a})
+    kb = GR._resolver_key(cap, {"condition_set": b})
+    assert ka != kb, "equal-length different condition sets still collide"
+
+    ma = GR.resolution_map(cap, metrics=["goals"], condition_set=a)
+    mb = GR.resolution_map(cap, metrics=["goals"], condition_set=b)
+    assert ma is not mb
+    assert set(ma) != set(mb), "the two maps hold identical ids -- the key is not separating"
+
+    # canonical: reordering a condition dict's KEYS must NOT change the fingerprint
+    c = [[{"value": "HOME", "dimension": "historical_venue_conditioning"}]]
+    assert GR._resolver_key(cap, {"condition_set": c}) == ka
+
+    # and metrics order must not matter either
+    k1 = GR._resolver_key(cap, {"metrics": ["goals", "yellow_cards"]})
+    k2 = GR._resolver_key(cap, {"metrics": ["yellow_cards", "goals"]})
+    assert k1 == k2
+
+
 def test_search_reachability_is_total(golden_universe):
     """P1 SEARCH-REACHABILITY: every evaluable candidate must be reachable by paginating."""
     rep = UNI.reachability_report(golden_universe)

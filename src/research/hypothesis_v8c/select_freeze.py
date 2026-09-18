@@ -42,17 +42,53 @@ import json
 import sys
 import time
 
+from src.research.hypothesis_v8c import aggregate_blocks as BLK
 from src.research.hypothesis_v8c import blind_index as BI
 from src.research.hypothesis_v8c import controls as CTL
 from src.research.hypothesis_v8c import pit_context as PC
 from src.research.hypothesis_v8c import universe as UNI
+from src.research.hypothesis_v8c import vintage as VIN
 
-SELECT_FREEZE_VERSION = "v8c_select_freeze_v1"
+SELECT_FREEZE_VERSION = "v8c_select_freeze_v2"
 
 #: Any module whose presence in THIS interpreter would break the seal.
 FORBIDDEN_MODULE_MARKERS = ("scorer", "score_frozen")
 
 INVALID_UNKNOWN_HYPOTHESIS_ID = "INVALID_UNKNOWN_HYPOTHESIS_ID"
+
+GRAMMAR_VERSION = __import__("src.research.hypothesis_v8c.grammar",
+                             fromlist=["x"]).GRAMMAR_VERSION
+SIMILARITY_VERSION = __import__("src.research.hypothesis_v71.similarity",
+                                fromlist=["x"]).SIMILARITY_VERSION
+
+
+def _grammar_size_hash() -> str:
+    """Binds the freeze to the exact declared grammar SHAPE, so a silent grammar change
+    (an added window, a new interaction family) invalidates the freeze."""
+    import hashlib
+    import json
+    from src.research.hypothesis_v8c import grammar as GR
+    payload = {"version": GR.GRAMMAR_VERSION, "windows": list(GR.WINDOWS),
+               "subjects": list(GR.SUBJECTS), "perspectives": list(GR.PERSPECTIVES),
+               "n_condition_shapes": len(GR.CONDITION_SHAPES),
+               "condition_shapes": GR.CONDITION_SHAPES,
+               "families": list(GR.RESEARCH_FAMILIES)}
+    return hashlib.sha256(
+        json.dumps(payload, sort_keys=True, default=str).encode()).hexdigest()
+
+
+GRAMMAR_SIZE_HASH = _grammar_size_hash()
+
+
+def universe_hash(fixture_universe) -> str:
+    """The exact candidate set that was selectable at this fixture."""
+    import hashlib
+    import json
+    return hashlib.sha256(json.dumps(
+        {"fixture_id": fixture_universe.fixture_id,
+         "evaluable_ids": list(fixture_universe.evaluable_ids()),
+         "ledger": fixture_universe.ledger()},
+        sort_keys=True, default=str).encode()).hexdigest()
 OK = "OK"
 OK_ABSTAIN = "OK_ABSTAIN"
 
@@ -127,8 +163,16 @@ def select_cohort(index, fixture_positions, *, capability, s_selector=None, k=3,
         h_out = CTL.heuristic_selections_for_fixture(len(s_valid), fu)
         reach = UNI.reachability_report(fu)
 
+        meta = VIN.fixture_metadata(index, pos)
         rows.append({
-            "fixture_id": fid, "rec_i": int(pos),
+            # ---- P0-A binding identity: enough to reproduce and VERIFY the pre-T state ----
+            "fixture_id": fid,
+            "fixture_metadata": meta,
+            "rec_i": int(pos),          # diagnostic only; process 2 resolves by fixture_id
+            "corpus_vintage_hash": VIN.corpus_vintage_before(index, meta["kickoff_unix"]),
+            "capability_hash": VIN.capability_hash(capability),
+            "grammar_version": GRAMMAR_VERSION,
+            "grammar_size_hash": GRAMMAR_SIZE_HASH,
             "competition": index.recs[pos].competition,
             "kickoff_unix": int(index.kick[pos]),
             "arm_status": arm_status,
@@ -148,6 +192,8 @@ def select_cohort(index, fixture_positions, *, capability, s_selector=None, k=3,
             "research_family_counts": fu.research_family_counts(),
             "reachability": reach,
             "pit_context_hash": PC.context_hash(ctx),
+            "universe_hash": universe_hash(fu),
+            "similarity_version": SIMILARITY_VERSION,
             "blind_index_audit": sealed.audit_report(),
         })
         if progress:
@@ -159,11 +205,17 @@ def select_cohort(index, fixture_positions, *, capability, s_selector=None, k=3,
     if enforce_seal:
         assert_no_scorer_loaded()
 
+    ids_ordered = [r["fixture_id"] for r in rows]
+    # ---- P1-F: inference blocks are computed and FROZEN HERE, before any outcome exists ----
+    blocks = BLK.chronological_blocks(ids_ordered)
+
     payload = {
         "freeze_version": SELECT_FREEZE_VERSION,
         "classification": classification,
         "n_fixtures": len(rows),
-        "fixture_ids_ordered": [r["fixture_id"] for r in rows],
+        "fixture_ids_ordered": ids_ordered,
+        "inference_blocks": blocks,
+        "inference_blocks_frozen_before_outcomes": True,
         "apparatus": {"universe": UNI.version_stamp(), "controls": CTL.version_stamp(),
                       "pit_context": PC.version_stamp(),
                       "blind_index": BI.version_stamp()},
@@ -214,4 +266,9 @@ def version_stamp() -> dict:
             "forbidden_module_markers": list(FORBIDDEN_MODULE_MARKERS),
             "writes_durable_hashed_freeze": True,
             "invalid_id_handling": "explicit terminal status + research-yield count",
+            "freezes_binding_identity": ["fixture_metadata", "corpus_vintage_hash",
+                                         "capability_hash", "grammar_version",
+                                         "grammar_size_hash", "pit_context_hash",
+                                         "universe_hash", "similarity_version"],
+            "freezes_inference_blocks": True,
             "reads_target_outcome": False}

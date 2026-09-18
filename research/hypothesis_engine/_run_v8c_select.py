@@ -16,7 +16,9 @@ sys.path.insert(0, "/home/ubuntu")
 def main():
     out_path, mode = sys.argv[1], (sys.argv[2] if len(sys.argv) > 2 else "golden")
     from src.research.hypothesis_v8c import golden as G
+    from src.research.hypothesis_v8c import receipt as RCPT
     from src.research.hypothesis_v8c import select_freeze as SF
+    from src.research.hypothesis_v8c import vintage as VIN
 
     SF.assert_no_scorer_loaded()          # entry assertion, before anything is built
 
@@ -31,8 +33,20 @@ def main():
         grammar_kwargs={"metrics": list(metrics)}, enforce_seal=True)
     h = SF.write_freeze(payload, out_path)
 
+    # P0-B: anchor the freeze in a SEPARATE receipt. Process 2 refuses without it.
+    receipt_path = out_path.replace(".json", "_receipt.json")
+    rec = RCPT.build_receipt(
+        freeze_path=out_path,
+        corpus_hash=VIN.corpus_vintage_full(env.index),
+        capability_hash=VIN.capability_hash(env.capability),
+        fixture_ids_ordered=payload["fixture_ids_ordered"],
+        classification=payload["classification"])
+    RCPT.write_receipt(rec, receipt_path)
+
     SF.assert_no_scorer_loaded()          # exit assertion, after everything is written
     print(f"FREEZE_HASH={h}")
+    print(f"RECEIPT_HASH={rec['receipt_hash']}")
+    print(f"PRODUCER_COMMIT={rec['producer_git_commit']}")
     print(f"TARGET_OUTCOMES_VIEWED={payload['totals']['target_outcomes_viewed']}")
     print(f"SCORER_LOADED={payload['scorer_loaded_in_this_process']}")
     print(f"N_FIXTURES={payload['n_fixtures']}")

@@ -22,11 +22,15 @@ def main():
     metrics = ("goals", "yellow_cards")
     n_targets = 15 if mode == "golden15" else 1
     env = G.build_environment(n_targets=n_targets, metrics=metrics)
+    receipt_path = freeze_path.replace(".json", "_receipt.json")
     res = SFZ.score_frozen(freeze_path, env.index, capability=env.capability,
-                           grammar_kwargs={"metrics": list(metrics)})
+                           grammar_kwargs={"metrics": list(metrics)},
+                           receipt_path=receipt_path)
     with open(out_path, "w") as f:
         json.dump(res, f, indent=1, default=str)
     print(f"FREEZE_HASH_VERIFIED={res['freeze_hash_verified']}")
+    print(f"RECEIPT_VERIFIED={res['receipt_verified']}")
+    print(f"BINDING_VERIFIED_FIXTURES={res['binding_verified_fixtures']}")
     print(f"SR_STATUS={res['endpoint_S_vs_R']['inference']['inference_status']}")
     print(f"SR_PAIRED_N={res['endpoint_S_vs_R']['paired_n_all']}")
     print(f"SH_PAIRED_N={res['endpoint_S_vs_H']['paired_n_all']}")

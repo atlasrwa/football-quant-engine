@@ -61,45 +61,11 @@ NO_PAIRED_EVALUABLE_FIXTURES = "NO_PAIRED_EVALUABLE_FIXTURES"
 INSUFFICIENT_CLUSTERS = "INSUFFICIENT_CLUSTERS_FOR_INFERENCE"
 
 
-# ---- frozen-before-outcome chronological blocks -------------------------------------------
-def target_n_blocks(n_cohort_fixtures: int) -> int:
-    """G(N) over the COHORT size, fixed before any outcome. No clamp up."""
-    if n_cohort_fixtures < MIN_QUALIFYING_BLOCKS * MIN_PAIRED_PER_BLOCK:
-        return 0
-    return min(MAX_CLUSTERS, n_cohort_fixtures // MIN_PAIRED_PER_BLOCK)
-
-
-def chronological_blocks(fixture_ids_in_kickoff_order) -> dict:
-    """Contiguous, ceiling-divided blocks over the cohort's own kickoff order.
-
-    A pure function of the fixture list -- never of any score. Frozen before outcomes.
-    """
-    fids = [str(f) for f in fixture_ids_in_kickoff_order]
-    n = len(fids)
-    g = target_n_blocks(n)
-    if g == 0:
-        mapping = {fid: "block_000" for fid in fids}
-        return {"n_fixtures": n, "target_n_blocks": 0, "block_size": n,
-                "n_blocks_actual": 1 if n else 0, "fixture_to_block": mapping,
-                "block_sizes": {"block_000": n} if n else {},
-                "below_exact_inference_size": True,
-                "min_paired_per_block": MIN_PAIRED_PER_BLOCK,
-                "min_qualifying_blocks": MIN_QUALIFYING_BLOCKS,
-                "frozen_before_any_outcome_opened": True}
-    block_size = math.ceil(n / g)
-    mapping, sizes = {}, {}
-    for i, fid in enumerate(fids):
-        label = f"block_{i // block_size:03d}"
-        mapping[fid] = label
-        sizes[label] = sizes.get(label, 0) + 1
-    return {"n_fixtures": n, "target_n_blocks": g, "block_size": block_size,
-            "n_blocks_actual": len(sizes), "fixture_to_block": mapping,
-            "block_sizes": dict(sorted(sizes.items())),
-            "below_exact_inference_size": False,
-            "min_paired_per_block": MIN_PAIRED_PER_BLOCK,
-            "min_qualifying_blocks": MIN_QUALIFYING_BLOCKS,
-            "frozen_before_any_outcome_opened": True}
-
+# ---- frozen-before-outcome chronological blocks (P1-F) -----------------------------------
+# Implemented in `aggregate_blocks` so PROCESS 1 can freeze them without importing a scorer.
+# Imported back here so there is exactly ONE implementation.
+from src.research.hypothesis_v8c.aggregate_blocks import (  # noqa: E402
+    chronological_blocks, target_n_blocks)
 
 # ---- arm scores ---------------------------------------------------------------------------
 def _ok(records, fid, arm):
