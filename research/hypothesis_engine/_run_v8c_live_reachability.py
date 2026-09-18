@@ -24,6 +24,7 @@ def main():
     from src.research.hypothesis_v8c import live_reachability as LR
     from src.research.hypothesis_v8c import pit_context as PC
     from src.research.hypothesis_v8c import universe as UNI
+    from src.research.hypothesis_v8c import provenance as PROV
     from src.research.hypothesis_v8c import vintage as VIN
 
     champ = H.assert_champion_unchanged()
@@ -83,6 +84,11 @@ def main():
         "champion_sha256": champ,
         "sealed_947_referenced": False, "new_sonnet_calls": 0,
     }
+    # P1-G: the artifact must carry the provenance of the process that produced it, or the
+    # freeze gate will (correctly) refuse to let it satisfy any condition.
+    report[PROV.PROVENANCE_KEY] = PROV.stamp(
+        corpus_hash=report["corpus_vintage_full"],
+        capability_hash=report["capability_hash"])
     with open(OUT, "w") as f:
         json.dump(report, f, indent=1, default=str)
     print(f"\n[live] LIVE_UNREACHABLE_CANDIDATES = {total_unreachable}")
