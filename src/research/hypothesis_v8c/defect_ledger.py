@@ -125,15 +125,31 @@ DEFECTS = [
     dict(id="P1-C-LIVE-SEARCH-REACHABILITY", severity="P1",
          root_cause="unreachable==0 was proven by unlimited pagination, not under the live "
                     "MAX_SEARCH_CALLS=6 x PAGE_SIZE_CAP=50 protocol",
-         repair="", required_evidence=[],
-         expected_terminal="LIVE_UNREACHABLE_CANDIDATES == 0 or a reported design conflict",
-         status_override=OPEN),
+         repair="live_reachability.py -- a candidate is LIVE-ADDRESSABLE iff its canonical "
+                "structural query returns it on the FIRST page, i.e. in one call; the count "
+                "is COMPUTED and the call cap is not relaxed",
+         required_evidence=[
+             f"{T}/test_live_reachability.py::test_every_evaluable_candidate_is_live_addressable",
+             f"{T}/test_live_reachability.py::test_canonical_query_is_expressible_by_the_model",
+             f"{T}/test_live_reachability.py::test_call_cap_is_not_relaxed"],
+         required_artifact="V8C_LIVE_SEARCH_REACHABILITY_REPORT.json",
+         expected_terminal="LIVE_UNREACHABLE_CANDIDATES == 0 or a reported design conflict"),
     dict(id="P1-D-SUBMISSION-CONTRACT", severity="P1",
          root_cause="MAX_SELECTIONS undefined; a mixed valid/invalid submission is silently "
                     "converted into a clean partial treatment",
-         repair="", required_evidence=[],
-         expected_terminal="INVALID_SUBMISSION with zero accepted selections",
-         status_override=OPEN),
+         repair="frozen contract: MAX_SELECTIONS=8, PARTIAL_ACCEPTANCE=False, "
+                "INVALID_SUBMISSION with zero accepted selections",
+         required_evidence=[
+             f"{T}/test_submission_contract.py::test_contract_constants_are_frozen",
+             f"{T}/test_submission_contract.py::test_valid_max_k_response_is_accepted",
+             f"{T}/test_submission_contract.py::test_over_cap_is_invalid",
+             f"{T}/test_submission_contract.py::test_duplicate_ids_are_invalid",
+             f"{T}/test_submission_contract.py::test_one_valid_plus_one_fabricated_accepts_NOTHING",
+             f"{T}/test_submission_contract.py::test_fabricated_id_alone_is_invalid",
+             f"{T}/test_submission_contract.py::test_id_never_returned_this_session_is_invalid",
+             f"{T}/test_submission_contract.py::test_abstention_is_legal",
+             f"{T}/test_submission_contract.py::test_every_outcome_has_an_explicit_status"],
+         expected_terminal="INVALID_SUBMISSION with zero accepted selections"),
     dict(id="P1-E-TREATMENT-PROVENANCE", severity="P1",
          root_cause="the all-arm freeze does not carry full treatment provenance",
          repair="", required_evidence=[], expected_terminal="every named field bound",
@@ -142,9 +158,19 @@ DEFECTS = [
          root_cause="the evidence generator wrote p0_open/p1_open/new_sonnet_calls literals "
                     "and the gate believed them; artifacts were bound to CURRENT code hashes "
                     "rather than proven to have been produced by them",
-         repair="", required_evidence=[],
-         expected_terminal="gate booleans derived from this ledger + per-artifact provenance",
-         status_override=OPEN),
+         repair="P0/P1 openness DERIVED from this ledger against actual passed pytest nodes; "
+                "every artifact must embed producer provenance, recomputed and compared by "
+                "the gate",
+         required_evidence=[
+             f"{T}/test_gate_provenance.py::test_ledger_with_no_evidence_reports_everything_open",
+             f"{T}/test_gate_provenance.py::test_ledger_closes_only_on_actual_passed_nodes",
+             f"{T}/test_gate_provenance.py::test_hand_written_p0_open_zero_cannot_pass",
+             f"{T}/test_gate_provenance.py::test_declared_p0_open_zero_is_ignored_even_with_passed_nodes",
+             f"{T}/test_gate_provenance.py::test_artifact_without_provenance_cannot_satisfy_a_condition",
+             f"{T}/test_gate_provenance.py::test_stale_evidence_from_older_code_is_refused",
+             f"{T}/test_gate_provenance.py::test_ledger_change_invalidates_prior_evidence",
+             f"{T}/test_gate_provenance.py::test_gate_has_no_override_flag"],
+         expected_terminal="gate booleans derived from this ledger + per-artifact provenance"),
     dict(id="P1-H-REAL-CORPUS-REACHABILITY", severity="P1",
          root_cause="SCORE_OK reachability was demonstrated on synthetic data only",
          repair="", required_evidence=[],
@@ -157,8 +183,12 @@ DEFECTS = [
          status_override=OPEN),
     dict(id="P1-J-PILOT-POPULATION-RULE", severity="P1",
          root_cause="the fresh-pilot selection rule is not preregistered",
-         repair="", required_evidence=[], expected_terminal="frozen rule before any 947 scan",
-         status_override=OPEN),
+         repair="V8C_FRESH_PILOT_POPULATION_RULE.md -- N=60 derived from the frozen inference "
+                "floor, structural eligibility only, first-N chronological, predeclared "
+                "shortfall handling; frozen BEFORE any 947 scan",
+         required_evidence=[],
+         required_artifact="V8C_FRESH_PILOT_POPULATION_RULE.md",
+         expected_terminal="frozen rule before any 947 scan"),
 ]
 
 #: Findings raised BY this repair pass, for the auditor to classify. Not gate conditions.
@@ -189,18 +219,22 @@ NEW_FINDINGS = [
 ]
 
 
-def evaluate(passed_node_ids) -> dict:
+def evaluate(passed_node_ids, *, artifact_dir="/home/ubuntu/research/hypothesis_engine") -> dict:
     """Derive P0_OPEN / P1_OPEN from ACTUAL test outcomes. Nothing here can be declared."""
+    import os
     passed = set(passed_node_ids or ())
     rows = []
     for d in DEFECTS:
+        art = d.get("required_artifact")
+        art_missing = ([f"required artifact {art} absent"]
+                       if art and not os.path.exists(os.path.join(artifact_dir, art)) else [])
         if d.get("status_override"):
             status = d["status_override"]
             missing = []
-        elif not d["required_evidence"]:
+        elif not d["required_evidence"] and not art:
             status, missing = OPEN, ["no required evidence declared"]
         else:
-            missing = [n for n in d["required_evidence"] if n not in passed]
+            missing = [n for n in d["required_evidence"] if n not in passed] + art_missing
             status = CLOSED if not missing else OPEN
         rows.append({**{k: v for k, v in d.items() if k != "status_override"},
                      "status": status, "missing_evidence": missing})
