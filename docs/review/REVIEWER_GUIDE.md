@@ -30,7 +30,13 @@ single `git add -A` would have published live credentials. This snapshot hardens
 
 ## 2. What this snapshot adds
 
-**29 files**, all source or tests. No data, no credentials, no generated artifacts.
+**48 files** (updated): source, tests, research entry points, diagnostics and four small
+findings artifacts. No data, no credentials, no bulk generated output.
+
+> **Superseded claim corrected.** An earlier revision of this guide said 29 files and
+> described 18 held / 15 excluded. Those classifications were re-inspected file by file:
+> 14 research entry points and diagnostics, 4 findings artifacts and 1 live-API probe were
+> reclassified to PUSH. See `REPOSITORY_MAP.md` §B for exact paths and reasons.
 
 | Group | Count | Why |
 |---|---|---|
@@ -38,6 +44,11 @@ single `git add -A` would have published live credentials. This snapshot hardens
 | Hardening modules (new) | 12 | The `llm_matchup/hardening` v3 package: atomic IO, run locking, controls, eligibility, freeze, golden, versions, pre-spend audit |
 | Tests (new) | 7 | Including two leakage tests and a censoring-provenance test |
 | `matchup` modules (new) | 4 | `features`, `harness`, `design`, `gen_artifacts` |
+| `matchup` PHASE F/G experiments | 7 | run directly, not scheduled — EXPERIMENTAL |
+| Leak-remediation diagnostics | 5 | `scripts/diagnose_*`, `*_9660.py` — EXPERIMENTAL |
+| Benchmarks | 2 | `run_benchmark.py`, `run_robustness_check.py` — EXPERIMENTAL |
+| Findings artifacts | 4 | reports + `robustness_results.json`, 64 KB total |
+| Live-API probe | 1 | opt-in via `RUN_LIVE_API_TESTS=1` |
 
 Plus: `.env.example` (placeholders only), hardened `.gitignore`, `scikit-learn` added to
 `pyproject.toml`, this guide, and the manifest.
@@ -104,6 +115,9 @@ collect 5 modules for `ModuleNotFoundError: hypothesis` / `sklearn` under the *s
 Python. Identical errors occur on the deployed tree, so this is an environment gap, not a
 regression. Both are installed in `/home/ubuntu/.venv`; `sklearn` is now declared in
 `pyproject.toml` and `hypothesis` was already in the dev extras.
+
+See `REPOSITORY_MAP.md` §D for the full defect backlog, including 309 files that hardcode
+`/home/ubuntu` and a declared boto3 (1.34.69) that does not match the deployed venv (1.43.93).
 
 **Unresolved scientific blockers (from the V8C work, carried forward):**
 

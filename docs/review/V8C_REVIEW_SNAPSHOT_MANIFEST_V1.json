@@ -1,13 +1,25 @@
 {
- "artifact": "V8C_REVIEW_SNAPSHOT_MANIFEST_V1",
+ "artifact": "V8C_REVIEW_SNAPSHOT_MANIFEST_V2",
  "base_sha": "bb85637c27233dc5981b968430cbff3260cd3817",
  "branch": "review/engine-snapshot-audit",
  "counts": {
-  "INCLUDE": 29,
-  "HOLD": 18,
-  "EXCLUDE": 15
+  "PUSH": 48,
+  "KEEP_LOCAL": 14,
+  "KEEP_EXTERNAL": 0,
+  "HOLD": 0
  },
  "included_paths": [
+  "MARKET_RELATIVE_REPORT.md",
+  "PER_LEAGUE_STATMIXER_REPORT.md",
+  "fdr_analysis_results.md",
+  "robustness_results.json",
+  "run_benchmark.py",
+  "run_robustness_check.py",
+  "scripts/diagnose_cards_edge.py",
+  "scripts/diagnose_corners.py",
+  "scripts/goals_vs_market_9660.py",
+  "scripts/rebuild_prior_only_9660.py",
+  "scripts/score_prior_only_9660.py",
   "src/research/llm_matchup/bedrock_adapter.py",
   "src/research/llm_matchup/hardening/adapter_v4.py",
   "src/research/llm_matchup/hardening/atomic_io.py",
@@ -24,10 +36,18 @@
   "src/research/llm_matchup/hardening/resume_golden_v3.py",
   "src/research/llm_matchup/hardening/run_lock.py",
   "src/research/llm_matchup/hardening/versions_v3_sonnet46.py",
+  "src/research/matchup/count_models.py",
   "src/research/matchup/design.py",
   "src/research/matchup/features.py",
   "src/research/matchup/gen_artifacts.py",
   "src/research/matchup/harness.py",
+  "src/research/matchup/referee_env.py",
+  "src/research/matchup/run_count_uncertainty.py",
+  "src/research/matchup/run_experiments.py",
+  "src/research/matchup/run_gbt.py",
+  "src/research/matchup/run_phase_f_and_forensics.py",
+  "src/research/matchup/run_referee_cards.py",
+  "test_hypothesis_layer_real_api.py",
   "tests/conftest.py",
   "tests/research/test_controls_v3_censoring_provenance.py",
   "tests/research/test_controls_v3_core.py",
@@ -53,9 +73,11 @@
    "purpose": null,
    "third_party_deps": [],
    "consumers": [],
-   "decision": "HOLD",
-   "reason": "repo-root report of uncertain provenance and ownership",
-   "needs_reviewer_attention": true
+   "decision": "PUSH",
+   "reason": "re-inspected: findings produced by the published diagnostics; 64 KB total",
+   "needs_reviewer_attention": false,
+   "lifecycle": "EXPERIMENTAL",
+   "superseded_prior_decision": "HOLD"
   },
   {
    "path": "PER_LEAGUE_STATMIXER_REPORT.md",
@@ -64,9 +86,11 @@
    "purpose": null,
    "third_party_deps": [],
    "consumers": [],
-   "decision": "HOLD",
-   "reason": "repo-root report of uncertain provenance and ownership",
-   "needs_reviewer_attention": true
+   "decision": "PUSH",
+   "reason": "re-inspected: findings produced by the published diagnostics; 64 KB total",
+   "needs_reviewer_attention": false,
+   "lifecycle": "EXPERIMENTAL",
+   "superseded_prior_decision": "HOLD"
   },
   {
    "path": "data/creator/hypotheses.jsonl",
@@ -77,9 +101,10 @@
    "consumers": [
     "src/creator/api.py"
    ],
-   "decision": "EXCLUDE",
+   "decision": "KEEP_LOCAL",
    "reason": "runtime ledger written by live cron (forecast_broadcast / fixture_alert_watcher); not source",
-   "needs_reviewer_attention": false
+   "needs_reviewer_attention": false,
+   "lifecycle": "ACTIVE"
   },
   {
    "path": "data/discovery/corpus/_refresh_report.json",
@@ -90,9 +115,10 @@
    "consumers": [
     "scripts/refresh_corpus.py"
    ],
-   "decision": "EXCLUDE",
+   "decision": "KEEP_LOCAL",
    "reason": "runtime ledger written by live cron (forecast_broadcast / fixture_alert_watcher); not source",
-   "needs_reviewer_attention": false
+   "needs_reviewer_attention": false,
+   "lifecycle": "ACTIVE"
   },
   {
    "path": "data/discovery/corpus/manifest.json",
@@ -107,9 +133,10 @@
     "research/llm_matchup/V3_CHECKPOINT.md",
     "scripts/heatmap_positional_experiment.py"
    ],
-   "decision": "EXCLUDE",
+   "decision": "KEEP_LOCAL",
    "reason": "runtime ledger written by live cron (forecast_broadcast / fixture_alert_watcher); not source",
-   "needs_reviewer_attention": false
+   "needs_reviewer_attention": false,
+   "lifecycle": "ACTIVE"
   },
   {
    "path": "data/discovery/pilotC_discovery_log.jsonl",
@@ -122,9 +149,10 @@
     "scripts/pilotC_forward_loop.py",
     "scripts/pilotC_heartbeat.py"
    ],
-   "decision": "EXCLUDE",
+   "decision": "KEEP_LOCAL",
    "reason": "runtime ledger written by live cron (forecast_broadcast / fixture_alert_watcher); not source",
-   "needs_reviewer_attention": false
+   "needs_reviewer_attention": false,
+   "lifecycle": "ACTIVE"
   },
   {
    "path": "data/discovery/pilotC_discovery_status.json",
@@ -138,9 +166,10 @@
     "scripts/pilotC_heartbeat.py",
     "tests/test_api_abort_classification.py"
    ],
-   "decision": "EXCLUDE",
+   "decision": "KEEP_LOCAL",
    "reason": "runtime ledger written by live cron (forecast_broadcast / fixture_alert_watcher); not source",
-   "needs_reviewer_attention": false
+   "needs_reviewer_attention": false,
+   "lifecycle": "ACTIVE"
   },
   {
    "path": "data/discovery/pilotC_settled_log.json",
@@ -155,9 +184,10 @@
     "tests/test_calibrated_exclusion.py",
     "tests/test_manual_exclusion.py"
    ],
-   "decision": "EXCLUDE",
+   "decision": "KEEP_LOCAL",
    "reason": "runtime ledger written by live cron (forecast_broadcast / fixture_alert_watcher); not source",
-   "needs_reviewer_attention": false
+   "needs_reviewer_attention": false,
+   "lifecycle": "ACTIVE"
   },
   {
    "path": "data/discovery/provider_league_registry.json",
@@ -172,9 +202,10 @@
     "src/research/footystats/corpus_expansion.py",
     "src/research/identity/registry_loader.py"
    ],
-   "decision": "EXCLUDE",
+   "decision": "KEEP_LOCAL",
    "reason": "runtime ledger written by live cron (forecast_broadcast / fixture_alert_watcher); not source",
-   "needs_reviewer_attention": false
+   "needs_reviewer_attention": false,
+   "lifecycle": "ACTIVE"
   },
   {
    "path": "data/forecast_broadcast/broadcasts.jsonl",
@@ -189,9 +220,10 @@
     "src/research/prospective/shadow_process.py",
     "src/research/scope/coverage_report.py"
    ],
-   "decision": "EXCLUDE",
+   "decision": "KEEP_LOCAL",
    "reason": "runtime ledger written by live cron (forecast_broadcast / fixture_alert_watcher); not source",
-   "needs_reviewer_attention": false
+   "needs_reviewer_attention": false,
+   "lifecycle": "ACTIVE"
   },
   {
    "path": "data/forward/commitments.jsonl",
@@ -206,9 +238,10 @@
     "scripts/fixture_ev_engine.py",
     "scripts/manual_predict.py"
    ],
-   "decision": "EXCLUDE",
+   "decision": "KEEP_LOCAL",
    "reason": "runtime ledger written by live cron (forecast_broadcast / fixture_alert_watcher); not source",
-   "needs_reviewer_attention": false
+   "needs_reviewer_attention": false,
+   "lifecycle": "ACTIVE"
   },
   {
    "path": "data/forward/predictions.jsonl",
@@ -223,9 +256,10 @@
     "scripts/quarantine_forward_loop.py",
     "src/research/prediction_engine/attestation.py"
    ],
-   "decision": "EXCLUDE",
+   "decision": "KEEP_LOCAL",
    "reason": "runtime ledger written by live cron (forecast_broadcast / fixture_alert_watcher); not source",
-   "needs_reviewer_attention": false
+   "needs_reviewer_attention": false,
+   "lifecycle": "ACTIVE"
   },
   {
    "path": "data/forward/run_log.jsonl",
@@ -238,9 +272,10 @@
     "scripts/quarantine_forward_loop.py",
     "src/research/prediction_engine/evaluation_window.py"
    ],
-   "decision": "EXCLUDE",
+   "decision": "KEEP_LOCAL",
    "reason": "runtime ledger written by live cron (forecast_broadcast / fixture_alert_watcher); not source",
-   "needs_reviewer_attention": false
+   "needs_reviewer_attention": false,
+   "lifecycle": "ACTIVE"
   },
   {
    "path": "fdr_analysis_results.md",
@@ -249,9 +284,11 @@
    "purpose": null,
    "third_party_deps": [],
    "consumers": [],
-   "decision": "HOLD",
-   "reason": "repo-root report of uncertain provenance and ownership",
-   "needs_reviewer_attention": true
+   "decision": "PUSH",
+   "reason": "re-inspected: findings produced by the published diagnostics; 64 KB total",
+   "needs_reviewer_attention": false,
+   "lifecycle": "EXPERIMENTAL",
+   "superseded_prior_decision": "HOLD"
   },
   {
    "path": "research/llm_matchup/out/hardening_v3/golden_v3_execution_ledger.json",
@@ -263,9 +300,10 @@
     "research/llm_matchup/V3_CHECKPOINT.md",
     "src/research/llm_matchup/hardening/resume_golden_v3.py"
    ],
-   "decision": "EXCLUDE",
+   "decision": "KEEP_LOCAL",
    "reason": "generated experiment output, regenerated by its producer",
-   "needs_reviewer_attention": false
+   "needs_reviewer_attention": false,
+   "lifecycle": "SUPERSEDED"
   },
   {
    "path": "research/llm_matchup/out/hardening_v3/golden_v3_states.jsonl",
@@ -277,9 +315,10 @@
     "research/llm_matchup/V3_CHECKPOINT.md",
     "src/research/llm_matchup/hardening/run_golden_v3.py"
    ],
-   "decision": "EXCLUDE",
+   "decision": "KEEP_LOCAL",
    "reason": "generated experiment output, regenerated by its producer",
-   "needs_reviewer_attention": false
+   "needs_reviewer_attention": false,
+   "lifecycle": "SUPERSEDED"
   },
   {
    "path": "research/llm_matchup/out/hardening_v3/golden_v3_summary.json",
@@ -291,9 +330,10 @@
     "research/llm_matchup/V3_CHECKPOINT.md",
     "src/research/llm_matchup/hardening/run_golden_v3.py"
    ],
-   "decision": "EXCLUDE",
+   "decision": "KEEP_LOCAL",
    "reason": "generated experiment output, regenerated by its producer",
-   "needs_reviewer_attention": false
+   "needs_reviewer_attention": false,
+   "lifecycle": "SUPERSEDED"
   },
   {
    "path": "robustness_results.json",
@@ -308,9 +348,11 @@
     "src/research/evaluation/laliga_corners.py",
     "src/research/prediction_engine/scope.py"
    ],
-   "decision": "HOLD",
-   "reason": "generated output of run_robustness_check.py",
-   "needs_reviewer_attention": true
+   "decision": "PUSH",
+   "reason": "re-inspected: findings produced by the published diagnostics; 64 KB total",
+   "needs_reviewer_attention": false,
+   "lifecycle": "EXPERIMENTAL",
+   "superseded_prior_decision": "HOLD"
   },
   {
    "path": "run_benchmark.py",
@@ -324,9 +366,11 @@
     "data/results/leak_consumer_audit.md",
     "scripts/audit_harness_sanity.py"
    ],
-   "decision": "HOLD",
-   "reason": "repo-root script of uncertain ownership; no consumer",
-   "needs_reviewer_attention": true
+   "decision": "PUSH",
+   "reason": "re-inspected: research entry point / diagnostic run directly; belongs in Git even with no importer",
+   "needs_reviewer_attention": false,
+   "lifecycle": "EXPERIMENTAL",
+   "superseded_prior_decision": "HOLD"
   },
   {
    "path": "run_robustness_check.py",
@@ -343,9 +387,11 @@
     "src/research/evaluation/laliga_corners.py",
     "src/research/prediction_engine/scope.py"
    ],
-   "decision": "HOLD",
-   "reason": "repo-root script of uncertain ownership; consumers are only its own report",
-   "needs_reviewer_attention": true
+   "decision": "PUSH",
+   "reason": "re-inspected: research entry point / diagnostic run directly; belongs in Git even with no importer",
+   "needs_reviewer_attention": false,
+   "lifecycle": "EXPERIMENTAL",
+   "superseded_prior_decision": "HOLD"
   },
   {
    "path": "scripts/diagnose_cards_edge.py",
@@ -356,9 +402,11 @@
     "numpy"
    ],
    "consumers": [],
-   "decision": "HOLD",
-   "reason": "one-off diagnostic; no consumer, not referenced by cron",
-   "needs_reviewer_attention": true
+   "decision": "PUSH",
+   "reason": "re-inspected: research entry point / diagnostic run directly; belongs in Git even with no importer",
+   "needs_reviewer_attention": false,
+   "lifecycle": "EXPERIMENTAL",
+   "superseded_prior_decision": "HOLD"
   },
   {
    "path": "scripts/diagnose_corners.py",
@@ -369,9 +417,11 @@
     "numpy"
    ],
    "consumers": [],
-   "decision": "HOLD",
-   "reason": "one-off diagnostic; no consumer, not referenced by cron",
-   "needs_reviewer_attention": true
+   "decision": "PUSH",
+   "reason": "re-inspected: research entry point / diagnostic run directly; belongs in Git even with no importer",
+   "needs_reviewer_attention": false,
+   "lifecycle": "EXPERIMENTAL",
+   "superseded_prior_decision": "HOLD"
   },
   {
    "path": "scripts/goals_vs_market_9660.py",
@@ -382,9 +432,11 @@
     "numpy"
    ],
    "consumers": [],
-   "decision": "HOLD",
-   "reason": "one-off league-specific analysis; no consumer",
-   "needs_reviewer_attention": true
+   "decision": "PUSH",
+   "reason": "re-inspected: research entry point / diagnostic run directly; belongs in Git even with no importer",
+   "needs_reviewer_attention": false,
+   "lifecycle": "EXPERIMENTAL",
+   "superseded_prior_decision": "HOLD"
   },
   {
    "path": "scripts/rebuild_prior_only_9660.py",
@@ -397,9 +449,11 @@
    "consumers": [
     "src/research/evaluation/laliga_corners.py"
    ],
-   "decision": "HOLD",
-   "reason": "one-off league-specific analysis; no consumer",
-   "needs_reviewer_attention": true
+   "decision": "PUSH",
+   "reason": "re-inspected: research entry point / diagnostic run directly; belongs in Git even with no importer",
+   "needs_reviewer_attention": false,
+   "lifecycle": "EXPERIMENTAL",
+   "superseded_prior_decision": "HOLD"
   },
   {
    "path": "scripts/score_prior_only_9660.py",
@@ -410,9 +464,11 @@
     "numpy"
    ],
    "consumers": [],
-   "decision": "HOLD",
-   "reason": "one-off league-specific analysis; no consumer",
-   "needs_reviewer_attention": true
+   "decision": "PUSH",
+   "reason": "re-inspected: research entry point / diagnostic run directly; belongs in Git even with no importer",
+   "needs_reviewer_attention": false,
+   "lifecycle": "EXPERIMENTAL",
+   "superseded_prior_decision": "HOLD"
   },
   {
    "path": "src/research/llm_matchup/bedrock_adapter.py",
@@ -430,9 +486,10 @@
     "research/llm_matchup/README.md",
     "src/research/hypothesis_v8b1/runner.py"
    ],
-   "decision": "INCLUDE",
+   "decision": "PUSH",
    "reason": "modified tracked source; interdependent with the new hardening modules and must ship with them",
-   "needs_reviewer_attention": false
+   "needs_reviewer_attention": false,
+   "lifecycle": "ACTIVE"
   },
   {
    "path": "src/research/llm_matchup/hardening/adapter_v4.py",
@@ -447,9 +504,10 @@
     "src/research/hypothesis_v8b1/runner.py",
     "src/research/llm_matchup/hardening/audit_request.py"
    ],
-   "decision": "INCLUDE",
+   "decision": "PUSH",
    "reason": "modified tracked source; interdependent with the new hardening modules and must ship with them",
-   "needs_reviewer_attention": false
+   "needs_reviewer_attention": false,
+   "lifecycle": "ACTIVE"
   },
   {
    "path": "src/research/llm_matchup/hardening/atomic_io.py",
@@ -460,9 +518,10 @@
    "consumers": [
     "src/research/llm_matchup/hardening/resume_golden_v3.py"
    ],
-   "decision": "INCLUDE",
+   "decision": "PUSH",
    "reason": "tracked resume_golden_v3.py imports it; a clean clone cannot run the resume path without it",
-   "needs_reviewer_attention": false
+   "needs_reviewer_attention": false,
+   "lifecycle": "ACTIVE"
   },
   {
    "path": "src/research/llm_matchup/hardening/audit_prespend.py",
@@ -471,9 +530,10 @@
    "purpose": "Pre-spend structural audit of the LITERAL serialized Bedrock request (V3 SS60 extended).",
    "third_party_deps": [],
    "consumers": [],
-   "decision": "INCLUDE",
+   "decision": "PUSH",
    "reason": "companion module/test of the hardening package; the package is incoherent without it",
-   "needs_reviewer_attention": false
+   "needs_reviewer_attention": false,
+   "lifecycle": "ACTIVE"
   },
   {
    "path": "src/research/llm_matchup/hardening/controls_v3_core.py",
@@ -482,9 +542,10 @@
    "purpose": "Generation-neutral core of the V3 identity / behavior-sensitivity control battery.",
    "third_party_deps": [],
    "consumers": [],
-   "decision": "INCLUDE",
+   "decision": "PUSH",
    "reason": "companion module/test of the hardening package; the package is incoherent without it",
-   "needs_reviewer_attention": false
+   "needs_reviewer_attention": false,
+   "lifecycle": "ACTIVE"
   },
   {
    "path": "src/research/llm_matchup/hardening/controls_v3_sonnet45.py",
@@ -493,9 +554,10 @@
    "purpose": "LLM_MATCHUP_V3 (Sonnet 4.5 arm) control battery.",
    "third_party_deps": [],
    "consumers": [],
-   "decision": "INCLUDE",
+   "decision": "PUSH",
    "reason": "companion module/test of the hardening package; the package is incoherent without it",
-   "needs_reviewer_attention": false
+   "needs_reviewer_attention": false,
+   "lifecycle": "ACTIVE"
   },
   {
    "path": "src/research/llm_matchup/hardening/controls_v3_sonnet46.py",
@@ -504,9 +566,10 @@
    "purpose": "LLM_MATCHUP_V3_SONNET46 control battery \u2014 the Sonnet 4.6 arm's identity / stability tests.",
    "third_party_deps": [],
    "consumers": [],
-   "decision": "INCLUDE",
+   "decision": "PUSH",
    "reason": "companion module/test of the hardening package; the package is incoherent without it",
-   "needs_reviewer_attention": false
+   "needs_reviewer_attention": false,
+   "lifecycle": "ACTIVE"
   },
   {
    "path": "src/research/llm_matchup/hardening/eligibility_v3_core.py",
@@ -517,9 +580,10 @@
    "consumers": [
     "research/hypothesis_engine/FORENSIC_FRONTIER_READINESS_AUDIT.md"
    ],
-   "decision": "INCLUDE",
+   "decision": "PUSH",
    "reason": "companion module/test of the hardening package; the package is incoherent without it",
-   "needs_reviewer_attention": false
+   "needs_reviewer_attention": false,
+   "lifecycle": "ACTIVE"
   },
   {
    "path": "src/research/llm_matchup/hardening/eligibility_v3_sonnet45.py",
@@ -528,9 +592,10 @@
    "purpose": "Sonnet 4.5 V3 mechanism eligibility \u2014 V3_SONNET45_ELIGIBILITY.",
    "third_party_deps": [],
    "consumers": [],
-   "decision": "INCLUDE",
+   "decision": "PUSH",
    "reason": "companion module/test of the hardening package; the package is incoherent without it",
-   "needs_reviewer_attention": false
+   "needs_reviewer_attention": false,
+   "lifecycle": "ACTIVE"
   },
   {
    "path": "src/research/llm_matchup/hardening/eligibility_v3_sonnet46.py",
@@ -539,9 +604,10 @@
    "purpose": "Sonnet 4.6 V3 mechanism eligibility \u2014 V3_SONNET46_ELIGIBILITY.",
    "third_party_deps": [],
    "consumers": [],
-   "decision": "INCLUDE",
+   "decision": "PUSH",
    "reason": "companion module/test of the hardening package; the package is incoherent without it",
-   "needs_reviewer_attention": false
+   "needs_reviewer_attention": false,
+   "lifecycle": "ACTIVE"
   },
   {
    "path": "src/research/llm_matchup/hardening/freeze_v3_sonnet46.py",
@@ -550,9 +616,10 @@
    "purpose": "Freeze the LLM_MATCHUP_V3_SONNET46 generation \u2014 the Sonnet 4.6 arm's scientific record.",
    "third_party_deps": [],
    "consumers": [],
-   "decision": "INCLUDE",
+   "decision": "PUSH",
    "reason": "companion module/test of the hardening package; the package is incoherent without it",
-   "needs_reviewer_attention": false
+   "needs_reviewer_attention": false,
+   "lifecycle": "ACTIVE"
   },
   {
    "path": "src/research/llm_matchup/hardening/golden_manifest.py",
@@ -565,9 +632,10 @@
     "src/research/llm_matchup/hardening/resume_golden_v3.py",
     "tests/research/test_golden_v3_resume.py"
    ],
-   "decision": "INCLUDE",
+   "decision": "PUSH",
    "reason": "modified tracked source; interdependent with the new hardening modules and must ship with them",
-   "needs_reviewer_attention": false
+   "needs_reviewer_attention": false,
+   "lifecycle": "ACTIVE"
   },
   {
    "path": "src/research/llm_matchup/hardening/golden_v3_sonnet46.py",
@@ -576,9 +644,10 @@
    "purpose": "LLM_MATCHUP_V3_SONNET46 golden batch harness -- the Sonnet 4.6 arm.",
    "third_party_deps": [],
    "consumers": [],
-   "decision": "INCLUDE",
+   "decision": "PUSH",
    "reason": "companion module/test of the hardening package; the package is incoherent without it",
-   "needs_reviewer_attention": false
+   "needs_reviewer_attention": false,
+   "lifecycle": "ACTIVE"
   },
   {
    "path": "src/research/llm_matchup/hardening/resume_golden_v3.py",
@@ -590,9 +659,10 @@
     "research/llm_matchup/V3_CHECKPOINT.md",
     "tests/research/test_golden_v3_resume.py"
    ],
-   "decision": "INCLUDE",
+   "decision": "PUSH",
    "reason": "modified tracked source; interdependent with the new hardening modules and must ship with them",
-   "needs_reviewer_attention": false
+   "needs_reviewer_attention": false,
+   "lifecycle": "ACTIVE"
   },
   {
    "path": "src/research/llm_matchup/hardening/run_lock.py",
@@ -603,9 +673,10 @@
    "consumers": [
     "src/research/llm_matchup/hardening/resume_golden_v3.py"
    ],
-   "decision": "INCLUDE",
+   "decision": "PUSH",
    "reason": "tracked resume_golden_v3.py imports it; provides the run lock that prevents concurrent golden runs",
-   "needs_reviewer_attention": false
+   "needs_reviewer_attention": false,
+   "lifecycle": "ACTIVE"
   },
   {
    "path": "src/research/llm_matchup/hardening/versions_v3_sonnet46.py",
@@ -617,9 +688,10 @@
     "research/hypothesis_engine/FORENSIC_FRONTIER_READINESS_AUDIT.md",
     "src/research/llm_matchup/hardening/adapter_v4.py"
    ],
-   "decision": "INCLUDE",
+   "decision": "PUSH",
    "reason": "companion module/test of the hardening package; the package is incoherent without it",
-   "needs_reviewer_attention": false
+   "needs_reviewer_attention": false,
+   "lifecycle": "ACTIVE"
   },
   {
    "path": "src/research/matchup/count_models.py",
@@ -632,9 +704,11 @@
     "sklearn"
    ],
    "consumers": [],
-   "decision": "HOLD",
-   "reason": "no consumer found; research tooling, sklearn-dependent",
-   "needs_reviewer_attention": true
+   "decision": "PUSH",
+   "reason": "re-inspected: research entry point / diagnostic run directly; belongs in Git even with no importer",
+   "needs_reviewer_attention": false,
+   "lifecycle": "EXPERIMENTAL",
+   "superseded_prior_decision": "HOLD"
   },
   {
    "path": "src/research/matchup/design.py",
@@ -651,9 +725,10 @@
     ".kiro/specs/immediate_launch/tasks.md",
     ".kiro/specs/ingestion-and-backtester/tasks.md"
    ],
-   "decision": "INCLUDE",
+   "decision": "PUSH",
    "reason": "tracked research/hypothesis_oos/_run_v4_oos.py imports it",
-   "needs_reviewer_attention": false
+   "needs_reviewer_attention": false,
+   "lifecycle": "ACTIVE"
   },
   {
    "path": "src/research/matchup/features.py",
@@ -670,9 +745,10 @@
     ".kiro/specs/ingestion-and-backtester/design.md",
     ".kiro/specs/ingestion-and-backtester/requirements.md"
    ],
-   "decision": "INCLUDE",
+   "decision": "PUSH",
    "reason": "tracked research/hypothesis_oos/_run_v4_oos.py imports it; also imported by the included leakage test",
-   "needs_reviewer_attention": false
+   "needs_reviewer_attention": false,
+   "lifecycle": "ACTIVE"
   },
   {
    "path": "src/research/matchup/gen_artifacts.py",
@@ -689,9 +765,10 @@
     "src/research/llm_matchup/hardening/freeze.py",
     "src/research/llm_matchup/ontology.py"
    ],
-   "decision": "INCLUDE",
+   "decision": "PUSH",
    "reason": "tracked src/research/llm_matchup/gen_artifacts.py imports it",
-   "needs_reviewer_attention": false
+   "needs_reviewer_attention": false,
+   "lifecycle": "ACTIVE"
   },
   {
    "path": "src/research/matchup/harness.py",
@@ -709,9 +786,10 @@
     "research/hypothesis_engine/V4_HYPOTHESIS_DERIVED_OOS_PREREGISTRATION.md",
     "research/hypothesis_engine/V7_1_CONFIRMATORY_OOS_REPORT.md"
    ],
-   "decision": "INCLUDE",
+   "decision": "PUSH",
    "reason": "tracked research/hypothesis_oos/_run_v4_oos.py imports it; sole sklearn consumer in the snapshot",
-   "needs_reviewer_attention": false
+   "needs_reviewer_attention": false,
+   "lifecycle": "ACTIVE"
   },
   {
    "path": "src/research/matchup/referee_env.py",
@@ -723,9 +801,11 @@
     "pilotC_stat_mixer"
    ],
    "consumers": [],
-   "decision": "HOLD",
-   "reason": "no consumer found; imports scripts/pilotC_stat_mixer dynamically",
-   "needs_reviewer_attention": true
+   "decision": "PUSH",
+   "reason": "re-inspected: research entry point / diagnostic run directly; belongs in Git even with no importer",
+   "needs_reviewer_attention": false,
+   "lifecycle": "EXPERIMENTAL",
+   "superseded_prior_decision": "HOLD"
   },
   {
    "path": "src/research/matchup/run_count_uncertainty.py",
@@ -736,9 +816,11 @@
     "numpy"
    ],
    "consumers": [],
-   "decision": "HOLD",
-   "reason": "no consumer found; ad-hoc experiment runner",
-   "needs_reviewer_attention": true
+   "decision": "PUSH",
+   "reason": "re-inspected: research entry point / diagnostic run directly; belongs in Git even with no importer",
+   "needs_reviewer_attention": false,
+   "lifecycle": "EXPERIMENTAL",
+   "superseded_prior_decision": "HOLD"
   },
   {
    "path": "src/research/matchup/run_experiments.py",
@@ -749,9 +831,11 @@
     "numpy"
    ],
    "consumers": [],
-   "decision": "HOLD",
-   "reason": "no consumer found; ad-hoc experiment runner",
-   "needs_reviewer_attention": true
+   "decision": "PUSH",
+   "reason": "re-inspected: research entry point / diagnostic run directly; belongs in Git even with no importer",
+   "needs_reviewer_attention": false,
+   "lifecycle": "EXPERIMENTAL",
+   "superseded_prior_decision": "HOLD"
   },
   {
    "path": "src/research/matchup/run_gbt.py",
@@ -763,9 +847,11 @@
     "sklearn"
    ],
    "consumers": [],
-   "decision": "HOLD",
-   "reason": "no consumer found; ad-hoc experiment runner",
-   "needs_reviewer_attention": true
+   "decision": "PUSH",
+   "reason": "re-inspected: research entry point / diagnostic run directly; belongs in Git even with no importer",
+   "needs_reviewer_attention": false,
+   "lifecycle": "EXPERIMENTAL",
+   "superseded_prior_decision": "HOLD"
   },
   {
    "path": "src/research/matchup/run_phase_f_and_forensics.py",
@@ -776,9 +862,11 @@
     "numpy"
    ],
    "consumers": [],
-   "decision": "HOLD",
-   "reason": "no consumer found; ad-hoc experiment runner",
-   "needs_reviewer_attention": true
+   "decision": "PUSH",
+   "reason": "re-inspected: research entry point / diagnostic run directly; belongs in Git even with no importer",
+   "needs_reviewer_attention": false,
+   "lifecycle": "EXPERIMENTAL",
+   "superseded_prior_decision": "HOLD"
   },
   {
    "path": "src/research/matchup/run_referee_cards.py",
@@ -790,9 +878,11 @@
     "pilotC_stat_mixer"
    ],
    "consumers": [],
-   "decision": "HOLD",
-   "reason": "no consumer found; imports scripts/pilotC_stat_mixer dynamically",
-   "needs_reviewer_attention": true
+   "decision": "PUSH",
+   "reason": "re-inspected: research entry point / diagnostic run directly; belongs in Git even with no importer",
+   "needs_reviewer_attention": false,
+   "lifecycle": "EXPERIMENTAL",
+   "superseded_prior_decision": "HOLD"
   },
   {
    "path": "test_hypothesis_layer_real_api.py",
@@ -801,9 +891,11 @@
    "purpose": "Integration test: Hypothesis layer end-to-end against real FootyStats API.",
    "third_party_deps": [],
    "consumers": [],
-   "decision": "EXCLUDE",
-   "reason": "makes LIVE FootyStats API calls, asserts a real FOOTYSTATS_API_KEY, reads .env and hardcodes /home/ubuntu; would fail CI and could incur provider calls",
-   "needs_reviewer_attention": true
+   "decision": "PUSH",
+   "reason": "re-inspected: integration coverage; made opt-in (RUN_LIVE_API_TESTS=1) and path-independent",
+   "needs_reviewer_attention": false,
+   "lifecycle": "EXPERIMENTAL",
+   "superseded_prior_decision": "EXCLUDE"
   },
   {
    "path": "tests/conftest.py",
@@ -821,9 +913,10 @@
     "docs/phase-3.2-preflight-audit.md",
     "research/hypothesis_engine/V6_1_FINAL_AUDIT_REPORT.md"
    ],
-   "decision": "INCLUDE",
+   "decision": "PUSH",
    "reason": "modified tracked source; interdependent with the new hardening modules and must ship with them",
-   "needs_reviewer_attention": false
+   "needs_reviewer_attention": false,
+   "lifecycle": "ACTIVE"
   },
   {
    "path": "tests/research/test_controls_v3_censoring_provenance.py",
@@ -835,9 +928,10 @@
     "pytest"
    ],
    "consumers": [],
-   "decision": "INCLUDE",
+   "decision": "PUSH",
    "reason": "companion module/test of the hardening package; the package is incoherent without it",
-   "needs_reviewer_attention": false
+   "needs_reviewer_attention": false,
+   "lifecycle": "ACTIVE"
   },
   {
    "path": "tests/research/test_controls_v3_core.py",
@@ -848,9 +942,10 @@
     "pytest"
    ],
    "consumers": [],
-   "decision": "INCLUDE",
+   "decision": "PUSH",
    "reason": "companion module/test of the hardening package; the package is incoherent without it",
-   "needs_reviewer_attention": false
+   "needs_reviewer_attention": false,
+   "lifecycle": "ACTIVE"
   },
   {
    "path": "tests/research/test_eligibility_v3_core.py",
@@ -863,9 +958,10 @@
    "consumers": [
     "research/hypothesis_engine/FORENSIC_FRONTIER_READINESS_AUDIT.md"
    ],
-   "decision": "INCLUDE",
+   "decision": "PUSH",
    "reason": "companion module/test of the hardening package; the package is incoherent without it",
-   "needs_reviewer_attention": false
+   "needs_reviewer_attention": false,
+   "lifecycle": "ACTIVE"
   },
   {
    "path": "tests/research/test_formation_leakage.py",
@@ -879,9 +975,10 @@
     "research/llm_matchup/B2_CORNERS_PILOT.md",
     "research/llm_matchup/FORMATION_RESOLUTION_POLICY.md"
    ],
-   "decision": "INCLUDE",
+   "decision": "PUSH",
    "reason": "companion module/test of the hardening package; the package is incoherent without it",
-   "needs_reviewer_attention": false
+   "needs_reviewer_attention": false,
+   "lifecycle": "ACTIVE"
   },
   {
    "path": "tests/research/test_formation_policy.py",
@@ -895,9 +992,10 @@
     "research/llm_matchup/B1_ADVERSARIAL_RESULTS.md",
     "research/llm_matchup/FORMATION_BEHAVIOR_ANALYSIS.md"
    ],
-   "decision": "INCLUDE",
+   "decision": "PUSH",
    "reason": "companion module/test of the hardening package; the package is incoherent without it",
-   "needs_reviewer_attention": false
+   "needs_reviewer_attention": false,
+   "lifecycle": "ACTIVE"
   },
   {
    "path": "tests/research/test_golden_v3_resume.py",
@@ -913,9 +1011,10 @@
     "research/llm_matchup/V3_CHECKPOINT.md",
     "src/research/llm_matchup/hardening/resume_golden_v3.py"
    ],
-   "decision": "INCLUDE",
+   "decision": "PUSH",
    "reason": "modified tracked source; interdependent with the new hardening modules and must ship with them",
-   "needs_reviewer_attention": false
+   "needs_reviewer_attention": false,
+   "lifecycle": "ACTIVE"
   },
   {
    "path": "tests/research/test_golden_v3_sonnet46.py",
@@ -926,9 +1025,10 @@
     "pytest"
    ],
    "consumers": [],
-   "decision": "INCLUDE",
+   "decision": "PUSH",
    "reason": "companion module/test of the hardening package; the package is incoherent without it",
-   "needs_reviewer_attention": false
+   "needs_reviewer_attention": false,
+   "lifecycle": "ACTIVE"
   },
   {
    "path": "tests/research/test_matchup_leakage.py",
@@ -943,9 +1043,27 @@
     "research/llm_matchup/GOLDEN_TESTS.md",
     "research/llm_matchup/README.md"
    ],
-   "decision": "INCLUDE",
+   "decision": "PUSH",
    "reason": "companion module/test of the hardening package; the package is incoherent without it",
-   "needs_reviewer_attention": false
+   "needs_reviewer_attention": false,
+   "lifecycle": "ACTIVE"
   }
- ]
+ ],
+ "supersedes": "V8C_REVIEW_SNAPSHOT_MANIFEST_V1 (29 push / 18 hold / 15 exclude)",
+ "decision_axes": {
+  "git_disposition": [
+   "PUSH",
+   "KEEP_EXTERNAL",
+   "KEEP_LOCAL",
+   "HOLD"
+  ],
+  "lifecycle": [
+   "ACTIVE",
+   "EXPERIMENTAL",
+   "SUPERSEDED",
+   "DEPRECATION_CANDIDATE",
+   "UNRELATED"
+  ]
+ },
+ "head_sha": "1694ca133923ec0d971a2c725a3f7d90164389f1"
 }
