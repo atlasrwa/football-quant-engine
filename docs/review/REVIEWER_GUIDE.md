@@ -110,11 +110,17 @@ presence in the layout as a statement that they are verified.
 
 ## 5. Known failures and unfinished work
 
-**Collection errors (5) — pre-existing, not introduced here.** `tests/research/` fails to
-collect 5 modules for `ModuleNotFoundError: hypothesis` / `sklearn` under the *system*
-Python. Identical errors occur on the deployed tree, so this is an environment gap, not a
-regression. Both are installed in `/home/ubuntu/.venv`; `sklearn` is now declared in
-`pyproject.toml` and `hypothesis` was already in the dev extras.
+**Collection — resolved.** A fresh venv from `pip install -e ".[dev,bedrock,persistence]"`
+collects **3,722 tests with 0 errors**. The earlier 5 errors were undeclared dependencies
+(`hypothesis`, `sklearn`) and one more surfaced during verification (`psycopg2`); all are now
+declared. Verified with `PYTHONPATH` unset and `PYTHONNOUSERSITE=1`.
+
+**Isolation limitation, stated plainly.** No container or separate host was available, so the
+fresh checkout still lives under `/home/ubuntu` and that path remains readable. Isolation was
+therefore established by *explicit origin verification* rather than by the filesystem: every
+project module, including `multisrc_corpus` and `championship_adapter`, was asserted to load
+from the checkout, and `sys.path` was asserted to contain no deployed-tree entry. That is
+weaker than true isolation and is reported as such.
 
 See `REPOSITORY_MAP.md` §D for the full defect backlog, including 309 files that hardcode
 `/home/ubuntu` and a declared boto3 (1.34.69) that does not match the deployed venv (1.43.93).
@@ -141,7 +147,7 @@ pass is ~1 hour per process. At 947 fixtures that is ~18 h per process.
 git clone git@github.com:atlasrwa/football-quant-engine.git
 cd football-quant-engine && git checkout review/engine-snapshot-audit
 python3 -m venv .venv && . .venv/bin/activate
-pip install -e ".[dev]"
+pip install -e ".[dev,bedrock,persistence]"   # bedrock/persistence only if you need them
 
 cp .env.example .env        # placeholders only; fill in locally, never commit
 
