@@ -115,8 +115,7 @@ def test_changed_executing_code_refuses(anchored):
         with pytest.raises(A.AnchorError, match="does not reproduce"):
             A.verify_producer_code(
                 anchor, repo_root=anchored["root"], verify_executing=True,
-                require_modules=["grammar"],
-                module_dir="src/research/hypothesis_v8c")
+                require_modules=["grammar"], require_executing=["grammar"])
     finally:
         sys.modules.pop("src.research.hypothesis_v8c.grammar_probe", None)
 

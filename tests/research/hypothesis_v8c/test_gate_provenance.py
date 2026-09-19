@@ -68,7 +68,10 @@ def test_stale_evidence_from_older_code_is_refused(tmp_path, monkeypatch):
     monkeypatch.setattr(F, "ENG", str(tmp_path))
     art = {"verdict": "PASS"}
     p = PROV.stamp()
-    p["producer_code_hashes"]["grammar"] = "0" * 64          # produced by different code
+    # `code_hashes()` is keyed by CANONICAL REPOSITORY PATH since the binding was widened to
+    # upstream dependencies, so poison a key that actually exists -- writing a bare module
+    # name would merely ADD a key and the staleness check would see nothing changed.
+    p["producer_code_hashes"]["src/research/hypothesis_v8c/grammar.py"] = "0" * 64
     art[PROV.PROVENANCE_KEY] = p
     (tmp_path / "V8C_PIT_ADVERSARIAL_RESULTS.json").write_text(json.dumps(art))
     v = F.evaluate_gate()

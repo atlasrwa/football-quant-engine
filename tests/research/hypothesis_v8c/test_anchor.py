@@ -78,7 +78,7 @@ def test_verifies_and_the_two_commits_are_distinct(repo):
         "the anchor commit must be later than the producer-code commit")
     assert out["producer_code_commit"] == repo["producer_commit"]
     assert out["anchor_commit"] == repo["anchor_commit"]
-    assert out["producer_code"]["n_modules_verified"] == 1
+    assert out["producer_code"]["n_sources_required"] == 1
     assert out["verified_against_working_tree"] is False
 
 
