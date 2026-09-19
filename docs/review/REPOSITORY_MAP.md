@@ -50,7 +50,7 @@ traced in this pass; both are recorded, neither is marked obsolete.
 ## B. File disposition
 
 Exact paths. `PUSH` = in this branch. Counts, taken from the final inventory in
-`V8C_REVIEW_SNAPSHOT_MANIFEST_V1.json` (artifact `..._V2`): **56 PUSH**, 14 KEEP_LOCAL,
+`V8C_REVIEW_SNAPSHOT_MANIFEST_V1.json` (artifact `..._V3`): **56 PUSH**, 14 KEEP_LOCAL,
 1 KEEP_EXTERNAL, 0 HOLD — 70 file entries plus 1 directory-group entry, counted separately.
 The rows below group paths for readability; the manifest is the per-file authority.
 
@@ -209,8 +209,11 @@ previous behaviour was reproducibly wrong in a way that documentation had unders
 **What it does.** `REPO_ROOT` is `os.path.realpath()` of the directory one level above this
 module's own directory — that is, the checkout the interpreter is executing. `SCRIPTS_DIR` is
 `<REPO_ROOT>/scripts`. `ensure_repo_importable()` and `ensure_scripts_importable()` prepend
-those to `sys.path` and return them. 18 call sites across 16 library modules use them, plus
-three `SCRIPTS_DIR`-as-constant importers under `prediction_engine/eval/`.
+those to `sys.path` and return them. Re-derived for this amendment: **18 sites across 16
+library modules** — 15 helper calls in 13 modules, plus 3 modules under
+`prediction_engine/eval/` that import `SCRIPTS_DIR` as a module-level constant
+(`baselines.py`, `walk_forward.py`, `candidate_cards_league_prior.py`). Those 3 are why a
+validating override was rejected: a guard for them would have to fire at import time.
 
 **What it cannot do.**
 
