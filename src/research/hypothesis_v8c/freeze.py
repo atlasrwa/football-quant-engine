@@ -64,6 +64,12 @@ REQUIRED_ARTIFACTS = {
     "sealed947_preflight": ("V8C_SEALED947_STRUCTURAL_PREFLIGHT.json", True),
     "score_stability": ("V8C_SCORE_STABILITY_AUDIT.json", True),
     "live_reachability": ("V8C_LIVE_SEARCH_REACHABILITY_REPORT.json", True),
+    # ---- successor artifacts from the integration audit ----------------------------------
+    # The gate must CONSUME these. Readiness cannot be certified from helper tests or from a
+    # handwritten boolean: each of these is produced by an executed composed run.
+    "composed_rehearsal": ("V8C_EXPOSED50_REHEARSAL_V2.json", True),
+    "r_action_space_coverage": ("V8C_R_ACTION_SPACE_COVERAGE_V2.json", True),
+    "ledger_evidence": ("V8C_LEDGER_EVIDENCE_V1.json", True),
 }
 
 #: Code modules whose hashes are bound into the manifest.
@@ -71,7 +77,10 @@ CODE_MODULES = ("grammar", "pit_context", "historical_pit", "compiler", "scorer"
                 "cohort_stats", "pre_t", "universe", "controls", "aggregate",
                 "aggregate_blocks", "blind_index", "select_freeze", "score_frozen", "packet",
                 "runner", "cache", "env_semantics", "golden", "vintage", "receipt",
-                "defect_ledger", "provenance", "live_reachability")
+                "defect_ledger", "provenance", "live_reachability",
+                # ---- added by the integration audit; each is scientific code whose change
+                # must invalidate a freeze that was certified under the old bytes ----
+                "anchor", "control_coverage", "historical_similarity", "prompt")
 
 
 class FreezeRefused(Exception):
