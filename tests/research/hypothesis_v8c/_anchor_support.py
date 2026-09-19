@@ -44,10 +44,14 @@ def anchor_freeze(tmp_path, freeze_path, *, fixture_ids=("mt_1",),
         _git(repo, "config", "user.email", "t@example.com")
         _git(repo, "config", "user.name", "T")
 
-    for fn in sorted(os.listdir(SRC)):
-        if fn.endswith(".py"):
-            shutil.copy2(os.path.join(SRC, fn), repo / MODULE_DIR / fn)
-    _git(repo, "add", MODULE_DIR)
+    # EVERY bound source, at its canonical repository path -- upstream scientific
+    # dependencies, the loader and the provider adapters included. Copying only
+    # `hypothesis_v8c/*` left 19 required sources missing from the anchor's commit.
+    for rel in RC.BOUND_SOURCES:
+        dst = repo / rel
+        dst.parent.mkdir(parents=True, exist_ok=True)
+        shutil.copy2(os.path.join(REPO, rel), dst)
+    _git(repo, "add", "-A")
     _git(repo, "commit", "-q", "--allow-empty", "-m", "producer code")
     producer_commit = _git(repo, "rev-parse", "HEAD")
 

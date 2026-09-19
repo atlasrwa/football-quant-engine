@@ -1,0 +1,23 @@
+{
+ "artifact": "V8C_EFFECT_COMPUTATION_DISCLOSURE_V2",
+ "supersedes": {
+  "artifact": "V8C_EXPOSED50_REHEARSAL_V2.json",
+  "field": "effect_direction_computed: false",
+  "preserved_unmodified": true
+ },
+ "generated_utc": "2026-09-19T04:46:44.260113+00:00",
+ "produced_at_commit": "9d548002641c15372bd0b51884a6898557365e1e",
+ "CORRECTION": {
+  "prior_claim": "effect_direction_computed = false",
+  "what_was_actually_true": "score_frozen called aggregate.per_fixture_endpoints and aggregate.endpoint, which compute arm means, paired differences D_R and D_H, dispersion and estimator.small_cluster_inference. aggregate.structural_only then REMOVED those fields from the returned dict. The rehearsal therefore supported 'not EMITTED'; it did not support 'not COMPUTED'.",
+  "scope_of_the_error": "The 50-fixture rehearsal reported in V8C_EXPOSED50_REHEARSAL_V2.json did compute arm means, paired differences and small-cluster inference in process 2 before discarding them. Those values were never written to any artifact, never printed, and never returned to a caller.",
+  "what_is_NOT_claimed": "That internal computation inside a process that has exited constitutes human or model exposure to an effect. It does not, and no effect value was rendered to anyone. The correction is about the accuracy of the WORDS 'not computed', not about a disclosure event.",
+  "repair": "score_frozen(mode='development_diagnostics') shares the identical verification, binding and scoring machinery, then branches to structural_diagnostics.structural_diagnostics, which assembles SCORE_OK counts, pair retention, block membership and inference ELIGIBILITY from statuses and identities. It never reads a score value -- scores are replaced by a poisoned sentinel that raises on any arithmetic -- and no effect aggregation or estimator is reachable from that branch.",
+  "verified_by": [
+   "tests/research/hypothesis_v8c/test_no_effect_computed.py",
+   "composed tests that replace aggregate.endpoint and the estimator with raising stubs"
+  ]
+ },
+ "confirmatory_path_unchanged": true,
+ "integrity_checks_bypassed": false
+}

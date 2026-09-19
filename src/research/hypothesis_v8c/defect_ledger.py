@@ -262,6 +262,62 @@ NEW_FINDINGS = [
 ]
 
 
+#: Requirements that gate the CONFIRMATORY protocol but NOT an explicitly-labelled
+#: four-selection development rehearsal. Each is OPEN until separately proved; none may be
+#: closed by an algorithm test passing or an artifact merely existing.
+CONFIRMATORY_ONLY_REQUIREMENTS = {
+    "K8_SET_LEVEL_FEASIBILITY": {
+        "status": OPEN,
+        "why": ("whole-action-space feasibility at k = MAX_SELECTIONS = 8 is unproven: the "
+                "Hall minimum-degree test gives a universal guarantee only to k = 1 over the "
+                "exposed-50 universes. It is NOT disproven -- the test is sufficient, not "
+                "necessary -- but an unproven requirement is OPEN."),
+        "artifact": "V8C_R_ACTION_SPACE_COVERAGE_V2.json",
+        "cannot_be_closed_by": ["a passing maximum-matching algorithm test",
+                                "the presence of the coverage artifact",
+                                "probe sets that happen to match at k=8"],
+        "blocks": ["CONFIRMATORY_READY"],
+        "does_not_block": ["DEVELOPMENT_REHEARSAL_READY"],
+    },
+    "LIVE_MODEL_RESOLUTION": {
+        "status": OPEN,
+        "why": ("every run so far used a deterministic mocked transport, so no resolved model "
+                "identity was ever reported and the live resolution path is untested"),
+        "cannot_be_closed_by": ["a mocked transport labelling the field NOT_APPLICABLE"],
+        "blocks": ["CONFIRMATORY_READY"],
+        "does_not_block": ["DEVELOPMENT_REHEARSAL_READY"],
+    },
+}
+
+#: What each readiness flag is ALLOWED to mean. Neither is ever set directly; both are
+#: DERIVED in `readiness()` from defect status and the requirements above.
+READINESS_DEFINITIONS = {
+    "DEVELOPMENT_REHEARSAL_READY": (
+        "the exposed-50 four-selection development rehearsal can execute end to end through "
+        "the real entry points with no bypass; says nothing about the confirmatory protocol"),
+    "CONFIRMATORY_READY": (
+        "every P0 and P1 defect is closed on bound evidence AND every confirmatory-only "
+        "requirement is resolved; this is NOT implied by a successful development rehearsal"),
+}
+
+
+def readiness(evaluation: dict) -> dict:
+    """DERIVE both flags. Neither is settable, and one never implies the other."""
+    conf_open = sorted(k for k, v in CONFIRMATORY_ONLY_REQUIREMENTS.items()
+                       if v["status"] != CLOSED)
+    dev_ready = evaluation["p0_open"] == 0
+    return {
+        "DEVELOPMENT_REHEARSAL_READY": bool(dev_ready),
+        "CONFIRMATORY_READY": bool(dev_ready and evaluation["p1_open"] == 0 and not conf_open),
+        "confirmatory_open_requirements": conf_open,
+        "p0_open": evaluation["p0_open"],
+        "p1_open": evaluation["p1_open"],
+        "definitions": READINESS_DEFINITIONS,
+        "derived_not_declared": True,
+        "development_ready_does_not_imply_confirmatory_ready": True,
+    }
+
+
 def module_hashes(modules) -> dict:
     """SHA256 of the CURRENT bytes of each bound module."""
     import hashlib

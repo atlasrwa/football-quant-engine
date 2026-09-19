@@ -60,6 +60,7 @@ ZERO SPEND. Reads no target outcome.
 from __future__ import annotations
 
 import bisect
+from collections import OrderedDict
 
 from src.research.hypothesis_v7 import similarity as V7S
 from src.research.hypothesis_v71.similarity import SimilarityRefused
@@ -79,6 +80,16 @@ PRIMARY_DISTANCE = V7S.PRIMARY_DISTANCE
 RESTRICT_SAME_COMPETITION = V7S.RESTRICT_SAME_COMPETITION
 
 
+class _Refused:
+    """A refusal, recorded as TEXT. Deliberately not an exception: storing the exception
+    object retains its traceback, its frames and their locals."""
+
+    __slots__ = ("message",)
+
+    def __init__(self, message):
+        self.message = message
+
+
 class HistoricalSimilarityIndex:
     """Similar-opponent cohorts as of ANY instant, over one corpus index.
 
@@ -86,13 +97,21 @@ class HistoricalSimilarityIndex:
     timestamps, not target-relative offsets.
     """
 
-    def __init__(self, index):
+    #: Deterministic bound on the cohort memo. Chosen against available capacity: each entry
+    #: is a small frozenset of team ids, so 200k entries is well under a gigabyte, while the
+    #: exposed-50 cohort needs only a few thousand. Eviction is LRU and affects speed only.
+    DEFAULT_MAX_COHORT_ENTRIES = 200_000
+
+    def __init__(self, index, *, max_cohort_entries=None):
         self.index = index
+        self.max_cohort_entries = int(max_cohort_entries
+                                      or self.DEFAULT_MAX_COHORT_ENTRIES)
+        self._evictions = 0
         self._pref = {}             # (team, comp, dim) -> (kickoffs, cum_sum, cum_count)
         self._match_k = {}          # (team, comp) -> sorted kickoffs (for n_matches)
         self._teams_by_comp = {}
         self._first_seen = {}       # team -> earliest kickoff, for the frozen tie-break
-        self._cohort_memo = {}
+        self._cohort_memo = OrderedDict()
         self._build()
 
     # ---- construction --------------------------------------------------------------------
@@ -174,17 +193,41 @@ class HistoricalSimilarityIndex:
         key = (competition, str(reference_team), int(before_unix))
         memo = self._cohort_memo.get(key)
         if memo is not None:
-            if isinstance(memo, SimilarityRefused):
-                raise memo
+            self._cohort_memo.move_to_end(key)
+            if isinstance(memo, _Refused):
+                # A FRESH exception every time. Caching the exception OBJECT and re-raising
+                # it appended a new frame to that object's __traceback__ on every raise, and
+                # each frame pinned its locals -- the profiles and z-fit dicts included. One
+                # cached refusal therefore grew an unbounded traceback chain, which is what
+                # actually consumed ~200 MB per fixture. The memo itself was never the cost:
+                # it holds a few hundred small frozensets.
+                raise SimilarityRefused(memo.message)
             return memo
 
         try:
             out = self._compute(reference_team, competition, before_unix)
         except SimilarityRefused as exc:
-            self._cohort_memo[key] = exc
+            # Store the REASON as text, never the exception (and never its traceback).
+            self._store(key, _Refused(str(exc)))
             raise
-        self._cohort_memo[key] = out
+        self._store(key, out)
         return out
+
+    def _store(self, key, value) -> None:
+        """Insert under a deterministic bound. Eviction is least-recently-used, so it can
+        change only PERFORMANCE: an evicted key is recomputed from the same inputs and yields
+        the same answer. Membership semantics are untouched."""
+        self._cohort_memo[key] = value
+        self._cohort_memo.move_to_end(key)
+        while len(self._cohort_memo) > self.max_cohort_entries:
+            self._cohort_memo.popitem(last=False)
+            self._evictions += 1
+
+    def cache_stats(self) -> dict:
+        return {"cohort_memo_entries": len(self._cohort_memo),
+                "cohort_memo_limit": self.max_cohort_entries,
+                "evictions": self._evictions,
+                "caches_exception_objects": False}
 
     def _compute(self, reference_team, competition, before_unix):
         ref = str(reference_team)

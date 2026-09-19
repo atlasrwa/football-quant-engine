@@ -164,76 +164,137 @@ def verify_anchor_at_commit(*, anchor_commit, anchor_repo_relpath, freeze_path,
     return anchor
 
 
-def verify_producer_code(anchor: dict, *, repo_root=None,
-                         module_dir="src/research/hypothesis_v8c",
-                         require_modules=None, verify_executing=True) -> dict:
-    """THREE-WAY binding of the scientific code.
+def verify_producer_code(anchor: dict, *, repo_root=None, require_modules=None,
+                         verify_executing=True, expected_exec_root=None,
+                         require_executing=None) -> dict:
+    """THREE-WAY binding of the scientific code, by CANONICAL REPOSITORY PATH.
 
-    Verifying the anchor against Git only proves the anchor agrees with history. It does NOT
-    prove the interpreter is running that code: a modified working tree passes such a check
-    trivially. So each bound module must satisfy
+        anchor claim == bytes at PRODUCER_CODE_COMMIT == bytes of the file this interpreter
+                                                         actually imported
 
-        hash(anchor claim) == hash(bytes committed at PRODUCER_CODE_COMMIT)
-                           == hash(the file THIS interpreter actually loaded)
+    Three defects this replaces:
 
-    An anchor whose producer hashes are absent or null is REFUSED rather than passing
-    vacuously -- an empty claim set must not be mistaken for a verified one.
+      * a module that was NOT LOADED was appended to a `not_loaded` list and skipped, then
+        counted in `n_modules_verified`, while the function returned
+        `executing_code_verified: bool(verify_executing)` -- the FLAG, not the outcome. A
+        required module could therefore be reported verified without being verified at all.
+      * only `hypothesis_v8c/*` was bound, so a change to the compiler, the similarity spec,
+        the corpus loader or a provider adapter left the anchor valid while changing results.
+      * an import resolved from a DIFFERENT checkout satisfied the check as long as the bytes
+        matched; `expected_exec_root` now pins where a loaded module may live.
+
+    A required source that cannot be verified is an ERROR. Nothing is certified by omission.
     """
+    import sys as _sys
+
+    from src.research.hypothesis_v8c import receipt as _RC
+
     commit = anchor.get("producer_code_commit")
     if not commit or commit == "UNKNOWN":
         raise AnchorError("anchor carries no producer_code_commit: cannot verify producer code")
 
     claimed = anchor.get("producer_code_hashes") or {}
-    required = set(require_modules) if require_modules is not None else set(claimed)
+    required = list(require_modules) if require_modules is not None else sorted(claimed)
     if not required:
         raise AnchorError("anchor declares NO producer code hashes: refusing to score on a "
                           "vacuously-satisfied code binding")
-    absent = sorted(m for m in required if claimed.get(m) in (None, ""))
-    if absent:
+    undeclared = sorted(m for m in required if claimed.get(m) in (None, ""))
+    if undeclared:
         raise AnchorError(
-            f"anchor's producer code coverage is incomplete: {len(absent)} module(s) carry no "
-            f"hash ({absent[:5]}) -- an incomplete binding is not a binding")
+            f"anchor's producer code coverage is incomplete: {len(undeclared)} source(s) carry "
+            f"no hash ({undeclared[:5]}) -- an incomplete binding is not a binding")
 
-    import sys as _sys
-    mismatches, missing, not_loaded = [], [], []
-    for mod in sorted(required):
-        expected = claimed[mod]
-        rel = f"{module_dir}/{mod}.py"
+    path_for = dict(_RC.MODULE_PATH_FOR)
+    rel_to_import = {v: k for k, v in path_for.items()}
+    exec_root = os.path.abspath(expected_exec_root or ROOT)
+
+    must_execute = set(require_executing if require_executing is not None
+                       else _RC.REQUIRED_EXECUTING_SOURCES)
+    mismatches, missing, unverified, git_only = [], [], [], []
+    git_verified = exec_verified = exec_verified_required = 0
+    for key in required:
+        expected = claimed[key]
+        rel = key if key.endswith(".py") else f"src/research/hypothesis_v8c/{key}.py"
         try:
             at_commit = _sha_bytes(read_blob_at(commit, rel, repo_root=repo_root))
         except AnchorError:
             missing.append(rel)
             continue
         if at_commit != expected:
-            mismatches.append({"module": mod, "at_commit": at_commit, "in_anchor": expected,
+            mismatches.append({"source": rel, "at_commit": at_commit, "in_anchor": expected,
                                "which": "GIT"})
             continue
+        git_verified += 1
         if not verify_executing:
             continue
-        m = _sys.modules.get(f"src.research.hypothesis_v8c.{mod}")
+
+        mod_name = rel_to_import.get(rel)
+        m = _sys.modules.get(mod_name) if mod_name else None
         f = getattr(m, "__file__", None) if m is not None else None
         if not f or not os.path.exists(f):
-            not_loaded.append(mod)
+            if rel in must_execute:
+                # NOT a skip. A source this process is REQUIRED to run, but never imported,
+                # cannot be certified as the code that is executing.
+                unverified.append({"source": rel, "reason": "NOT_LOADED_IN_THIS_INTERPRETER"})
+            else:
+                git_only.append(rel)      # bound and git-verified; legitimately not imported
+            continue
+        f = os.path.abspath(f)
+        if not f.startswith(exec_root + os.sep):
+            # Cross-checkout substitution: identical bytes from another tree must not pass.
+            unverified.append({"source": rel, "reason": "LOADED_FROM_FOREIGN_CHECKOUT",
+                               "loaded_from": f, "expected_root": exec_root})
             continue
         with open(f, "rb") as fh:
             executing = _sha_bytes(fh.read())
         if executing != expected:
-            mismatches.append({"module": mod, "executing": executing, "in_anchor": expected,
+            mismatches.append({"source": rel, "executing": executing, "in_anchor": expected,
                                "which": "EXECUTING"})
+            continue
+        exec_verified += 1
+        if rel in must_execute:
+            exec_verified_required += 1
 
-    if missing or mismatches:
+    if missing or mismatches or unverified:
         raise AnchorError(
             f"producer code does not reproduce the anchor: {len(mismatches)} hash mismatch(es), "
-            f"{len(missing)} missing file(s). {mismatches[:3]} {missing[:3]}")
+            f"{len(missing)} missing file(s), {len(unverified)} unverified source(s). "
+            f"{mismatches[:2]} {missing[:2]} {unverified[:2]}")
+
+    if verify_executing:
+        needed = [r for r in required if r in must_execute]
+        unbound = sorted(set(must_execute) - set(required))
+        if unbound:
+            # A source declared REQUIRED-EXECUTING but absent from the bound set would never
+            # be hashed at all -- an unverifiable requirement is a broken contract, not a pass.
+            raise AnchorError(
+                f"required-executing sources are not bound and so were never verified: "
+                f"{unbound}")
+        if exec_verified_required < len(needed):
+            raise AnchorError(
+                f"executing-code verification is incomplete: {exec_verified_required}/"
+                f"{len(needed)} required-executing sources verified")
+
     return {"producer_code_commit": commit,
-            "n_modules_verified": len(required),
-            "executing_code_verified": bool(verify_executing),
-            "modules_not_loaded_in_this_interpreter": sorted(not_loaded)}
+            "n_sources_required": len(required),
+            "n_git_verified": git_verified,
+            "n_executing_verified": exec_verified,
+            # the OUTCOME, never the flag
+            "n_required_executing": len([r for r in required if r in must_execute]),
+            "n_executing_verified_required": exec_verified_required,
+            "n_git_verified_only": len(git_only),
+            "git_verified_only_sources": sorted(git_only),
+            "executing_code_verified": (
+                bool(verify_executing)
+                and exec_verified_required == len([r for r in required if r in must_execute])),
+            "expected_exec_root": exec_root,
+            "unverified_sources": unverified}
 
 
 def verify_for_scoring(*, anchor_commit, anchor_repo_relpath, freeze_path, receipt_path,
                        repo_root=None, verify_code=True, require_modules=None,
-                       verify_executing=True) -> dict:
+                       verify_executing=True, expected_exec_root=None,
+                       require_executing=None) -> dict:
     """The complete PROCESS 2 gate. Raises before any caller can open a target outcome.
 
     Ordering matters: the external anchor is checked FIRST, because it is the only check whose
@@ -244,7 +305,9 @@ def verify_for_scoring(*, anchor_commit, anchor_repo_relpath, freeze_path, recei
         freeze_path=freeze_path, receipt_path=receipt_path, repo_root=repo_root)
     code = (verify_producer_code(anchor, repo_root=repo_root,
                                  require_modules=require_modules,
-                                 verify_executing=verify_executing)
+                                 verify_executing=verify_executing,
+                                 expected_exec_root=expected_exec_root,
+                                 require_executing=require_executing)
             if verify_code else None)
 
     from src.research.hypothesis_v8c import receipt as RC

@@ -1,0 +1,73 @@
+{
+ "artifact": "V8C_REPRODUCIBILITY_COMPARISON_CONTRACT_V1",
+ "generated_utc": "2026-09-19T04:46:44.260350+00:00",
+ "predeclared_at_commit": "9d548002641c15372bd0b51884a6898557365e1e",
+ "predeclared_before_any_run": true,
+ "purpose": "fix what counts as a deterministic match BEFORE either run exists, so no mismatch can be excused after the fact by adding an exclusion",
+ "COMPARED_SCIENTIFIC_PAYLOAD": {
+  "per_fixture": [
+   "fixture_id",
+   "packet_hash",
+   "pit_context_hash",
+   "universe_hash",
+   "corpus_vintage_hash",
+   "capability_hash",
+   "grammar_version",
+   "grammar_size_hash",
+   "arm_status",
+   "k_valid",
+   "S",
+   "R",
+   "H",
+   "R_pairs",
+   "R_identity_count",
+   "R_cross_treatment_overlap_count",
+   "live_search_addressable"
+  ],
+  "cohort": [
+   "fixture_ids_ordered",
+   "inference_blocks.fixture_to_block",
+   "freeze_hash"
+  ],
+  "diagnostics": [
+   "arm_score_ok",
+   "status_counts",
+   "n_pairs_frozen_total",
+   "n_pairs_surviving_total",
+   "inference_eligibility"
+  ],
+  "provenance": [
+   "prompt_sha256",
+   "tool_schema_sha256",
+   "runner_version",
+   "orchestration_version",
+   "search_queries",
+   "ids_returned_to_model",
+   "submitted_ids",
+   "accepted_ids",
+   "validation_status",
+   "research_reason",
+   "termination_reason"
+  ]
+ },
+ "EXCLUDED_AND_WHY": {
+  "created_utc": "wall-clock stamp; differs by construction",
+  "generated_utc": "wall-clock stamp",
+  "export_timestamp_utc": "wall-clock stamp",
+  "elapsed_s": "timing, not a scientific quantity",
+  "rss_mb_peak": "resource measurement, reported separately",
+  "process ids": "OS-assigned",
+  "absolute paths": "each run extracts to its own output directory by design",
+  "anchor_commit": "each run anchors in its own throwaway repo, so the commit id differs",
+  "producer_code_commit": "differs per scratch repo; the CODE HASHES it certifies are compared instead",
+  "receipt_hash / anchor_hash": "cover the excluded timestamps above; the freeze_sha256 and producer_code_hashes they carry ARE compared"
+ },
+ "SEPARATELY_COMPARED_BOUND_CONTENTS": [
+  "anchor.producer_code_hashes (every bound source, by canonical path)",
+  "receipt.freeze_sha256",
+  "receipt.corpus_hash",
+  "receipt.capability_hash",
+  "receipt.manifest_cohort_hash"
+ ],
+ "RULE": "no field may be moved from COMPARED to EXCLUDED after a mismatch is observed. A mismatch in a compared field is a REPRODUCIBILITY FAILURE and is reported as one."
+}

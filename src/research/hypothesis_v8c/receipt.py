@@ -43,10 +43,93 @@ import subprocess
 RECEIPT_VERSION = "v8c_receipt_v1"
 
 #: Modules whose content is bound into every receipt.
-BOUND_MODULES = ("grammar", "pit_context", "historical_pit", "compiler", "scorer",
-                 "cohort_stats", "pre_t", "universe", "controls", "aggregate",
-                 "blind_index", "select_freeze", "score_frozen", "packet", "runner",
-                 "cache", "vintage", "receipt")
+#: The V8C modules bound into every receipt, by bare name (back-compat surface).
+BOUND_MODULES = ("grammar", "pit_context", "historical_pit", "historical_similarity",
+                 "compiler", "scorer", "cohort_stats", "pre_t", "universe", "controls",
+                 "control_coverage", "aggregate", "aggregate_blocks", "blind_index",
+                 "select_freeze", "score_frozen", "packet", "runner", "prompt", "anchor",
+                 "structural_diagnostics", "bundle_gate",
+                 "cache", "vintage", "receipt", "live_reachability", "env_semantics",
+                 "freeze", "defect_ledger", "provenance", "golden", "harness")
+
+#: EVERY source file whose bytes can change a measured result, by CANONICAL REPOSITORY PATH.
+#:
+#: Binding only `hypothesis_v8c/*` was not a binding of the scientific code. The compiler
+#: delegates to `hypothesis_v71.compiler`, the similarity spec lives in `hypothesis_v7`, the
+#: corpus is normalised by `matchup.corpus` and the provider adapters under `scripts/`, and
+#: the capability contract is parsed by `hypothesis_v71.capability`. A change to any of them
+#: changes what the engine measures while leaving a v8c-only anchor perfectly valid.
+#:
+#: `historical_similarity` and `prompt` were the two most load-bearing omissions: the first
+#: decides historical cohort membership, the second is the exact text and tool schema the
+#: model is shown.
+BOUND_SOURCES = tuple(sorted(
+    [f"src/research/hypothesis_v8c/{m}.py" for m in BOUND_MODULES]
+    + [
+        # ---- upstream scientific dependencies the v8c path calls into ----
+        "src/research/hypothesis_v71/capability.py",
+        "src/research/hypothesis_v71/compiler.py",
+        "src/research/hypothesis_v71/corpus_index.py",
+        "src/research/hypothesis_v71/engine.py",
+        "src/research/hypothesis_v71/estimator.py",
+        "src/research/hypothesis_v71/execution.py",
+        "src/research/hypothesis_v71/invariants.py",
+        "src/research/hypothesis_v71/ir.py",
+        "src/research/hypothesis_v71/leakage.py",
+        "src/research/hypothesis_v71/recency.py",
+        "src/research/hypothesis_v71/similarity.py",
+        "src/research/hypothesis_v7/similarity.py",
+        "src/research/hypothesis_v7/pit.py",
+        "src/research/hypothesis_v7/leakage.py",
+        "src/research/hypothesis_v8b1/controls.py",
+        "src/research/hypothesis_v8b1/search.py",
+        # ---- loader / normaliser: what a "record" IS ----
+        "src/research/matchup/corpus.py",
+        "scripts/multisrc_corpus.py",
+        "scripts/championship_adapter.py",
+    ]))
+
+#: The sources the SCORING process must actually have imported. Every one of these is
+#: required to be loaded AND to match; a bound source outside this set is verified against the
+#: commit but is legitimately not imported by process 2 (e.g. `control_coverage`, `golden`),
+#: and is reported as git-verified-only rather than silently counted as executing-verified.
+REQUIRED_EXECUTING_SOURCES = tuple(sorted([
+    "src/research/hypothesis_v8c/anchor.py",
+    "src/research/hypothesis_v8c/aggregate.py",
+    "src/research/hypothesis_v8c/aggregate_blocks.py",
+    "src/research/hypothesis_v8c/blind_index.py",
+    "src/research/hypothesis_v8c/cache.py",
+    "src/research/hypothesis_v8c/cohort_stats.py",
+    "src/research/hypothesis_v8c/compiler.py",
+    "src/research/hypothesis_v8c/grammar.py",
+    "src/research/hypothesis_v8c/historical_pit.py",
+    "src/research/hypothesis_v8c/historical_similarity.py",
+    "src/research/hypothesis_v8c/packet.py",
+    "src/research/hypothesis_v8c/pit_context.py",
+    "src/research/hypothesis_v8c/pre_t.py",
+    "src/research/hypothesis_v8c/prompt.py",
+    "src/research/hypothesis_v8c/receipt.py",
+    "src/research/hypothesis_v8c/runner.py",
+    "src/research/hypothesis_v8c/score_frozen.py",
+    "src/research/hypothesis_v8c/structural_diagnostics.py",
+    "src/research/hypothesis_v8c/scorer.py",
+    "src/research/hypothesis_v8c/select_freeze.py",
+    "src/research/hypothesis_v8c/universe.py",
+    "src/research/hypothesis_v8c/vintage.py",
+    "src/research/hypothesis_v71/capability.py",
+    "src/research/hypothesis_v71/compiler.py",
+    "src/research/hypothesis_v71/corpus_index.py",
+    "src/research/hypothesis_v71/invariants.py",
+    "src/research/hypothesis_v71/similarity.py",
+    "src/research/hypothesis_v7/similarity.py",
+    "src/research/matchup/corpus.py",
+]))
+
+#: Import path -> repo path, for the executing-code check.
+MODULE_PATH_FOR = {
+    rel[len("src/"):].replace("/", ".")[:-3].replace("research.", "src.research.", 1): rel
+    for rel in BOUND_SOURCES if rel.startswith("src/")}
+
 
 #: The checkout this module is executing from. Derived from the module's own location, not
 #: hardcoded, so the producer-code binding follows the interpreter rather than one machine's
@@ -83,9 +166,9 @@ def git_commit() -> str:
 
 def code_hashes() -> dict:
     out = {}
-    for m in BOUND_MODULES:
-        p = f"{ROOT}/src/research/hypothesis_v8c/{m}.py"
-        out[m] = sha_file_bytes(p) if os.path.exists(p) else None
+    for rel in BOUND_SOURCES:
+        p = f"{ROOT}/{rel}"
+        out[rel] = sha_file_bytes(p) if os.path.exists(p) else None
     return out
 
 

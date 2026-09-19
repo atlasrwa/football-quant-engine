@@ -100,6 +100,7 @@ TERM_FORCED_SUBMIT = "FORCED_SUBMIT_AFTER_BUDGET_EXHAUSTED"
 TERM_NO_SUBMISSION = "ENDED_WITHOUT_SUBMISSION"
 TERM_MAX_TURNS = "MAX_TOOL_TURNS_EXCEEDED"
 TERM_MALFORMED_TOOL_USE = "MALFORMED_TOOL_USE"
+TERM_TRANSPORT_FAILURE = "TRANSPORT_FAILURE"
 
 
 @dataclass
@@ -304,6 +305,21 @@ def _tool_result(tool_use_id: str, payload: dict, *, ok: bool = True) -> dict:
                            "status": "success" if ok else "error"}}
 
 
+def _submission_text(tool_input) -> dict:
+    """The model's OWN words, carried verbatim as TEXT.
+
+    `run_fixture_converse` used not to return these at all, so `select_freeze`'s
+    `run.get("research_reason")` silently yielded None on every fixture: the reasoning was
+    DISCARDED while the record claimed to preserve it. Nothing here is parsed, scored or
+    turned into a covariate -- the numerical firewall is unchanged.
+    """
+    if not isinstance(tool_input, dict):
+        return {"research_reason": None, "evidence_references": []}
+    ev = tool_input.get("evidence_references")
+    return {"research_reason": tool_input.get("research_reason"),
+            "evidence_references": list(ev) if isinstance(ev, list) else []}
+
+
 def _submitted_ids_from(tool_input) -> tuple:
     """(ids, malformed_reason). A malformed submission yields ids=None so the caller can
     record INVALID_SUBMISSION rather than silently treating it as an abstention."""
@@ -333,8 +349,15 @@ def run_fixture_converse(fixture_universe, capability, *, converse, packet,
     session = SearchSession(fixture_universe=fixture_universe)
     messages = [{"role": "user", "content": [{"text": packet}]}]
     tool_config = {"tools": [{"toolSpec": t} for t in TOOL_SCHEMAS]}
+    # The config actually SENT, recorded as such. It was previously separate from the
+    # caller-supplied `model_config_stamp`, so the stamp could describe a request that was
+    # never made.
+    effective_inference_config = dict(inference_config or {})
 
     converse_calls = 0
+    converse_attempts = 0
+    transport_failures = []
+    submission_text = {"research_reason": None, "evidence_references": []}
     search_attempted = 0
     budget_exhausted = False
     forced_submit_requested = False
@@ -342,9 +365,20 @@ def run_fixture_converse(fixture_universe, capability, *, converse, packet,
     raw_response_hashes, stop_reasons, usages = [], [], []
 
     for _turn in range(MAX_TOOL_TURNS + 1):
-        response = converse(modelId=model_id, messages=messages,
-                            system=[{"text": SYSTEM_PROMPT}], toolConfig=tool_config,
-                            inferenceConfig=inference_config or {})
+        # ATTEMPTS are counted separately from successful RESPONSES, and a transport failure
+        # is a terminal record -- never a silent retry or a reselection.
+        converse_attempts += 1
+        try:
+            response = converse(modelId=model_id, messages=messages,
+                                system=[{"text": SYSTEM_PROMPT}], toolConfig=tool_config,
+                                inferenceConfig=effective_inference_config)
+        except Exception as exc:
+            transport_failures.append({"attempt": converse_attempts,
+                                       "error_type": type(exc).__name__,
+                                       "error": str(exc)[:400]})
+            termination = TERM_TRANSPORT_FAILURE
+            submitted, malformed = None, f"transport failure: {type(exc).__name__}"
+            break
         converse_calls += 1
         raw_response_hashes.append(CACHE._sha(response))
         stop_reasons.append(response.get("stopReason"))
@@ -365,6 +399,7 @@ def run_fixture_converse(fixture_universe, capability, *, converse, packet,
             tool_input = use.get("input")
 
             if name == SUBMIT_TOOL_NAME:
+                submission_text = _submission_text(tool_input)
                 ids, why = _submitted_ids_from(tool_input)
                 if ids is None:
                     submitted, malformed = None, why
@@ -433,6 +468,9 @@ def run_fixture_converse(fixture_universe, capability, *, converse, packet,
         "stop_reasons": stop_reasons,
         "usage": usages,
         "malformed_reason": malformed,
+        "converse_attempts": converse_attempts,
+        "transport_failures": transport_failures,
+        "effective_inference_config": effective_inference_config,
     }
     result["search_calls_used"] = session.search_calls_used
     result["n_ids_returned_this_session"] = len(session.returned_ids)
@@ -440,6 +478,11 @@ def run_fixture_converse(fixture_universe, capability, *, converse, packet,
     result["ids_returned_to_model"] = sorted(session.returned_ids)
     result["submitted_ids"] = list(submitted) if submitted is not None else []
     result["raw_model_response_hashes"] = raw_response_hashes
+    result["research_reason"] = submission_text["research_reason"]
+    result["evidence_references"] = submission_text["evidence_references"]
+    result["effective_inference_config"] = effective_inference_config
+    result["transport_failures"] = transport_failures
+    result["converse_attempts"] = converse_attempts
     return result
 
 
@@ -477,6 +520,20 @@ def treatment_record(*, fixture_id, kickoff_unix, fixture_universe, ctx, packet_
         "orchestration_version": ORCHESTRATION_VERSION,
         "model_config_hash": (CACHE.model_config_hash(model_config_stamp)
                               if model_config_stamp is not None else None),
+        # The config the request was ACTUALLY sent with, distinct from the caller's stamp.
+        "effective_inference_config": result.get("effective_inference_config"),
+        "effective_inference_config_hash": (
+            CACHE.model_config_hash(result["effective_inference_config"])
+            if result.get("effective_inference_config") is not None else None),
+        "converse_attempts": result.get("converse_attempts"),
+        "transport_failures": result.get("transport_failures", []),
+        # Honest labelling: a deterministic stand-in resolves no model, so the live-model
+        # resolution path is NOT exercised and must not be reported as if it were.
+        "resolved_model_id_status": (
+            "REPORTED_BY_TRANSPORT" if resolved_model_id else
+            "NOT_APPLICABLE_MOCK_TRANSPORT" if str(model_id).startswith("DETERMINISTIC")
+            else "NOT_REPORTED_BY_TRANSPORT"),
+        "live_model_resolution_tested": bool(resolved_model_id),
         "cache_key": cache_key,
         "cache_hit": cache_hit,
         # ---- what actually happened ----------------------------------------------------
@@ -495,8 +552,12 @@ def treatment_record(*, fixture_id, kickoff_unix, fixture_universe, ctx, packet_
         "validation_problems": result.get("problems", []),
         "research_yield": result.get("research_yield"),
         # ---- the reasoning, as TEXT, never as a feature -----------------------------------
-        "research_reason": research_reason,
-        "evidence_references": evidence_references or [],
+        # Prefer what the RUNNER actually captured from the submission over anything the
+        # caller passes in: the caller cannot know what the model said.
+        "research_reason": (result.get("research_reason")
+                            if result.get("research_reason") is not None else research_reason),
+        "evidence_references": (result.get("evidence_references")
+                                or evidence_references or []),
         "prose_is_never_a_numerical_feature": True,
         "controls_can_read_prose": False,
         # ---- raw response binding ----------------------------------------------------------

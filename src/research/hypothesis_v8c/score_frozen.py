@@ -44,6 +44,7 @@ from src.research.hypothesis_v8c import pit_context as PC
 from src.research.hypothesis_v8c import receipt as RCPT
 from src.research.hypothesis_v8c import scorer as SC
 from src.research.hypothesis_v8c import select_freeze as SF
+from src.research.hypothesis_v8c import structural_diagnostics as SD
 from src.research.hypothesis_v8c import universe as UNI
 from src.research.hypothesis_v8c import vintage as VIN
 
@@ -52,6 +53,11 @@ SCORE_FROZEN_VERSION = "v8c_score_frozen_v2"
 UNRESOLVED = "UNRESOLVED"
 
 SCORE_FROZEN_SCHEMA_VERSION = "v8c_freeze_schema_v1"
+
+#: The two assembly modes. Verification, binding and scoring are IDENTICAL in both; they
+#: differ only in what is assembled from the resulting records.
+CONFIRMATORY = "confirmatory"
+DEVELOPMENT_DIAGNOSTICS = "development_diagnostics"
 
 #: Top-level fields a freeze MUST carry. Absence is FAIL-CLOSED, never "skip the check".
 REQUIRED_FREEZE_FIELDS = (
@@ -279,7 +285,8 @@ def verify_inference_blocks(fz: dict) -> dict:
 def score_frozen(freeze_path: str, index, *, capability, receipt_path,
                  anchor_commit, anchor_repo_relpath, similarity_engine=None,
                  grammar_kwargs=None, progress=False, require_commit=None,
-                 repo_root=None, verify_executing_code=True) -> dict:
+                 repo_root=None, expected_exec_root=None,
+                 mode=CONFIRMATORY) -> dict:
     """Verify EVERYTHING, then score. The only place a target outcome is read.
 
     `receipt_path`, `anchor_commit` and `anchor_repo_relpath` are all MANDATORY. A mutable
@@ -301,7 +308,11 @@ def score_frozen(freeze_path: str, index, *, capability, receipt_path,
     anchor_out = ANCHOR.verify_for_scoring(
         anchor_commit=anchor_commit, anchor_repo_relpath=anchor_repo_relpath,
         freeze_path=freeze_path, receipt_path=receipt_path, repo_root=repo_root,
-        require_modules=RCPT.BOUND_MODULES, verify_executing=verify_executing_code)
+        # No bypass. Executing-code verification is NOT optional on the scoring path, and
+        # the required set is every bound SOURCE -- upstream scientific dependencies, the
+        # loader and the provider adapters included, not just hypothesis_v8c/*.
+        require_modules=RCPT.BOUND_SOURCES, verify_executing=True,
+        expected_exec_root=expected_exec_root)
 
     fz = load_and_verify_freeze(freeze_path, receipt_path=receipt_path,
                                 require_commit=require_commit)
@@ -311,7 +322,13 @@ def score_frozen(freeze_path: str, index, *, capability, receipt_path,
 
     # ---- verify EVERY fixture's binding BEFORE scoring ANY of them ---------------------
     verified = []
-    for row in fz["selections"]:
+    n_rows = len(fz["selections"])
+    for _i, row in enumerate(fz["selections"], 1):
+        # Progress for the binding pass, which rebuilds a universe per fixture and was
+        # previously silent for its whole duration. Emits identity and counts only -- never
+        # an outcome, a score or an effect.
+        if progress:
+            print(f"[bind] {_i}/{n_rows} {row['fixture_id']}", flush=True)
         pos, ctx = verify_fixture_binding(
             row, index, capability, historical=historical,
             similarity_engine=similarity_engine, grammar_kwargs=gkw,
@@ -350,6 +367,34 @@ def score_frozen(freeze_path: str, index, *, capability, receipt_path,
 
     ids = fz["fixture_ids_ordered"]
 
+    if mode == DEVELOPMENT_DIAGNOSTICS:
+        # REPAIR 3. The SAME verification and the SAME scorer produced `records`; only the
+        # assembly differs. No effect aggregation and no estimator is reached from here, so
+        # the claim is "not computed", not merely "not emitted".
+        diag = SD.structural_diagnostics(records, ids, pair_triples,
+                                         blocks["fixture_to_block"])
+        return {"score_version": SCORE_FROZEN_VERSION,
+                "mode": DEVELOPMENT_DIAGNOSTICS,
+                "freeze_hash_verified": fz["freeze_hash"],
+                "freeze_version": fz["freeze_version"],
+                "classification": fz["classification"],
+                "receipt_verified": True,
+                "anchor_commit": anchor_commit,
+                "producer_code_commit": anchor_out["producer_code"]["producer_code_commit"],
+                "anchor_verified": True,
+                "executing_code_verified":
+                    anchor_out["producer_code"]["executing_code_verified"],
+                "n_sources_required": anchor_out["producer_code"]["n_sources_required"],
+                "n_executing_verified": anchor_out["producer_code"]["n_executing_verified"],
+                "blocks_validated_before_any_target_read": True,
+                "binding_verified_fixtures": len(verified),
+                "blocks": blocks,
+                "scorer": SC.version_stamp(),
+                "structural_diagnostics": diag,
+                "effect_aggregation_called": False,
+                "statistical_inference_called": False,
+                "records": [{k: v for k, v in r.items() if k != "score"} for r in records]}
+
     per_fixture = AG.per_fixture_endpoints(records, ids, pair_triples)
     sr = AG.endpoint(per_fixture, "D_R", blocks["fixture_to_block"],
                      label="S_vs_R (MATCHED-PAIR)")
@@ -364,6 +409,8 @@ def score_frozen(freeze_path: str, index, *, capability, receipt_path,
             "producer_code_commit": anchor_out["producer_code_commit"],
             "anchor_verified": True,
             "executing_code_verified": anchor_out["producer_code"]["executing_code_verified"],
+            "n_sources_required": anchor_out["producer_code"]["n_sources_required"],
+            "n_executing_verified": anchor_out["producer_code"]["n_executing_verified"],
             "blocks_validated_before_any_target_read": True,
             "binding_verified_fixtures": len(verified),
             "blocks_source": "FROZEN_IN_SELECTION (recomputation used only as a check)",
