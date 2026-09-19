@@ -13,7 +13,8 @@ import sys
 from collections import defaultdict
 from typing import Optional
 import numpy as np
-sys.path.insert(0, "/home/ubuntu/scripts")
+from src._repo_paths import ensure_scripts_importable  # noqa: E402
+ensure_scripts_importable()
 import pilotC_stat_mixer as mix   # reuse load_corpus (FootyStats, status==complete)
 
 

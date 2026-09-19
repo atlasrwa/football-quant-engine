@@ -15,7 +15,8 @@ import sys
 from datetime import datetime, timezone
 from pathlib import Path
 
-sys.path.insert(0, "/home/ubuntu")
+from src._repo_paths import ensure_repo_importable
+ensure_repo_importable()
 
 from src.engine.analysis.fdr import QuarantineTracker
 from src.research.governance.classifier import GovernanceDecision, GovernanceState

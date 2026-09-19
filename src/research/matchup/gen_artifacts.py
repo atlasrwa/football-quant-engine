@@ -1,7 +1,8 @@
 """Generate machine-readable research artifacts (dictionary, provenance, coverage, registry)."""
 import os, sys, csv, json, time
 import numpy as np
-sys.path.insert(0, "/home/ubuntu")
+from src._repo_paths import ensure_repo_importable
+ensure_repo_importable()
 from src.research.matchup.corpus import load_corpus, season_of
 from src.research.matchup.design import DesignBuilder, WINDOWS, WLBL, POOLS, CHAMP_POOL, outcome
 from src.research.matchup import features as F

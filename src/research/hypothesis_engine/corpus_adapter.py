@@ -29,7 +29,8 @@ from collections import defaultdict
 from dataclasses import dataclass
 from typing import Optional, Sequence
 
-sys.path.insert(0, "/home/ubuntu")
+from src._repo_paths import ensure_repo_importable
+ensure_repo_importable()
 
 from src.research.hypothesis_engine import capability, context_packet as CP, measurement as M
 from src.research.matchup import corpus as MC

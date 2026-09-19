@@ -19,7 +19,7 @@ import sys
 from pathlib import Path
 from typing import Optional
 
-_SCRIPTS = str(Path("/home/ubuntu/scripts"))
+from src._repo_paths import SCRIPTS_DIR as _SCRIPTS  # noqa: E402
 if _SCRIPTS not in sys.path:
     sys.path.insert(0, _SCRIPTS)
 

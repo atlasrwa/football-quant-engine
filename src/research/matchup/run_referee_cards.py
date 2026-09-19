@@ -11,7 +11,9 @@ import os, sys, warnings
 from collections import defaultdict
 import numpy as np
 warnings.filterwarnings("ignore")
-sys.path.insert(0, "/home/ubuntu"); sys.path.insert(0, "/home/ubuntu/scripts")
+from src._repo_paths import (ensure_repo_importable,  # noqa: E402
+                             ensure_scripts_importable)
+ensure_repo_importable(); ensure_scripts_importable()
 import pilotC_stat_mixer as mix
 from src.research.matchup.referee_env import RefereeLeagueContext
 from src.research.matchup import harness as H

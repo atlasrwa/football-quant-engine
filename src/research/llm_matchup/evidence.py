@@ -18,7 +18,8 @@ import os, sys, json, glob, hashlib
 from dataclasses import dataclass, field, asdict
 from typing import Optional
 
-sys.path.insert(0, "/home/ubuntu")
+from src._repo_paths import ensure_repo_importable
+ensure_repo_importable()
 from src.research.matchup.corpus import MatchRecord, load_corpus, season_of
 from src.research.llm_matchup import cohorts as CH
 from src.research.llm_matchup.versions import PACKET_SCHEMA_VERSION, COHORT_POLICY_VERSION

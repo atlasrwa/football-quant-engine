@@ -37,7 +37,7 @@ from pathlib import Path
 from typing import Callable, Optional
 
 # The champion lives in scripts/; make it importable without moving it.
-_SCRIPTS = str(Path("/home/ubuntu/scripts"))
+from src._repo_paths import SCRIPTS_DIR as _SCRIPTS  # noqa: E402
 if _SCRIPTS not in sys.path:
     sys.path.insert(0, _SCRIPTS)
 

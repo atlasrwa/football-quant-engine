@@ -7,7 +7,8 @@ from __future__ import annotations
 import os, sys, json, time, warnings
 import numpy as np
 warnings.filterwarnings("ignore")
-sys.path.insert(0, "/home/ubuntu")
+from src._repo_paths import ensure_repo_importable
+ensure_repo_importable()
 
 from src.research.matchup.corpus import load_corpus
 from src.research.matchup.design import DesignBuilder, outcome, POOLS, CHAMP_POOL
