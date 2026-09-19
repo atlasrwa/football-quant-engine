@@ -26,12 +26,26 @@ import json
 import time
 
 from src.research.llm_matchup import phaseb_harness as H
+from src.research.llm_matchup.bedrock_adapter import check_bedrock_capability, IncompatibleBotoError
+from src.research.llm_matchup.hardening import atomic_io as AIO
+from src.research.llm_matchup.hardening import run_lock as RL
 from src.research.llm_matchup.hardening import sampling as SMP
 from src.research.llm_matchup.hardening import neutralize_v3 as NZ3
 from src.research.llm_matchup.hardening import golden_manifest as GM
+from src.research.llm_matchup.hardening import versions_v3 as V3
 
 OUT = GM.OUT
 LEDGER_PATH = os.path.join(OUT, "golden_v3_execution_ledger.json")
+
+
+def _lock_path() -> str:
+    """Resolved at CALL TIME from `GM.OUT`, not at import time -- same reasoning as
+    `golden_manifest.load_manifest`'s `manifest_path` default: binding this in a module-level
+    constant would snapshot the production path at import and silently defeat
+    `monkeypatch.setattr(GM, "OUT", ...)`, which is how the offline resume tests isolate
+    themselves. Without this, every existing `dry_run=False` test would acquire a REAL lock
+    file under the production `out/hardening_v3/` directory as an untracked side effect."""
+    return os.path.join(GM.OUT, ".golden_v3_live_runner.lock")
 
 
 def classify_bedrock_error(error: str | None) -> str:
@@ -57,8 +71,7 @@ def load_ledger() -> dict:
 
 
 def save_ledger(ledger: dict) -> None:
-    os.makedirs(OUT, exist_ok=True)
-    json.dump(ledger, open(LEDGER_PATH, "w"), indent=2, default=str)
+    AIO.atomic_write_json(LEDGER_PATH, ledger)
 
 
 def resume(call_fn=None, use_cache: bool = True, dry_run: bool = False) -> dict:
@@ -67,10 +80,41 @@ def resume(call_fn=None, use_cache: bool = True, dry_run: bool = False) -> dict:
     `call_fn(neutral_packet, use_cache=...) -> LLMResult` defaults to
     `adapter_v4.analyze_matchup_v4` and is overridable ONLY for offline testing -- production
     callers should never pass this.
+
+    Live calls (`dry_run=False`) are guarded by TWO fail-closed gates before any Bedrock call
+    is attempted: an exclusive process lock (ABORT_ALREADY_RUNNING if another live runner
+    already holds it -- a duplicate `resume()` ran concurrently against this exact ledger
+    once already) and a Bedrock-capability probe (ABORT_INCOMPATIBLE_BOTO3 if the active
+    Python environment's boto3 cannot make a Converse call at all -- this also happened once,
+    silently producing 16 misleading per-fixture UNAVAILABLE records for one environment bug).
     """
+    if not dry_run:
+        try:
+            lock = RL.acquire(_lock_path())
+            lock.__enter__()
+        except RL.AlreadyRunningError as e:
+            return {"status": "ABORT_ALREADY_RUNNING", "detail": str(e)}
+        try:
+            return _resume_locked(call_fn, use_cache, dry_run)
+        finally:
+            lock.__exit__(None, None, None)
+    return _resume_locked(call_fn, use_cache, dry_run)
+
+
+def _resume_locked(call_fn, use_cache: bool, dry_run: bool) -> dict:
     manifest = GM.load_manifest()
     if manifest is None:
         return {"status": "ABORT_NO_FROZEN_MANIFEST"}
+
+    # Fail-closed cross-generation guard (checkpoint SS2). This module is the SONNET 4.5 arm's
+    # resume harness and owns the 4.5 ledger. It must refuse any manifest belonging to a
+    # different scientific generation (e.g. LLM_MATCHUP_V3_SONNET46), so a 4.6 manifest can
+    # never cause a 4.5 fixture to be marked complete, and vice versa.
+    manifest_gen = manifest.get("generation_id")
+    if manifest_gen is not None and manifest_gen != V3.GENERATION_ID:
+        return {"status": "ABORT_GENERATION_ID_MISMATCH",
+                "expected_generation_id": V3.GENERATION_ID,
+                "manifest_generation_id": manifest_gen}
 
     n = manifest["generation_fingerprint"]["sampling_params"]["n"]
     max_scan = manifest["generation_fingerprint"]["sampling_params"]["max_scan"]
@@ -82,6 +126,12 @@ def resume(call_fn=None, use_cache: bool = True, dry_run: bool = False) -> dict:
     if call_fn is None:
         from src.research.llm_matchup.hardening import adapter_v4 as A4
         call_fn = A4.analyze_matchup_v4
+
+    if not dry_run:
+        try:
+            check_bedrock_capability(region=V3.DEFAULT_BEDROCK_REGION)
+        except IncompatibleBotoError as e:
+            return {"status": "ABORT_INCOMPATIBLE_BOTO3", "detail": str(e)}
 
     ledger = load_ledger()
     fixtures_ledger = ledger.setdefault("fixtures", {})
@@ -114,15 +164,30 @@ def resume(call_fn=None, use_cache: bool = True, dry_run: bool = False) -> dict:
         neutral = NZ3.neutralize_for_llm_v2(source_packet)
 
         result = call_fn(neutral, use_cache=use_cache)
-        error_class = None if result.status == "OK" else classify_bedrock_error(
-            result.manifest.get("error"))
+        # LLM_STATE_REJECTED is the validator refusing a genuine model response (e.g. a
+        # hallucinated evidence-id citation) -- a SCIENTIFIC outcome, not an infrastructure
+        # failure. It must never be run through classify_bedrock_error (which is only
+        # meaningful for the exception/UNAVAILABLE path and would misreport it as
+        # OTHER_UNAVAILABLE, hiding a real validator attrition event as a fake infra blip).
+        if result.status == "LLM_STATE_REJECTED":
+            error_class = "LLM_STATE_REJECTED"
+        elif result.status == "OK":
+            error_class = None
+        else:
+            error_class = classify_bedrock_error(result.manifest.get("error"))
         attempt = {"unix": int(time.time()), "status": result.status,
-                  "cache_hit": result.manifest.get("cache_hit"), "error_class": error_class}
+                  "cache_hit": result.manifest.get("cache_hit"), "error_class": error_class,
+                  "reject_field": result.manifest.get("reject_field"),
+                  "reject_reason": result.manifest.get("reject_reason")}
         entry["attempts"].append(attempt)
 
         if result.status == "OK":
             entry["status"] = "SUCCESS"
             results.append({"fixture_id": fid, "status": "SUCCESS", "source": "new_call"})
+        elif result.status == "LLM_STATE_REJECTED":
+            entry["status"] = "LLM_STATE_REJECTED"
+            results.append({"fixture_id": fid, "status": "LLM_STATE_REJECTED",
+                            "reject_reason": result.manifest.get("reject_reason")})
         elif error_class == "AWS_DAILY_TOKEN_QUOTA":
             entry["status"] = "AWS_DAILY_TOKEN_QUOTA"
             stopped_for_quota = True

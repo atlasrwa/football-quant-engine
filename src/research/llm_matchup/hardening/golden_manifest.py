@@ -48,33 +48,41 @@ def _sha256_json(obj) -> str:
     return hashlib.sha256(json.dumps(obj, sort_keys=True, default=str).encode()).hexdigest()
 
 
-def current_generation_fingerprint(n: int, max_scan: int = 200) -> dict:
-    """Every scientific input that must be IDENTICAL across a resume (checkpoint §5)."""
+def current_generation_fingerprint(n: int, max_scan: int = 200, gen=V3) -> dict:
+    """Every scientific input that must be IDENTICAL across a resume (checkpoint §5).
+
+    `gen` selects the generation module (default `versions_v3` = Sonnet 4.5 arm). Because
+    `bedrock_model_id` is part of the fingerprint, the Sonnet 4.6 arm is automatically a
+    DISTINCT generation: a 4.6 result can never satisfy the 4.5 manifest's compatibility
+    check, so tomorrow's 4.5 resume cannot be contaminated by today's 4.6 work.
+    """
     return {
-        "version_stamp": V3.version_stamp(),
+        "version_stamp": gen.version_stamp(),
         "prompt_content_hash": PR4.prompt_content_hash(),
         "schema_content_hash": SCH3.schema_content_hash(),
         "ontology_content_hash": _sha256_json(ONT.to_dict()),
         "neutralization_module_hash": _sha256_file(NEUTRALIZE_MODULE_PATH),
         "formation_structure_hash": FS.structure_content_hash(),
         "sampling_module_hash": _sha256_file(SAMPLING_MODULE_PATH),
-        "bedrock_model_id": V3.DEFAULT_BEDROCK_MODEL_ID,
-        "bedrock_region": V3.DEFAULT_BEDROCK_REGION,
-        "inference_config": V3.INFERENCE_CONFIG,
+        "bedrock_model_id": gen.DEFAULT_BEDROCK_MODEL_ID,
+        "bedrock_region": gen.DEFAULT_BEDROCK_REGION,
+        "inference_config": gen.INFERENCE_CONFIG,
         "sampling_params": {"n": n, "max_scan": max_scan},
     }
 
 
-def build_manifest(fixture_ids: list[str], n: int, max_scan: int = 200) -> dict:
-    fp = current_generation_fingerprint(n, max_scan)
+def build_manifest(fixture_ids: list[str], n: int, max_scan: int = 200, gen=V3,
+                   note: str | None = None) -> dict:
+    fp = current_generation_fingerprint(n, max_scan, gen=gen)
     return {
         "study": "golden_v3_fixture_manifest",
-        "generation_id": V3.GENERATION_ID,
+        "generation_id": gen.GENERATION_ID,
         "n_fixtures": len(fixture_ids),
         "fixture_ids": fixture_ids,
         "fixture_manifest_hash": _sha256_json(fixture_ids),
         "generation_fingerprint": fp,
-        "note": ("Deterministic stratified selection (hardening.sampling.select_stratified), "
+        "note": note or (
+                "Deterministic stratified selection (hardening.sampling.select_stratified), "
                 "prefix-stable in n. Ids 0-14 are byte-identical to the original n=15 golden "
                 "smoke batch; ids 15-19 are an approved n=15->20 extension attempted under "
                 "the SAME generation during the same interrupted run -- never a replacement "
@@ -82,19 +90,35 @@ def build_manifest(fixture_ids: list[str], n: int, max_scan: int = 200) -> dict:
     }
 
 
-def load_manifest() -> dict | None:
-    if not os.path.exists(MANIFEST_PATH):
+def load_manifest(manifest_path: str | None = None) -> dict | None:
+    """Load a frozen fixture manifest.
+
+    `manifest_path` defaults to the MODULE-LEVEL `MANIFEST_PATH` resolved AT CALL TIME, not
+    at function-definition time. This is deliberate and load-bearing: binding the default in
+    the signature (`manifest_path: str = MANIFEST_PATH`) snapshots the path at import and
+    silently defeats `monkeypatch.setattr(GM, "MANIFEST_PATH", ...)`, which is how the
+    offline resume tests isolate themselves from the real Sonnet 4.5 artifacts. That exact
+    bug let `test_resume_aborts_when_no_manifest` load the REAL frozen 4.5 manifest, skip its
+    intended ABORT_NO_FROZEN_MANIFEST path, and write fake OK attempts into the REAL 4.5
+    execution ledger. Keep the None sentinel.
+    """
+    manifest_path = manifest_path or MANIFEST_PATH
+    if not os.path.exists(manifest_path):
         return None
-    return json.load(open(MANIFEST_PATH))
+    return json.load(open(manifest_path))
 
 
-def save_manifest_if_absent(manifest: dict) -> str:
+def save_manifest_if_absent(manifest: dict, manifest_path: str | None = None) -> str:
     """Persist ONLY if no manifest exists yet. Freezing must never silently overwrite a
-    prior frozen fixture set (checkpoint SS2: never regenerate the sample)."""
-    if os.path.exists(MANIFEST_PATH):
+    prior frozen fixture set (checkpoint SS2: never regenerate the sample).
+
+    `manifest_path` resolves the module-level default at CALL TIME -- see `load_manifest`.
+    """
+    manifest_path = manifest_path or MANIFEST_PATH
+    if os.path.exists(manifest_path):
         return "EXISTS_UNCHANGED"
-    os.makedirs(OUT, exist_ok=True)
-    json.dump(manifest, open(MANIFEST_PATH, "w"), indent=2, default=str)
+    os.makedirs(os.path.dirname(manifest_path), exist_ok=True)
+    json.dump(manifest, open(manifest_path, "w"), indent=2, default=str)
     return "CREATED"
 
 
