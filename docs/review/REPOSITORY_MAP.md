@@ -21,8 +21,12 @@ not gather evidence, not that something is broken.
 | Validation & provenance | `select_freeze.py`, `receipt.py`, `anchor.py`, `score_frozen.py` | ACTIVE | VERIFIED_OFFLINE — 57 gate/anchor tests | — |
 | Bundle / data gate | `src/research/hypothesis_v8c/bundle_gate.py` | ACTIVE | VERIFIED_OFFLINE — 15 tests, pinned digest | — |
 | Hardening v3 (golden runs) | `src/research/llm_matchup/hardening/*` | ACTIVE | VERIFIED_OFFLINE — 104 tests | scientific content not audited |
-| Forecasting | `scripts/forecast_broadcast.py` (cron, 15 min) | ACTIVE | UNVERIFIED | not traced in this task |
-| Prospective / shadow / settlement | `data/forward/*`, `data/discovery/*` via cron loops | ACTIVE | UNVERIFIED | not traced in this task |
+| Discovery / ingestion | `scripts/pilotC_fixture_discovery.py`, `scripts/multisrc_step4_discovery.py`, `scripts/refresh_corpus.py`, `python -m src.cli corpus-ingest` | ACTIVE | UNVERIFIED | provider credentials required |
+| Forecast commitments | `scripts/pilotC_forward_predict.py` → `data/forward/commitments.jsonl` | ACTIVE | UNVERIFIED | entry point exists; execution not traced |
+| Prospective capture | `scripts/pilotC_forward_loop.py`, `scripts/quarantine_forward_loop.py` (cron, 4 h) | ACTIVE | UNVERIFIED | entry point exists; execution not traced |
+| Shadow / closing evaluation | `scripts/pilotC_settle.py` (closing observation + evaluation) | ACTIVE | UNVERIFIED | entry point exists; execution not traced |
+| Settlement | `scripts/pilotC_settle.py` → `data/discovery/pilotC_settled_log.json` | ACTIVE | UNVERIFIED | entry point exists; execution not traced |
+| Publication | `scripts/forecast_broadcast.py` (cron, 15 min), `scripts/signals_telegram_bot.py` (cron, daily) | ACTIVE | UNVERIFIED | entry point exists; execution not traced |
 | Scheduling & ops | crontab → `scripts/{forecast_broadcast,fixture_alert_watcher,quarantine_forward_loop,signals_telegram_bot,sync_provider_leagues}.py` | ACTIVE | VERIFIED_OFFLINE — all tracked, entry points exist | jobs run on the deployed host only |
 | Matchup research (PHASE F/G) | `src/research/matchup/run_*.py` | EXPERIMENTAL | UNVERIFIED | run directly; not scheduled |
 | Leak-remediation diagnostics | `scripts/diagnose_*.py`, `*_9660.py` | EXPERIMENTAL | UNVERIFIED | read cached corpus; no network |
@@ -93,7 +97,14 @@ file, so the churn persists until that decision is made.
 | **50-fixture composed rehearsal incomplete** | `_run_v8c_exposed50_rehearsal_v3.py` | two runs launched and cancelled; composed path proven at 2 fixtures | **P2** — `DEVELOPMENT_REHEARSAL_READY` not assertable |
 | Feature / provenance defects carried from review | `matchup/features.py`, provenance stamps | reviewer finding, not re-derived here | **P2** — needs its own pass |
 | Universe build ~65–95 s/fixture | `universe.py` | measured | **P3** — 947 fixtures ≈ 18 h per process |
-| `data/` ledger churn (74 tracked files) | repo hygiene | §C | **P3** — decision pending |
+| `data/` ledger churn | repo hygiene | §F: 19 candidates, 15 blocked by provenance | **P3** — decision pending |
+| Simultaneous-kickoff leakage | evaluation / feature build | reviewer finding; not re-derived here | **P1** |
+| Season-boundary behaviour | corpus / feature windows | reviewer finding; not re-derived here | **P1** |
+| Provenance bound to the wrong checkout | `receipt.py`, `anchor.py` | reproduced: cross-checkout import failure; ROOT now derived | **P1** — partially repaired, needs audit |
+| Missing scientific dependencies in freeze bindings | `freeze.py` `CODE_MODULES` | reviewer finding; `BOUND_SOURCES` widened to 51, `CODE_MODULES` not re-audited | **P1** |
+| Requested vs observed model identity | `runner.py` provenance | mock transport reports `NOT_APPLICABLE_MOCK_TRANSPORT`; live never exercised | **P1** |
+| Spend enforcement | Bedrock config | `.env.example` values only; enforcement path not traced | **P1** |
+| Lock / preflight coverage differences | `run_lock.py`, preflight | reviewer finding; not re-derived here | **P2** |
 
 ## E. External data
 
@@ -106,3 +117,32 @@ file, so the churn persists until that decision is made.
 | Layout | `data/thestatsapi/championship/` (season + per-fixture stats), `research/hypothesis_engine/` (selection freeze, fixture manifest, sealed-reserve ids), `research/hypothesis_oos/out/v7/V7_COVERAGE_MATRIX.json`, `loader_adapter/` |
 | Supplied how | Transferred privately to an authorized environment; validated by `src/research/hypothesis_v8c/bundle_gate.py`, which verifies the digest, reads the manifest from inside the verified archive, requires an exact tree match, scans season files for sealed-reserve ids, and binds every loader root to the validated directory |
 | Full corpus | ~8,500 files under `data/thestatsapi/` on the deployed host; not redistributed |
+
+## F. Tracked `data/` retention — all 74 files classified individually
+
+The earlier handoff called these "runtime ledgers". That was wrong: only 13 are.
+**Nothing was untracked in this pass.** `KEEP_LOCAL` here describes a retention *proposal*,
+not an action taken — the files remain tracked.
+
+| Kind | N | Retention policy | Why |
+|---|---|---|---|
+| MODEL_CONFIG_INPUT | 18 | RETAIN_VERSIONED | capability/market/strategy contract read at runtime; behaviour depends on content |
+| OPERATIONAL_STATE | 17 | CANDIDATE_RUNTIME_STORAGE | mutable operational state rewritten by scheduled jobs |
+| MUTABLE_LEDGER | 13 | CANDIDATE_RUNTIME_STORAGE | append-only ledger rewritten by cron; churn is not source change |
+| FROZEN_EVIDENCE | 12 | RETAIN_VERSIONED | scientific evidence; may be cited by manifests or prior reports |
+| PREREGISTRATION_ATTESTATION | 7 | RETAIN_VERSIONED | preregistration/attestation — versioning is the point |
+| HUMAN_REPORT | 4 | RETAIN_VERSIONED | small human-readable report; review material |
+| REGENERABLE_CACHE | 3 | CANDIDATE_EXTERNAL_EVIDENCE | regenerable from the provider corpus |
+
+**15 of the 74 are `UNRESOLVED_DEPENDENCY`** — referenced by a freeze or manifest
+artifact, so moving or untracking them would break a provenance reference. Migration for
+those is **blocked pending an explicit decision**, regardless of their kind.
+
+| Retention policy | N |
+|---|---|
+| CANDIDATE_EXTERNAL_EVIDENCE | 3 |
+| CANDIDATE_RUNTIME_STORAGE | 19 |
+| RETAIN_VERSIONED | 37 |
+| UNRESOLVED_DEPENDENCY | 15 |
+
+Per-file detail: `V8C_REVIEW_SNAPSHOT_MANIFEST_V1.json` → `tracked_data_inventory.files`.
