@@ -16,6 +16,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+import pathlib
 import subprocess
 import sys
 import tempfile
@@ -139,10 +140,18 @@ def e2e_evidence():
     fz = SF.select_cohort(env.index, env.target_positions, capability=env.capability, k=3,
                           fixture_ids=env.target_fixture_ids, grammar_kwargs=GK,
                           classification="SYNTHETIC_ONLY", enforce_seal=False)
-    with tempfile.NamedTemporaryFile("w", suffix=".json", delete=False) as f:
+    d = tempfile.mkdtemp()
+    path = f"{d}/freeze.json"
+    with open(path, "w") as f:
         json.dump(fz, f, indent=1, default=str, sort_keys=True)
-        path = f.name
-    res = SFZ.score_frozen(path, env.index, capability=env.capability, grammar_kwargs=GK)
+    # The evidence run goes through the SAME process-2 gate as a real run: external anchor,
+    # mandatory receipt, mandatory bindings. Evidence produced through a weaker path would not
+    # be evidence about the path that actually runs.
+    sys.path.insert(0, "/home/ubuntu/tests/research/hypothesis_v8c")
+    from _anchor_support import anchor_freeze          # noqa: E402
+    akw = anchor_freeze(pathlib.Path(d), path, fixture_ids=fz["fixture_ids_ordered"])
+    res = SFZ.score_frozen(path, env.index, capability=env.capability, grammar_kwargs=GK,
+                           **akw)
 
     ok = lambda arm: sum(1 for r in res["records"]
                          if r["arm"] == arm and r["status"] == CS.SCORE_OK)

@@ -102,9 +102,17 @@ def test_h_formula_is_the_frozen_one():
 
 
 def test_invalid_sonnet_id_is_an_explicit_terminal_state(golden_env):
-    """P1 INVALID-S: no silent `continue`."""
-    def selector(fu):
-        return [fu.evaluable[0]["hypothesis_id"], "mt_NOT_A_REAL_ID"]
+    """P1 INVALID-S: no silent `continue` -- and, since the audit, no PARTIAL ACCEPTANCE.
+
+    This test previously asserted `k_valid == 1`, i.e. that the one good id SURVIVED beside a
+    fabricated one. That was pinning the defect: `runner.PARTIAL_ACCEPTANCE` is False, so a
+    mixed submission must be rejected IN FULL. The corrected expectation is zero accepted.
+    """
+    from src.research.hypothesis_v8c import runner as RUN
+
+    def selector(session):
+        page = session.search({"max_results": 50})
+        return [page["results"][0]["hypothesis_id"], "mt_NOT_A_REAL_ID"]
 
     payload = SF.select_cohort(golden_env.index, [golden_env.target_pos],
                                capability=golden_env.capability, s_selector=selector,
@@ -112,10 +120,10 @@ def test_invalid_sonnet_id_is_an_explicit_terminal_state(golden_env):
                                grammar_kwargs=GRAMMAR_KW, enforce_seal=False)
     row = payload["selections"][0]
     assert row["n_submitted"] == 2
-    assert row["k_valid"] == 1
-    assert len(row["S_invalid"]) == 1
-    assert row["S_invalid"][0]["status"] == SF.INVALID_UNKNOWN_HYPOTHESIS_ID
-    assert payload["totals"]["S_invalid_count"] == 1
+    assert row["k_valid"] == 0, "partial acceptance leaked a valid id through"
+    assert row["arm_status"] == RUN.INVALID_SUBMISSION
+    assert row["S"] == [] and row["R"] == [] and row["H"] == []
+    assert row["S_invalid"], "the rejection must be an EXPLICIT terminal state, not a silence"
 
 
 def test_pair_identities_survive_into_the_freeze(golden_env):

@@ -42,6 +42,8 @@ from __future__ import annotations
 import hashlib
 import json
 
+ROOT = "/home/ubuntu"
+
 DEFECT_LEDGER_VERSION = "v8c_defect_ledger_v1"
 
 CLOSED = "CLOSED"
@@ -120,14 +122,17 @@ DEFECTS = [
     dict(id="P1-A-REAL-SONNET-RUNNER", severity="P1",
          root_cause="runner.py provides the session/validation surface but not the real "
                     "Bedrock Converse orchestration, so the paid treatment path does not exist",
-         repair="", required_evidence=[], expected_terminal="mocked multi-turn Converse loop",
-         status_override=OPEN),
+         expected_terminal="mocked multi-turn Converse loop",
+         repair='runner.run_fixture_converse -- the real multi-turn Bedrock Converse loop with the transport INJECTED; no boto3 import anywhere, so the mocked tests exercise the same orchestration a paid run would',
+         required_evidence=['tests/research/hypothesis_v8c/test_runner_converse.py::test_tool_loop_executes_searches_then_submits', 'tests/research/hypothesis_v8c/test_runner_converse.py::test_seventh_search_does_not_execute_and_forces_submit', 'tests/research/hypothesis_v8c/test_runner_converse.py::test_no_live_bedrock_call_is_possible_here', 'tests/research/hypothesis_v8c/test_runner_converse.py::test_search_backend_is_v8c_not_v8b1'],
+         bound_modules=['runner', 'universe', 'prompt']),
     dict(id="P1-B-PROMPT-TOOL-CONTRACT", severity="P1",
          root_cause="the V8C submit tool is materially simpler than the prior deep-reasoning "
                     "interface while docs claim the football prompt is unchanged",
-         repair="", required_evidence=[],
          expected_terminal="one frozen PROMPT_VERSION/PROMPT_SHA256/TOOL_SCHEMA_SHA256",
-         status_override=OPEN),
+         repair='prompt.py freezes ONE system prompt and ONE tool schema, both content-hashed and bound into the cache identity and every treatment record',
+         required_evidence=['tests/research/hypothesis_v8c/test_runner_converse.py::test_runner_sends_the_frozen_prompt_and_tool_schema', 'tests/research/hypothesis_v8c/test_submission_contract_authority.py::test_freeze_carries_complete_treatment_provenance'],
+         bound_modules=['prompt', 'runner']),
     dict(id="P1-C-LIVE-SEARCH-REACHABILITY", severity="P1",
          root_cause="unreachable==0 was proven by unlimited pagination, not under the live "
                     "MAX_SEARCH_CALLS=6 x PAGE_SIZE_CAP=50 protocol",
@@ -158,8 +163,10 @@ DEFECTS = [
          expected_terminal="INVALID_SUBMISSION with zero accepted selections"),
     dict(id="P1-E-TREATMENT-PROVENANCE", severity="P1",
          root_cause="the all-arm freeze does not carry full treatment provenance",
-         repair="", required_evidence=[], expected_terminal="every named field bound",
-         status_override=OPEN),
+         expected_terminal="every named field bound",
+         repair='runner.treatment_record, emitted by select_freeze.select_cohort for every fixture; resolved model identity is carried as None when unavailable, never fabricated',
+         required_evidence=['tests/research/hypothesis_v8c/test_submission_contract_authority.py::test_freeze_carries_complete_treatment_provenance', 'tests/research/hypothesis_v8c/test_submission_contract_authority.py::test_resolved_model_id_is_not_fabricated', 'tests/research/hypothesis_v8c/test_runner_converse.py::test_complete_treatment_provenance_is_emitted'],
+         bound_modules=['runner', 'select_freeze', 'packet']),
     dict(id="P1-G-GATE-SELF-CERTIFICATION", severity="P1",
          root_cause="the evidence generator wrote p0_open/p1_open/new_sonnet_calls literals "
                     "and the gate believed them; artifacts were bound to CURRENT code hashes "
@@ -179,14 +186,18 @@ DEFECTS = [
          expected_terminal="gate booleans derived from this ledger + per-artifact provenance"),
     dict(id="P1-H-REAL-CORPUS-REACHABILITY", severity="P1",
          root_cause="SCORE_OK reachability was demonstrated on synthetic data only",
-         repair="", required_evidence=[],
          expected_terminal="exposed-50 endpoint reachability, classified DEVELOPMENT",
-         status_override=OPEN),
+         repair='live_reachability.audit_fixture measures addressability under the REAL bounded 6-call protocol; select_freeze records theoretical and live reachability separately',
+         required_evidence=['tests/research/hypothesis_v8c/test_submission_contract_authority.py::test_clean_submission_is_accepted_and_bound'],
+         required_artifact='V8C_EXPOSED50_REHEARSAL_V2.json',
+         bound_modules=['live_reachability', 'universe', 'select_freeze']),
     dict(id="P1-I-R-ACTION-SPACE-COVERAGE", severity="P1",
          root_cause="R feasibility probed on only the first four evaluable candidates",
-         repair="", required_evidence=[],
          expected_terminal="coverage over the whole S action space + set-level K matching",
-         status_override=OPEN),
+         repair="control_coverage: whole-action-space single-candidate coverage, SET-LEVEL feasibility by maximum bipartite matching, and a Hall's-condition minimum-degree proof over the whole space reported in the successor coverage artifact",
+         required_evidence=['tests/research/hypothesis_v8c/test_control_coverage.py::test_single_candidate_coverage_is_computed_over_every_candidate', 'tests/research/hypothesis_v8c/test_control_coverage.py::test_set_level_uses_maximum_matching_not_greedy', 'tests/research/hypothesis_v8c/test_control_coverage.py::test_max_matching_beats_greedy_on_a_constructed_conflict'],
+         required_artifact='V8C_R_ACTION_SPACE_COVERAGE_V2.json',
+         bound_modules=['control_coverage', 'controls']),
     dict(id="P1-J-PILOT-POPULATION-RULE", severity="P1",
          root_cause="the fresh-pilot selection rule is not preregistered",
          repair="V8C_FRESH_PILOT_POPULATION_RULE.md -- N=60 derived from the frozen inference "
@@ -251,10 +262,36 @@ NEW_FINDINGS = [
 ]
 
 
-def evaluate(passed_node_ids, *, artifact_dir="/home/ubuntu/research/hypothesis_engine") -> dict:
-    """Derive P0_OPEN / P1_OPEN from ACTUAL test outcomes. Nothing here can be declared."""
+def module_hashes(modules) -> dict:
+    """SHA256 of the CURRENT bytes of each bound module."""
+    import hashlib
+    import os
+    out = {}
+    for m in modules:
+        path = f"{ROOT}/src/research/hypothesis_v8c/{m}.py"
+        if os.path.exists(path):
+            with open(path, "rb") as f:
+                out[m] = hashlib.sha256(f.read()).hexdigest()
+        else:
+            out[m] = None
+    return out
+
+
+def evaluate(passed_node_ids, *, artifact_dir="/home/ubuntu/research/hypothesis_engine",
+             evidence_binding=None) -> dict:
+    """Derive P0_OPEN / P1_OPEN from ACTUAL test outcomes. Nothing here can be declared.
+
+    `evidence_binding` is the record written when the evidence was produced:
+
+        {defect_id: {"code_hashes": {module: sha}, "commit": ..., "input_hashes": {...}}}
+
+    A defect whose bound modules have CHANGED since that record cannot be CLOSED on it. Stale
+    evidence is not evidence: a passing node id from before a repair says nothing about the
+    code running now.
+    """
     import os
     passed = set(passed_node_ids or ())
+    binding = evidence_binding or {}
     rows = []
     for d in DEFECTS:
         art = d.get("required_artifact")
@@ -267,6 +304,20 @@ def evaluate(passed_node_ids, *, artifact_dir="/home/ubuntu/research/hypothesis_
             status, missing = OPEN, ["no required evidence declared"]
         else:
             missing = [n for n in d["required_evidence"] if n not in passed] + art_missing
+            # STALENESS: the bound modules must be the ones the evidence was produced against.
+            bound = d.get("bound_modules") or []
+            if bound:
+                rec = binding.get(d["id"])
+                if not rec:
+                    missing.append("no evidence binding recorded for the bound modules")
+                else:
+                    now = module_hashes(bound)
+                    drifted = sorted(m for m in bound
+                                     if rec.get("code_hashes", {}).get(m) != now.get(m))
+                    if drifted:
+                        missing.append(
+                            f"evidence is STALE: bound module(s) changed since it was "
+                            f"produced: {drifted}")
             status = CLOSED if not missing else OPEN
         rows.append({**{k: v for k, v in d.items() if k != "status_override"},
                      "status": status, "missing_evidence": missing})
@@ -280,7 +331,11 @@ def evaluate(passed_node_ids, *, artifact_dir="/home/ubuntu/research/hypothesis_
             "p0_closed": [r["id"] for r in rows if r["severity"] == "P0" and r["status"] == CLOSED],
             "p1_closed": [r["id"] for r in rows if r["severity"] == "P1" and r["status"] == CLOSED],
             "open_ids": [r["id"] for r in rows if r["status"] != CLOSED],
-            "derived_from": "actual pytest node outcomes; no literal is accepted"}
+            "derived_from": "actual pytest node outcomes; no literal is accepted",
+            "evidence_binding_supplied": bool(binding),
+            "staleness_rule": ("a defect with bound_modules cannot be CLOSED unless an "
+                               "evidence binding records the SAME module hashes that are on "
+                               "disk now")}
 
 
 def ledger_hash() -> str:

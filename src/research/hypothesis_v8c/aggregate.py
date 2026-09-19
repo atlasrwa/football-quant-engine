@@ -201,6 +201,26 @@ def endpoint(per_fixture, key, fixture_to_block, *, label) -> dict:
                       "block": fixture_to_block[pf["fixture_id"]]} for pf in rows]}
 
 
+#: The fields of an endpoint that describe ASSEMBLY rather than RESULT. Everything omitted
+#: here -- `descriptive_all_fixtures`, `inference`, and the per-fixture `rows` with their
+#: `diff` values -- is effect-bearing.
+STRUCTURAL_ENDPOINT_FIELDS = ("label", "estimand", "paired_n_all", "paired_n_in_inference",
+                              "n_blocks_spanned", "block_qualification")
+
+
+def structural_only(endpoint: dict) -> dict:
+    """The OUTCOME-FREE projection of an endpoint.
+
+    Lets a development rehearsal answer "did the endpoint assemble, and were matched pairs
+    retained?" without computing, reading or emitting any effect, direction or p-value. The
+    exposed-50 outcomes are development data, so the distinction is the whole point: pair
+    RETENTION is structural, pair DIFFERENCE is a result.
+    """
+    out = {k: endpoint[k] for k in STRUCTURAL_ENDPOINT_FIELDS if k in endpoint}
+    out["effect_fields_withheld"] = ["descriptive_all_fixtures", "inference", "rows"]
+    return out
+
+
 def _pos_zero_neg(diffs, eps=1e-12) -> dict:
     pos = sum(1 for d in diffs if d > eps)
     neg = sum(1 for d in diffs if d < -eps)

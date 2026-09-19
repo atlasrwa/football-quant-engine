@@ -15,7 +15,13 @@ from src.research.hypothesis_v8c import score_frozen as SFZ
 from src.research.hypothesis_v8c import select_freeze as SF
 from src.research.hypothesis_v8c import vintage as VIN
 
+from src.research.hypothesis_v8c import anchor as ANCHOR
+from ._anchor_support import anchor_freeze
 from .conftest import GOLDEN_METRICS, GRAMMAR_KW
+
+#: Anchor kwargs, keyed by freeze path. Built when the freeze is written --
+#: i.e. BEFORE any test mutates it, which is the whole point of an anchor.
+_ANCHORS = {}
 
 
 def _freeze(env, tmp_path, name="freeze.json"):
@@ -32,12 +38,23 @@ def _freeze(env, tmp_path, name="freeze.json"):
         classification="SYNTHETIC_ONLY")
     rp = tmp_path / (name.replace(".json", "_receipt.json"))
     RCPT.write_receipt(r, str(rp))
+    _ANCHORS[str(p)] = anchor_freeze(
+        tmp_path, str(p), fixture_ids=payload["fixture_ids_ordered"],
+        receipt_path=str(rp))
     return payload, str(p), str(rp)
 
 
 def _score(env, fp, rp, **kw):
+    # A freeze registered by `_freeze` keeps the anchor built BEFORE any mutation, so an
+    # edited freeze is caught by the ANCHOR. Tests that write their own deliberately-mutated
+    # freeze are exercising the BINDING checks instead, so that freeze is anchored as-is --
+    # otherwise the anchor would mask the binding failure the test is actually about.
+    import pathlib as _pl
+    a = dict(_ANCHORS.get(fp) or anchor_freeze(_pl.Path(fp).parent, fp, receipt_path=rp))
+    a["receipt_path"] = rp
+    a.update(kw)
     return SFZ.score_frozen(fp, env.index, capability=env.capability,
-                            grammar_kwargs=GRAMMAR_KW, receipt_path=rp, **kw)
+                            grammar_kwargs=GRAMMAR_KW, **a)
 
 
 @pytest.fixture(scope="module")
@@ -72,8 +89,7 @@ def test_row_inserted_before_frozen_rec_i_is_refused(env, tmp_path):
     _p, fp, rp = _freeze(env, tmp_path)
     env2 = G.build_environment(metrics=GOLDEN_METRICS, n_prior_blocks=41)   # extra history
     with pytest.raises((SFZ.FreezeBindingMismatch, SFZ.FixtureNotInIndex)):
-        SFZ.score_frozen(fp, env2.index, capability=env2.capability,
-                         grammar_kwargs=GRAMMAR_KW, receipt_path=rp)
+        _score(env2, fp, rp)
 
 
 def test_reordered_index_still_resolves_by_fixture_id(env, tmp_path):
@@ -103,8 +119,7 @@ def test_mutated_prior_historical_value_is_refused(env, tmp_path):
     env2 = G.build_environment(metrics=GOLDEN_METRICS)
     env2.index.vals["goals"][5] = (99.0, 99.0)              # backfill a prior observation
     with pytest.raises(SFZ.FreezeBindingMismatch) as e:
-        SFZ.score_frozen(fp, env2.index, capability=env2.capability,
-                         grammar_kwargs=GRAMMAR_KW, receipt_path=rp)
+        _score(env2, fp, rp)
     assert "corpus vintage changed" in str(e.value) or "PIT context" in str(e.value)
 
 
@@ -208,9 +223,11 @@ def test_self_rehashed_tamper_is_caught_by_the_receipt(env, tmp_path):
     reread = json.load(open(fp))
     assert reread["freeze_hash"] == SF.freeze_hash(reread)
     # ... and the external receipt still refuses
-    with pytest.raises(RCPT.ReceiptError) as e:
+    with pytest.raises((RCPT.ReceiptError, ANCHOR.AnchorError)) as e:
         _score(env, fp, rp)
-    assert "freeze file bytes" in str(e.value)
+    # The external anchor now catches this BEFORE the receipt does; either
+    # refusal is correct, and the anchor is the stronger of the two.
+    assert "freeze file bytes" in str(e.value) or "freeze bytes" in str(e.value)
 
 
 def test_edited_receipt_is_refused(env, tmp_path):
@@ -218,21 +235,21 @@ def test_edited_receipt_is_refused(env, tmp_path):
     r = json.load(open(rp))
     r["freeze_sha256"] = "0" * 64
     json.dump(r, open(rp, "w"), indent=1, default=str, sort_keys=True)
-    with pytest.raises(RCPT.ReceiptError) as e:
+    with pytest.raises((RCPT.ReceiptError, ANCHOR.AnchorError)) as e:
         _score(env, fp, rp)
-    assert "receipt_hash" in str(e.value)
+    assert "receipt_hash" in str(e.value) or "receipt bytes" in str(e.value)
 
 
 def test_receipt_from_another_commit_is_refused(env, tmp_path):
     _p, fp, rp = _freeze(env, tmp_path)
-    with pytest.raises(RCPT.ReceiptError) as e:
+    with pytest.raises((RCPT.ReceiptError, ANCHOR.AnchorError)) as e:
         _score(env, fp, rp, require_commit="0" * 40)
     assert "commit" in str(e.value)
 
 
 def test_missing_receipt_is_refused(env, tmp_path):
     _p, fp, _rp = _freeze(env, tmp_path)
-    with pytest.raises(RCPT.ReceiptError):
+    with pytest.raises((RCPT.ReceiptError, ANCHOR.AnchorError)):
         _score(env, fp, str(tmp_path / "nope.json"))
 
 
@@ -265,6 +282,8 @@ def test_post_freeze_block_change_is_refused(env, tmp_path):
                            classification="SYNTHETIC_ONLY")
     rp2 = tmp_path / "blocks_receipt.json"
     RCPT.write_receipt(r, str(rp2))
-    with pytest.raises(SFZ.FreezeBindingMismatch) as e:
+    # Block validation now runs BEFORE any target read, so this is refused by
+    # the pre-scoring validator rather than by the per-fixture binding check.
+    with pytest.raises(SFZ.InferenceBlockError) as e:
         _score(env, str(fp2), str(rp2))
     assert "blocking rule changed" in str(e.value)

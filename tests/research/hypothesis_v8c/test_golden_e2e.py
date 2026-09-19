@@ -5,6 +5,8 @@ asserts the exact expected failure, at the expected stage, for the expected reas
 """
 from __future__ import annotations
 
+import pathlib
+
 import pytest
 
 from src.research.hypothesis_v8c import aggregate as AG
@@ -27,11 +29,17 @@ def _run(env, k=3):
                               grammar_kwargs=GRAMMAR_KW, enforce_seal=False)
     import json
     import tempfile
-    with tempfile.NamedTemporaryFile("w", suffix=".json", delete=False) as f:
+
+    from ._anchor_support import anchor_freeze
+    d = tempfile.mkdtemp()
+    path = f"{d}/freeze.json"
+    with open(path, "w") as f:
         json.dump(freeze, f, indent=1, default=str, sort_keys=True)
-        path = f.name
+    # The composed run goes through the REAL process-2 gate, external anchor included.
+    akw = anchor_freeze(pathlib.Path(d), path,
+                        fixture_ids=freeze["fixture_ids_ordered"])
     res = SFZ.score_frozen(path, env.index, capability=env.capability,
-                           grammar_kwargs=GRAMMAR_KW)
+                           grammar_kwargs=GRAMMAR_KW, **akw)
     return freeze, res
 
 

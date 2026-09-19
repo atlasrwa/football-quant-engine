@@ -67,11 +67,20 @@ def test_two_process_seal_end_to_end(tmp_path):
     assert "SCORER_LOADED=False" in p1.stdout
     assert freeze.exists(), "process 1 must leave a durable freeze"
 
+    # BETWEEN the two processes: anchor the freeze externally and commit it. Process 2 will
+    # not start without a pinned ANCHOR_COMMIT, which is the point of the anchor.
+    from ._anchor_support import anchor_freeze
+    akw = anchor_freeze(tmp_path, str(freeze))
+
     p2 = subprocess.run([sys.executable, "research/hypothesis_engine/_run_v8c_score.py",
-                         str(freeze), str(results), "golden"], cwd="/home/ubuntu",
-                        capture_output=True, text=True)
+                         str(freeze), str(results), "golden",
+                         akw["anchor_commit"], akw["anchor_repo_relpath"], akw["repo_root"]],
+                        cwd="/home/ubuntu", capture_output=True, text=True)
     assert p2.returncode == 0, p2.stderr
     assert "FREEZE_HASH_VERIFIED=" in p2.stdout
+    assert "ANCHOR_VERIFIED=True" in p2.stdout
+    assert "EXECUTING_CODE_VERIFIED=True" in p2.stdout
+    assert "BLOCKS_VALIDATED_BEFORE_TARGET_READ=True" in p2.stdout
     frozen_hash = [l for l in p1.stdout.splitlines() if l.startswith("FREEZE_HASH=")][0]
     assert frozen_hash.split("=", 1)[1] in p2.stdout
 
@@ -86,7 +95,9 @@ def test_freeze_is_written_before_any_scoring_and_hash_verifies(golden_env, tmp_
     p = tmp_path / "freeze.json"
     SF.write_freeze(payload, str(p))
     from src.research.hypothesis_v8c import score_frozen as SFZ
-    verified = SFZ.load_and_verify_freeze(str(p))
+    from ._anchor_support import anchor_freeze
+    akw = anchor_freeze(tmp_path, str(p), fixture_ids=payload["fixture_ids_ordered"])
+    verified = SFZ.load_and_verify_freeze(str(p), receipt_path=akw["receipt_path"])
     assert verified["freeze_hash"] == payload["freeze_hash"]
 
 
@@ -103,8 +114,13 @@ def test_scoring_refuses_a_tampered_freeze(golden_env, tmp_path):
     json.dump(tampered, open(p, "w"), indent=1, default=str, sort_keys=True)
 
     from src.research.hypothesis_v8c import score_frozen as SFZ
-    with pytest.raises(SFZ.FreezeIntegrityError):
-        SFZ.load_and_verify_freeze(str(p))
+    from src.research.hypothesis_v8c import receipt as RCPT
+    from ._anchor_support import anchor_freeze
+    # The receipt is built over the TAMPERED bytes on purpose: the point is that the freeze's
+    # own self-hash no longer matches its payload, which `load_and_verify_freeze` must catch.
+    akw = anchor_freeze(tmp_path, str(p), fixture_ids=tampered["fixture_ids_ordered"])
+    with pytest.raises((SFZ.FreezeIntegrityError, RCPT.ReceiptError)):
+        SFZ.load_and_verify_freeze(str(p), receipt_path=akw["receipt_path"])
 
 
 # ---- the blind index ----------------------------------------------------------------------

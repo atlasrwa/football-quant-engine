@@ -224,6 +224,28 @@ def run_fixture(fixture_universe, capability, *, selector, grammar_kwargs=None) 
     result["search_calls_used"] = session.search_calls_used
     result["n_ids_returned_this_session"] = len(session.returned_ids)
     result["search_trace"] = session.calls
+    result["ids_returned_to_model"] = sorted(session.returned_ids)
+    result["submitted_ids"] = list(submitted)
+    result["raw_model_response_hashes"] = []
+    # The SAME orchestration block `run_fixture_converse` emits, so a treatment record is
+    # complete whichever entry point produced it. A provenance field that is populated on one
+    # path and silently None on the other is how an audit trail rots.
+    result["orchestration"] = {
+        "runner_version": RUNNER_VERSION,
+        "orchestration_version": ORCHESTRATION_VERSION,
+        "converse_calls": 0,
+        "search_calls_attempted": len(session.calls),
+        "search_calls_executed": session.search_calls_used,
+        "max_search_calls": MAX_SEARCH_CALLS,
+        "search_budget_exhausted": any(c.get("status") == SEARCH_BUDGET_EXHAUSTED
+                                       for c in session.calls),
+        "forced_submit": False,
+        "termination_reason": TERM_SUBMITTED,
+        "stop_reasons": [],
+        "usage": [],
+        "malformed_reason": None,
+        "transport": "IN_PROCESS_SELECTOR (no model call)",
+    }
     return result
 
 

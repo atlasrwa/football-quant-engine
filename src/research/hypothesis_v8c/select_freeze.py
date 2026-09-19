@@ -46,7 +46,9 @@ from src.research.hypothesis_v8c import aggregate_blocks as BLK
 from src.research.hypothesis_v8c import blind_index as BI
 from src.research.hypothesis_v8c import controls as CTL
 from src.research.hypothesis_v8c import live_reachability as LIVE
+from src.research.hypothesis_v8c import packet as PK
 from src.research.hypothesis_v8c import pit_context as PC
+from src.research.hypothesis_v8c import runner as RUN
 from src.research.hypothesis_v8c import universe as UNI
 from src.research.hypothesis_v8c import vintage as VIN
 
@@ -80,6 +82,12 @@ def _grammar_size_hash() -> str:
 
 GRAMMAR_SIZE_HASH = _grammar_size_hash()
 
+#: The frozen recency family the packet is built over.
+RECENCY_FAMILY = (tuple(__import__("src.research.hypothesis_v71.recency",
+                                   fromlist=["x"]).family())
+                  + (__import__("src.research.hypothesis_v71.recency",
+                                fromlist=["x"]).UniformRecency(),))
+
 
 def universe_hash(fixture_universe) -> str:
     """The exact candidate set that was selectable at this fixture."""
@@ -108,20 +116,29 @@ def assert_no_scorer_loaded() -> list:
     return loaded
 
 
-def default_s_selector(fixture_universe, k=3):
+def default_s_selector(session, k=3):
     """A deterministic STAND-IN for Sonnet so the composed path runs with no paid call.
 
+    SESSION-BASED, deliberately. It issues a real search through the real tool surface, so the
+    ids it submits were genuinely RETURNED BY THIS SESSION -- which is one of the six terms of
+    the authoritative submission contract. A selector that returned ids straight out of
+    `fixture_universe.evaluable` would bypass that term and could never be validated the way a
+    model's submission is.
+
     NOT a model, NOT an arm of the real experiment: in a real run this is replaced by the
-    frozen Sonnet selections from the runner. Reads no outcome and no support statistic --
-    it sees the same `llm_facing` projection Sonnet would.
+    frozen Sonnet selections from `runner.run_fixture_converse`. Reads no outcome and no
+    support statistic -- it sees the same `llm_facing` projection Sonnet would.
     """
-    return [c["hypothesis_id"] for c in
-            [UNI.llm_facing(x) for x in fixture_universe.evaluable[:k]]]
+    page = session.search({"max_results": UNI.PAGE_SIZE_CAP})
+    return [c["hypothesis_id"] for c in page.get("results", [])[:k]]
 
 
 def select_cohort(index, fixture_positions, *, capability, s_selector=None, k=3,
                   fixture_ids=None, similarity_engine=None, classification="SYNTHETIC_ONLY",
-                  grammar_kwargs=None, progress=False, enforce_seal=True) -> dict:
+                  grammar_kwargs=None, progress=False, enforce_seal=True,
+                  model_id="DETERMINISTIC_STANDIN", resolved_model_id=None,
+                  model_config_stamp=None, cache_key=None, cache_hit=None,
+                  s_runner=None) -> dict:
     """Select S/R/H for the WHOLE cohort. Returns the freeze payload. Reads no outcome.
 
     `enforce_seal=False` exists ONLY for in-process unit tests, whose interpreter is shared
@@ -130,9 +147,16 @@ def select_cohort(index, fixture_positions, *, capability, s_selector=None, k=3,
     exits, and `test_outcome_seal.py` proves that end to end by actually spawning the two
     processes. Any real run leaves this True.
     """
+    # The test-only relaxation is NOT reachable for a real run. It exists because unit tests
+    # share one interpreter with scoring tests and are contaminated by construction; it must
+    # never be usable to produce real evidence.
+    if not enforce_seal and not str(classification).startswith("SYNTHETIC"):
+        raise AssertionError(
+            f"enforce_seal=False is test-only and is refused for classification "
+            f"{classification!r}: a real selection must run scorer-free in its own process")
     if enforce_seal:
         assert_no_scorer_loaded()
-    s_selector = s_selector or (lambda fu: default_s_selector(fu, k=k))
+    s_selector = s_selector or (lambda session: default_s_selector(session, k=k))
     rows, t0 = [], time.time()
 
     for n, pos in enumerate(fixture_positions):
@@ -142,21 +166,34 @@ def select_cohort(index, fixture_positions, *, capability, s_selector=None, k=3,
         fu = UNI.build_fixture_universe(sealed, pos, ctx=ctx, capability=capability,
                                         fixture_id=fid, grammar_kwargs=grammar_kwargs)
 
-        # ---- S arm -----------------------------------------------------------------------
-        submitted = list(s_selector(fu))
+        # ---- S arm: the ONE authoritative submission contract ---------------------------
+        # `runner` owns validation. This function does NOT re-implement it. Re-implementing it
+        # is how the two paths drifted: `select_cohort` used to keep the valid ids out of a
+        # mixed valid/invalid submission (partial acceptance), while `runner.PARTIAL_ACCEPTANCE`
+        # said False. One contract, one place.
+        #
+        # The real evidence packet is built FIRST, target-blind, because the packet is what the
+        # model is shown -- so it must exist before the model is asked anything.
+        pkt = PK.build_packet(sealed, pos, capability, ctx, RECENCY_FAMILY)
+        packet_hash = pkt["packet_hash"]
+
+        if s_runner is not None:
+            # A caller-supplied runner (e.g. the real Converse loop) drives the tool session
+            # itself and returns the VALIDATED result. It still goes through
+            # `runner.validate_submission`, so the contract is unchanged.
+            run = s_runner(fu, capability, grammar_kwargs=grammar_kwargs, packet=pkt)
+        else:
+            run = RUN.run_fixture(fu, capability, selector=s_selector,
+                                  grammar_kwargs=grammar_kwargs)
         by_id = {c["hypothesis_id"]: c for c in fu.evaluable}
-        s_valid, s_invalid = [], []
-        for hid in submitted:
-            if hid in by_id:
-                s_valid.append(hid)
-            else:
-                # P1 INVALID-S: an unknown id is an EXPLICIT terminal state with a
-                # research-yield count -- never a silent `continue`.
-                s_invalid.append({"hypothesis_id": hid,
-                                  "status": INVALID_UNKNOWN_HYPOTHESIS_ID,
-                                  "reason": "not in this fixture's PRE_T_EVALUABLE universe"})
-        arm_status = (OK if s_valid else (OK_ABSTAIN if not submitted
-                                          else INVALID_UNKNOWN_HYPOTHESIS_ID))
+        s_valid = list(run["accepted"])
+        # The runner's status is CARRIED, never recomputed and never softened. In particular
+        # INVALID_SUBMISSION is preserved as failure: it is NOT relabelled OK_ABSTAIN just
+        # because the accepted list is empty. Abstention is an explicit empty submission; a
+        # rejected submission is a different event and the endpoint must be able to tell them
+        # apart.
+        arm_status = run["status"]
+        s_invalid = list(run["problems"])
 
         # ---- control arms ----------------------------------------------------------------
         shapes = [CTL.shape_of(by_id[h]) for h in s_valid]
@@ -186,7 +223,7 @@ def select_cohort(index, fixture_positions, *, capability, s_selector=None, k=3,
             "k_valid": len(s_valid),
             "S": list(s_valid),
             "S_invalid": s_invalid,
-            "n_submitted": len(submitted),
+            "n_submitted": run["n_submitted"],
             "R_pairs": [{"s_id": p["s_id"], "r_id": p["r_id"], "tier": p["tier"],
                          "status": p["status"]} for p in r_out["pairs"]],
             "R": [p["r_id"] for p in r_out["pairs"] if p["r_id"]],
@@ -203,6 +240,18 @@ def select_cohort(index, fixture_positions, *, capability, s_selector=None, k=3,
             "reachability": reach,                  # retained: back-compat alias
             "pit_context_hash": PC.context_hash(ctx),
             "universe_hash": universe_hash(fu),
+            "packet_hash": packet_hash,
+            # ---- P1-E: the COMPLETE treatment provenance, emitted by the runner itself ----
+            "treatment_provenance": RUN.treatment_record(
+                fixture_id=fid, kickoff_unix=meta["kickoff_unix"], fixture_universe=fu,
+                ctx=ctx, packet_hash=packet_hash,
+                capability_hash=VIN.capability_hash(capability),
+                corpus_vintage=VIN.corpus_vintage_before(index, meta["kickoff_unix"]),
+                result=run, model_id=model_id, resolved_model_id=resolved_model_id,
+                model_config_stamp=model_config_stamp,
+                cache_key=cache_key, cache_hit=cache_hit,
+                research_reason=run.get("research_reason"),
+                evidence_references=run.get("evidence_references")),
             "similarity_version": SIMILARITY_VERSION,
             "blind_index_audit": sealed.audit_report(),
         })

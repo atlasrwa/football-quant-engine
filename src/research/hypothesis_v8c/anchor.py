@@ -157,36 +157,75 @@ def verify_anchor_at_commit(*, anchor_commit, anchor_repo_relpath, freeze_path,
 
 
 def verify_producer_code(anchor: dict, *, repo_root=None,
-                         module_dir="src/research/hypothesis_v8c") -> dict:
-    """Verify each bound module's hash against the code AS COMMITTED at
-    PRODUCER_CODE_COMMIT -- never against the working tree."""
+                         module_dir="src/research/hypothesis_v8c",
+                         require_modules=None, verify_executing=True) -> dict:
+    """THREE-WAY binding of the scientific code.
+
+    Verifying the anchor against Git only proves the anchor agrees with history. It does NOT
+    prove the interpreter is running that code: a modified working tree passes such a check
+    trivially. So each bound module must satisfy
+
+        hash(anchor claim) == hash(bytes committed at PRODUCER_CODE_COMMIT)
+                           == hash(the file THIS interpreter actually loaded)
+
+    An anchor whose producer hashes are absent or null is REFUSED rather than passing
+    vacuously -- an empty claim set must not be mistaken for a verified one.
+    """
     commit = anchor.get("producer_code_commit")
     if not commit or commit == "UNKNOWN":
         raise AnchorError("anchor carries no producer_code_commit: cannot verify producer code")
-    mismatches, missing = [], []
-    for mod, expected in sorted((anchor.get("producer_code_hashes") or {}).items()):
-        if expected is None:
-            continue
+
+    claimed = anchor.get("producer_code_hashes") or {}
+    required = set(require_modules) if require_modules is not None else set(claimed)
+    if not required:
+        raise AnchorError("anchor declares NO producer code hashes: refusing to score on a "
+                          "vacuously-satisfied code binding")
+    absent = sorted(m for m in required if claimed.get(m) in (None, ""))
+    if absent:
+        raise AnchorError(
+            f"anchor's producer code coverage is incomplete: {len(absent)} module(s) carry no "
+            f"hash ({absent[:5]}) -- an incomplete binding is not a binding")
+
+    import sys as _sys
+    mismatches, missing, not_loaded = [], [], []
+    for mod in sorted(required):
+        expected = claimed[mod]
         rel = f"{module_dir}/{mod}.py"
         try:
-            got = _sha_bytes(read_blob_at(commit, rel, repo_root=repo_root))
+            at_commit = _sha_bytes(read_blob_at(commit, rel, repo_root=repo_root))
         except AnchorError:
             missing.append(rel)
             continue
-        if got != expected:
-            mismatches.append({"module": mod, "at_commit": got, "in_anchor": expected})
+        if at_commit != expected:
+            mismatches.append({"module": mod, "at_commit": at_commit, "in_anchor": expected,
+                               "which": "GIT"})
+            continue
+        if not verify_executing:
+            continue
+        m = _sys.modules.get(f"src.research.hypothesis_v8c.{mod}")
+        f = getattr(m, "__file__", None) if m is not None else None
+        if not f or not os.path.exists(f):
+            not_loaded.append(mod)
+            continue
+        with open(f, "rb") as fh:
+            executing = _sha_bytes(fh.read())
+        if executing != expected:
+            mismatches.append({"module": mod, "executing": executing, "in_anchor": expected,
+                               "which": "EXECUTING"})
+
     if missing or mismatches:
         raise AnchorError(
-            f"producer code at {commit} does not reproduce the anchor: "
-            f"{len(mismatches)} hash mismatch(es), {len(missing)} missing file(s) "
-            f"{mismatches[:3]} {missing[:3]}")
+            f"producer code does not reproduce the anchor: {len(mismatches)} hash mismatch(es), "
+            f"{len(missing)} missing file(s). {mismatches[:3]} {missing[:3]}")
     return {"producer_code_commit": commit,
-            "n_modules_verified": len([v for v in (anchor.get("producer_code_hashes") or {}).values()
-                                       if v is not None])}
+            "n_modules_verified": len(required),
+            "executing_code_verified": bool(verify_executing),
+            "modules_not_loaded_in_this_interpreter": sorted(not_loaded)}
 
 
 def verify_for_scoring(*, anchor_commit, anchor_repo_relpath, freeze_path, receipt_path,
-                       repo_root=None, verify_code=True) -> dict:
+                       repo_root=None, verify_code=True, require_modules=None,
+                       verify_executing=True) -> dict:
     """The complete PROCESS 2 gate. Raises before any caller can open a target outcome.
 
     Ordering matters: the external anchor is checked FIRST, because it is the only check whose
@@ -195,7 +234,10 @@ def verify_for_scoring(*, anchor_commit, anchor_repo_relpath, freeze_path, recei
     anchor = verify_anchor_at_commit(
         anchor_commit=anchor_commit, anchor_repo_relpath=anchor_repo_relpath,
         freeze_path=freeze_path, receipt_path=receipt_path, repo_root=repo_root)
-    code = verify_producer_code(anchor, repo_root=repo_root) if verify_code else None
+    code = (verify_producer_code(anchor, repo_root=repo_root,
+                                 require_modules=require_modules,
+                                 verify_executing=verify_executing)
+            if verify_code else None)
 
     from src.research.hypothesis_v8c import receipt as RC
     rcpt = RC.verify_receipt(receipt_path, freeze_path)   # NOT require_commit=HEAD
@@ -218,4 +260,8 @@ def version_stamp() -> dict:
             "why_not": ("committing the anchor necessarily creates a later commit, so that "
                         "check is unsatisfiable in the real workflow and would be bypassed"),
             "anchor_commit_must_be_explicit": True,
-            "reads_working_tree_for_verification": False}
+            "reads_working_tree_for_verification": False,
+            "binds_executing_code": True,
+            "three_way_binding": ["anchor claim", "bytes at PRODUCER_CODE_COMMIT",
+                                  "file loaded by this interpreter"],
+            "refuses_vacuous_or_incomplete_producer_hashes": True}

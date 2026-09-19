@@ -67,9 +67,13 @@ def repo(tmp_path):
 
 # ------------------------------------------------------------------ the happy path
 def test_verifies_and_the_two_commits_are_distinct(repo):
+    # `verify_executing=False`: this scratch repo holds a STUB grammar.py, so the interpreter
+    # is deliberately not running it. The three-way executing-code binding is exercised in
+    # test_process2_gate.py::test_changed_executing_code_refuses.
     out = A.verify_for_scoring(
         anchor_commit=repo["anchor_commit"], anchor_repo_relpath=ANCHOR_REL,
-        freeze_path=repo["freeze"], receipt_path=repo["receipt"], repo_root=repo["root"])
+        freeze_path=repo["freeze"], receipt_path=repo["receipt"], repo_root=repo["root"],
+        verify_executing=False)
     assert out["distinct_commits"] is True, (
         "the anchor commit must be later than the producer-code commit")
     assert out["producer_code_commit"] == repo["producer_commit"]
@@ -84,7 +88,8 @@ def test_producer_commit_need_not_equal_head(repo):
     assert head == repo["anchor_commit"] != repo["producer_commit"]
     A.verify_for_scoring(
         anchor_commit=repo["anchor_commit"], anchor_repo_relpath=ANCHOR_REL,
-        freeze_path=repo["freeze"], receipt_path=repo["receipt"], repo_root=repo["root"])
+        freeze_path=repo["freeze"], receipt_path=repo["receipt"], repo_root=repo["root"],
+        verify_executing=False)
 
 
 # ------------------------------------------------------------------ adversarial
