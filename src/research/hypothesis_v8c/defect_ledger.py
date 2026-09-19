@@ -46,6 +46,7 @@ DEFECT_LEDGER_VERSION = "v8c_defect_ledger_v1"
 
 CLOSED = "CLOSED"
 OPEN = "OPEN"
+REPAIRED = "REPAIRED"
 DEFERRED_TO_AUDIT = "DEFERRED_TO_AUDIT"
 
 T = "tests/research/hypothesis_v8c"
@@ -204,22 +205,42 @@ DEFECTS = [
 
 #: Findings raised BY this repair pass, for the auditor to classify. Not gate conditions.
 NEW_FINDINGS = [
-    dict(id="N1-SIMILARITY-TARGET-TIME-SELF-INCLUSION", severity="P1_CANDIDATE",
+    dict(id="N1-SIMILARITY-TARGET-TIME-SELF-INCLUSION", severity="P0",
          finding="`similar_opponent_ids` builds every team's profile as of T. A historical "
                  "match H between the subject and opponent X therefore contributes to X's "
                  "profile, which helps decide whether X is judged similar to the target's "
                  "opponent -- so H participates in deciding its own cohort membership.",
-         why_not_repaired_here=(
-             "the similar-set is ONE set used to filter every H, so leave-H-out is incoherent "
-             "by construction: it would need a different set per H and 'similar to today's "
-             "opponent' would stop meaning anything. The conditioning variable is a property "
-             "of the TARGET's opponent, not of H, and uses only data < T, so this is a "
-             "target-time construct rather than the P1-K defect. The clean alternative -- "
-             "excluding the subject's own matches from every opponent's similarity profile -- "
-             "changes the FROZEN V7.1 similarity contract, which is not a call to make "
-             "mid-mission."),
-         candidate_repair="exclude the subject's own matches from opponent similarity profiles",
-         status=DEFERRED_TO_AUDIT),
+         status=REPAIRED,
+         repaired_by="hypothesis_v8c.historical_similarity.HistoricalSimilarityIndex "
+                     "(P0-SIMSELF); compiler._select now resolves membership per historical "
+                     "match, strictly before H.",
+         previously="DEFERRED_TO_AUDIT. The earlier pass argued that a per-H set was "
+                    "'incoherent by construction' because 'similar to today's opponent' would "
+                    "stop meaning anything, and that the construct was target-time rather than "
+                    "a P1-K-class defect.",
+         why_the_deferral_was_overturned=(
+             "The deferral rested on an argument, not a measurement. The adversarial battery "
+             "in tests/research/hypothesis_v8c/test_similarity_self_inclusion.py DEMONSTRATES "
+             "the leak on a synthetic corpus: mutating H's OWN measured values flips H's "
+             "opponent out of the k=8 set, and so does appending extreme post-H pre-T rows. "
+             "Under the Gate-A stop rule that is items 1 (future/target leakage into the "
+             "conditioning variable) and 5 (outcome information influencing selection), so it "
+             "blocks the mission and cannot be deferred. The 'stops meaning anything' "
+             "objection does not survive contact with the repair: the semantic becomes 'was X "
+             "similar to the target's opponent, judged from information available before H?', "
+             "which is exactly the per-H move P1-K already made for `opponent_profile` bands. "
+             "The alternative the earlier pass proposed -- excluding the subject's own matches "
+             "from opponent profiles -- would have CHANGED the frozen V7 similarity contract; "
+             "this repair changes only the reference INSTANT and reuses every frozen "
+             "dimension, weight, k and tie-break verbatim."),
+         adversarial_tests=[
+             f"{T}/test_similarity_self_inclusion.py::"
+             "test_h_own_observation_does_not_change_its_own_membership",
+             f"{T}/test_similarity_self_inclusion.py::"
+             "test_post_h_data_does_not_change_h_membership",
+             f"{T}/test_similarity_self_inclusion.py::test_unrepaired_engine_leaks",
+             f"{T}/test_similarity_self_inclusion.py::"
+             "test_compiler_refuses_similarity_without_h_time_index"]),
     dict(id="N2-P1K-UNIVERSE-COST", severity="INFORMATIONAL",
          finding="H-time classification costs ~23% of profile-conditioned evaluable candidates "
                  "at a data-rich fixture (879 -> 674 on mt_626333016). Those candidates were "

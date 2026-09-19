@@ -47,6 +47,7 @@ from __future__ import annotations
 
 from src.research.hypothesis_v71 import compiler as CO
 from src.research.hypothesis_v71 import invariants as INV
+from src.research.hypothesis_v71.similarity import SimilarityRefused
 
 COMPILER_VERSION = "v8c_compiler_v1"
 
@@ -103,7 +104,8 @@ def _passes_filters(entry, filters, *, entity_id, target_is_home, rec,
     return (not ok) if complement else ok
 
 
-def _select(index, sel, ir, rec, rec_i, subject_id, terciles, axis_cache, similarity):
+def _select(index, sel, ir, rec, rec_i, subject_id, terciles, axis_cache, similarity,
+            hist_similarity=None):
     """The observation set + weights named by one Selector. Strictly PIT.
 
     Copied from the frozen `compiler._select`; differs only in calling the corrected
@@ -120,10 +122,25 @@ def _select(index, sel, ir, rec, rec_i, subject_id, terciles, axis_cache, simila
 
     if sel.similar_to_opponent:
         opponent_id = _entity_id("FIXTURE_OPPONENT", rec, subject_id)
-        similar = similarity.similar_opponent_ids(index, opponent_id, rec, rec_i)
         want = sel.similar_to_opponent == "SIMILAR"
-        entries = [e for e in entries
-                   if (assert_profile_reads_opponent(e, entity_id) in similar) == want]
+        if hist_similarity is None:
+            # Never fall back to the as-of-T set: that is the P0-SIMSELF defect, and a silent
+            # fallback would make the leak depend on how the caller was wired.
+            raise CompileRefused(
+                "similar_to_opponent requires an H-time HistoricalSimilarityIndex "
+                "(P0-SIMSELF); the as-of-T similar set lets H decide its own membership")
+        kept = []
+        for e in entries:
+            # Membership is resolved from information strictly BEFORE this historical match,
+            # so neither H's own observation nor any post-H match can move it.
+            try:
+                sim_h = hist_similarity.similar_ids_before(
+                    opponent_id, rec.competition, int(e[1]))
+            except SimilarityRefused:
+                continue          # unclassifiable as of H -> EXCLUDED, never imputed
+            if (assert_profile_reads_opponent(e, entity_id) in sim_h) == want:
+                kept.append(e)
+        entries = kept
 
     if sel.filters:
         entries = [e for e in entries
@@ -141,7 +158,8 @@ def _select(index, sel, ir, rec, rec_i, subject_id, terciles, axis_cache, simila
 
 
 def compile_query(ir, index, rec_i, *, metric, terciles, axis_cache, similarity,
-                  recency, capability=None, collect_fixtures=True) -> CompiledQuery:
+                  recency, capability=None, collect_fixtures=True,
+                  hist_similarity=None) -> CompiledQuery:
     """Compile ONE metric of a validated IR at one target fixture.
 
     Copied from the frozen `compiler.compile_query`; differs only in calling the corrected
@@ -188,7 +206,8 @@ def compile_query(ir, index, rec_i, *, metric, terciles, axis_cache, similarity,
             out[name] = ((mean,), (1.0,), frozenset(), n)
             continue
         entries, entity_id, fixtures = _select(index, sel, ir, rec, rec_i, subject_id,
-                                               terciles, axis_cache, similarity)
+                                               terciles, axis_cache, similarity,
+                                               hist_similarity=hist_similarity)
         if not entries:
             raise CompileRefused(f"{name} selector matched no prior observation")
         vals, wts = values_of(entries, entity_id, sel.weighting)

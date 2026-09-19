@@ -51,7 +51,7 @@ def unique_opponents_of_cohort(ir, index, rec_i, cohort_fixtures) -> int:
 
 
 def score_fixture(ir, index, rec_i, *, metric, terciles, axis_cache, similarity, recency,
-                  capability=None) -> FixtureScore:
+                  capability=None, hist_similarity=None) -> FixtureScore:
     """Score ONE hypothesis IR at ONE target fixture. Identical to the frozen V8B.2 scorer
     except that the compiler is the competition-coherent V8C successor."""
     try:
@@ -60,7 +60,8 @@ def score_fixture(ir, index, rec_i, *, metric, terciles, axis_cache, similarity,
         for w in recency:
             q = CO.compile_query(ir, index, rec_i, metric=metric, terciles=terciles,
                                  axis_cache=axis_cache, similarity=similarity, recency=w,
-                                 capability=capability, collect_fixtures=True)
+                                 capability=capability, collect_fixtures=True,
+                                 hist_similarity=hist_similarity)
             if q.is_degenerate():
                 return FixtureScore(status=SCORE_REFUSED,
                                     reason="cohort and baseline read the same observations "

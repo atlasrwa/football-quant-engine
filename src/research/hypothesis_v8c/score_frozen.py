@@ -193,6 +193,7 @@ def score_frozen(freeze_path: str, index, *, capability, similarity_engine=None,
                 fs = SC.score_fixture(ir, index, pos, metric=ir.target_metrics[0],
                                       terciles=ctx.terciles, axis_cache=ctx.axis_cache,
                                       similarity=ctx.similarity,
+                                      hist_similarity=ctx.historical_similarity,
                                       recency=ENGmod.recency_family_for(ir),
                                       capability=capability)
                 records.append({"fixture_id": fid, "arm": arm, "hypothesis_id": hid,

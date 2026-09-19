@@ -45,6 +45,7 @@ import time
 from src.research.hypothesis_v8c import aggregate_blocks as BLK
 from src.research.hypothesis_v8c import blind_index as BI
 from src.research.hypothesis_v8c import controls as CTL
+from src.research.hypothesis_v8c import live_reachability as LIVE
 from src.research.hypothesis_v8c import pit_context as PC
 from src.research.hypothesis_v8c import universe as UNI
 from src.research.hypothesis_v8c import vintage as VIN
@@ -161,7 +162,13 @@ def select_cohort(index, fixture_positions, *, capability, s_selector=None, k=3,
         shapes = [CTL.shape_of(by_id[h]) for h in s_valid]
         r_out = CTL.blind_selections_for_fixture(shapes, fu)
         h_out = CTL.heuristic_selections_for_fixture(len(s_valid), fu)
+        # BOTH reachability notions are recorded, explicitly labelled. `reachability_report`
+        # paginates to exhaustion and so measures THEORETICAL API reachability; the live
+        # protocol gives the model 6 calls and a 50-result page. Experiment ELIGIBILITY is
+        # decided on the LIVE number only (P1-C); the theoretical one is kept as a diagnostic
+        # so the gap between the two stays visible rather than being quietly conflated.
         reach = UNI.reachability_report(fu)
+        live_reach = LIVE.audit_fixture(fu)
 
         meta = VIN.fixture_metadata(index, pos)
         rows.append({
@@ -190,7 +197,10 @@ def select_cohort(index, fixture_positions, *, capability, s_selector=None, k=3,
             "H_status": h_out["status"], "H_ranked_over": h_out.get("n_ranked_over", 0),
             "universe_ledger": fu.ledger(),
             "research_family_counts": fu.research_family_counts(),
-            "reachability": reach,
+            "reachability_theoretical": reach,      # unlimited pagination
+            "reachability_live": live_reach,        # the 6-call bounded protocol
+            "live_search_addressable": live_reach["n_live_unreachable"] == 0,
+            "reachability": reach,                  # retained: back-compat alias
             "pit_context_hash": PC.context_hash(ctx),
             "universe_hash": universe_hash(fu),
             "similarity_version": SIMILARITY_VERSION,
@@ -225,6 +235,10 @@ def select_cohort(index, fixture_positions, *, capability, s_selector=None, k=3,
                 sum(r["R_cross_treatment_overlap_count"] for r in rows),
             "unreachable_candidate_count":
                 sum(r["reachability"]["unreachable_candidate_count"] for r in rows),
+            "live_search_unreachable_count":
+                sum(r["reachability_live"]["n_live_unreachable"] for r in rows),
+            "all_fixtures_live_search_addressable":
+                all(r["live_search_addressable"] for r in rows) if rows else None,
             "S_invalid_count": sum(len(r["S_invalid"]) for r in rows),
             "target_outcomes_viewed":
                 any(r["blind_index_audit"]["target_outcomes_viewed"] for r in rows),

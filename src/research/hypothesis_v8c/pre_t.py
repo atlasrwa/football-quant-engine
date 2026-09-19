@@ -145,7 +145,8 @@ def _status_for(support) -> tuple[str, str]:
 
 
 def classify_pre_t_evaluability(ir, index, rec_i, *, metric, terciles, axis_cache, similarity,
-                                recency, capability=None) -> PreTEvaluability:
+                                recency, capability=None,
+                                hist_similarity=None) -> PreTEvaluability:
     """Decide, WITHOUT the target outcome, whether this hypothesis will be measurable at this
     fixture.
 
@@ -185,7 +186,8 @@ def classify_pre_t_evaluability(ir, index, rec_i, *, metric, terciles, axis_cach
         for w in recency:
             q = CO.compile_query(ir, blind, rec_i, metric=metric, terciles=terciles,
                                  axis_cache=axis_cache, similarity=similarity, recency=w,
-                                 capability=capability, collect_fixtures=True)
+                                 capability=capability, collect_fixtures=True,
+                                 hist_similarity=hist_similarity)
             if q.is_degenerate():
                 return PreTEvaluability(status=PRE_T_DEGENERATE_CONTRAST, hypothesis_id=hid,
                                         reason="cohort and baseline read the same "
@@ -239,6 +241,7 @@ def evaluate_candidate(ir, index, rec_i, *, ctx, capability):
     return classify_pre_t_evaluability(
         ir, index, rec_i, metric=ir.target_metrics[0], terciles=ctx.terciles,
         axis_cache=ctx.axis_cache, similarity=ctx.similarity,
+        hist_similarity=ctx.historical_similarity,
         recency=ENG.recency_family_for(ir), capability=capability)
 
 

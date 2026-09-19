@@ -8,12 +8,30 @@ Per sealed fixture, using strictly pre-T information only:
     admissible universe size
     PRE_T_EVALUABLE universe size + the pre-T attrition ledger
     metrics represented / mechanism (comparator) types represented / research families
-    search reachability (unreachable_candidate_count)
-    distinct-R feasibility
+    LIVE search addressability (live_reachability.audit_fixture -- the bounded 6-call protocol)
+    full R action-space coverage + SET-LEVEL distinct-R feasibility up to MAX_SELECTIONS
     H feasibility
-    PILOT_ELIGIBLE under the predeclared structural rule
+    PILOT_ELIGIBLE, matching V8C_FRESH_PILOT_POPULATION_RULE.md section 2 EXACTLY
 
 No Sonnet calls. No scoring. No CHAMPION write.
+
+REPAIRED FOR GATE A (Phase 8). NOT RUN IN THAT MISSION -- running it needs explicit
+authorisation, because it touches the sealed reserve's structural surface.
+
+Three things were obsolete and are now fixed:
+
+  1. `UNI.reachability_report` measured THEORETICAL reachability by paginating one unfiltered
+     query to exhaustion. Under the live protocol the model gets 6 calls and a 50-result page,
+     so that overstated S's action space. Replaced by `live_reachability.audit_fixture`, which
+     asks whether each candidate's own canonical structural query surfaces it on the FIRST page.
+  2. Distinct-R feasibility was probed on `fu.evaluable[:K_MIN]` -- the first four candidates as
+     a proxy. The experiment matches a SET of up to MAX_SELECTIONS simultaneously, where no
+     control may be reused and none may be another S pick. Replaced by
+     `control_coverage.audit_fixture`, which computes full single-candidate coverage and
+     SET-LEVEL feasibility by maximum bipartite matching.
+  3. `PILOT_ELIGIBLE` omitted the frozen rule's `live_search_addressable` conjunct. It now
+     reproduces section 2 term for term, and `PILOT_RULE_CONJUNCTS` states those terms in code
+     so a reviewer can diff them against the document.
 """
 from __future__ import annotations
 
@@ -35,6 +53,22 @@ SHARD_DIR = f"{ENG}/out/v8c_preflight_shards"
 #: than restate S's pick (+1). Not tuned to yield a fixture count.
 K_MIN = 4
 
+#: V8C_FRESH_PILOT_POPULATION_RULE.md section 2, term for term. A fixture is PILOT_ELIGIBLE
+#: iff ALL of these hold on pre-T structural information only. No term reads a target outcome,
+#: an effect, a score, a direction or a p-value.
+PILOT_RULE_CONJUNCTS = (
+    "pre_t_evaluable_candidates >= K_MIN",
+    "distinct_R_feasible",
+    "H_feasible",
+    "live_search_addressable",
+    "fixture_in_frozen_947_reserve",
+)
+PILOT_RULE_DOC = "V8C_FRESH_PILOT_POPULATION_RULE.md"
+PILOT_RULE_VERSION = "v8c_pilot_rule_v1"
+
+#: Set-level R feasibility is evaluated up to the frozen submission cap, not at K_MIN.
+MAX_SELECTIONS = 8
+
 _G = {}
 
 
@@ -48,7 +82,9 @@ def _init():
 
 def _one(fid):
     from src.research.hypothesis_v8c import blind_index as BI
+    from src.research.hypothesis_v8c import control_coverage as CC
     from src.research.hypothesis_v8c import controls as CTL
+    from src.research.hypothesis_v8c import live_reachability as LIVE
     from src.research.hypothesis_v8c import pit_context as PC
     from src.research.hypothesis_v8c import universe as UNI
     cap, index = _G["cap"], _G["index"]
@@ -59,18 +95,26 @@ def _one(fid):
     sealed = BI.TargetBlindIndex(index, [pos])          # the target's own stats are unreadable
     ctx = PC.build_pit_context(sealed, pos)
     fu = UNI.build_fixture_universe(sealed, pos, ctx=ctx, capability=cap, fixture_id=fid)
-    reach = UNI.reachability_report(fu)
 
-    # Distinct-R feasibility: can a control be found for a hypothetical S pick that is
-    # distinct from it AND from every other S pick? Probed structurally on the first K_MIN
-    # evaluable candidates -- reads no outcome and no effect.
-    probe = [CTL.shape_of(c) for c in fu.evaluable[:K_MIN]]
-    r_feasible = False
+    # LIVE addressability under the real bounded protocol -- NOT the old unlimited-pagination
+    # `reachability_report`, which measured a search budget the model does not have.
+    reach = LIVE.audit_fixture(fu)
+    live_addressable = reach["n_live_unreachable"] == 0
+
+    # FULL R action-space coverage, plus SET-LEVEL feasibility at the frozen submission cap.
+    # No first-four proxy.
+    cov = CC.audit_fixture(fu, k=MAX_SELECTIONS)
+    r_single = cov["R_SINGLE_CANDIDATE_COVERAGE"]
+    r_set_k8 = cov["R_SET_LEVEL_K8_FEASIBLE"]
+
+    # The rule's `distinct_R_feasible` term: a control exists for every member of a
+    # simultaneously-submitted set, at the size the protocol actually permits.
+    k_probe = min(MAX_SELECTIONS, fu.n_evaluable)
+    probe = [CTL.shape_of(c) for c in fu.evaluable[:k_probe]]
+    r_feasible = bool(r_set_k8) if probe else False
     r_tiers = {}
     if probe:
-        r_out = CTL.blind_selections_for_fixture(probe, fu)
-        r_feasible = r_out["n_matched"] == len(probe)
-        r_tiers = r_out["tiers"]
+        r_tiers = CTL.blind_selections_for_fixture(probe, fu)["tiers"]
     h_out = CTL.heuristic_selections_for_fixture(len(probe), fu) if probe else None
     h_feasible = bool(h_out and h_out["n_selected"] == len(probe))
 
@@ -86,10 +130,20 @@ def _one(fid):
         "n_mechanism_types_represented": len({c["comparator"] for c in fu.evaluable}),
         "n_research_families_represented": len({c["research_family"] for c in fu.evaluable}),
         "research_family_counts": fu.research_family_counts(),
-        "unreachable_candidate_count": reach["unreachable_candidate_count"],
+        "live_search_unreachable_count": reach["n_live_unreachable"],
+        "live_search_addressable": bool(live_addressable),
+        "live_reachability_version": reach["live_reachability_version"],
+        "R_SINGLE_CANDIDATE_COVERAGE": r_single,
+        "R_SET_LEVEL_K8_FEASIBLE": bool(r_set_k8),
         "distinct_r_feasible": bool(r_feasible), "r_tiers": r_tiers,
         "h_feasible": bool(h_feasible),
-        "pilot_eligible": bool(fu.n_evaluable >= K_MIN and r_feasible and h_feasible),
+        # section 2, term for term. The in-reserve term is guaranteed by the caller, which
+        # iterates `sealed_947_ids()`, and is restated here so the record is self-describing.
+        "pilot_eligible": bool(fu.n_evaluable >= K_MIN and r_feasible and h_feasible
+                               and live_addressable),
+        "pilot_rule_version": PILOT_RULE_VERSION,
+        "pilot_rule_conjuncts": list(PILOT_RULE_CONJUNCTS),
+        "fixture_in_frozen_947_reserve": True,
         "blind_audit": {"blocked_target_reads": audit["blocked_target_reads"],
                         "blocked_vals_reads": audit["blocked_vals_reads"],
                         "sanitized_record_reads": audit["sanitized_record_reads"],

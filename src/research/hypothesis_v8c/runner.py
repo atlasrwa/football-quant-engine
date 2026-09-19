@@ -40,6 +40,7 @@ from dataclasses import dataclass, field
 
 from src.research.hypothesis_v8c import cache as CACHE
 from src.research.hypothesis_v8c import grammar as GR
+from src.research.hypothesis_v8c import prompt as PROMPT
 from src.research.hypothesis_v8c import universe as UNI
 
 RUNNER_VERSION = "v8c_runner_v2"
@@ -80,26 +81,25 @@ TERMINAL_SELECTION_STATUSES = (OK, OK_ABSTAIN, INVALID_SUBMISSION)
 #: with ZERO accepted selections, and it is counted in research yield.
 PARTIAL_ACCEPTANCE = False
 
-#: The tool contract. Hashed into the cache identity, so changing it invalidates the cache.
-TOOL_SCHEMAS = [
-    {"name": "search_hypotheses",
-     "description": ("Search the measurable hypothesis space for this fixture. Returns "
-                     "structural descriptions only. Use `cursor` to page through results."),
-     "input_schema": {"type": "object", "properties": {
-         "target_metric": {"type": "string"}, "subject": {"type": "string"},
-         "side": {"type": "string"}, "comparator": {"type": "string"},
-         "mechanism_type": {"type": "string"},
-         "opponent_profile_dimension": {"type": "string"},
-         "venue": {"type": "string"}, "competition_conditioned": {"type": "boolean"},
-         "window": {"type": "string"}, "max_conditions": {"type": "integer"},
-         "max_results": {"type": "integer"}, "cursor": {"type": "string"}}}},
-    {"name": "submit_selections",
-     "description": "Submit the canonical hypothesis ids you have chosen. Zero is valid.",
-     "input_schema": {"type": "object", "properties": {
-         "hypothesis_ids": {"type": "array", "items": {"type": "string"}},
-         "research_reason": {"type": "string"}},
-         "required": ["hypothesis_ids"]}},
-]
+#: The tool contract and the system prompt are the FROZEN artifacts from `prompt.py`.
+#: The runner may not construct its own: a prompt that drifts between fixtures makes the
+#: treatment arm unreproducible (stop-rule item 6).
+TOOL_SCHEMAS = PROMPT.TOOL_SCHEMAS
+SYSTEM_PROMPT = PROMPT.SYSTEM_PROMPT
+PROMPT_VERSION = PROMPT.PROMPT_VERSION
+PROMPT_SHA256 = PROMPT.PROMPT_SHA256
+TOOL_SCHEMA_VERSION = PROMPT.TOOL_SCHEMA_VERSION
+TOOL_SCHEMA_SHA256 = PROMPT.TOOL_SCHEMA_SHA256
+
+SEARCH_TOOL_NAME = "search_hypotheses"
+SUBMIT_TOOL_NAME = "submit_selections"
+
+#: Terminal reasons for the orchestration loop, distinct from the SELECTION statuses above.
+TERM_SUBMITTED = "SUBMITTED"
+TERM_FORCED_SUBMIT = "FORCED_SUBMIT_AFTER_BUDGET_EXHAUSTED"
+TERM_NO_SUBMISSION = "ENDED_WITHOUT_SUBMISSION"
+TERM_MAX_TURNS = "MAX_TOOL_TURNS_EXCEEDED"
+TERM_MALFORMED_TOOL_USE = "MALFORMED_TOOL_USE"
 
 
 @dataclass
@@ -249,3 +249,234 @@ def version_stamp() -> dict:
             "max_search_calls": MAX_SEARCH_CALLS,
             "tool_schema_hash": CACHE.tool_schema_hash(TOOL_SCHEMAS),
             "performs_model_call_in_v8c_mission": False}
+
+
+# ==========================================================================================
+# PHASE 1 -- the real Bedrock Converse orchestration.
+#
+# The model client is INJECTED. `converse` is any callable with the Bedrock Converse shape:
+#
+#     converse(modelId=..., messages=[...], system=[...], toolConfig={...},
+#              inferenceConfig={...}) -> {"output": {"message": {"role", "content": [...]}},
+#                                         "stopReason": ..., "usage": {...}}
+#
+# Nothing in this module imports boto3 and nothing here constructs a client. A test supplies a
+# deterministic mock; a paid run would supply a real Bedrock client. That is the only
+# difference, which is what makes the mocked tests evidence about the real path.
+# ==========================================================================================
+
+def _tool_uses(response: dict) -> list:
+    """Every toolUse block in a Converse response, in order."""
+    content = (((response or {}).get("output") or {}).get("message") or {}).get("content") or []
+    return [b["toolUse"] for b in content if isinstance(b, dict) and "toolUse" in b]
+
+
+def _assistant_message(response: dict) -> dict:
+    msg = (((response or {}).get("output") or {}).get("message") or {})
+    return {"role": msg.get("role", "assistant"), "content": msg.get("content", [])}
+
+
+def _tool_result(tool_use_id: str, payload: dict, *, ok: bool = True) -> dict:
+    return {"toolResult": {"toolUseId": tool_use_id,
+                           "content": [{"json": payload}],
+                           "status": "success" if ok else "error"}}
+
+
+def _submitted_ids_from(tool_input) -> tuple:
+    """(ids, malformed_reason). A malformed submission yields ids=None so the caller can
+    record INVALID_SUBMISSION rather than silently treating it as an abstention."""
+    if not isinstance(tool_input, dict):
+        return None, "submit_selections input is not an object"
+    if "hypothesis_ids" not in tool_input:
+        return None, "submit_selections omitted the required `hypothesis_ids`"
+    ids = tool_input["hypothesis_ids"]
+    if not isinstance(ids, list):
+        return None, "`hypothesis_ids` is not a list"
+    if not all(isinstance(x, str) for x in ids):
+        return None, "`hypothesis_ids` contains a non-string element"
+    return tuple(ids), None
+
+
+def run_fixture_converse(fixture_universe, capability, *, converse, packet,
+                         model_id, resolved_model_id=None, model_config_stamp=None,
+                         grammar_kwargs=None, inference_config=None) -> dict:
+    """Drive ONE fixture through the REAL multi-turn tool loop.
+
+    The search backend is `hypothesis_v8c.universe.search_evaluable`, via `SearchSession` --
+    never V8B search. The call cap is enforced by `SearchSession`, which returns a
+    deterministic SEARCH_BUDGET_EXHAUSTED rather than executing a seventh search.
+
+    Returns the complete, immutable treatment record.
+    """
+    session = SearchSession(fixture_universe=fixture_universe)
+    messages = [{"role": "user", "content": [{"text": packet}]}]
+    tool_config = {"tools": [{"toolSpec": t} for t in TOOL_SCHEMAS]}
+
+    converse_calls = 0
+    search_attempted = 0
+    budget_exhausted = False
+    forced_submit_requested = False
+    submitted, malformed, termination = None, None, None
+    raw_response_hashes, stop_reasons, usages = [], [], []
+
+    for _turn in range(MAX_TOOL_TURNS + 1):
+        response = converse(modelId=model_id, messages=messages,
+                            system=[{"text": SYSTEM_PROMPT}], toolConfig=tool_config,
+                            inferenceConfig=inference_config or {})
+        converse_calls += 1
+        raw_response_hashes.append(CACHE._sha(response))
+        stop_reasons.append(response.get("stopReason"))
+        if response.get("usage"):
+            usages.append(response["usage"])
+
+        uses = _tool_uses(response)
+        if not uses:
+            termination = TERM_NO_SUBMISSION
+            break
+
+        messages.append(_assistant_message(response))
+        results, terminated = [], False
+
+        for use in uses:
+            name = use.get("name")
+            use_id = use.get("toolUseId", "")
+            tool_input = use.get("input")
+
+            if name == SUBMIT_TOOL_NAME:
+                ids, why = _submitted_ids_from(tool_input)
+                if ids is None:
+                    submitted, malformed = None, why
+                    termination = TERM_MALFORMED_TOOL_USE
+                else:
+                    submitted = ids
+                    termination = (TERM_FORCED_SUBMIT if forced_submit_requested
+                                   else TERM_SUBMITTED)
+                terminated = True
+                break
+
+            if name == SEARCH_TOOL_NAME:
+                search_attempted += 1
+                page = session.search(dict(tool_input or {}))
+                if page.get("status") == SEARCH_BUDGET_EXHAUSTED:
+                    budget_exhausted = True
+                    forced_submit_requested = True
+                    # The seventh search does NOT run. The model is told, deterministically,
+                    # that it must now submit.
+                    page = {**page, "instruction": (
+                        "SEARCH_BUDGET_EXHAUSTED: you have used all 6 searches. Call "
+                        "submit_selections now with 0-8 ids you have already seen.")}
+                results.append(_tool_result(use_id, page,
+                                            ok=page.get("status") != SEARCH_BUDGET_EXHAUSTED))
+                continue
+
+            # An unknown tool is a malformed response, not something to route around.
+            submitted, malformed = None, f"unknown tool {name!r}"
+            termination = TERM_MALFORMED_TOOL_USE
+            terminated = True
+            break
+
+        if terminated:
+            break
+        messages.append({"role": "user", "content": results})
+    else:
+        termination = TERM_MAX_TURNS
+
+    if termination is None:
+        termination = TERM_MAX_TURNS
+
+    if submitted is None:
+        # No usable submission. Never silently an abstention: an abstention is a submission of
+        # zero ids, which is a different event from never submitting at all.
+        result = {"status": INVALID_SUBMISSION, "accepted": [], "problems":
+                  [{"hypothesis_id": None, "reason": "NO_VALID_SUBMISSION",
+                    "detail": malformed or termination}],
+                  "n_submitted": 0, "partial_acceptance": PARTIAL_ACCEPTANCE,
+                  "research_yield": {"submitted": 0, "accepted": 0, "rejected": 0,
+                                     "abstained": False}}
+    else:
+        result = validate_submission(submitted, session, capability,
+                                     grammar_kwargs=grammar_kwargs)
+
+    result["valid"] = result["accepted"]
+    result["orchestration"] = {
+        "runner_version": RUNNER_VERSION,
+        "orchestration_version": ORCHESTRATION_VERSION,
+        "converse_calls": converse_calls,
+        "search_calls_attempted": search_attempted,
+        "search_calls_executed": session.search_calls_used,
+        "max_search_calls": MAX_SEARCH_CALLS,
+        "search_budget_exhausted": budget_exhausted,
+        "forced_submit": forced_submit_requested,
+        "termination_reason": termination,
+        "stop_reasons": stop_reasons,
+        "usage": usages,
+        "malformed_reason": malformed,
+    }
+    result["search_calls_used"] = session.search_calls_used
+    result["n_ids_returned_this_session"] = len(session.returned_ids)
+    result["search_trace"] = session.calls
+    result["ids_returned_to_model"] = sorted(session.returned_ids)
+    result["submitted_ids"] = list(submitted) if submitted is not None else []
+    result["raw_model_response_hashes"] = raw_response_hashes
+    return result
+
+
+def treatment_record(*, fixture_id, kickoff_unix, fixture_universe, ctx, packet_hash,
+                     capability_hash, corpus_vintage, result, model_id,
+                     resolved_model_id=None, model_config_stamp=None,
+                     cache_key=None, cache_hit=None, research_reason=None,
+                     evidence_references=None) -> dict:
+    """PHASE 4 -- the complete, immutable S-arm provenance record for ONE fixture.
+
+    Everything that determined the treatment is frozen here. No prose becomes a numerical
+    feature: `research_reason` is carried verbatim as TEXT and is never parsed, scored or
+    turned into a covariate, and neither control arm can see it (see `controls.SonnetShape`,
+    which has no prose field at all).
+    """
+    from src.research.hypothesis_v8c import pit_context as PC
+    orch = result.get("orchestration") or {}
+    return {
+        # ---- identity of the measured thing -------------------------------------------
+        "fixture_id": fixture_id,
+        "kickoff_unix": int(kickoff_unix),
+        "corpus_vintage": corpus_vintage,
+        "capability_hash": capability_hash,
+        "pit_context_hash": PC.context_hash(ctx),
+        "universe_hash": CACHE.fixture_universe_hash(fixture_universe),
+        "packet_hash": packet_hash,
+        # ---- identity of the treatment ------------------------------------------------
+        "requested_model_id": model_id,
+        "resolved_model_id": resolved_model_id,
+        "prompt_version": PROMPT_VERSION,
+        "prompt_sha256": PROMPT_SHA256,
+        "tool_schema_version": TOOL_SCHEMA_VERSION,
+        "tool_schema_sha256": TOOL_SCHEMA_SHA256,
+        "runner_version": RUNNER_VERSION,
+        "orchestration_version": ORCHESTRATION_VERSION,
+        "model_config_hash": (CACHE.model_config_hash(model_config_stamp)
+                              if model_config_stamp is not None else None),
+        "cache_key": cache_key,
+        "cache_hit": cache_hit,
+        # ---- what actually happened ----------------------------------------------------
+        "converse_calls": orch.get("converse_calls"),
+        "search_calls_attempted": orch.get("search_calls_attempted"),
+        "search_calls_executed": orch.get("search_calls_executed"),
+        "search_budget_exhausted": orch.get("search_budget_exhausted"),
+        "forced_submit": orch.get("forced_submit"),
+        "termination_reason": orch.get("termination_reason"),
+        "search_queries": [c.get("query") for c in (result.get("search_trace") or [])],
+        "ids_returned_to_model": result.get("ids_returned_to_model", []),
+        # ---- the selection ---------------------------------------------------------------
+        "submitted_ids": result.get("submitted_ids", []),
+        "accepted_ids": result.get("accepted", []),
+        "validation_status": result.get("status"),
+        "validation_problems": result.get("problems", []),
+        "research_yield": result.get("research_yield"),
+        # ---- the reasoning, as TEXT, never as a feature -----------------------------------
+        "research_reason": research_reason,
+        "evidence_references": evidence_references or [],
+        "prose_is_never_a_numerical_feature": True,
+        "controls_can_read_prose": False,
+        # ---- raw response binding ----------------------------------------------------------
+        "raw_model_response_hashes": result.get("raw_model_response_hashes", []),
+    }

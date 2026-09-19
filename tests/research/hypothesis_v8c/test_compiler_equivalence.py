@@ -23,6 +23,14 @@ def test_identical_without_opponent_profile(golden_env, golden_ctx):
     for spec, ir in GR.build_valid_irs(golden_env.capability, metrics=["goals"]):
         if any(c.get("dimension") == "opponent_profile" for c in spec["conditions"]):
             continue
+        # P0-SIMSELF: `similar_to_opponent` is the SECOND predicate V8C deliberately changes.
+        # The frozen compiler resolves the similar set as of T, which lets a historical match H
+        # help decide its own cohort membership; V8C resolves it strictly before H. So these
+        # IRs are excluded from the byte-identity claim for exactly the same reason
+        # `opponent_profile` is -- their divergence is the repair, not a regression.
+        if getattr(ir.cohort, "similar_to_opponent", None) or \
+                getattr(ir.baseline, "similar_to_opponent", None):
+            continue
         rec = ENG.recency_family_for(ir)
         kw = dict(metric="goals", terciles=ter, axis_cache=cache,
                   similarity=golden_ctx.similarity, capability=golden_env.capability,

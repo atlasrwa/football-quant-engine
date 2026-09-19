@@ -52,6 +52,7 @@ from src.research.hypothesis_v71 import execution as EX
 from src.research.hypothesis_v71 import invariants as INV
 from src.research.hypothesis_v71 import similarity as SIM
 from src.research.hypothesis_v8c import historical_pit as HPIT
+from src.research.hypothesis_v8c import historical_similarity as HSIM
 
 PIT_CONTEXT_VERSION = "v8c_pit_context_v3"
 
@@ -78,10 +79,14 @@ class PitContext:
     index: object
     terciles: dict            # (competition, axis) -> (lo, hi)   [as of T, packet only]
     axis_cache: object        # HistoricalProfileIndex             [H-time, compiler]
-    similarity: object
+    similarity: object        # SimilarityEngine                   [as of T, PACKET ONLY]
     cut_unix: int
     rec_i: int
     target_profiles: dict = None   # (team, competition, axis) -> mean [as of T, packet only]
+    #: HistoricalSimilarityIndex -- H-time similar-opponent membership (P0-SIMSELF). The
+    #: compiler MUST use this, never `similarity`: the as-of-T set lets a historical match H
+    #: help decide whether H itself enters its own cohort.
+    historical_similarity: object = None
 
     @property
     def historical(self):
@@ -106,7 +111,7 @@ class PitContext:
 
 
 def build_pit_context(index, rec_i, *, similarity_engine=None,
-                      historical=None) -> PitContext:
+                      historical=None, historical_similarity=None) -> PitContext:
     """The context fitted STRICTLY BEFORE `index.kick[rec_i]`, keyed per competition.
 
     `similarity_engine` may be shared across targets: `SimilarityEngine` caches on
@@ -147,8 +152,13 @@ def build_pit_context(index, rec_i, *, similarity_engine=None,
     # The H-time index is a property of the CORPUS, not of the target, so it is built once and
     # shared. Passing it in is strongly preferred: rebuilding per target is correct but wasteful.
     hp = historical if historical is not None else HPIT.HistoricalProfileIndex(index)
+    # Also a CORPUS property, not a target property: built once, shared, memoised on real
+    # historical timestamps (P0-SIMSELF).
+    hs = (historical_similarity if historical_similarity is not None
+          else HSIM.HistoricalSimilarityIndex(index))
     return PitContext(index=index, terciles=ter, axis_cache=hp, similarity=sim,
-                      cut_unix=cut, rec_i=int(rec_i), target_profiles=cache)
+                      cut_unix=cut, rec_i=int(rec_i), target_profiles=cache,
+                      historical_similarity=hs)
 
 
 def context_hash(ctx: PitContext) -> str:
@@ -164,6 +174,12 @@ def context_hash(ctx: PitContext) -> str:
         "target_profiles": [[list(k), round(v, 10)]
                             for k, v in sorted((ctx.target_profiles or {}).items())],
         "historical_pit_identity": ctx.axis_cache.identity_hash_before(ctx.cut_unix),
+        # Binds the H-time membership semantic into the context identity, so a freeze produced
+        # under the repaired semantic can never be confused with one produced under the leaky
+        # as-of-T semantic (P0-SIMSELF).
+        "similarity_membership_semantic": (
+            HSIM.MEMBERSHIP_SEMANTIC if ctx.historical_similarity is not None
+            else "AS_OF_T_LEAKY"),
     }
     return hashlib.sha256(
         json.dumps(payload, sort_keys=True, default=str).encode()).hexdigest()
@@ -171,7 +187,10 @@ def context_hash(ctx: PitContext) -> str:
 
 def version_stamp() -> dict:
     return {"pit_context_version": PIT_CONTEXT_VERSION,
-            "repairs": ["D-V8C-P0-CTXCUT", "P1-PROFILE-COMP", "P1-K"],
+            "repairs": ["D-V8C-P0-CTXCUT", "P1-PROFILE-COMP", "P1-K", "P0-SIMSELF"],
+            "similarity_membership_semantic": HSIM.MEMBERSHIP_SEMANTIC,
+            "compiler_similarity_source": "historical_similarity (H-time)",
+            "packet_similarity_source": "similarity (as of T, target's own opponent only)",
             "historical_classification": HPIT.PROFILE_SEMANTIC,
             "compiler_reads": "axis_cache (HistoricalProfileIndex), H-time",
             "packet_reads": "terciles + target_profiles, as of T, target opponent only",
