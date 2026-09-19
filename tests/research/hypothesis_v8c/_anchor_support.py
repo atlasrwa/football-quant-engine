@@ -17,7 +17,11 @@ from src.research.hypothesis_v8c import anchor as A
 from src.research.hypothesis_v8c import receipt as RC
 
 MODULE_DIR = "src/research/hypothesis_v8c"
-SRC = f"/home/ubuntu/{MODULE_DIR}"
+#: The checkout THIS test file lives in -- not a hardcoded machine path, so a clean checkout
+#: elsewhere anchors its own modules rather than another tree's.
+REPO = os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(
+    os.path.abspath(__file__)))))
+SRC = os.path.join(REPO, MODULE_DIR)
 
 
 def _git(repo, *args):

@@ -47,7 +47,15 @@ import subprocess
 
 ANCHOR_VERSION = "v8c_anchor_v1"
 
-ROOT = "/home/ubuntu"
+#: The checkout this module is executing from. Derived from the module's own location, not
+#: hardcoded, so the producer-code binding follows the interpreter rather than one machine's
+#: path. `V8C_ROOT` overrides it for a relocated tree. A hardcoded "/home/ubuntu" here meant a
+#: clean checkout elsewhere would hash THAT tree's modules while running its own -- which is
+#: precisely the substitution the three-way binding exists to catch.
+ROOT = os.environ.get(
+    "V8C_ROOT",
+    os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(
+        os.path.abspath(__file__))))))
 
 
 class AnchorError(Exception):
