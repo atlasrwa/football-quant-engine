@@ -102,3 +102,67 @@ data/forward/scanner_model_cache_*.pkl
 # Runtime operational logs (research monitor, capture runner, cron jobs).
 # These are runtime artifacts, never source; keep them out of the tree.
 logs/
+
+# ==========================================================================
+# REPOSITORY-ROOT HARDENING
+#
+# This repository is checked out at /home/ubuntu on the deployed host, so the
+# repo root IS the user's home directory. Credential stores, unrelated
+# toolchains and runtime data sit beside the source tree, and a single
+# `git add -A` would publish live secrets. None of the paths below is
+# currently tracked; these rules keep it that way.
+#
+# Deliberately NARROW: no blanket `*.json` or `data/**` rule, because
+# versioned evidence artifacts, schemas and manifests under research/ must
+# stay committable.
+# ==========================================================================
+
+# ---- credential stores and shell state (NEVER commit) ----
+/.ssh/
+/.aws/
+/.gnupg/
+/.git-credentials
+/.netrc
+/.env.cron
+/.bash_history
+/.lesshst
+/.sudo_as_admin_successful
+/.claude.json
+/.claude/
+/.supabase/
+/.config/
+*.pem
+*.p12
+id_rsa
+id_ed25519
+
+# ---- raw provider corpora and runtime ledgers (bulk, regenerated) ----
+/data/thestatsapi/
+/data/alerts/
+/data/clv_panel/
+/data/attestations/*.lock
+
+# ---- generated bundles, handoff archives, review worktrees ----
+/handoff_out/
+
+# ---- package manager and toolchain caches ----
+/.npm/
+/.cache/
+/.nvm/
+/.gradle/
+/.local/
+/.ollama/
+/.semantic_search/
+/.android/
+/android-sdk/
+/android/
+
+# ---- unrelated projects and nested checkouts living in $HOME ----
+/llama.cpp/
+/RWA-Atlas-Claude/
+/rwa-atlas-audit/
+/football-quant-engine/
+/v8a-worktree/
+/v8a1-worktree/
+/snap/
+/semantic-review/

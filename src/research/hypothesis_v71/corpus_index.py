@@ -17,7 +17,8 @@ import bisect
 import os
 import sys
 
-sys.path.insert(0, "/home/ubuntu/scripts")
+from src._repo_paths import ensure_scripts_importable  # noqa: E402
+ensure_scripts_importable()
 
 INDEX_VERSION = "v71_index_v1"
 

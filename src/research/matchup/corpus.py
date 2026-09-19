@@ -16,8 +16,8 @@ import os, sys, json, glob
 from dataclasses import dataclass, field
 from typing import Any, Optional
 
-_SCRIPTS = "/home/ubuntu/scripts"
-sys.path.insert(0, _SCRIPTS)
+from src._repo_paths import ensure_scripts_importable
+_SCRIPTS = ensure_scripts_importable()
 import multisrc_corpus as msc          # noqa: E402
 import championship_adapter as adapt   # noqa: E402
 

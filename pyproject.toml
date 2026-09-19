@@ -9,6 +9,10 @@ dependencies = [
     "scipy==1.12.0",
     "pydantic==2.6.1",
     "pandas==2.2.1",
+    # Used by src/research/matchup/harness.py, count_models.py and run_gbt.py. It was
+    # installed on the deployed host but never declared, so a clean checkout could not
+    # collect the research test tree.
+    "scikit-learn==1.9.0",
 ]
 
 [project.optional-dependencies]
@@ -17,13 +21,25 @@ dev = [
     "pytest-asyncio==0.23.5",
     "hypothesis==6.*",
 ]
+# Postgres persistence. src/research/persistence/{connection,postgres,migrator}.py import
+# psycopg2, and tests/research/test_persistence_orchestrator.py could not be COLLECTED
+# without it -- the deployed host has 2.9.12 but nothing declared it. Optional because the
+# research paths do not require a database.
+persistence = [
+    "psycopg2-binary==2.9.12",
+]
 api = [
     "fastapi==0.109.2",
     "uvicorn==0.27.1",
 ]
 bedrock = [
-    "boto3==1.34.69",
-    "botocore==1.34.69",
+    # 1.34.69 predates the Bedrock Converse API (added in 1.34.83), so the declared pin
+    # could not run bedrock_adapter.py or hardening/adapter_v4.py at all -- the deployed
+    # host runs 1.43.93. Pinned to the deployed version, verified OFFLINE against the
+    # bundled botocore service model: Converse, ConverseStream and InvokeModel are all
+    # present. No client was constructed and no request was made.
+    "boto3==1.43.93",
+    "botocore==1.43.93",
 ]
 
 [build-system]
@@ -36,4 +52,11 @@ include = ["src*"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
-pythonpath = ["."]
+# `scripts/` holds top-level modules (multisrc_corpus, championship_adapter,
+# pilotC_stat_mixer) that library code imports by bare name. Without it on the path a
+# clean checkout fails with ModuleNotFoundError: No module named 'multisrc_corpus'.
+pythonpath = [".", "scripts"]
+markers = [
+    "integration: needs live external services; skipped unless explicitly opted in",
+    "slow: long-running; not part of the fast feedback loop",
+]

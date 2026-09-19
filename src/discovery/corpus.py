@@ -342,7 +342,8 @@ def build_corpus(force_refetch: bool = False) -> CorpusStats:
     Returns:
         CorpusStats with size/coverage information.
     """
-    sys.path.insert(0, "/home/ubuntu")
+    from src._repo_paths import ensure_repo_importable
+    ensure_repo_importable()
 
     # Load env
     env_path = Path("/home/ubuntu/.env")
@@ -492,7 +493,8 @@ def ingest_on_demand_season(
         season_index (or None), total_matches, completed_matches,
         from_cache (bool), api_requests}.
     """
-    sys.path.insert(0, "/home/ubuntu")
+    from src._repo_paths import ensure_repo_importable
+    ensure_repo_importable()
 
     # Load env (same lightweight loader as build_corpus)
     env_path = Path("/home/ubuntu/.env")
@@ -931,7 +933,8 @@ def _load_env_for_thestats() -> None:
     THESTATS_API_KEY is what the TheStatsAPI client reads. It may live only in
     the shell environment; setdefault never clobbers an already-exported value.
     """
-    sys.path.insert(0, "/home/ubuntu")
+    from src._repo_paths import ensure_repo_importable
+    ensure_repo_importable()
     env_path = Path("/home/ubuntu/.env")
     if env_path.exists():
         with open(env_path) as f:

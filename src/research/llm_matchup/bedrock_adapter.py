@@ -30,6 +30,44 @@ class BedrockUnavailable(Exception):
     pass
 
 
+class IncompatibleBotoError(Exception):
+    """Raised by `check_bedrock_capability` when the ACTIVE Python environment cannot make a
+    Bedrock Converse call at all (e.g. system Python's stale boto3 lacking `.converse`).
+
+    This is a PROCESS-WIDE SDK incompatibility, not a per-request runtime failure (throttling,
+    timeout, daily quota). The two must never be conflated: a caller that let every fixture
+    fail individually and get classified LLM_STATE_UNAVAILABLE/OTHER_UNAVAILABLE would produce
+    20 misleading per-fixture records for what is actually one environment misconfiguration
+    (this happened once already -- see the Sonnet 4.5 V3 resume incident). Call this ONCE,
+    before the batch, and abort the whole run on failure instead.
+    """
+
+
+def check_bedrock_capability(region: str | None = None) -> dict:
+    """Fail fast: prove this interpreter's boto3/botocore can actually call Bedrock Converse
+    before spending it on a batch. Makes no network call -- only inspects the client object.
+
+    Returns a small provenance dict on success; raises IncompatibleBotoError on failure.
+    """
+    try:
+        import boto3
+        import botocore
+    except Exception as e:
+        raise IncompatibleBotoError(f"ABORT_INCOMPATIBLE_BOTO3: boto3 not importable: {e}")
+
+    client = _bedrock_client(region or "us-east-1")
+    if not hasattr(client, "converse"):
+        raise IncompatibleBotoError(
+            "ABORT_INCOMPATIBLE_BOTO3: bedrock-runtime client has no 'converse' method "
+            f"(boto3=={boto3.__version__}, botocore=={botocore.__version__}). This Python "
+            "environment cannot run live Sonnet V3 Converse calls -- likely running under "
+            "the wrong interpreter (use .venv/bin/python) or a too-old boto3. Refusing to "
+            "start the batch rather than emitting per-fixture UNAVAILABLE records for a "
+            "process-wide SDK incompatibility.")
+    return {"boto3_version": boto3.__version__, "botocore_version": botocore.__version__,
+           "has_converse": True, "region": region or "us-east-1"}
+
+
 @dataclass
 class LLMResult:
     status: str                     # OK | LLM_STATE_REJECTED | LLM_STATE_UNAVAILABLE

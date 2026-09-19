@@ -80,6 +80,10 @@ def test_save_manifest_if_absent_never_overwrites(tmp_path, monkeypatch):
 
 # --- resume(): abort paths (must make ZERO calls) -----------------------------------
 def test_resume_aborts_when_no_manifest(tmp_path, monkeypatch):
+    # GM.OUT must be redirected too: resume() takes the live-runner lock (resolved from GM.OUT)
+    # before it discovers the manifest is missing, so without this the test writes a real lock
+    # file into the production out/hardening_v3/ directory.
+    monkeypatch.setattr(GM, "OUT", str(tmp_path))
     monkeypatch.setattr(GM, "MANIFEST_PATH", str(tmp_path / "absent.json"))
     calls = []
     out = RG.resume(call_fn=lambda *a, **k: calls.append(1) or FakeResult("OK"))

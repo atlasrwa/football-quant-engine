@@ -1,0 +1,2451 @@
+{
+ "artifact": "V8C_REVIEW_SNAPSHOT_MANIFEST_V3",
+ "base_sha": "bb85637c27233dc5981b968430cbff3260cd3817",
+ "branch": "review/engine-snapshot-audit",
+ "counts": {
+  "file_entries": 70,
+  "directory_group_entries": 1,
+  "by_disposition": {
+   "KEEP_EXTERNAL": 1,
+   "KEEP_LOCAL": 14,
+   "PUSH": 56,
+   "HOLD": 0
+  },
+  "by_origin": {
+   "AMENDMENT_PASS": 1,
+   "CHANGED_IN_HYGIENE_PASS": 8,
+   "HYGIENE_PASS": 7,
+   "ORIGINAL_SNAPSHOT": 55
+  }
+ },
+ "included_paths": [
+  ".env.example",
+  ".gitignore",
+  "MARKET_RELATIVE_REPORT.md",
+  "PER_LEAGUE_STATMIXER_REPORT.md",
+  "docs/review/REPOSITORY_MAP.md",
+  "docs/review/REVIEWER_GUIDE.md",
+  "docs/review/V8C_REVIEW_SNAPSHOT_MANIFEST_V1.json",
+  "fdr_analysis_results.md",
+  "pyproject.toml",
+  "robustness_results.json",
+  "run_benchmark.py",
+  "run_robustness_check.py",
+  "scripts/diagnose_cards_edge.py",
+  "scripts/diagnose_corners.py",
+  "scripts/goals_vs_market_9660.py",
+  "scripts/rebuild_prior_only_9660.py",
+  "scripts/score_prior_only_9660.py",
+  "src/_repo_paths.py",
+  "src/research/llm_matchup/bedrock_adapter.py",
+  "src/research/llm_matchup/hardening/adapter_v4.py",
+  "src/research/llm_matchup/hardening/atomic_io.py",
+  "src/research/llm_matchup/hardening/audit_prespend.py",
+  "src/research/llm_matchup/hardening/controls_v3_core.py",
+  "src/research/llm_matchup/hardening/controls_v3_sonnet45.py",
+  "src/research/llm_matchup/hardening/controls_v3_sonnet46.py",
+  "src/research/llm_matchup/hardening/eligibility_v3_core.py",
+  "src/research/llm_matchup/hardening/eligibility_v3_sonnet45.py",
+  "src/research/llm_matchup/hardening/eligibility_v3_sonnet46.py",
+  "src/research/llm_matchup/hardening/freeze_v3_sonnet46.py",
+  "src/research/llm_matchup/hardening/golden_manifest.py",
+  "src/research/llm_matchup/hardening/golden_v3_sonnet46.py",
+  "src/research/llm_matchup/hardening/resume_golden_v3.py",
+  "src/research/llm_matchup/hardening/run_lock.py",
+  "src/research/llm_matchup/hardening/versions_v3_sonnet46.py",
+  "src/research/matchup/count_models.py",
+  "src/research/matchup/design.py",
+  "src/research/matchup/features.py",
+  "src/research/matchup/gen_artifacts.py",
+  "src/research/matchup/harness.py",
+  "src/research/matchup/referee_env.py",
+  "src/research/matchup/run_count_uncertainty.py",
+  "src/research/matchup/run_experiments.py",
+  "src/research/matchup/run_gbt.py",
+  "src/research/matchup/run_phase_f_and_forensics.py",
+  "src/research/matchup/run_referee_cards.py",
+  "test_hypothesis_layer_real_api.py",
+  "tests/conftest.py",
+  "tests/research/test_controls_v3_censoring_provenance.py",
+  "tests/research/test_controls_v3_core.py",
+  "tests/research/test_eligibility_v3_core.py",
+  "tests/research/test_formation_leakage.py",
+  "tests/research/test_formation_policy.py",
+  "tests/research/test_golden_v3_resume.py",
+  "tests/research/test_golden_v3_sonnet46.py",
+  "tests/research/test_matchup_leakage.py",
+  "tests/test_repo_paths.py"
+ ],
+ "additional_files_created": [
+  ".env.example",
+  ".gitignore (hardened)",
+  "pyproject.toml (dependency declarations)",
+  "src/_repo_paths.py",
+  "tests/test_repo_paths.py",
+  "docs/review/REPOSITORY_MAP.md",
+  "docs/review/REVIEWER_GUIDE.md",
+  "docs/review/V8C_REVIEW_SNAPSHOT_MANIFEST_V1.json"
+ ],
+ "files": [
+  {
+   "path": "MARKET_RELATIVE_REPORT.md",
+   "git_status": "untracked",
+   "size_bytes": 5744,
+   "purpose": "finding: do raw stats add anything the de-vigged market price does not (verdict: no)",
+   "third_party_deps": [],
+   "consumers": [],
+   "decision": "PUSH",
+   "reason": "re-inspected: findings produced by the published diagnostics; 64 KB total",
+   "needs_reviewer_attention": false,
+   "lifecycle": "EXPERIMENTAL",
+   "superseded_prior_decision": "HOLD",
+   "origin": "ORIGINAL_SNAPSHOT"
+  },
+  {
+   "path": "PER_LEAGUE_STATMIXER_REPORT.md",
+   "git_status": "untracked",
+   "size_bytes": 6101,
+   "purpose": "finding: per-league Pilot-C stat-mixer across 25 corpus leagues",
+   "third_party_deps": [],
+   "consumers": [],
+   "decision": "PUSH",
+   "reason": "re-inspected: findings produced by the published diagnostics; 64 KB total",
+   "needs_reviewer_attention": false,
+   "lifecycle": "EXPERIMENTAL",
+   "superseded_prior_decision": "HOLD",
+   "origin": "ORIGINAL_SNAPSHOT"
+  },
+  {
+   "path": "data/creator/hypotheses.jsonl",
+   "git_status": "modified-tracked",
+   "size_bytes": 11853,
+   "purpose": "module in the published package; see REPOSITORY_MAP.md section B",
+   "third_party_deps": [],
+   "consumers": [
+    "src/creator/api.py"
+   ],
+   "decision": "KEEP_LOCAL",
+   "reason": "runtime ledger written by live cron (forecast_broadcast / fixture_alert_watcher); not source",
+   "needs_reviewer_attention": false,
+   "lifecycle": "ACTIVE",
+   "origin": "ORIGINAL_SNAPSHOT"
+  },
+  {
+   "path": "data/discovery/corpus/_refresh_report.json",
+   "git_status": "modified-tracked",
+   "size_bytes": 5476,
+   "purpose": "module in the published package; see REPOSITORY_MAP.md section B",
+   "third_party_deps": [],
+   "consumers": [
+    "scripts/refresh_corpus.py"
+   ],
+   "decision": "KEEP_LOCAL",
+   "reason": "runtime ledger written by live cron (forecast_broadcast / fixture_alert_watcher); not source",
+   "needs_reviewer_attention": false,
+   "lifecycle": "ACTIVE",
+   "origin": "ORIGINAL_SNAPSHOT"
+  },
+  {
+   "path": "data/discovery/corpus/manifest.json",
+   "git_status": "modified-tracked",
+   "size_bytes": 25733,
+   "purpose": "module in the published package; see REPOSITORY_MAP.md section B",
+   "third_party_deps": [],
+   "consumers": [
+    "research/llm_matchup/FINAL_RECOMMENDATION.md",
+    "research/llm_matchup/FOOTBALL_ONTOLOGY.md",
+    "research/llm_matchup/README.md",
+    "research/llm_matchup/V3_CHECKPOINT.md",
+    "scripts/heatmap_positional_experiment.py"
+   ],
+   "decision": "KEEP_LOCAL",
+   "reason": "runtime ledger written by live cron (forecast_broadcast / fixture_alert_watcher); not source",
+   "needs_reviewer_attention": false,
+   "lifecycle": "ACTIVE",
+   "origin": "ORIGINAL_SNAPSHOT"
+  },
+  {
+   "path": "data/discovery/pilotC_discovery_log.jsonl",
+   "git_status": "modified-tracked",
+   "size_bytes": 119616,
+   "purpose": "module in the published package; see REPOSITORY_MAP.md section B",
+   "third_party_deps": [],
+   "consumers": [
+    "scripts/pilotC_fixture_discovery.py",
+    "scripts/pilotC_forward_loop.py",
+    "scripts/pilotC_heartbeat.py"
+   ],
+   "decision": "KEEP_LOCAL",
+   "reason": "runtime ledger written by live cron (forecast_broadcast / fixture_alert_watcher); not source",
+   "needs_reviewer_attention": false,
+   "lifecycle": "ACTIVE",
+   "origin": "ORIGINAL_SNAPSHOT"
+  },
+  {
+   "path": "data/discovery/pilotC_discovery_status.json",
+   "git_status": "modified-tracked",
+   "size_bytes": 2118,
+   "purpose": "module in the published package; see REPOSITORY_MAP.md section B",
+   "third_party_deps": [],
+   "consumers": [
+    "scripts/pilotC_fixture_discovery.py",
+    "scripts/pilotC_forward_loop.py",
+    "scripts/pilotC_heartbeat.py",
+    "tests/test_api_abort_classification.py"
+   ],
+   "decision": "KEEP_LOCAL",
+   "reason": "runtime ledger written by live cron (forecast_broadcast / fixture_alert_watcher); not source",
+   "needs_reviewer_attention": false,
+   "lifecycle": "ACTIVE",
+   "origin": "ORIGINAL_SNAPSHOT"
+  },
+  {
+   "path": "data/discovery/pilotC_settled_log.json",
+   "git_status": "modified-tracked",
+   "size_bytes": 48905,
+   "purpose": "module in the published package; see REPOSITORY_MAP.md section B",
+   "third_party_deps": [],
+   "consumers": [
+    "scripts/manual_predict.py",
+    "scripts/pilotC_forward_loop.py",
+    "scripts/pilotC_settle.py",
+    "tests/test_calibrated_exclusion.py",
+    "tests/test_manual_exclusion.py"
+   ],
+   "decision": "KEEP_LOCAL",
+   "reason": "runtime ledger written by live cron (forecast_broadcast / fixture_alert_watcher); not source",
+   "needs_reviewer_attention": false,
+   "lifecycle": "ACTIVE",
+   "origin": "ORIGINAL_SNAPSHOT"
+  },
+  {
+   "path": "data/discovery/provider_league_registry.json",
+   "git_status": "modified-tracked",
+   "size_bytes": 66884,
+   "purpose": "module in the published package; see REPOSITORY_MAP.md section B",
+   "third_party_deps": [],
+   "consumers": [
+    "research/evaluation/prospective_universe_report.md",
+    "scripts/sync_provider_leagues.py",
+    "src/discovery/corpus.py",
+    "src/research/footystats/corpus_expansion.py",
+    "src/research/identity/registry_loader.py"
+   ],
+   "decision": "KEEP_LOCAL",
+   "reason": "runtime ledger written by live cron (forecast_broadcast / fixture_alert_watcher); not source",
+   "needs_reviewer_attention": false,
+   "lifecycle": "ACTIVE",
+   "origin": "ORIGINAL_SNAPSHOT"
+  },
+  {
+   "path": "data/forecast_broadcast/broadcasts.jsonl",
+   "git_status": "modified-tracked",
+   "size_bytes": 247857,
+   "purpose": "module in the published package; see REPOSITORY_MAP.md section B",
+   "third_party_deps": [],
+   "consumers": [
+    "scripts/annotate_stale_corpus_forecasts.py",
+    "scripts/forecast_broadcast_heartbeat.py",
+    "src/research/prediction_engine/broadcast/record.py",
+    "src/research/prospective/shadow_process.py",
+    "src/research/scope/coverage_report.py"
+   ],
+   "decision": "KEEP_LOCAL",
+   "reason": "runtime ledger written by live cron (forecast_broadcast / fixture_alert_watcher); not source",
+   "needs_reviewer_attention": false,
+   "lifecycle": "ACTIVE",
+   "origin": "ORIGINAL_SNAPSHOT"
+  },
+  {
+   "path": "data/forward/commitments.jsonl",
+   "git_status": "modified-tracked",
+   "size_bytes": 394844,
+   "purpose": "module in the published package; see REPOSITORY_MAP.md section B",
+   "third_party_deps": [],
+   "consumers": [
+    "PILOTC_HARDENING_REPORT.md",
+    "public_site/server.py",
+    "scripts/edge_scanner.py",
+    "scripts/fixture_ev_engine.py",
+    "scripts/manual_predict.py"
+   ],
+   "decision": "KEEP_LOCAL",
+   "reason": "runtime ledger written by live cron (forecast_broadcast / fixture_alert_watcher); not source",
+   "needs_reviewer_attention": false,
+   "lifecycle": "ACTIVE",
+   "origin": "ORIGINAL_SNAPSHOT"
+  },
+  {
+   "path": "data/forward/predictions.jsonl",
+   "git_status": "modified-tracked",
+   "size_bytes": 337672,
+   "purpose": "module in the published package; see REPOSITORY_MAP.md section B",
+   "third_party_deps": [],
+   "consumers": [
+    "public_site/server.py",
+    "scripts/manual_predict.py",
+    "scripts/migrate_forward_ledger.py",
+    "scripts/quarantine_forward_loop.py",
+    "src/research/prediction_engine/attestation.py"
+   ],
+   "decision": "KEEP_LOCAL",
+   "reason": "runtime ledger written by live cron (forecast_broadcast / fixture_alert_watcher); not source",
+   "needs_reviewer_attention": false,
+   "lifecycle": "ACTIVE",
+   "origin": "ORIGINAL_SNAPSHOT"
+  },
+  {
+   "path": "data/forward/run_log.jsonl",
+   "git_status": "modified-tracked",
+   "size_bytes": 49324,
+   "purpose": "module in the published package; see REPOSITORY_MAP.md section B",
+   "third_party_deps": [],
+   "consumers": [
+    "scripts/pilotC_forward_loop.py",
+    "scripts/quarantine_forward_loop.py",
+    "src/research/prediction_engine/evaluation_window.py"
+   ],
+   "decision": "KEEP_LOCAL",
+   "reason": "runtime ledger written by live cron (forecast_broadcast / fixture_alert_watcher); not source",
+   "needs_reviewer_attention": false,
+   "lifecycle": "ACTIVE",
+   "origin": "ORIGINAL_SNAPSHOT"
+  },
+  {
+   "path": "fdr_analysis_results.md",
+   "git_status": "untracked",
+   "size_bytes": 2465,
+   "purpose": "finding: false-discovery-rate analysis over the corners/cards family",
+   "third_party_deps": [],
+   "consumers": [],
+   "decision": "PUSH",
+   "reason": "re-inspected: findings produced by the published diagnostics; 64 KB total",
+   "needs_reviewer_attention": false,
+   "lifecycle": "EXPERIMENTAL",
+   "superseded_prior_decision": "HOLD",
+   "origin": "ORIGINAL_SNAPSHOT"
+  },
+  {
+   "path": "research/llm_matchup/out/hardening_v3/golden_v3_execution_ledger.json",
+   "git_status": "modified-tracked",
+   "size_bytes": 16538,
+   "purpose": "module in the published package; see REPOSITORY_MAP.md section B",
+   "third_party_deps": [],
+   "consumers": [
+    "research/llm_matchup/V3_CHECKPOINT.md",
+    "src/research/llm_matchup/hardening/resume_golden_v3.py"
+   ],
+   "decision": "KEEP_LOCAL",
+   "reason": "generated experiment output, regenerated by its producer",
+   "needs_reviewer_attention": false,
+   "lifecycle": "SUPERSEDED",
+   "origin": "ORIGINAL_SNAPSHOT"
+  },
+  {
+   "path": "research/llm_matchup/out/hardening_v3/golden_v3_states.jsonl",
+   "git_status": "modified-tracked",
+   "size_bytes": 226603,
+   "purpose": "module in the published package; see REPOSITORY_MAP.md section B",
+   "third_party_deps": [],
+   "consumers": [
+    "research/llm_matchup/V3_CHECKPOINT.md",
+    "src/research/llm_matchup/hardening/run_golden_v3.py"
+   ],
+   "decision": "KEEP_LOCAL",
+   "reason": "generated experiment output, regenerated by its producer",
+   "needs_reviewer_attention": false,
+   "lifecycle": "SUPERSEDED",
+   "origin": "ORIGINAL_SNAPSHOT"
+  },
+  {
+   "path": "research/llm_matchup/out/hardening_v3/golden_v3_summary.json",
+   "git_status": "modified-tracked",
+   "size_bytes": 12708,
+   "purpose": "module in the published package; see REPOSITORY_MAP.md section B",
+   "third_party_deps": [],
+   "consumers": [
+    "research/llm_matchup/V3_CHECKPOINT.md",
+    "src/research/llm_matchup/hardening/run_golden_v3.py"
+   ],
+   "decision": "KEEP_LOCAL",
+   "reason": "generated experiment output, regenerated by its producer",
+   "needs_reviewer_attention": false,
+   "lifecycle": "SUPERSEDED",
+   "origin": "ORIGINAL_SNAPSHOT"
+  },
+  {
+   "path": "robustness_results.json",
+   "git_status": "untracked",
+   "size_bytes": 42620,
+   "purpose": "data behind fdr_analysis_results.md: 25 leagues x 3 seasons",
+   "third_party_deps": [],
+   "consumers": [
+    "data/discovery/MM_CALIBRATION_AUDIT_REPORT.md",
+    "data/results/leak_consumer_audit.md",
+    "public_site/server.py",
+    "src/research/evaluation/laliga_corners.py",
+    "src/research/prediction_engine/scope.py"
+   ],
+   "decision": "PUSH",
+   "reason": "re-inspected: findings produced by the published diagnostics; 64 KB total",
+   "needs_reviewer_attention": false,
+   "lifecycle": "EXPERIMENTAL",
+   "superseded_prior_decision": "HOLD",
+   "origin": "ORIGINAL_SNAPSHOT"
+  },
+  {
+   "path": "run_benchmark.py",
+   "git_status": "untracked",
+   "size_bytes": 17164,
+   "purpose": "Walk-forward benchmark: all models vs baselines vs FootyStats public predictions.",
+   "third_party_deps": [
+    "numpy"
+   ],
+   "consumers": [
+    "data/results/leak_consumer_audit.md",
+    "scripts/audit_harness_sanity.py"
+   ],
+   "decision": "PUSH",
+   "reason": "re-inspected: research entry point / diagnostic run directly; belongs in Git even with no importer",
+   "needs_reviewer_attention": false,
+   "lifecycle": "EXPERIMENTAL",
+   "superseded_prior_decision": "HOLD",
+   "origin": "ORIGINAL_SNAPSHOT"
+  },
+  {
+   "path": "run_robustness_check.py",
+   "git_status": "untracked",
+   "size_bytes": 24628,
+   "purpose": "Leak-free multi-league, multi-season robustness check for corners and cards.",
+   "third_party_deps": [
+    "numpy"
+   ],
+   "consumers": [
+    "data/results/leak_consumer_audit.md",
+    "scripts/audit_harness_sanity.py",
+    "scripts/audit_reproduce_validation.py",
+    "src/research/evaluation/laliga_corners.py",
+    "src/research/prediction_engine/scope.py"
+   ],
+   "decision": "PUSH",
+   "reason": "re-inspected: research entry point / diagnostic run directly; belongs in Git even with no importer",
+   "needs_reviewer_attention": false,
+   "lifecycle": "EXPERIMENTAL",
+   "superseded_prior_decision": "HOLD",
+   "origin": "ORIGINAL_SNAPSHOT"
+  },
+  {
+   "path": "scripts/diagnose_cards_edge.py",
+   "git_status": "untracked",
+   "size_bytes": 4106,
+   "purpose": "Diagnose the surviving cards +5.72% edge on leak-free features (Task 3 follow-up).",
+   "third_party_deps": [
+    "numpy"
+   ],
+   "consumers": [],
+   "decision": "PUSH",
+   "reason": "re-inspected: research entry point / diagnostic run directly; belongs in Git even with no importer",
+   "needs_reviewer_attention": false,
+   "lifecycle": "EXPERIMENTAL",
+   "superseded_prior_decision": "HOLD",
+   "origin": "ORIGINAL_SNAPSHOT"
+  },
+  {
+   "path": "scripts/diagnose_corners.py",
+   "git_status": "untracked",
+   "size_bytes": 19657,
+   "purpose": "research entry point run directly; see REPOSITORY_MAP.md section B",
+   "third_party_deps": [
+    "numpy"
+   ],
+   "consumers": [],
+   "decision": "PUSH",
+   "reason": "re-inspected: research entry point / diagnostic run directly; belongs in Git even with no importer",
+   "needs_reviewer_attention": false,
+   "lifecycle": "EXPERIMENTAL",
+   "superseded_prior_decision": "HOLD",
+   "origin": "ORIGINAL_SNAPSHOT"
+  },
+  {
+   "path": "scripts/goals_vs_market_9660.py",
+   "git_status": "untracked",
+   "size_bytes": 8570,
+   "purpose": "Task 4 — Goals O/U 2.5: prior-only model vs market closing line (EPL 2023/24, 9660).",
+   "third_party_deps": [
+    "numpy"
+   ],
+   "consumers": [],
+   "decision": "PUSH",
+   "reason": "re-inspected: research entry point / diagnostic run directly; belongs in Git even with no importer",
+   "needs_reviewer_attention": false,
+   "lifecycle": "EXPERIMENTAL",
+   "superseded_prior_decision": "HOLD",
+   "origin": "ORIGINAL_SNAPSHOT"
+  },
+  {
+   "path": "scripts/rebuild_prior_only_9660.py",
+   "git_status": "untracked",
+   "size_bytes": 8724,
+   "purpose": "Rebuild strictly-prior EPL 2023/24 (FootyStats season 9660) walk-forward predictions.",
+   "third_party_deps": [
+    "numpy"
+   ],
+   "consumers": [
+    "src/research/evaluation/laliga_corners.py"
+   ],
+   "decision": "PUSH",
+   "reason": "re-inspected: research entry point / diagnostic run directly; belongs in Git even with no importer",
+   "needs_reviewer_attention": false,
+   "lifecycle": "EXPERIMENTAL",
+   "superseded_prior_decision": "HOLD",
+   "origin": "ORIGINAL_SNAPSHOT"
+  },
+  {
+   "path": "scripts/score_prior_only_9660.py",
+   "git_status": "untracked",
+   "size_bytes": 5632,
+   "purpose": "Score the rebuilt prior-only EPL 2023/24 (season 9660) predictions (Task 3).",
+   "third_party_deps": [
+    "numpy"
+   ],
+   "consumers": [],
+   "decision": "PUSH",
+   "reason": "re-inspected: research entry point / diagnostic run directly; belongs in Git even with no importer",
+   "needs_reviewer_attention": false,
+   "lifecycle": "EXPERIMENTAL",
+   "superseded_prior_decision": "HOLD",
+   "origin": "ORIGINAL_SNAPSHOT"
+  },
+  {
+   "path": "src/research/llm_matchup/bedrock_adapter.py",
+   "git_status": "modified-tracked",
+   "size_bytes": 8899,
+   "purpose": "Bedrock adapter — narrow interface analyze_matchup() (brief §21, §23, §60, §61).",
+   "third_party_deps": [
+    "boto3",
+    "botocore"
+   ],
+   "consumers": [
+    "research/hypothesis_engine/FORENSIC_FRONTIER_READINESS_AUDIT.md",
+    "research/hypothesis_engine/V8B1_RESEARCH_PROTOCOL.md",
+    "research/llm_matchup/ARCHITECTURE.md",
+    "research/llm_matchup/README.md",
+    "src/research/hypothesis_v8b1/runner.py"
+   ],
+   "decision": "PUSH",
+   "reason": "modified tracked source; interdependent with the new hardening modules and must ship with them",
+   "needs_reviewer_attention": false,
+   "lifecycle": "ACTIVE",
+   "origin": "ORIGINAL_SNAPSHOT"
+  },
+  {
+   "path": "src/research/llm_matchup/hardening/adapter_v4.py",
+   "git_status": "modified-tracked",
+   "size_bytes": 10305,
+   "purpose": "Identity-neutral Bedrock call path (adapter_v4) — the LLM_MATCHUP_V3 instrument.",
+   "third_party_deps": [],
+   "consumers": [
+    "research/hypothesis_engine/FORENSIC_FRONTIER_READINESS_AUDIT.md",
+    "research/hypothesis_engine/_build_v8b1_economics_projection.py",
+    "research/llm_matchup/V3_CHECKPOINT.md",
+    "src/research/hypothesis_v8b1/runner.py",
+    "src/research/llm_matchup/hardening/audit_request.py"
+   ],
+   "decision": "PUSH",
+   "reason": "modified tracked source; interdependent with the new hardening modules and must ship with them",
+   "needs_reviewer_attention": false,
+   "lifecycle": "ACTIVE",
+   "origin": "ORIGINAL_SNAPSHOT"
+  },
+  {
+   "path": "src/research/llm_matchup/hardening/atomic_io.py",
+   "git_status": "untracked",
+   "size_bytes": 909,
+   "purpose": "Atomic JSON persistence for live experimental artifacts (execution ledgers, control",
+   "third_party_deps": [],
+   "consumers": [
+    "src/research/llm_matchup/hardening/resume_golden_v3.py"
+   ],
+   "decision": "PUSH",
+   "reason": "tracked resume_golden_v3.py imports it; a clean clone cannot run the resume path without it",
+   "needs_reviewer_attention": false,
+   "lifecycle": "ACTIVE",
+   "origin": "ORIGINAL_SNAPSHOT"
+  },
+  {
+   "path": "src/research/llm_matchup/hardening/audit_prespend.py",
+   "git_status": "untracked",
+   "size_bytes": 13837,
+   "purpose": "Pre-spend structural audit of the LITERAL serialized Bedrock request (V3 SS60 extended).",
+   "third_party_deps": [],
+   "consumers": [],
+   "decision": "PUSH",
+   "reason": "companion module/test of the hardening package; the package is incoherent without it",
+   "needs_reviewer_attention": false,
+   "lifecycle": "ACTIVE",
+   "origin": "ORIGINAL_SNAPSHOT"
+  },
+  {
+   "path": "src/research/llm_matchup/hardening/controls_v3_core.py",
+   "git_status": "untracked",
+   "size_bytes": 32772,
+   "purpose": "Generation-neutral core of the V3 identity / behavior-sensitivity control battery.",
+   "third_party_deps": [],
+   "consumers": [],
+   "decision": "PUSH",
+   "reason": "companion module/test of the hardening package; the package is incoherent without it",
+   "needs_reviewer_attention": false,
+   "lifecycle": "ACTIVE",
+   "origin": "ORIGINAL_SNAPSHOT"
+  },
+  {
+   "path": "src/research/llm_matchup/hardening/controls_v3_sonnet45.py",
+   "git_status": "untracked",
+   "size_bytes": 5416,
+   "purpose": "LLM_MATCHUP_V3 (Sonnet 4.5 arm) control battery.",
+   "third_party_deps": [],
+   "consumers": [],
+   "decision": "PUSH",
+   "reason": "companion module/test of the hardening package; the package is incoherent without it",
+   "needs_reviewer_attention": false,
+   "lifecycle": "ACTIVE",
+   "origin": "ORIGINAL_SNAPSHOT"
+  },
+  {
+   "path": "src/research/llm_matchup/hardening/controls_v3_sonnet46.py",
+   "git_status": "untracked",
+   "size_bytes": 2657,
+   "purpose": "LLM_MATCHUP_V3_SONNET46 control battery — the Sonnet 4.6 arm's identity / stability tests.",
+   "third_party_deps": [],
+   "consumers": [],
+   "decision": "PUSH",
+   "reason": "companion module/test of the hardening package; the package is incoherent without it",
+   "needs_reviewer_attention": false,
+   "lifecycle": "ACTIVE",
+   "origin": "ORIGINAL_SNAPSHOT"
+  },
+  {
+   "path": "src/research/llm_matchup/hardening/eligibility_v3_core.py",
+   "git_status": "untracked",
+   "size_bytes": 14711,
+   "purpose": "Generation-neutral V3 mechanism-eligibility core.",
+   "third_party_deps": [],
+   "consumers": [
+    "research/hypothesis_engine/FORENSIC_FRONTIER_READINESS_AUDIT.md"
+   ],
+   "decision": "PUSH",
+   "reason": "companion module/test of the hardening package; the package is incoherent without it",
+   "needs_reviewer_attention": false,
+   "lifecycle": "ACTIVE",
+   "origin": "ORIGINAL_SNAPSHOT"
+  },
+  {
+   "path": "src/research/llm_matchup/hardening/eligibility_v3_sonnet45.py",
+   "git_status": "untracked",
+   "size_bytes": 2554,
+   "purpose": "Sonnet 4.5 V3 mechanism eligibility — V3_SONNET45_ELIGIBILITY.",
+   "third_party_deps": [],
+   "consumers": [],
+   "decision": "PUSH",
+   "reason": "companion module/test of the hardening package; the package is incoherent without it",
+   "needs_reviewer_attention": false,
+   "lifecycle": "ACTIVE",
+   "origin": "ORIGINAL_SNAPSHOT"
+  },
+  {
+   "path": "src/research/llm_matchup/hardening/eligibility_v3_sonnet46.py",
+   "git_status": "untracked",
+   "size_bytes": 2914,
+   "purpose": "Sonnet 4.6 V3 mechanism eligibility — V3_SONNET46_ELIGIBILITY.",
+   "third_party_deps": [],
+   "consumers": [],
+   "decision": "PUSH",
+   "reason": "companion module/test of the hardening package; the package is incoherent without it",
+   "needs_reviewer_attention": false,
+   "lifecycle": "ACTIVE",
+   "origin": "ORIGINAL_SNAPSHOT"
+  },
+  {
+   "path": "src/research/llm_matchup/hardening/freeze_v3_sonnet46.py",
+   "git_status": "untracked",
+   "size_bytes": 12179,
+   "purpose": "Freeze the LLM_MATCHUP_V3_SONNET46 generation — the Sonnet 4.6 arm's scientific record.",
+   "third_party_deps": [],
+   "consumers": [],
+   "decision": "PUSH",
+   "reason": "companion module/test of the hardening package; the package is incoherent without it",
+   "needs_reviewer_attention": false,
+   "lifecycle": "ACTIVE",
+   "origin": "ORIGINAL_SNAPSHOT"
+  },
+  {
+   "path": "src/research/llm_matchup/hardening/golden_manifest.py",
+   "git_status": "modified-tracked",
+   "size_bytes": 6785,
+   "purpose": "Frozen golden/live-smoke fixture manifest + generation-compatibility fingerprint",
+   "third_party_deps": [],
+   "consumers": [
+    "research/llm_matchup/V3_CHECKPOINT.md",
+    "src/research/llm_matchup/hardening/resume_golden_v3.py",
+    "tests/research/test_golden_v3_resume.py"
+   ],
+   "decision": "PUSH",
+   "reason": "modified tracked source; interdependent with the new hardening modules and must ship with them",
+   "needs_reviewer_attention": false,
+   "lifecycle": "ACTIVE",
+   "origin": "ORIGINAL_SNAPSHOT"
+  },
+  {
+   "path": "src/research/llm_matchup/hardening/golden_v3_sonnet46.py",
+   "git_status": "untracked",
+   "size_bytes": 29189,
+   "purpose": "LLM_MATCHUP_V3_SONNET46 golden batch harness -- the Sonnet 4.6 arm.",
+   "third_party_deps": [],
+   "consumers": [],
+   "decision": "PUSH",
+   "reason": "companion module/test of the hardening package; the package is incoherent without it",
+   "needs_reviewer_attention": false,
+   "lifecycle": "ACTIVE",
+   "origin": "ORIGINAL_SNAPSHOT"
+  },
+  {
+   "path": "src/research/llm_matchup/hardening/resume_golden_v3.py",
+   "git_status": "modified-tracked",
+   "size_bytes": 9796,
+   "purpose": "Idempotent, quota-safe resume harness for the golden_v3 smoke batch",
+   "third_party_deps": [],
+   "consumers": [
+    "research/llm_matchup/V3_CHECKPOINT.md",
+    "tests/research/test_golden_v3_resume.py"
+   ],
+   "decision": "PUSH",
+   "reason": "modified tracked source; interdependent with the new hardening modules and must ship with them",
+   "needs_reviewer_attention": false,
+   "lifecycle": "ACTIVE",
+   "origin": "ORIGINAL_SNAPSHOT"
+  },
+  {
+   "path": "src/research/llm_matchup/hardening/run_lock.py",
+   "git_status": "untracked",
+   "size_bytes": 2619,
+   "purpose": "Process-level exclusive lock for live (paid) experiment runners.",
+   "third_party_deps": [],
+   "consumers": [
+    "src/research/llm_matchup/hardening/resume_golden_v3.py"
+   ],
+   "decision": "PUSH",
+   "reason": "tracked resume_golden_v3.py imports it; provides the run lock that prevents concurrent golden runs",
+   "needs_reviewer_attention": false,
+   "lifecycle": "ACTIVE",
+   "origin": "ORIGINAL_SNAPSHOT"
+  },
+  {
+   "path": "src/research/llm_matchup/hardening/versions_v3_sonnet46.py",
+   "git_status": "untracked",
+   "size_bytes": 7978,
+   "purpose": "LLM_MATCHUP_V3_SONNET46 — the Sonnet 4.6 arm of the V3 identity-neutral generation.",
+   "third_party_deps": [],
+   "consumers": [
+    "research/hypothesis_engine/FORENSIC_FRONTIER_READINESS_AUDIT.md",
+    "src/research/llm_matchup/hardening/adapter_v4.py"
+   ],
+   "decision": "PUSH",
+   "reason": "companion module/test of the hardening package; the package is incoherent without it",
+   "needs_reviewer_attention": false,
+   "lifecycle": "ACTIVE",
+   "origin": "ORIGINAL_SNAPSHOT"
+  },
+  {
+   "path": "src/research/matchup/count_models.py",
+   "git_status": "untracked",
+   "size_bytes": 3378,
+   "purpose": "Count/distributional challengers for goals and corners (PHASE F).",
+   "third_party_deps": [
+    "numpy",
+    "scipy",
+    "sklearn"
+   ],
+   "consumers": [],
+   "decision": "PUSH",
+   "reason": "re-inspected: research entry point / diagnostic run directly; belongs in Git even with no importer",
+   "needs_reviewer_attention": false,
+   "lifecycle": "EXPERIMENTAL",
+   "superseded_prior_decision": "HOLD",
+   "origin": "ORIGINAL_SNAPSHOT"
+  },
+  {
+   "path": "src/research/matchup/design.py",
+   "git_status": "untracked",
+   "size_bytes": 9291,
+   "purpose": "Assemble named feature FAMILIES per fixture for chronological OOS experiments.",
+   "third_party_deps": [
+    "numpy"
+   ],
+   "consumers": [
+    ".kiro/specs/asymmetric-matchup-engine/design.md",
+    ".kiro/specs/asymmetric-matchup-engine/tasks.md",
+    ".kiro/specs/footystats_crypto_bridge/tasks.md",
+    ".kiro/specs/immediate_launch/tasks.md",
+    ".kiro/specs/ingestion-and-backtester/tasks.md"
+   ],
+   "decision": "PUSH",
+   "reason": "tracked research/hypothesis_oos/_run_v4_oos.py imports it",
+   "needs_reviewer_attention": false,
+   "lifecycle": "ACTIVE",
+   "origin": "ORIGINAL_SNAPSHOT"
+  },
+  {
+   "path": "src/research/matchup/features.py",
+   "git_status": "untracked",
+   "size_bytes": 11382,
+   "purpose": "PIT-safe feature builders for the contextual-matchup challenger.",
+   "third_party_deps": [
+    "numpy"
+   ],
+   "consumers": [
+    ".kiro/specs/asymmetric-matchup-engine/design.md",
+    ".kiro/specs/asymmetric-matchup-engine/requirements.md",
+    ".kiro/specs/asymmetric-matchup-engine/tasks.md",
+    ".kiro/specs/ingestion-and-backtester/design.md",
+    ".kiro/specs/ingestion-and-backtester/requirements.md"
+   ],
+   "decision": "PUSH",
+   "reason": "tracked research/hypothesis_oos/_run_v4_oos.py imports it; also imported by the included leakage test",
+   "needs_reviewer_attention": false,
+   "lifecycle": "ACTIVE",
+   "origin": "ORIGINAL_SNAPSHOT"
+  },
+  {
+   "path": "src/research/matchup/gen_artifacts.py",
+   "git_status": "untracked",
+   "size_bytes": 6454,
+   "purpose": "Generate machine-readable research artifacts (dictionary, provenance, coverage, registry).",
+   "third_party_deps": [
+    "numpy"
+   ],
+   "consumers": [
+    "research/llm_matchup/ARCHITECTURE.md",
+    "research/llm_matchup/README.md",
+    "src/research/llm_matchup/gen_artifacts.py",
+    "src/research/llm_matchup/hardening/freeze.py",
+    "src/research/llm_matchup/ontology.py"
+   ],
+   "decision": "PUSH",
+   "reason": "tracked src/research/llm_matchup/gen_artifacts.py imports it",
+   "needs_reviewer_attention": false,
+   "lifecycle": "ACTIVE",
+   "origin": "CHANGED_IN_HYGIENE_PASS"
+  },
+  {
+   "path": "src/research/matchup/harness.py",
+   "git_status": "untracked",
+   "size_bytes": 6309,
+   "purpose": "Chronological OOS evaluation harness for champion-vs-challenger experiments.",
+   "third_party_deps": [
+    "numpy",
+    "sklearn"
+   ],
+   "consumers": [
+    "SELECTIVITY_TEST_REPORT.md",
+    "docs/clean_raw_stats_engine_report.md",
+    "research/hypothesis_engine/FORENSIC_FRONTIER_READINESS_AUDIT.md",
+    "research/hypothesis_engine/V4_HYPOTHESIS_DERIVED_OOS_PREREGISTRATION.md",
+    "research/hypothesis_engine/V7_1_CONFIRMATORY_OOS_REPORT.md"
+   ],
+   "decision": "PUSH",
+   "reason": "tracked research/hypothesis_oos/_run_v4_oos.py imports it; sole sklearn consumer in the snapshot",
+   "needs_reviewer_attention": false,
+   "lifecycle": "ACTIVE",
+   "origin": "ORIGINAL_SNAPSHOT"
+  },
+  {
+   "path": "src/research/matchup/referee_env.py",
+   "git_status": "untracked",
+   "size_bytes": 3506,
+   "purpose": "PIT-safe referee & league-environment context from the FootyStats corpus.",
+   "third_party_deps": [
+    "numpy",
+    "pilotC_stat_mixer"
+   ],
+   "consumers": [],
+   "decision": "PUSH",
+   "reason": "re-inspected: research entry point / diagnostic run directly; belongs in Git even with no importer",
+   "needs_reviewer_attention": false,
+   "lifecycle": "EXPERIMENTAL",
+   "superseded_prior_decision": "HOLD",
+   "origin": "CHANGED_IN_HYGIENE_PASS"
+  },
+  {
+   "path": "src/research/matchup/run_count_uncertainty.py",
+   "git_status": "untracked",
+   "size_bytes": 7484,
+   "purpose": "Bootstrap CIs for the COUNT-model challenger vs champion (the most promising family),",
+   "third_party_deps": [
+    "numpy"
+   ],
+   "consumers": [],
+   "decision": "PUSH",
+   "reason": "re-inspected: research entry point / diagnostic run directly; belongs in Git even with no importer",
+   "needs_reviewer_attention": false,
+   "lifecycle": "EXPERIMENTAL",
+   "superseded_prior_decision": "HOLD",
+   "origin": "CHANGED_IN_HYGIENE_PASS"
+  },
+  {
+   "path": "src/research/matchup/run_experiments.py",
+   "git_status": "untracked",
+   "size_bytes": 5993,
+   "purpose": "Build feature families per fixture, cache them, and run the ablation ladder.",
+   "third_party_deps": [
+    "numpy"
+   ],
+   "consumers": [],
+   "decision": "PUSH",
+   "reason": "re-inspected: research entry point / diagnostic run directly; belongs in Git even with no importer",
+   "needs_reviewer_attention": false,
+   "lifecycle": "EXPERIMENTAL",
+   "superseded_prior_decision": "HOLD",
+   "origin": "CHANGED_IN_HYGIENE_PASS"
+  },
+  {
+   "path": "src/research/matchup/run_gbt.py",
+   "git_status": "untracked",
+   "size_bytes": 2937,
+   "purpose": "PHASE G: limited nonlinear challenger (gradient-boosted trees) on the matchup",
+   "third_party_deps": [
+    "numpy",
+    "sklearn"
+   ],
+   "consumers": [],
+   "decision": "PUSH",
+   "reason": "re-inspected: research entry point / diagnostic run directly; belongs in Git even with no importer",
+   "needs_reviewer_attention": false,
+   "lifecycle": "EXPERIMENTAL",
+   "superseded_prior_decision": "HOLD",
+   "origin": "CHANGED_IN_HYGIENE_PASS"
+  },
+  {
+   "path": "src/research/matchup/run_phase_f_and_forensics.py",
+   "git_status": "untracked",
+   "size_bytes": 12401,
+   "purpose": "PHASE F (count models) + uncertainty (bootstrap CIs) + per-competition stability",
+   "third_party_deps": [
+    "numpy"
+   ],
+   "consumers": [],
+   "decision": "PUSH",
+   "reason": "re-inspected: research entry point / diagnostic run directly; belongs in Git even with no importer",
+   "needs_reviewer_attention": false,
+   "lifecycle": "EXPERIMENTAL",
+   "superseded_prior_decision": "HOLD",
+   "origin": "CHANGED_IN_HYGIENE_PASS"
+  },
+  {
+   "path": "src/research/matchup/run_referee_cards.py",
+   "git_status": "untracked",
+   "size_bytes": 4363,
+   "purpose": "Cards referee/league-environment experiment on the FootyStats corpus.",
+   "third_party_deps": [
+    "numpy",
+    "pilotC_stat_mixer"
+   ],
+   "consumers": [],
+   "decision": "PUSH",
+   "reason": "re-inspected: research entry point / diagnostic run directly; belongs in Git even with no importer",
+   "needs_reviewer_attention": false,
+   "lifecycle": "EXPERIMENTAL",
+   "superseded_prior_decision": "HOLD",
+   "origin": "CHANGED_IN_HYGIENE_PASS"
+  },
+  {
+   "path": "test_hypothesis_layer_real_api.py",
+   "git_status": "untracked",
+   "size_bytes": 13041,
+   "purpose": "Integration test: Hypothesis layer end-to-end against real FootyStats API.",
+   "third_party_deps": [],
+   "consumers": [],
+   "decision": "PUSH",
+   "reason": "re-inspected: integration coverage; made opt-in (RUN_LIVE_API_TESTS=1) and path-independent",
+   "needs_reviewer_attention": false,
+   "lifecycle": "EXPERIMENTAL",
+   "superseded_prior_decision": "EXCLUDE",
+   "origin": "CHANGED_IN_HYGIENE_PASS"
+  },
+  {
+   "path": "tests/conftest.py",
+   "git_status": "modified-tracked",
+   "size_bytes": 5706,
+   "purpose": "Shared test fixtures and the SyntheticMatchGenerator.",
+   "third_party_deps": [
+    "hypothesis",
+    "pytest"
+   ],
+   "consumers": [
+    ".kiro/specs/asymmetric-matchup-engine/tasks.md",
+    ".kiro/specs/ingestion-and-backtester/tasks.md",
+    "docs/phase-3.1-codebase-assessment.md",
+    "docs/phase-3.2-preflight-audit.md",
+    "research/hypothesis_engine/V6_1_FINAL_AUDIT_REPORT.md"
+   ],
+   "decision": "PUSH",
+   "reason": "modified tracked source; interdependent with the new hardening modules and must ship with them",
+   "needs_reviewer_attention": false,
+   "lifecycle": "ACTIVE",
+   "origin": "ORIGINAL_SNAPSHOT"
+  },
+  {
+   "path": "tests/research/test_controls_v3_censoring_provenance.py",
+   "git_status": "untracked",
+   "size_bytes": 11779,
+   "purpose": "Regression tests for the SS27 infrastructure-censoring REPORTING gap.",
+   "third_party_deps": [
+    "one",
+    "pytest"
+   ],
+   "consumers": [],
+   "decision": "PUSH",
+   "reason": "companion module/test of the hardening package; the package is incoherent without it",
+   "needs_reviewer_attention": false,
+   "lifecycle": "ACTIVE",
+   "origin": "ORIGINAL_SNAPSHOT"
+  },
+  {
+   "path": "tests/research/test_controls_v3_core.py",
+   "git_status": "untracked",
+   "size_bytes": 23895,
+   "purpose": "Tests for the generation-neutral control-runner infrastructure built to resume the Sonnet",
+   "third_party_deps": [
+    "pytest"
+   ],
+   "consumers": [],
+   "decision": "PUSH",
+   "reason": "companion module/test of the hardening package; the package is incoherent without it",
+   "needs_reviewer_attention": false,
+   "lifecycle": "ACTIVE",
+   "origin": "ORIGINAL_SNAPSHOT"
+  },
+  {
+   "path": "tests/research/test_eligibility_v3_core.py",
+   "git_status": "untracked",
+   "size_bytes": 8115,
+   "purpose": "Tests for the generation-neutral V3 eligibility extraction (`eligibility_v3_core`).",
+   "third_party_deps": [
+    "pytest"
+   ],
+   "consumers": [
+    "research/hypothesis_engine/FORENSIC_FRONTIER_READINESS_AUDIT.md"
+   ],
+   "decision": "PUSH",
+   "reason": "companion module/test of the hardening package; the package is incoherent without it",
+   "needs_reviewer_attention": false,
+   "lifecycle": "ACTIVE",
+   "origin": "ORIGINAL_SNAPSHOT"
+  },
+  {
+   "path": "tests/research/test_formation_leakage.py",
+   "git_status": "untracked",
+   "size_bytes": 6043,
+   "purpose": "Hard leakage-boundary tests for the two-concept formation model (formation_policy_v1).",
+   "third_party_deps": [
+    "pytest"
+   ],
+   "consumers": [
+    "research/llm_matchup/B2_CORNERS_PILOT.md",
+    "research/llm_matchup/FORMATION_RESOLUTION_POLICY.md"
+   ],
+   "decision": "PUSH",
+   "reason": "companion module/test of the hardening package; the package is incoherent without it",
+   "needs_reviewer_attention": false,
+   "lifecycle": "ACTIVE",
+   "origin": "ORIGINAL_SNAPSHOT"
+  },
+  {
+   "path": "tests/research/test_formation_policy.py",
+   "git_status": "untracked",
+   "size_bytes": 11415,
+   "purpose": "Formation policy tests (formation_policy_v1) — deterministic, hermetic, no Bedrock.",
+   "third_party_deps": [
+    "pytest"
+   ],
+   "consumers": [
+    "research/llm_matchup/B1_ADVERSARIAL_RESULTS.md",
+    "research/llm_matchup/FORMATION_BEHAVIOR_ANALYSIS.md"
+   ],
+   "decision": "PUSH",
+   "reason": "companion module/test of the hardening package; the package is incoherent without it",
+   "needs_reviewer_attention": false,
+   "lifecycle": "ACTIVE",
+   "origin": "ORIGINAL_SNAPSHOT"
+  },
+  {
+   "path": "tests/research/test_golden_v3_resume.py",
+   "git_status": "modified-tracked",
+   "size_bytes": 10372,
+   "purpose": "V3 checkpoint mandate SS4-SS7, SS16: idempotent, quota-safe resume harness.",
+   "third_party_deps": [
+    "pytest"
+   ],
+   "consumers": [
+    "research/hypothesis_engine/FORENSIC_FRONTIER_READINESS_AUDIT.md",
+    "research/hypothesis_engine/V7_1_PRE_OOS_HARDENING_REPORT.md",
+    "research/llm_matchup/V3_CHECKPOINT.md",
+    "src/research/llm_matchup/hardening/resume_golden_v3.py"
+   ],
+   "decision": "PUSH",
+   "reason": "modified tracked source; interdependent with the new hardening modules and must ship with them",
+   "needs_reviewer_attention": false,
+   "lifecycle": "ACTIVE",
+   "origin": "ORIGINAL_SNAPSHOT"
+  },
+  {
+   "path": "tests/research/test_golden_v3_sonnet46.py",
+   "git_status": "untracked",
+   "size_bytes": 26783,
+   "purpose": "LLM_MATCHUP_V3_SONNET46 arm: isolation, cache-separation and audit-sensitivity tests.",
+   "third_party_deps": [
+    "pytest"
+   ],
+   "consumers": [],
+   "decision": "PUSH",
+   "reason": "companion module/test of the hardening package; the package is incoherent without it",
+   "needs_reviewer_attention": false,
+   "lifecycle": "ACTIVE",
+   "origin": "ORIGINAL_SNAPSHOT"
+  },
+  {
+   "path": "tests/research/test_matchup_leakage.py",
+   "git_status": "untracked",
+   "size_bytes": 6809,
+   "purpose": "Leakage / temporal-integrity / orientation tests for the matchup research layer.",
+   "third_party_deps": [
+    "numpy",
+    "pytest"
+   ],
+   "consumers": [
+    "research/llm_matchup/GOLDEN_TESTS.md",
+    "research/llm_matchup/README.md"
+   ],
+   "decision": "PUSH",
+   "reason": "companion module/test of the hardening package; the package is incoherent without it",
+   "needs_reviewer_attention": false,
+   "lifecycle": "ACTIVE",
+   "origin": "ORIGINAL_SNAPSHOT"
+  },
+  {
+   "path": "docs/review/REVIEWER_GUIDE.md",
+   "git_status": "modified-in-amendment-pass",
+   "purpose": "reviewer entry document",
+   "consumers": [],
+   "third_party_deps": [],
+   "decision": "PUSH",
+   "lifecycle": "ACTIVE",
+   "reason": "organizational/packaging file",
+   "needs_reviewer_attention": false,
+   "origin": "HYGIENE_PASS"
+  },
+  {
+   "path": "docs/review/REPOSITORY_MAP.md",
+   "git_status": "modified-in-amendment-pass",
+   "purpose": "component status, file disposition, deprecation, functional backlog, per-file tracked-data retention, and the source-root behaviour statement (section G)",
+   "consumers": [],
+   "third_party_deps": [],
+   "decision": "PUSH",
+   "lifecycle": "ACTIVE",
+   "reason": "organizational/packaging file",
+   "needs_reviewer_attention": false,
+   "origin": "HYGIENE_PASS"
+  },
+  {
+   "path": "docs/review/V8C_REVIEW_SNAPSHOT_MANIFEST_V1.json",
+   "git_status": "modified-in-amendment-pass",
+   "purpose": "this manifest",
+   "consumers": [],
+   "third_party_deps": [],
+   "decision": "PUSH",
+   "lifecycle": "ACTIVE",
+   "reason": "organizational/packaging file",
+   "needs_reviewer_attention": false,
+   "origin": "HYGIENE_PASS"
+  },
+  {
+   "path": ".env.example",
+   "git_status": "new-or-modified-in-hygiene-pass",
+   "purpose": "placeholder-only environment template; variable names actually read by code",
+   "consumers": [],
+   "third_party_deps": [],
+   "decision": "PUSH",
+   "lifecycle": "ACTIVE",
+   "reason": "organizational/packaging file",
+   "needs_reviewer_attention": false,
+   "origin": "HYGIENE_PASS"
+  },
+  {
+   "path": ".gitignore",
+   "git_status": "new-or-modified-in-hygiene-pass",
+   "purpose": "ignore rules hardened for a $HOME-rooted checkout",
+   "consumers": [],
+   "third_party_deps": [],
+   "decision": "PUSH",
+   "lifecycle": "ACTIVE",
+   "reason": "organizational/packaging file",
+   "needs_reviewer_attention": false,
+   "origin": "HYGIENE_PASS"
+  },
+  {
+   "path": "pyproject.toml",
+   "git_status": "new-or-modified-in-hygiene-pass",
+   "purpose": "packaging: declares scikit-learn, pytest pythonpath incl. scripts/, markers",
+   "consumers": [],
+   "third_party_deps": [],
+   "decision": "PUSH",
+   "lifecycle": "ACTIVE",
+   "reason": "organizational/packaging file",
+   "needs_reviewer_attention": false,
+   "origin": "HYGIENE_PASS"
+  },
+  {
+   "path": "src/_repo_paths.py",
+   "git_status": "modified-in-amendment-pass",
+   "purpose": "packaging: derives the repo root and scripts dir from this module's own canonical location; no environment variable can redirect executable imports",
+   "consumers": [],
+   "third_party_deps": [],
+   "decision": "PUSH",
+   "lifecycle": "ACTIVE",
+   "reason": "V8C_ROOT previously overrode the derived root and a foreign multisrc_corpus was reproducibly importable through it; the override is removed here. sys.path only -- no scientific logic, no data/output root, changed",
+   "needs_reviewer_attention": false,
+   "origin": "HYGIENE_PASS"
+  },
+  {
+   "path": "data/thestatsapi/ (directory-level inventory scope)",
+   "git_status": "untracked directory, ~8500 files",
+   "purpose": "raw provider corpus consumed by the research suites",
+   "consumers": [
+    "src/research/matchup/corpus.py",
+    "scripts/multisrc_corpus.py"
+   ],
+   "third_party_deps": [],
+   "decision": "KEEP_EXTERNAL",
+   "lifecycle": "ACTIVE",
+   "reason": "supplied out of band as a digest-pinned archive; see REPOSITORY_MAP.md section E",
+   "integrity": "SHA256 ed6f8d37c769568802cf1d2dc2b1b6a70b41c661d75d27218a29173e3e0e8d78",
+   "entry_kind": "DIRECTORY_GROUP",
+   "origin": "ORIGINAL_SNAPSHOT",
+   "needs_reviewer_attention": false
+  },
+  {
+   "path": "tests/test_repo_paths.py",
+   "git_status": "new-in-amendment-pass",
+   "size_bytes": 10008,
+   "purpose": "packaging regression: proves the executable source root resolves to the executing checkout and that a foreign V8C_ROOT cannot load a foreign module",
+   "third_party_deps": [
+    "pytest"
+   ],
+   "consumers": [],
+   "decision": "PUSH",
+   "reason": "covers src/_repo_paths.py; runs each import check in an isolated subprocess with PYTHONPATH unset so sys.modules cannot be contaminated. Offline, no credentials, creates nothing outside a pytest tmp_path",
+   "needs_reviewer_attention": false,
+   "lifecycle": "ACTIVE",
+   "superseded_prior_decision": null,
+   "origin": "AMENDMENT_PASS"
+  }
+ ],
+ "supersedes": "V8C_REVIEW_SNAPSHOT_MANIFEST_V2",
+ "decision_axes": {
+  "git_disposition": [
+   "PUSH",
+   "KEEP_EXTERNAL",
+   "KEEP_LOCAL",
+   "HOLD"
+  ],
+  "lifecycle": [
+   "ACTIVE",
+   "EXPERIMENTAL",
+   "SUPERSEDED",
+   "DEPRECATION_CANDIDATE",
+   "UNRELATED"
+  ],
+  "origin": [
+   "ORIGINAL_SNAPSHOT",
+   "CHANGED_IN_HYGIENE_PASS",
+   "HYGIENE_PASS",
+   "AMENDMENT_PASS"
+  ]
+ },
+ "tracked_data_inventory": {
+  "scope": "all 74 files under data/ tracked at the review base",
+  "note": "classification does NOT untrack anything; nothing was untracked in this pass",
+  "by_kind": {
+   "FROZEN_EVIDENCE": 12,
+   "HUMAN_REPORT": 4,
+   "MODEL_CONFIG_INPUT": 18,
+   "MUTABLE_LEDGER": 13,
+   "OPERATIONAL_STATE": 17,
+   "PREREGISTRATION_ATTESTATION": 7,
+   "REGENERABLE_CACHE": 3
+  },
+  "by_retention_policy": {
+   "CANDIDATE_EXTERNAL_EVIDENCE": 3,
+   "CANDIDATE_RUNTIME_STORAGE": 19,
+   "RETAIN_VERSIONED": 37,
+   "UNRESOLVED_DEPENDENCY": 15
+  },
+  "files": [
+   {
+    "path": "data/attestations/fixture_research/mt_466259566-20260831T071205253786Z-1788160325253817161.json",
+    "bytes": 1722,
+    "kind": "PREREGISTRATION_ATTESTATION",
+    "n_code_refs": 0,
+    "refs": [],
+    "referenced_by_freeze_or_manifest": false,
+    "retention_policy": "RETAIN_VERSIONED",
+    "retention_reason": "preregistration/attestation; versioning IS the point",
+    "git_tracking_state": "TRACKED",
+    "disposition": "PUSH",
+    "note_already_tracked": "already tracked; this classification does NOT untrack it and nothing was untracked in this pass"
+   },
+   {
+    "path": "data/attestations/laliga_corners_hierarchical_v2.json",
+    "bytes": 1472,
+    "kind": "PREREGISTRATION_ATTESTATION",
+    "n_code_refs": 0,
+    "refs": [],
+    "referenced_by_freeze_or_manifest": false,
+    "retention_policy": "RETAIN_VERSIONED",
+    "retention_reason": "preregistration/attestation; versioning IS the point",
+    "git_tracking_state": "TRACKED",
+    "disposition": "PUSH",
+    "note_already_tracked": "already tracked; this classification does NOT untrack it and nothing was untracked in this pass"
+   },
+   {
+    "path": "data/attestations/research_preregistrations.jsonl",
+    "bytes": 923,
+    "kind": "PREREGISTRATION_ATTESTATION",
+    "n_code_refs": 0,
+    "refs": [],
+    "referenced_by_freeze_or_manifest": true,
+    "retention_policy": "UNRESOLVED_DEPENDENCY",
+    "retention_reason": "referenced by a freeze/manifest artifact; moving or untracking it would break a provenance reference -- migration blocked pending explicit decision",
+    "git_tracking_state": "TRACKED",
+    "disposition": "KEEP_LOCAL",
+    "note_already_tracked": "already tracked; this classification does NOT untrack it and nothing was untracked in this pass"
+   },
+   {
+    "path": "data/coverage_audit/budget.json",
+    "bytes": 3531,
+    "kind": "MODEL_CONFIG_INPUT",
+    "n_code_refs": 3,
+    "refs": [
+     "research/evaluation/prospective_live_capture_report.md",
+     "scripts/coverage_audit_common.py",
+     "scripts/coverage_audit_report.py"
+    ],
+    "referenced_by_freeze_or_manifest": false,
+    "retention_policy": "RETAIN_VERSIONED",
+    "retention_reason": "capability/market/strategy contract read at runtime; behaviour depends on its content",
+    "git_tracking_state": "TRACKED",
+    "disposition": "PUSH",
+    "note_already_tracked": "already tracked; this classification does NOT untrack it and nothing was untracked in this pass"
+   },
+   {
+    "path": "data/coverage_audit/footystats_fields.json",
+    "bytes": 16707,
+    "kind": "MODEL_CONFIG_INPUT",
+    "n_code_refs": 2,
+    "refs": [
+     "scripts/coverage_audit_footystats_fields.py",
+     "scripts/coverage_audit_report.py"
+    ],
+    "referenced_by_freeze_or_manifest": false,
+    "retention_policy": "RETAIN_VERSIONED",
+    "retention_reason": "capability/market/strategy contract read at runtime; behaviour depends on its content",
+    "git_tracking_state": "TRACKED",
+    "disposition": "PUSH",
+    "note_already_tracked": "already tracked; this classification does NOT untrack it and nothing was untracked in this pass"
+   },
+   {
+    "path": "data/coverage_audit/known_gaps.json",
+    "bytes": 2541,
+    "kind": "MODEL_CONFIG_INPUT",
+    "n_code_refs": 1,
+    "refs": [
+     "scripts/coverage_audit_report.py"
+    ],
+    "referenced_by_freeze_or_manifest": false,
+    "retention_policy": "RETAIN_VERSIONED",
+    "retention_reason": "capability/market/strategy contract read at runtime; behaviour depends on its content",
+    "git_tracking_state": "TRACKED",
+    "disposition": "PUSH",
+    "note_already_tracked": "already tracked; this classification does NOT untrack it and nothing was untracked in this pass"
+   },
+   {
+    "path": "data/coverage_audit/live_probe.json",
+    "bytes": 3959,
+    "kind": "MODEL_CONFIG_INPUT",
+    "n_code_refs": 2,
+    "refs": [
+     "scripts/coverage_audit_live_probe.py",
+     "scripts/coverage_audit_report.py"
+    ],
+    "referenced_by_freeze_or_manifest": false,
+    "retention_policy": "RETAIN_VERSIONED",
+    "retention_reason": "capability/market/strategy contract read at runtime; behaviour depends on its content",
+    "git_tracking_state": "TRACKED",
+    "disposition": "PUSH",
+    "note_already_tracked": "already tracked; this classification does NOT untrack it and nothing was untracked in this pass"
+   },
+   {
+    "path": "data/coverage_audit/markets.json",
+    "bytes": 18263,
+    "kind": "MODEL_CONFIG_INPUT",
+    "n_code_refs": 3,
+    "refs": [
+     "scripts/coverage_audit_markets.py",
+     "scripts/coverage_audit_report.py",
+     "scripts/ev_test_other_markets.py"
+    ],
+    "referenced_by_freeze_or_manifest": false,
+    "retention_policy": "RETAIN_VERSIONED",
+    "retention_reason": "capability/market/strategy contract read at runtime; behaviour depends on its content",
+    "git_tracking_state": "TRACKED",
+    "disposition": "PUSH",
+    "note_already_tracked": "already tracked; this classification does NOT untrack it and nothing was untracked in this pass"
+   },
+   {
+    "path": "data/coverage_audit/referee.json",
+    "bytes": 1638,
+    "kind": "MODEL_CONFIG_INPUT",
+    "n_code_refs": 1,
+    "refs": [
+     "scripts/coverage_audit_report.py"
+    ],
+    "referenced_by_freeze_or_manifest": false,
+    "retention_policy": "RETAIN_VERSIONED",
+    "retention_reason": "capability/market/strategy contract read at runtime; behaviour depends on its content",
+    "git_tracking_state": "TRACKED",
+    "disposition": "PUSH",
+    "note_already_tracked": "already tracked; this classification does NOT untrack it and nothing was untracked in this pass"
+   },
+   {
+    "path": "data/creator/hypotheses.jsonl",
+    "bytes": 9255,
+    "kind": "MUTABLE_LEDGER",
+    "n_code_refs": 1,
+    "refs": [
+     "src/creator/api.py"
+    ],
+    "referenced_by_freeze_or_manifest": true,
+    "retention_policy": "UNRESOLVED_DEPENDENCY",
+    "retention_reason": "referenced by a freeze/manifest artifact; moving or untracking it would break a provenance reference -- migration blocked pending explicit decision",
+    "git_tracking_state": "TRACKED",
+    "disposition": "KEEP_LOCAL",
+    "note_already_tracked": "already tracked; this classification does NOT untrack it and nothing was untracked in this pass"
+   },
+   {
+    "path": "data/creator/verdicts.jsonl",
+    "bytes": 868,
+    "kind": "MUTABLE_LEDGER",
+    "n_code_refs": 1,
+    "refs": [
+     "src/creator/api.py"
+    ],
+    "referenced_by_freeze_or_manifest": false,
+    "retention_policy": "CANDIDATE_RUNTIME_STORAGE",
+    "retention_reason": "append-only operational ledger rewritten by cron; churn is not source change",
+    "git_tracking_state": "TRACKED",
+    "disposition": "KEEP_LOCAL",
+    "note_already_tracked": "already tracked; this classification does NOT untrack it and nothing was untracked in this pass"
+   },
+   {
+    "path": "data/discovery/MM_CALIBRATION_AUDIT_REPORT.md",
+    "bytes": 12259,
+    "kind": "HUMAN_REPORT",
+    "n_code_refs": 0,
+    "refs": [],
+    "referenced_by_freeze_or_manifest": true,
+    "retention_policy": "UNRESOLVED_DEPENDENCY",
+    "retention_reason": "referenced by a freeze/manifest artifact; moving or untracking it would break a provenance reference -- migration blocked pending explicit decision",
+    "git_tracking_state": "TRACKED",
+    "disposition": "KEEP_LOCAL",
+    "note_already_tracked": "already tracked; this classification does NOT untrack it and nothing was untracked in this pass"
+   },
+   {
+    "path": "data/discovery/MM_REGULARIZED_MULTIFEATURE_REPORT.md",
+    "bytes": 15636,
+    "kind": "HUMAN_REPORT",
+    "n_code_refs": 0,
+    "refs": [],
+    "referenced_by_freeze_or_manifest": false,
+    "retention_policy": "RETAIN_VERSIONED",
+    "retention_reason": "small human-readable report; review material",
+    "git_tracking_state": "TRACKED",
+    "disposition": "PUSH",
+    "note_already_tracked": "already tracked; this classification does NOT untrack it and nothing was untracked in this pass"
+   },
+   {
+    "path": "data/discovery/attrition_report.json",
+    "bytes": 991,
+    "kind": "FROZEN_EVIDENCE",
+    "n_code_refs": 1,
+    "refs": [
+     "src/discovery/library.py"
+    ],
+    "referenced_by_freeze_or_manifest": false,
+    "retention_policy": "RETAIN_VERSIONED",
+    "retention_reason": "scientific evidence; hash or content may be cited by manifests or prior reports",
+    "git_tracking_state": "TRACKED",
+    "disposition": "PUSH",
+    "note_already_tracked": "already tracked; this classification does NOT untrack it and nothing was untracked in this pass"
+   },
+   {
+    "path": "data/discovery/clean_feature_verification.json",
+    "bytes": 2035,
+    "kind": "FROZEN_EVIDENCE",
+    "n_code_refs": 2,
+    "refs": [
+     "docs/clean_raw_stats_engine_report.md",
+     "scripts/clean_verify.py"
+    ],
+    "referenced_by_freeze_or_manifest": false,
+    "retention_policy": "RETAIN_VERSIONED",
+    "retention_reason": "scientific evidence; hash or content may be cited by manifests or prior reports",
+    "git_tracking_state": "TRACKED",
+    "disposition": "PUSH",
+    "note_already_tracked": "already tracked; this classification does NOT untrack it and nothing was untracked in this pass"
+   },
+   {
+    "path": "data/discovery/clean_heldout_confirm.json",
+    "bytes": 1311,
+    "kind": "FROZEN_EVIDENCE",
+    "n_code_refs": 3,
+    "refs": [
+     "data/discovery/MM_REGULARIZED_MULTIFEATURE_REPORT.md",
+     "docs/clean_raw_stats_engine_report.md",
+     "scripts/clean_heldout_confirm.py"
+    ],
+    "referenced_by_freeze_or_manifest": false,
+    "retention_policy": "RETAIN_VERSIONED",
+    "retention_reason": "scientific evidence; hash or content may be cited by manifests or prior reports",
+    "git_tracking_state": "TRACKED",
+    "disposition": "PUSH",
+    "note_already_tracked": "already tracked; this classification does NOT untrack it and nothing was untracked in this pass"
+   },
+   {
+    "path": "data/discovery/clean_stage1_broad.json",
+    "bytes": 415758,
+    "kind": "OPERATIONAL_STATE",
+    "n_code_refs": 2,
+    "refs": [
+     "docs/clean_raw_stats_engine_report.md",
+     "scripts/clean_stage1.py"
+    ],
+    "referenced_by_freeze_or_manifest": false,
+    "retention_policy": "CANDIDATE_RUNTIME_STORAGE",
+    "retention_reason": "mutable operational state rewritten by scheduled jobs",
+    "git_tracking_state": "TRACKED",
+    "disposition": "KEEP_LOCAL",
+    "note_already_tracked": "already tracked; this classification does NOT untrack it and nothing was untracked in this pass"
+   },
+   {
+    "path": "data/discovery/clean_stage1_rich.json",
+    "bytes": 82396,
+    "kind": "OPERATIONAL_STATE",
+    "n_code_refs": 2,
+    "refs": [
+     "docs/clean_raw_stats_engine_report.md",
+     "scripts/clean_stage1_rich.py"
+    ],
+    "referenced_by_freeze_or_manifest": false,
+    "retention_policy": "CANDIDATE_RUNTIME_STORAGE",
+    "retention_reason": "mutable operational state rewritten by scheduled jobs",
+    "git_tracking_state": "TRACKED",
+    "disposition": "KEEP_LOCAL",
+    "note_already_tracked": "already tracked; this classification does NOT untrack it and nothing was untracked in this pass"
+   },
+   {
+    "path": "data/discovery/clean_stage2_ev.json",
+    "bytes": 2451,
+    "kind": "OPERATIONAL_STATE",
+    "n_code_refs": 2,
+    "refs": [
+     "docs/clean_raw_stats_engine_report.md",
+     "scripts/clean_stage2_ev.py"
+    ],
+    "referenced_by_freeze_or_manifest": false,
+    "retention_policy": "CANDIDATE_RUNTIME_STORAGE",
+    "retention_reason": "mutable operational state rewritten by scheduled jobs",
+    "git_tracking_state": "TRACKED",
+    "disposition": "KEEP_LOCAL",
+    "note_already_tracked": "already tracked; this classification does NOT untrack it and nothing was untracked in this pass"
+   },
+   {
+    "path": "data/discovery/corners_goals_btts_report.json",
+    "bytes": 6302,
+    "kind": "FROZEN_EVIDENCE",
+    "n_code_refs": 0,
+    "refs": [],
+    "referenced_by_freeze_or_manifest": false,
+    "retention_policy": "RETAIN_VERSIONED",
+    "retention_reason": "scientific evidence; hash or content may be cited by manifests or prior reports",
+    "git_tracking_state": "TRACKED",
+    "disposition": "PUSH",
+    "note_already_tracked": "already tracked; this classification does NOT untrack it and nothing was untracked in this pass"
+   },
+   {
+    "path": "data/discovery/corpus/_refresh_report.json",
+    "bytes": 5475,
+    "kind": "OPERATIONAL_STATE",
+    "n_code_refs": 1,
+    "refs": [
+     "scripts/refresh_corpus.py"
+    ],
+    "referenced_by_freeze_or_manifest": true,
+    "retention_policy": "UNRESOLVED_DEPENDENCY",
+    "retention_reason": "referenced by a freeze/manifest artifact; moving or untracking it would break a provenance reference -- migration blocked pending explicit decision",
+    "git_tracking_state": "TRACKED",
+    "disposition": "KEEP_LOCAL",
+    "note_already_tracked": "already tracked; this classification does NOT untrack it and nothing was untracked in this pass"
+   },
+   {
+    "path": "data/discovery/corpus/manifest.json",
+    "bytes": 25733,
+    "kind": "OPERATIONAL_STATE",
+    "n_code_refs": 19,
+    "refs": [
+     "research/llm_matchup/FINAL_RECOMMENDATION.md",
+     "research/llm_matchup/FOOTBALL_ONTOLOGY.md",
+     "research/llm_matchup/README.md"
+    ],
+    "referenced_by_freeze_or_manifest": true,
+    "retention_policy": "UNRESOLVED_DEPENDENCY",
+    "retention_reason": "referenced by a freeze/manifest artifact; moving or untracking it would break a provenance reference -- migration blocked pending explicit decision",
+    "git_tracking_state": "TRACKED",
+    "disposition": "KEEP_LOCAL",
+    "note_already_tracked": "already tracked; this classification does NOT untrack it and nothing was untracked in this pass"
+   },
+   {
+    "path": "data/discovery/diagnostic_report.md",
+    "bytes": 5391,
+    "kind": "HUMAN_REPORT",
+    "n_code_refs": 0,
+    "refs": [],
+    "referenced_by_freeze_or_manifest": false,
+    "retention_policy": "RETAIN_VERSIONED",
+    "retention_reason": "small human-readable report; review material",
+    "git_tracking_state": "TRACKED",
+    "disposition": "PUSH",
+    "note_already_tracked": "already tracked; this classification does NOT untrack it and nothing was untracked in this pass"
+   },
+   {
+    "path": "data/discovery/final_confirmation_report.json",
+    "bytes": 3388,
+    "kind": "FROZEN_EVIDENCE",
+    "n_code_refs": 0,
+    "refs": [],
+    "referenced_by_freeze_or_manifest": false,
+    "retention_policy": "RETAIN_VERSIONED",
+    "retention_reason": "scientific evidence; hash or content may be cited by manifests or prior reports",
+    "git_tracking_state": "TRACKED",
+    "disposition": "PUSH",
+    "note_already_tracked": "already tracked; this classification does NOT untrack it and nothing was untracked in this pass"
+   },
+   {
+    "path": "data/discovery/metric_library.json",
+    "bytes": 24182,
+    "kind": "OPERATIONAL_STATE",
+    "n_code_refs": 2,
+    "refs": [
+     "docs/disagreement_edge_test_report.md",
+     "src/discovery/library.py"
+    ],
+    "referenced_by_freeze_or_manifest": false,
+    "retention_policy": "CANDIDATE_RUNTIME_STORAGE",
+    "retention_reason": "mutable operational state rewritten by scheduled jobs",
+    "git_tracking_state": "TRACKED",
+    "disposition": "KEEP_LOCAL",
+    "note_already_tracked": "already tracked; this classification does NOT untrack it and nothing was untracked in this pass"
+   },
+   {
+    "path": "data/discovery/mm_calibration_audit.json",
+    "bytes": 694029,
+    "kind": "FROZEN_EVIDENCE",
+    "n_code_refs": 2,
+    "refs": [
+     "data/discovery/MM_CALIBRATION_AUDIT_REPORT.md",
+     "scripts/mm_calibration_audit.py"
+    ],
+    "referenced_by_freeze_or_manifest": false,
+    "retention_policy": "RETAIN_VERSIONED",
+    "retention_reason": "scientific evidence; hash or content may be cited by manifests or prior reports",
+    "git_tracking_state": "TRACKED",
+    "disposition": "PUSH",
+    "note_already_tracked": "already tracked; this classification does NOT untrack it and nothing was untracked in this pass"
+   },
+   {
+    "path": "data/discovery/mm_mixed_verification.json",
+    "bytes": 1335,
+    "kind": "FROZEN_EVIDENCE",
+    "n_code_refs": 3,
+    "refs": [
+     "data/discovery/MM_REGULARIZED_MULTIFEATURE_REPORT.md",
+     "docs/mm_per_market_models_report.md",
+     "scripts/mm_verify_mixed.py"
+    ],
+    "referenced_by_freeze_or_manifest": false,
+    "retention_policy": "RETAIN_VERSIONED",
+    "retention_reason": "scientific evidence; hash or content may be cited by manifests or prior reports",
+    "git_tracking_state": "TRACKED",
+    "disposition": "PUSH",
+    "note_already_tracked": "already tracked; this classification does NOT untrack it and nothing was untracked in this pass"
+   },
+   {
+    "path": "data/discovery/mm_models.json",
+    "bytes": 377067,
+    "kind": "MODEL_CONFIG_INPUT",
+    "n_code_refs": 4,
+    "refs": [
+     "data/discovery/MM_CALIBRATION_AUDIT_REPORT.md",
+     "data/discovery/MM_REGULARIZED_MULTIFEATURE_REPORT.md",
+     "scripts/mm_models.py"
+    ],
+    "referenced_by_freeze_or_manifest": false,
+    "retention_policy": "RETAIN_VERSIONED",
+    "retention_reason": "capability/market/strategy contract read at runtime; behaviour depends on its content",
+    "git_tracking_state": "TRACKED",
+    "disposition": "PUSH",
+    "note_already_tracked": "already tracked; this classification does NOT untrack it and nothing was untracked in this pass"
+   },
+   {
+    "path": "data/discovery/mm_stage2_ev.json",
+    "bytes": 3140,
+    "kind": "OPERATIONAL_STATE",
+    "n_code_refs": 2,
+    "refs": [
+     "data/discovery/MM_REGULARIZED_MULTIFEATURE_REPORT.md",
+     "scripts/mm_stage2_ev.py"
+    ],
+    "referenced_by_freeze_or_manifest": false,
+    "retention_policy": "CANDIDATE_RUNTIME_STORAGE",
+    "retention_reason": "mutable operational state rewritten by scheduled jobs",
+    "git_tracking_state": "TRACKED",
+    "disposition": "KEEP_LOCAL",
+    "note_already_tracked": "already tracked; this classification does NOT untrack it and nothing was untracked in this pass"
+   },
+   {
+    "path": "data/discovery/pilotC_discovery_log.jsonl",
+    "bytes": 36728,
+    "kind": "MUTABLE_LEDGER",
+    "n_code_refs": 3,
+    "refs": [
+     "scripts/pilotC_fixture_discovery.py",
+     "scripts/pilotC_forward_loop.py",
+     "scripts/pilotC_heartbeat.py"
+    ],
+    "referenced_by_freeze_or_manifest": true,
+    "retention_policy": "UNRESOLVED_DEPENDENCY",
+    "retention_reason": "referenced by a freeze/manifest artifact; moving or untracking it would break a provenance reference -- migration blocked pending explicit decision",
+    "git_tracking_state": "TRACKED",
+    "disposition": "KEEP_LOCAL",
+    "note_already_tracked": "already tracked; this classification does NOT untrack it and nothing was untracked in this pass"
+   },
+   {
+    "path": "data/discovery/pilotC_discovery_status.json",
+    "bytes": 2125,
+    "kind": "OPERATIONAL_STATE",
+    "n_code_refs": 4,
+    "refs": [
+     "scripts/pilotC_fixture_discovery.py",
+     "scripts/pilotC_forward_loop.py",
+     "scripts/pilotC_heartbeat.py"
+    ],
+    "referenced_by_freeze_or_manifest": true,
+    "retention_policy": "UNRESOLVED_DEPENDENCY",
+    "retention_reason": "referenced by a freeze/manifest artifact; moving or untracking it would break a provenance reference -- migration blocked pending explicit decision",
+    "git_tracking_state": "TRACKED",
+    "disposition": "KEEP_LOCAL",
+    "note_already_tracked": "already tracked; this classification does NOT untrack it and nothing was untracked in this pass"
+   },
+   {
+    "path": "data/discovery/pilotC_forward_predictions.json",
+    "bytes": 106810,
+    "kind": "OPERATIONAL_STATE",
+    "n_code_refs": 4,
+    "refs": [
+     "PILOTC_HARDENING_REPORT.md",
+     "scripts/manual_predict.py",
+     "scripts/pilotC_forward_predict.py"
+    ],
+    "referenced_by_freeze_or_manifest": false,
+    "retention_policy": "CANDIDATE_RUNTIME_STORAGE",
+    "retention_reason": "mutable operational state rewritten by scheduled jobs",
+    "git_tracking_state": "TRACKED",
+    "disposition": "KEEP_LOCAL",
+    "note_already_tracked": "already tracked; this classification does NOT untrack it and nothing was untracked in this pass"
+   },
+   {
+    "path": "data/discovery/pilotC_health_report.json",
+    "bytes": 4869,
+    "kind": "FROZEN_EVIDENCE",
+    "n_code_refs": 1,
+    "refs": [
+     "scripts/pilotC_forward_loop.py"
+    ],
+    "referenced_by_freeze_or_manifest": false,
+    "retention_policy": "RETAIN_VERSIONED",
+    "retention_reason": "scientific evidence; hash or content may be cited by manifests or prior reports",
+    "git_tracking_state": "TRACKED",
+    "disposition": "PUSH",
+    "note_already_tracked": "already tracked; this classification does NOT untrack it and nothing was untracked in this pass"
+   },
+   {
+    "path": "data/discovery/pilotC_settled_log.json",
+    "bytes": 48905,
+    "kind": "OPERATIONAL_STATE",
+    "n_code_refs": 6,
+    "refs": [
+     "scripts/manual_predict.py",
+     "scripts/pilotC_forward_loop.py",
+     "scripts/pilotC_settle.py"
+    ],
+    "referenced_by_freeze_or_manifest": true,
+    "retention_policy": "UNRESOLVED_DEPENDENCY",
+    "retention_reason": "referenced by a freeze/manifest artifact; moving or untracking it would break a provenance reference -- migration blocked pending explicit decision",
+    "git_tracking_state": "TRACKED",
+    "disposition": "KEEP_LOCAL",
+    "note_already_tracked": "already tracked; this classification does NOT untrack it and nothing was untracked in this pass"
+   },
+   {
+    "path": "data/discovery/pilotC_stat_mixer.json",
+    "bytes": 9699,
+    "kind": "MODEL_CONFIG_INPUT",
+    "n_code_refs": 65,
+    "refs": [
+     "research/hypothesis_engine/FORENSIC_FRONTIER_READINESS_AUDIT.md",
+     "research/hypothesis_engine/V4_HYPOTHESIS_DERIVED_OOS_PREREGISTRATION.md",
+     "research/hypothesis_engine/V5A1_FINAL_REPORT.md"
+    ],
+    "referenced_by_freeze_or_manifest": true,
+    "retention_policy": "UNRESOLVED_DEPENDENCY",
+    "retention_reason": "referenced by a freeze/manifest artifact; moving or untracking it would break a provenance reference -- migration blocked pending explicit decision",
+    "git_tracking_state": "TRACKED",
+    "disposition": "KEEP_LOCAL",
+    "note_already_tracked": "already tracked; this classification does NOT untrack it and nothing was untracked in this pass"
+   },
+   {
+    "path": "data/discovery/pilotC_topup_plan.json",
+    "bytes": 1910,
+    "kind": "OPERATIONAL_STATE",
+    "n_code_refs": 2,
+    "refs": [
+     "PILOTC_HARDENING_REPORT.md",
+     "scripts/pilotC_settle.py"
+    ],
+    "referenced_by_freeze_or_manifest": false,
+    "retention_policy": "CANDIDATE_RUNTIME_STORAGE",
+    "retention_reason": "mutable operational state rewritten by scheduled jobs",
+    "git_tracking_state": "TRACKED",
+    "disposition": "KEEP_LOCAL",
+    "note_already_tracked": "already tracked; this classification does NOT untrack it and nothing was untracked in this pass"
+   },
+   {
+    "path": "data/discovery/provider_league_registry.json",
+    "bytes": 51627,
+    "kind": "OPERATIONAL_STATE",
+    "n_code_refs": 8,
+    "refs": [
+     "PER_LEAGUE_STATMIXER_REPORT.md",
+     "research/evaluation/prospective_universe_report.md",
+     "scripts/sync_provider_leagues.py"
+    ],
+    "referenced_by_freeze_or_manifest": true,
+    "retention_policy": "UNRESOLVED_DEPENDENCY",
+    "retention_reason": "referenced by a freeze/manifest artifact; moving or untracking it would break a provenance reference -- migration blocked pending explicit decision",
+    "git_tracking_state": "TRACKED",
+    "disposition": "KEEP_LOCAL",
+    "note_already_tracked": "already tracked; this classification does NOT untrack it and nothing was untracked in this pass"
+   },
+   {
+    "path": "data/discovery/raw_stats_discovery.json",
+    "bytes": 131784,
+    "kind": "OPERATIONAL_STATE",
+    "n_code_refs": 2,
+    "refs": [
+     "docs/raw_stats_engine_report.md",
+     "scripts/raw_stats_discovery.py"
+    ],
+    "referenced_by_freeze_or_manifest": false,
+    "retention_policy": "CANDIDATE_RUNTIME_STORAGE",
+    "retention_reason": "mutable operational state rewritten by scheduled jobs",
+    "git_tracking_state": "TRACKED",
+    "disposition": "KEEP_LOCAL",
+    "note_already_tracked": "already tracked; this classification does NOT untrack it and nothing was untracked in this pass"
+   },
+   {
+    "path": "data/discovery/search_log.jsonl",
+    "bytes": 335368,
+    "kind": "MUTABLE_LEDGER",
+    "n_code_refs": 1,
+    "refs": [
+     "src/discovery/library.py"
+    ],
+    "referenced_by_freeze_or_manifest": false,
+    "retention_policy": "CANDIDATE_RUNTIME_STORAGE",
+    "retention_reason": "append-only operational ledger rewritten by cron; churn is not source change",
+    "git_tracking_state": "TRACKED",
+    "disposition": "KEEP_LOCAL",
+    "note_already_tracked": "already tracked; this classification does NOT untrack it and nothing was untracked in this pass"
+   },
+   {
+    "path": "data/discovery/stale_vs_fresh_corpus_score.json",
+    "bytes": 18769,
+    "kind": "OPERATIONAL_STATE",
+    "n_code_refs": 1,
+    "refs": [
+     "scripts/score_stale_vs_fresh_corpus.py"
+    ],
+    "referenced_by_freeze_or_manifest": false,
+    "retention_policy": "CANDIDATE_RUNTIME_STORAGE",
+    "retention_reason": "mutable operational state rewritten by scheduled jobs",
+    "git_tracking_state": "TRACKED",
+    "disposition": "KEEP_LOCAL",
+    "note_already_tracked": "already tracked; this classification does NOT untrack it and nothing was untracked in this pass"
+   },
+   {
+    "path": "data/errors/.gitkeep",
+    "bytes": 0,
+    "kind": "OPERATIONAL_STATE",
+    "n_code_refs": 2,
+    "refs": [
+     ".kiro/specs/ingestion-and-backtester/tasks.md",
+     "ARCHITECTURE_MAP.md"
+    ],
+    "referenced_by_freeze_or_manifest": false,
+    "retention_policy": "CANDIDATE_RUNTIME_STORAGE",
+    "retention_reason": "mutable operational state rewritten by scheduled jobs",
+    "git_tracking_state": "TRACKED",
+    "disposition": "KEEP_LOCAL",
+    "note_already_tracked": "already tracked; this classification does NOT untrack it and nothing was untracked in this pass"
+   },
+   {
+    "path": "data/features/.gitkeep",
+    "bytes": 0,
+    "kind": "REGENERABLE_CACHE",
+    "n_code_refs": 2,
+    "refs": [
+     ".kiro/specs/ingestion-and-backtester/tasks.md",
+     "ARCHITECTURE_MAP.md"
+    ],
+    "referenced_by_freeze_or_manifest": false,
+    "retention_policy": "CANDIDATE_EXTERNAL_EVIDENCE",
+    "retention_reason": "regenerable from the provider corpus",
+    "git_tracking_state": "TRACKED",
+    "disposition": "KEEP_LOCAL",
+    "note_already_tracked": "already tracked; this classification does NOT untrack it and nothing was untracked in this pass"
+   },
+   {
+    "path": "data/forecast_broadcast/broadcasts.jsonl",
+    "bytes": 67854,
+    "kind": "MUTABLE_LEDGER",
+    "n_code_refs": 11,
+    "refs": [
+     "scripts/annotate_stale_corpus_forecasts.py",
+     "scripts/forecast_broadcast_heartbeat.py",
+     "src/research/prediction_engine/broadcast/record.py"
+    ],
+    "referenced_by_freeze_or_manifest": true,
+    "retention_policy": "UNRESOLVED_DEPENDENCY",
+    "retention_reason": "referenced by a freeze/manifest artifact; moving or untracking it would break a provenance reference -- migration blocked pending explicit decision",
+    "git_tracking_state": "TRACKED",
+    "disposition": "KEEP_LOCAL",
+    "note_already_tracked": "already tracked; this classification does NOT untrack it and nothing was untracked in this pass"
+   },
+   {
+    "path": "data/forecast_broadcast/record_annotations.jsonl",
+    "bytes": 24114,
+    "kind": "MUTABLE_LEDGER",
+    "n_code_refs": 1,
+    "refs": [
+     "src/research/prediction_engine/broadcast/record.py"
+    ],
+    "referenced_by_freeze_or_manifest": false,
+    "retention_policy": "CANDIDATE_RUNTIME_STORAGE",
+    "retention_reason": "append-only operational ledger rewritten by cron; churn is not source change",
+    "git_tracking_state": "TRACKED",
+    "disposition": "KEEP_LOCAL",
+    "note_already_tracked": "already tracked; this classification does NOT untrack it and nothing was untracked in this pass"
+   },
+   {
+    "path": "data/forecast_broadcast/scope_changes.jsonl",
+    "bytes": 891,
+    "kind": "MUTABLE_LEDGER",
+    "n_code_refs": 1,
+    "refs": [
+     "src/research/prediction_engine/broadcast/scope_config.py"
+    ],
+    "referenced_by_freeze_or_manifest": false,
+    "retention_policy": "CANDIDATE_RUNTIME_STORAGE",
+    "retention_reason": "append-only operational ledger rewritten by cron; churn is not source change",
+    "git_tracking_state": "TRACKED",
+    "disposition": "KEEP_LOCAL",
+    "note_already_tracked": "already tracked; this classification does NOT untrack it and nothing was untracked in this pass"
+   },
+   {
+    "path": "data/forward/commitments.jsonl",
+    "bytes": 298673,
+    "kind": "MUTABLE_LEDGER",
+    "n_code_refs": 22,
+    "refs": [
+     "PILOTC_HARDENING_REPORT.md",
+     "public_site/server.py",
+     "scripts/edge_scanner.py"
+    ],
+    "referenced_by_freeze_or_manifest": true,
+    "retention_policy": "UNRESOLVED_DEPENDENCY",
+    "retention_reason": "referenced by a freeze/manifest artifact; moving or untracking it would break a provenance reference -- migration blocked pending explicit decision",
+    "git_tracking_state": "TRACKED",
+    "disposition": "KEEP_LOCAL",
+    "note_already_tracked": "already tracked; this classification does NOT untrack it and nothing was untracked in this pass"
+   },
+   {
+    "path": "data/forward/commitments.jsonl.legacy_bak",
+    "bytes": 97586,
+    "kind": "OPERATIONAL_STATE",
+    "n_code_refs": 1,
+    "refs": [
+     "PILOTC_HARDENING_REPORT.md"
+    ],
+    "referenced_by_freeze_or_manifest": false,
+    "retention_policy": "CANDIDATE_RUNTIME_STORAGE",
+    "retention_reason": "mutable operational state rewritten by scheduled jobs",
+    "git_tracking_state": "TRACKED",
+    "disposition": "KEEP_LOCAL",
+    "note_already_tracked": "already tracked; this classification does NOT untrack it and nothing was untracked in this pass"
+   },
+   {
+    "path": "data/forward/pilotC_commitments.jsonl",
+    "bytes": 108193,
+    "kind": "MUTABLE_LEDGER",
+    "n_code_refs": 8,
+    "refs": [
+     "scripts/manual_predict.py",
+     "scripts/pilotC_forward_loop.py",
+     "scripts/pilotC_forward_predict.py"
+    ],
+    "referenced_by_freeze_or_manifest": false,
+    "retention_policy": "CANDIDATE_RUNTIME_STORAGE",
+    "retention_reason": "append-only operational ledger rewritten by cron; churn is not source change",
+    "git_tracking_state": "TRACKED",
+    "disposition": "KEEP_LOCAL",
+    "note_already_tracked": "already tracked; this classification does NOT untrack it and nothing was untracked in this pass"
+   },
+   {
+    "path": "data/forward/pilotC_reveals.jsonl",
+    "bytes": 102841,
+    "kind": "MUTABLE_LEDGER",
+    "n_code_refs": 4,
+    "refs": [
+     "scripts/pilotC_forward_loop.py",
+     "scripts/pilotC_forward_predict.py",
+     "scripts/pilotC_heartbeat.py"
+    ],
+    "referenced_by_freeze_or_manifest": false,
+    "retention_policy": "CANDIDATE_RUNTIME_STORAGE",
+    "retention_reason": "append-only operational ledger rewritten by cron; churn is not source change",
+    "git_tracking_state": "TRACKED",
+    "disposition": "KEEP_LOCAL",
+    "note_already_tracked": "already tracked; this classification does NOT untrack it and nothing was untracked in this pass"
+   },
+   {
+    "path": "data/forward/pilotC_run_log.jsonl",
+    "bytes": 45185,
+    "kind": "MUTABLE_LEDGER",
+    "n_code_refs": 1,
+    "refs": [
+     "scripts/pilotC_forward_loop.py"
+    ],
+    "referenced_by_freeze_or_manifest": false,
+    "retention_policy": "CANDIDATE_RUNTIME_STORAGE",
+    "retention_reason": "append-only operational ledger rewritten by cron; churn is not source change",
+    "git_tracking_state": "TRACKED",
+    "disposition": "KEEP_LOCAL",
+    "note_already_tracked": "already tracked; this classification does NOT untrack it and nothing was untracked in this pass"
+   },
+   {
+    "path": "data/forward/predictions.jsonl",
+    "bytes": 257980,
+    "kind": "MUTABLE_LEDGER",
+    "n_code_refs": 10,
+    "refs": [
+     "docs/review/REPOSITORY_MAP.md",
+     "public_site/server.py",
+     "scripts/manual_predict.py"
+    ],
+    "referenced_by_freeze_or_manifest": true,
+    "retention_policy": "UNRESOLVED_DEPENDENCY",
+    "retention_reason": "referenced by a freeze/manifest artifact; moving or untracking it would break a provenance reference -- migration blocked pending explicit decision",
+    "git_tracking_state": "TRACKED",
+    "disposition": "KEEP_LOCAL",
+    "note_already_tracked": "already tracked; this classification does NOT untrack it and nothing was untracked in this pass"
+   },
+   {
+    "path": "data/forward/preregistration_ledger.jsonl",
+    "bytes": 441,
+    "kind": "PREREGISTRATION_ATTESTATION",
+    "n_code_refs": 2,
+    "refs": [
+     "PILOTC_HARDENING_REPORT.md",
+     "scripts/edge_scanner.py"
+    ],
+    "referenced_by_freeze_or_manifest": false,
+    "retention_policy": "RETAIN_VERSIONED",
+    "retention_reason": "preregistration/attestation; versioning IS the point",
+    "git_tracking_state": "TRACKED",
+    "disposition": "PUSH",
+    "note_already_tracked": "already tracked; this classification does NOT untrack it and nothing was untracked in this pass"
+   },
+   {
+    "path": "data/forward/run_log.jsonl",
+    "bytes": 25685,
+    "kind": "MUTABLE_LEDGER",
+    "n_code_refs": 3,
+    "refs": [
+     "scripts/pilotC_forward_loop.py",
+     "scripts/quarantine_forward_loop.py",
+     "src/research/prediction_engine/evaluation_window.py"
+    ],
+    "referenced_by_freeze_or_manifest": true,
+    "retention_policy": "UNRESOLVED_DEPENDENCY",
+    "retention_reason": "referenced by a freeze/manifest artifact; moving or untracking it would break a provenance reference -- migration blocked pending explicit decision",
+    "git_tracking_state": "TRACKED",
+    "disposition": "KEEP_LOCAL",
+    "note_already_tracked": "already tracked; this classification does NOT untrack it and nothing was untracked in this pass"
+   },
+   {
+    "path": "data/forward/scanner_preregistration.json",
+    "bytes": 8948,
+    "kind": "PREREGISTRATION_ATTESTATION",
+    "n_code_refs": 1,
+    "refs": [
+     "scripts/edge_scanner.py"
+    ],
+    "referenced_by_freeze_or_manifest": false,
+    "retention_policy": "RETAIN_VERSIONED",
+    "retention_reason": "preregistration/attestation; versioning IS the point",
+    "git_tracking_state": "TRACKED",
+    "disposition": "PUSH",
+    "note_already_tracked": "already tracked; this classification does NOT untrack it and nothing was untracked in this pass"
+   },
+   {
+    "path": "data/forward/scanner_preregistration_ledger.jsonl",
+    "bytes": 443,
+    "kind": "PREREGISTRATION_ATTESTATION",
+    "n_code_refs": 1,
+    "refs": [
+     "scripts/edge_scanner.py"
+    ],
+    "referenced_by_freeze_or_manifest": false,
+    "retention_policy": "RETAIN_VERSIONED",
+    "retention_reason": "preregistration/attestation; versioning IS the point",
+    "git_tracking_state": "TRACKED",
+    "disposition": "PUSH",
+    "note_already_tracked": "already tracked; this classification does NOT untrack it and nothing was untracked in this pass"
+   },
+   {
+    "path": "data/prospective/.gitignore",
+    "bytes": 271,
+    "kind": "OPERATIONAL_STATE",
+    "n_code_refs": 6,
+    "refs": [
+     "PILOTC_HARDENING_REPORT.md",
+     "docs/review/REPOSITORY_MAP.md",
+     "docs/review/REVIEWER_GUIDE.md"
+    ],
+    "referenced_by_freeze_or_manifest": false,
+    "retention_policy": "CANDIDATE_RUNTIME_STORAGE",
+    "retention_reason": "mutable operational state rewritten by scheduled jobs",
+    "git_tracking_state": "TRACKED",
+    "disposition": "KEEP_LOCAL",
+    "note_already_tracked": "already tracked; this classification does NOT untrack it and nothing was untracked in this pass"
+   },
+   {
+    "path": "data/raw/.gitkeep",
+    "bytes": 0,
+    "kind": "REGENERABLE_CACHE",
+    "n_code_refs": 2,
+    "refs": [
+     ".kiro/specs/ingestion-and-backtester/tasks.md",
+     "ARCHITECTURE_MAP.md"
+    ],
+    "referenced_by_freeze_or_manifest": false,
+    "retention_policy": "CANDIDATE_EXTERNAL_EVIDENCE",
+    "retention_reason": "regenerable from the provider corpus",
+    "git_tracking_state": "TRACKED",
+    "disposition": "KEEP_LOCAL",
+    "note_already_tracked": "already tracked; this classification does NOT untrack it and nothing was untracked in this pass"
+   },
+   {
+    "path": "data/results/.gitkeep",
+    "bytes": 0,
+    "kind": "FROZEN_EVIDENCE",
+    "n_code_refs": 2,
+    "refs": [
+     ".kiro/specs/ingestion-and-backtester/tasks.md",
+     "ARCHITECTURE_MAP.md"
+    ],
+    "referenced_by_freeze_or_manifest": false,
+    "retention_policy": "RETAIN_VERSIONED",
+    "retention_reason": "scientific evidence; hash or content may be cited by manifests or prior reports",
+    "git_tracking_state": "TRACKED",
+    "disposition": "PUSH",
+    "note_already_tracked": "already tracked; this classification does NOT untrack it and nothing was untracked in this pass"
+   },
+   {
+    "path": "data/results/backtest_20260824_034818.json",
+    "bytes": 9758,
+    "kind": "FROZEN_EVIDENCE",
+    "n_code_refs": 0,
+    "refs": [],
+    "referenced_by_freeze_or_manifest": false,
+    "retention_policy": "RETAIN_VERSIONED",
+    "retention_reason": "scientific evidence; hash or content may be cited by manifests or prior reports",
+    "git_tracking_state": "TRACKED",
+    "disposition": "PUSH",
+    "note_already_tracked": "already tracked; this classification does NOT untrack it and nothing was untracked in this pass"
+   },
+   {
+    "path": "data/results/book_disagreement.json",
+    "bytes": 16168,
+    "kind": "FROZEN_EVIDENCE",
+    "n_code_refs": 2,
+    "refs": [
+     "PILOTC_HARDENING_REPORT.md",
+     "scripts/book_disagreement_analysis.py"
+    ],
+    "referenced_by_freeze_or_manifest": false,
+    "retention_policy": "RETAIN_VERSIONED",
+    "retention_reason": "scientific evidence; hash or content may be cited by manifests or prior reports",
+    "git_tracking_state": "TRACKED",
+    "disposition": "PUSH",
+    "note_already_tracked": "already tracked; this classification does NOT untrack it and nothing was untracked in this pass"
+   },
+   {
+    "path": "data/results/leak_consumer_audit.md",
+    "bytes": 4670,
+    "kind": "HUMAN_REPORT",
+    "n_code_refs": 0,
+    "refs": [],
+    "referenced_by_freeze_or_manifest": true,
+    "retention_policy": "UNRESOLVED_DEPENDENCY",
+    "retention_reason": "referenced by a freeze/manifest artifact; moving or untracking it would break a provenance reference -- migration blocked pending explicit decision",
+    "git_tracking_state": "TRACKED",
+    "disposition": "KEEP_LOCAL",
+    "note_already_tracked": "already tracked; this classification does NOT untrack it and nothing was untracked in this pass"
+   },
+   {
+    "path": "data/results/pilotC_bss_provisionality.json",
+    "bytes": 4675,
+    "kind": "FROZEN_EVIDENCE",
+    "n_code_refs": 1,
+    "refs": [
+     "PILOTC_HARDENING_REPORT.md"
+    ],
+    "referenced_by_freeze_or_manifest": false,
+    "retention_policy": "RETAIN_VERSIONED",
+    "retention_reason": "scientific evidence; hash or content may be cited by manifests or prior reports",
+    "git_tracking_state": "TRACKED",
+    "disposition": "PUSH",
+    "note_already_tracked": "already tracked; this classification does NOT untrack it and nothing was untracked in this pass"
+   },
+   {
+    "path": "data/results/pilotC_preregistration.json",
+    "bytes": 8020,
+    "kind": "PREREGISTRATION_ATTESTATION",
+    "n_code_refs": 2,
+    "refs": [
+     "PILOTC_HARDENING_REPORT.md",
+     "scripts/pilotC_forward_loop.py"
+    ],
+    "referenced_by_freeze_or_manifest": false,
+    "retention_policy": "RETAIN_VERSIONED",
+    "retention_reason": "preregistration/attestation; versioning IS the point",
+    "git_tracking_state": "TRACKED",
+    "disposition": "PUSH",
+    "note_already_tracked": "already tracked; this classification does NOT untrack it and nothing was untracked in this pass"
+   },
+   {
+    "path": "data/strategies/benchmarks/xb_epl_card_intensity.json",
+    "bytes": 275,
+    "kind": "MODEL_CONFIG_INPUT",
+    "n_code_refs": 1,
+    "refs": [
+     ".kiro/specs/immediate_launch/design.md"
+    ],
+    "referenced_by_freeze_or_manifest": false,
+    "retention_policy": "RETAIN_VERSIONED",
+    "retention_reason": "capability/market/strategy contract read at runtime; behaviour depends on its content",
+    "git_tracking_state": "TRACKED",
+    "disposition": "PUSH",
+    "note_already_tracked": "already tracked; this classification does NOT untrack it and nothing was untracked in this pass"
+   },
+   {
+    "path": "data/strategies/benchmarks/xb_laliga_referee_friction.json",
+    "bytes": 233,
+    "kind": "MODEL_CONFIG_INPUT",
+    "n_code_refs": 1,
+    "refs": [
+     ".kiro/specs/immediate_launch/design.md"
+    ],
+    "referenced_by_freeze_or_manifest": false,
+    "retention_policy": "RETAIN_VERSIONED",
+    "retention_reason": "capability/market/strategy contract read at runtime; behaviour depends on its content",
+    "git_tracking_state": "TRACKED",
+    "disposition": "PUSH",
+    "note_already_tracked": "already tracked; this classification does NOT untrack it and nothing was untracked in this pass"
+   },
+   {
+    "path": "data/strategies/benchmarks/xb_ligue1_low_foul_under.json",
+    "bytes": 284,
+    "kind": "MODEL_CONFIG_INPUT",
+    "n_code_refs": 0,
+    "refs": [],
+    "referenced_by_freeze_or_manifest": false,
+    "retention_policy": "RETAIN_VERSIONED",
+    "retention_reason": "capability/market/strategy contract read at runtime; behaviour depends on its content",
+    "git_tracking_state": "TRACKED",
+    "disposition": "PUSH",
+    "note_already_tracked": "already tracked; this classification does NOT untrack it and nothing was untracked in this pass"
+   },
+   {
+    "path": "data/strategies/benchmarks/xc_bundesliga_deep_penetration.json",
+    "bytes": 289,
+    "kind": "MODEL_CONFIG_INPUT",
+    "n_code_refs": 0,
+    "refs": [],
+    "referenced_by_freeze_or_manifest": false,
+    "retention_policy": "RETAIN_VERSIONED",
+    "retention_reason": "capability/market/strategy contract read at runtime; behaviour depends on its content",
+    "git_tracking_state": "TRACKED",
+    "disposition": "PUSH",
+    "note_already_tracked": "already tracked; this classification does NOT untrack it and nothing was untracked in this pass"
+   },
+   {
+    "path": "data/strategies/benchmarks/xc_epl_corners_over.json",
+    "bytes": 278,
+    "kind": "MODEL_CONFIG_INPUT",
+    "n_code_refs": 0,
+    "refs": [],
+    "referenced_by_freeze_or_manifest": false,
+    "retention_policy": "RETAIN_VERSIONED",
+    "retention_reason": "capability/market/strategy contract read at runtime; behaviour depends on its content",
+    "git_tracking_state": "TRACKED",
+    "disposition": "PUSH",
+    "note_already_tracked": "already tracked; this classification does NOT untrack it and nothing was untracked in this pass"
+   },
+   {
+    "path": "data/strategies/benchmarks/xc_laliga_wing_attack.json",
+    "bytes": 231,
+    "kind": "MODEL_CONFIG_INPUT",
+    "n_code_refs": 0,
+    "refs": [],
+    "referenced_by_freeze_or_manifest": false,
+    "retention_policy": "RETAIN_VERSIONED",
+    "retention_reason": "capability/market/strategy contract read at runtime; behaviour depends on its content",
+    "git_tracking_state": "TRACKED",
+    "disposition": "PUSH",
+    "note_already_tracked": "already tracked; this classification does NOT untrack it and nothing was untracked in this pass"
+   },
+   {
+    "path": "data/strategies/benchmarks/xc_seriea_defensive_under.json",
+    "bytes": 286,
+    "kind": "MODEL_CONFIG_INPUT",
+    "n_code_refs": 0,
+    "refs": [],
+    "referenced_by_freeze_or_manifest": false,
+    "retention_policy": "RETAIN_VERSIONED",
+    "retention_reason": "capability/market/strategy contract read at runtime; behaviour depends on its content",
+    "git_tracking_state": "TRACKED",
+    "disposition": "PUSH",
+    "note_already_tracked": "already tracked; this classification does NOT untrack it and nothing was untracked in this pass"
+   },
+   {
+    "path": "data/strategies/benchmarks/xo_bundesliga_counter.json",
+    "bytes": 231,
+    "kind": "MODEL_CONFIG_INPUT",
+    "n_code_refs": 0,
+    "refs": [],
+    "referenced_by_freeze_or_manifest": false,
+    "retention_policy": "RETAIN_VERSIONED",
+    "retention_reason": "capability/market/strategy contract read at runtime; behaviour depends on its content",
+    "git_tracking_state": "TRACKED",
+    "disposition": "PUSH",
+    "note_already_tracked": "already tracked; this classification does NOT untrack it and nothing was untracked in this pass"
+   },
+   {
+    "path": "data/strategies/benchmarks/xo_epl_high_line_trap.json",
+    "bytes": 285,
+    "kind": "MODEL_CONFIG_INPUT",
+    "n_code_refs": 1,
+    "refs": [
+     ".kiro/specs/immediate_launch/design.md"
+    ],
+    "referenced_by_freeze_or_manifest": false,
+    "retention_policy": "RETAIN_VERSIONED",
+    "retention_reason": "capability/market/strategy contract read at runtime; behaviour depends on its content",
+    "git_tracking_state": "TRACKED",
+    "disposition": "PUSH",
+    "note_already_tracked": "already tracked; this classification does NOT untrack it and nothing was untracked in this pass"
+   },
+   {
+    "path": "data/strategies/benchmarks/xo_seriea_direct_attack.json",
+    "bytes": 285,
+    "kind": "MODEL_CONFIG_INPUT",
+    "n_code_refs": 1,
+    "refs": [
+     ".kiro/specs/immediate_launch/design.md"
+    ],
+    "referenced_by_freeze_or_manifest": false,
+    "retention_policy": "RETAIN_VERSIONED",
+    "retention_reason": "capability/market/strategy contract read at runtime; behaviour depends on its content",
+    "git_tracking_state": "TRACKED",
+    "disposition": "PUSH",
+    "note_already_tracked": "already tracked; this classification does NOT untrack it and nothing was untracked in this pass"
+   },
+   {
+    "path": "data/thestatsapi/championship/_on_demand_leagues.json",
+    "bytes": 156,
+    "kind": "REGENERABLE_CACHE",
+    "n_code_refs": 1,
+    "refs": [
+     "scripts/multisrc_corpus.py"
+    ],
+    "referenced_by_freeze_or_manifest": false,
+    "retention_policy": "CANDIDATE_EXTERNAL_EVIDENCE",
+    "retention_reason": "regenerable from the provider corpus",
+    "git_tracking_state": "TRACKED",
+    "disposition": "KEEP_LOCAL",
+    "note_already_tracked": "already tracked; this classification does NOT untrack it and nothing was untracked in this pass"
+   }
+  ]
+ },
+ "source_baseline_sha": "a2c6f6b41b7babb25dfc6c8830dbbf07038389c6",
+ "source_baseline_sha_meaning": "BASELINE ONLY: the commit this manifest was GENERATED FROM (the amendment's starting HEAD). It is NOT the SHA of the commit that contains this file -- a file cannot contain the hash of the commit that introduces it. The final review head is reported in PR #19 and in the handoff.",
+ "review_base_sha": "bb85637c27233dc5981b968430cbff3260cd3817",
+ "entries_without_purpose": [],
+ "base_sha_meaning": "BASELINE ONLY: tip of feat/v8c-experiment-repair, the branch point this review branch was taken from. Unchanged by the amendment.",
+ "amendment": {
+  "starting_head": "a2c6f6b41b7babb25dfc6c8830dbbf07038389c6",
+  "scope": "source-root correction, its regression tests, and documentation/manifest reconciliation",
+  "changed_or_added_paths": [
+   "docs/review/REPOSITORY_MAP.md",
+   "docs/review/REVIEWER_GUIDE.md",
+   "docs/review/V8C_REVIEW_SNAPSHOT_MANIFEST_V1.json",
+   "src/_repo_paths.py",
+   "tests/test_repo_paths.py"
+  ],
+  "not_repaired_here": [
+   "src/research/llm_matchup/hardening/golden_manifest.py -- foreign-source fingerprinting (OPEN)",
+   "src/research/llm_matchup/hardening/freeze_v3_sonnet46.py -- missing core-module bindings (OPEN)",
+   "src/research/llm_matchup/hardening/adapter_v4.py -- requested ID as resolved identity (OPEN)"
+  ],
+  "data_migrations": "none performed; the 15 UNRESOLVED_DEPENDENCY files are untouched"
+ }
+}
