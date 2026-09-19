@@ -20,8 +20,9 @@ the user's home directory**. Credential stores (`.ssh/`, `.aws/`, `.git-credenti
 
 That layout made routine `git add` unsafe, so working code accumulated untracked. At the
 time of this snapshot: **20 modified tracked files and 8,685 untracked entries**. Of those,
-29 files are genuine engine source or tests; the rest are data, caches, credentials or
-unrelated projects.
+48 are genuine engine source, tests, research entry points or findings artifacts; the rest are
+data, caches, credentials or unrelated projects. (An earlier revision said 29, before the
+file-by-file re-inspection recorded in `REPOSITORY_MAP.md` §B.)
 
 `.gitignore` did **not** previously cover `.ssh/`, `.aws/`, `.git-credentials`, `.env.cron`
 or `.bash_history`. No secret was ever committed (verified against tracked history), but a
@@ -30,13 +31,10 @@ single `git add -A` would have published live credentials. This snapshot hardens
 
 ## 2. What this snapshot adds
 
-**48 files** (updated): source, tests, research entry points, diagnostics and four small
-findings artifacts. No data, no credentials, no bulk generated output.
-
-> **Superseded claim corrected.** An earlier revision of this guide said 29 files and
-> described 18 held / 15 excluded. Those classifications were re-inspected file by file:
-> 14 research entry points and diagnostics, 4 findings artifacts and 1 live-API probe were
-> reclassified to PUSH. See `REPOSITORY_MAP.md` §B for exact paths and reasons.
+**56 files**: source, tests, research entry points, diagnostics, four small findings
+artifacts and the packaging/organisational files. No data, no credentials, no bulk generated
+output. The number is the `PUSH` total of `V8C_REVIEW_SNAPSHOT_MANIFEST_V1.json`, which is the
+per-file authority; earlier revisions of this guide quoted 29 and then 48 and are superseded.
 
 | Group | Count | Why |
 |---|---|---|
@@ -49,9 +47,11 @@ findings artifacts. No data, no credentials, no bulk generated output.
 | Benchmarks | 2 | `run_benchmark.py`, `run_robustness_check.py` — EXPERIMENTAL |
 | Findings artifacts | 4 | reports + `robustness_results.json`, 64 KB total |
 | Live-API probe | 1 | opt-in via `RUN_LIVE_API_TESTS=1` |
+| Packaging & organisation | 8 | `.env.example` (placeholders only), hardened `.gitignore`, `pyproject.toml`, `src/_repo_paths.py`, `tests/test_repo_paths.py`, this guide, `REPOSITORY_MAP.md`, the manifest |
 
-Plus: `.env.example` (placeholders only), hardened `.gitignore`, `scikit-learn` added to
-`pyproject.toml`, this guide, and the manifest.
+**48 snapshot files + 8 packaging/organisation files = 56 PUSH**, matching
+`counts.by_disposition.PUSH` in the manifest. The other inventory entries are 14 `KEEP_LOCAL`
+and 1 `KEEP_EXTERNAL` directory group, counted separately.
 
 **Dependency completeness (inspected).** `src/research/matchup/harness.py` imports
 `sklearn`, which was installed on the host but never declared. A clean checkout therefore
@@ -80,11 +80,21 @@ tests/research/                  the research test tree (3,631 tests collected)
 | every 15 min | `scripts/forecast_broadcast.py` |
 | hourly | `scripts/fixture_alert_watcher.py` |
 | every 4 h | `scripts/quarantine_forward_loop.py` |
-| daily 00:00 | `python -m src.cli daily-signals` → `scripts/signals_telegram_bot.py` |
+| daily 00:00 UTC | `python -m src.cli daily-signals` → `scripts/signals_telegram_bot.py` |
 | daily 00:30 | `scripts/sync_provider_leagues.py --refresh` |
+| daily 07:10 | `scripts/forecast_broadcast.py --coverage` |
+| Mon & Thu 06:00 | `scripts/pilotC_fixture_discovery.py` |
+| Sun 04:20 | `scripts/refresh_corpus.py --all-leagues` |
 
-All are tracked. They write to `data/` and `logs/`, which is why those paths show as
-modified and are excluded here.
+Eight entries, re-read from the live crontab for this revision; an earlier revision listed
+only the first five. All are tracked. They write to `data/` and `logs/`, which is why those
+paths show as modified and are excluded here.
+
+**Not scheduled.** `src/research/prospective/{cli,shadow_process,shadow_settle_process}.py` are
+the real entry points of the prospective package and appear in **no** crontab entry.
+`cli capture-due` is wrapped by the tracked `scripts/prospective_capture_run.sh`, and a `*/15`
+cadence for it appears in `research/evaluation/prospective_*_report.md` as a *recommendation*
+only. `scripts/pilotC_forward_loop.py` is likewise not scheduled. See `REPOSITORY_MAP.md` §A.
 
 ## 4. Stage map
 
@@ -102,7 +112,8 @@ Producer → artifact → consumer, with gaps named.
 | Verification + scoring | `score_frozen.py` | records | aggregation | — |
 | Endpoint | `aggregate.py` | S-vs-R, S-vs-H | inference | development runs use the outcome-free `structural_diagnostics` path |
 | Forecast / market | `scripts/forecast_broadcast.py` | broadcasts | Telegram | **not inspected in this task** |
-| Prospective / shadow / settlement | `data/forward/*`, `data/discovery/*` | ledgers | cron loops | **not inspected in this task** |
+| Prospective / shadow / settlement (Pilot C) | `scripts/pilotC_{forward_predict,forward_loop,settle}.py` | `data/forward/*`, `data/discovery/*` ledgers | `scripts/quarantine_forward_loop.py` (the only one in cron) | **not inspected in this task** |
+| Prospective / shadow / settlement (package) | `src/research/prospective/{cli,shadow_process,shadow_settle_process}.py` | `data/prospective/*` captures, shadows, settlements | each other; `cli.py` invokes `shadow_settle_process` | **not inspected in this task**; **not scheduled** — see §3 |
 
 The last two rows are honest gaps: this snapshot was assembled from the V8C repair work, and
 I did not trace the forecast/settlement paths end to end. A reviewer should not read their
@@ -122,8 +133,20 @@ project module, including `multisrc_corpus` and `championship_adapter`, was asse
 from the checkout, and `sys.path` was asserted to contain no deployed-tree entry. That is
 weaker than true isolation and is reported as such.
 
+**Source root — the override is closed.** The first repair derived the root from
+`src/_repo_paths.py` but then let `V8C_ROOT` replace it, and a reviewer reproduced importing a
+dummy `multisrc_corpus` from a foreign directory through that override. The module now derives
+`REPO_ROOT` from its own canonical location and reads no environment variable at all; there is
+no fallback and no `/home/ubuntu` default. `tests/test_repo_paths.py` covers it in isolated
+subprocesses and fails against the previous module with *"the foreign dummy module was
+imported"*. Full statement of the behaviour, including what deliberately still uses `V8C_ROOT`:
+`REPOSITORY_MAP.md` §G.
+
 See `REPOSITORY_MAP.md` §D for the full defect backlog, including 309 files that hardcode
-`/home/ubuntu` and a declared boto3 (1.34.69) that does not match the deployed venv (1.43.93).
+`/home/ubuntu` for data, output and evidence roots. The stale `boto3==1.34.69` **declaration**
+is corrected to `1.43.93`, matching the deployed venv and verified offline against the bundled
+botocore service model; that is a packaging fix only, and **live execution against it remains
+unverified** — no client was built and no Bedrock request was made.
 
 **Unresolved scientific blockers (from the V8C work, carried forward):**
 
@@ -151,8 +174,17 @@ pip install -e ".[dev,bedrock,persistence]"   # bedrock/persistence only if you 
 
 cp .env.example .env        # placeholders only; fill in locally, never commit
 
-# collection (expect the 5 pre-existing errors only if deps are missing)
+# collection (3,722 collected, 0 errors in a correctly provisioned venv)
 python -m pytest tests/research/ --collect-only -q
+
+# packaging regression: the source root resolves to THIS checkout (fast, offline)
+python -m pytest tests/test_repo_paths.py -q
+
+# the reviewer's original reproducer
+python -m pytest tests/research/test_matchup_leakage.py -q
+
+# the legacy live-API probe: collects, and skips unless RUN_LIVE_API_TESTS=1
+python -m pytest test_hypothesis_layer_real_api.py -q -rs
 
 # the 7 tests added by this snapshot
 python -m pytest tests/research/test_controls_v3_core.py \
