@@ -2,12 +2,34 @@
 
 from __future__ import annotations
 
+import os
 import random
 from typing import List, Optional
 
 import pytest
 
 from src.models.match import Match
+
+# ---------------------------------------------------------------------------
+# Hypothesis profiles -- deterministic, reproducible property testing for CI.
+# The property-based V6.1 metric tests must be reproducible across machines and
+# must persist any failing example. `derandomize=True` makes example generation a
+# deterministic function of the test, so a green run is reproducible and a failing
+# example is stable; the on-disk `.hypothesis/examples` DB replays known failures first.
+# This is test infrastructure only -- it touches no scientific parameter.
+# ---------------------------------------------------------------------------
+try:
+    from hypothesis import HealthCheck, settings
+
+    settings.register_profile(
+        "ci", derandomize=True, print_blob=True,
+        suppress_health_check=[HealthCheck.too_slow])
+    settings.register_profile(
+        "dev", print_blob=True,
+        suppress_health_check=[HealthCheck.too_slow])
+    settings.load_profile(os.environ.get("HYPOTHESIS_PROFILE", "ci"))
+except Exception:                                   # hypothesis not installed
+    pass
 
 
 class SyntheticMatchGenerator:
