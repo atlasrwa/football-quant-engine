@@ -38,7 +38,14 @@ import subprocess
 import sys
 import time
 
-ROOT = "/home/ubuntu"
+#: The checkout THIS script lives in -- derived, not hardcoded. A literal "/home/ubuntu"
+#: here made `sys.path` resolve every scientific import from that tree even when the script
+#: was invoked from a clean clone, so the run imported foreign code while reporting the
+#: clone's commit. The executing-code guard caught it as LOADED_FROM_FOREIGN_CHECKOUT; this
+#: is the underlying cause. `V8C_ROOT` overrides for a relocated tree.
+ROOT = os.environ.get(
+    "V8C_ROOT",
+    os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 ENG = f"{ROOT}/research/hypothesis_engine"
 sys.path.insert(0, ROOT)
 sys.path.insert(0, f"{ROOT}/scripts")
