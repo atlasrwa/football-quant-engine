@@ -96,6 +96,27 @@ REQUIRED_CORE_MODULES = (
 #: satisfy the new contract and must not be silently upgraded to look as though it does.
 FREEZE_CONTRACT_VERSION = "v3_sonnet46_freeze_contract_v2_core_bound"
 
+#: Contracts this verifier is willing to certify. Matching hashes are NOT evidence of
+#: contract compatibility: a manifest can carry every current hash and still describe a
+#: different required set, which is exactly how a pre-repair freeze looks once the cores are
+#: required. An unlisted or absent contract is refused rather than inferred.
+SUPPORTED_CONTRACTS = frozenset({FREEZE_CONTRACT_VERSION})
+
+#: Covered module basename -> the dotted name it is imported under. Used to find the module
+#: OBJECT actually in play, so a foreign copy loaded under the real name is detected.
+_COVERED_DOTTED = {
+    mod: f"src.research.llm_matchup.hardening.{mod[:-3]}" for mod in REQUIRED_MODULES
+}
+
+#: The scientific wrappers and the attribute each binds its core to. `sys.modules` alone is
+#: not enough: a wrapper keeps its own reference, so replacing `sys.modules[...]` after the
+#: wrapper imported it would leave the foreign object in use but invisible to a
+#: `sys.modules` scan. Both are checked; neither subsumes the other.
+WRAPPER_BOUND_CORES = (
+    ("controls_v3_sonnet46", "CORE", "controls_v3_core.py"),
+    ("eligibility_v3_sonnet46", "ECORE", "eligibility_v3_core.py"),
+)
+
 #: `atomic_io.py` is a direct dependency of both cores and is deliberately NOT required: it
 #: is an atomic-write utility and encodes no scientific decision. Recorded here so the
 #: exclusion is a stated judgement rather than an oversight.
@@ -105,10 +126,18 @@ EXCLUDED_WITH_REASON = {
 
 
 class FreezeBindingError(RuntimeError):
-    """A required scientific source binding is missing, unreadable or stale.
+    """A required scientific source binding is missing, unreadable, foreign or stale.
 
     Raised instead of returning a report, so an incomplete or drifted binding cannot be
     mistaken for a verified one by a caller that only checks a return value.
+    """
+
+
+class FreezeGenerationMismatch(FreezeBindingError):
+    """The recomputed generation identity differs from the existing freeze's.
+
+    A distinct type so a caller -- and a test -- can tell "the bindings are wrong" from
+    "the bindings are fine but this is a different instrument".
     """
 
 
@@ -155,13 +184,80 @@ def _observed_model_identities() -> dict:
     }
 
 
-def current_module_hashes() -> dict:
+def _loaded_covered_objects() -> dict:
+    """Covered basename -> the module OBJECT in play, for those that are loaded.
+
+    Two sources, because neither covers the other:
+
+    * `sys.modules[dotted]` -- the general case. Any covered module loaded from somewhere
+      else appears here under its real name.
+    * the wrapper's own bound attribute (`controls_v3_sonnet46.CORE`) -- the narrow case
+      where `sys.modules` was reassigned *after* the wrapper imported its core, leaving the
+      foreign object in use but invisible to a `sys.modules` scan. This is the shape that
+      defeated the previous verifier.
+
+    A covered module that is not loaded contributes nothing: there is no origin to check.
+    """
+    found = {}
+    for mod, dotted in _COVERED_DOTTED.items():
+        obj = sys.modules.get(dotted)
+        if obj is not None:
+            found[mod] = obj
+    for wrapper, attr, core in WRAPPER_BOUND_CORES:
+        wrapper_obj = sys.modules.get(f"src.research.llm_matchup.hardening.{wrapper}")
+        if wrapper_obj is None:
+            continue
+        bound = getattr(wrapper_obj, attr, None)
+        if bound is not None:
+            # The wrapper's reference wins: it is the object the science actually runs on.
+            found[core] = bound
+    return found
+
+
+def loaded_origin_violations() -> list:
+    """Covered modules that are loaded from outside this checkout, as report rows.
+
+    Delegates the comparison to `golden_manifest._verified_source_path`, the mechanism
+    accepted in the preceding repair, rather than adding a second one with its own rules.
+    It is underscore-private but deliberately shared: both modules live in `hardening/` and
+    a divergent copy here is exactly what this repair is meant to avoid.
+    """
+    violations = []
+    for mod, obj in sorted(_loaded_covered_objects().items()):
+        try:
+            GM._verified_source_path(obj, mod)
+        except GM.SourceBindingError as e:
+            violations.append({
+                "module": mod,
+                "loaded_from": os.path.realpath(getattr(obj, "__file__", "") or ""),
+                "expected": os.path.join(SRC_DIR, mod),
+                "detail": str(e),
+            })
+    return violations
+
+
+def current_module_hashes(check_origins: bool = True) -> dict:
     """Hash every REQUIRED module from the executing checkout, or fail.
 
-    The previous implementation was `if os.path.exists(p): module_hashes[mod] = ...`, so a
+    The original implementation was `if os.path.exists(p): module_hashes[mod] = ...`, so a
     required source that was renamed, moved or deleted simply vanished from the manifest and
-    the freeze still reported success over a smaller set. Absence is now an error.
+    the freeze still reported success over a smaller set. Absence is an error.
+
+    Hashing the file at the expected path is not by itself enough: a foreign copy of a core
+    can be loaded under the real dotted name while this function happily hashes the local
+    file, which is how a reviewer obtained an `OK` verdict over a mixed-checkout process.
+    Loaded origins are therefore validated too.
+
+    `check_origins=False` exists only so `verify_freeze` can REPORT a foreign origin rather
+    than raise on it; the check itself is the same code either way.
     """
+    if check_origins:
+        violations = loaded_origin_violations()
+        if violations:
+            raise FreezeBindingError(
+                "covered module(s) loaded from outside this checkout: "
+                + "; ".join(f"{v['module']} <- {v['loaded_from']}" for v in violations)
+                + ". Refusing to hash local files as though they described the loaded code.")
     hashes, missing = {}, []
     for mod in REQUIRED_MODULES:
         path = os.path.join(SRC_DIR, mod)
@@ -177,57 +273,84 @@ def current_module_hashes() -> dict:
 
 
 def verify_freeze(freeze_manifest: dict) -> dict:
-    """Check a freeze's recorded source bindings against THIS checkout's sources.
+    """Check a freeze's declared contract and source bindings against THIS checkout.
 
     Deliberately independent of `build_manifest()`, which reads eight result artifacts under
-    `OUT`. Binding integrity is a question about source files alone, so verifying it must not
-    require a golden batch, a controls run or any other artifact to exist.
+    `OUT`. Binding integrity is a question about a contract and some source files, so
+    verifying it must not require a golden batch, a controls run or any other artifact.
 
-    Returns a report; it never raises for a *failed* verification (see
-    `verify_freeze_or_raise`), only for an unreadable executing checkout.
+    FAILURE ORDER -- first match wins, because each stage decides how the next is read:
 
-        status  OK                     every required binding present and current
-                INCOMPLETE_BINDING     required hashes absent from the freeze (e.g. a
-                                       pre-repair freeze, which stays readable as history)
-                BINDING_MISMATCH       a recorded hash no longer matches this checkout
+        1. MISSING_CONTRACT      no `freeze_contract_version`
+        2. UNSUPPORTED_CONTRACT  a contract this verifier does not certify
+        3. INCOMPLETE_BINDING    a required hash is absent from the freeze
+        4. FOREIGN_ORIGIN        a covered module is loaded from another checkout
+        5. BINDING_MISMATCH      a recorded hash no longer matches this checkout
+        6. OK
+
+    Every diagnostic field is populated on EVERY return path, including the contract
+    failures. A historical freeze must stay *readable* -- naming what it is missing is the
+    point of inspecting it -- so a contract refusal never blanks the binding detail.
+
+    Returns a report and never raises for a failed verification; `verify_freeze_or_raise`
+    is the enforcing wrapper. Matching hashes are never read as contract compatibility.
     """
-    current = current_module_hashes()
-    recorded = (freeze_manifest or {}).get("module_hashes")
-    if not isinstance(recorded, dict):
-        return {"ok": False, "status": "INCOMPLETE_BINDING",
-                "contract": FREEZE_CONTRACT_VERSION,
-                "freeze_contract": (freeze_manifest or {}).get("freeze_contract_version"),
-                "missing_bindings": sorted(REQUIRED_MODULES),
-                "missing_required_cores": sorted(REQUIRED_CORE_MODULES),
-                "mismatched": [],
-                "detail": "freeze records no module_hashes mapping"}
+    freeze_manifest = freeze_manifest or {}
+    declared = freeze_manifest.get("freeze_contract_version")
+    recorded = freeze_manifest.get("module_hashes")
+    recorded = recorded if isinstance(recorded, dict) else {}
+
+    violations = loaded_origin_violations()
+    current = current_module_hashes(check_origins=False)
 
     missing = sorted(m for m in REQUIRED_MODULES if m not in recorded)
     mismatched = sorted(m for m in REQUIRED_MODULES
                         if m in recorded and recorded[m] != current[m])
-    status = ("OK" if not missing and not mismatched
-              else "INCOMPLETE_BINDING" if missing else "BINDING_MISMATCH")
+
+    if declared is None:
+        status = "MISSING_CONTRACT"
+    elif declared not in SUPPORTED_CONTRACTS:
+        status = "UNSUPPORTED_CONTRACT"
+    elif missing:
+        status = "INCOMPLETE_BINDING"
+    elif violations:
+        status = "FOREIGN_ORIGIN"
+    elif mismatched:
+        status = "BINDING_MISMATCH"
+    else:
+        status = "OK"
+
     return {
         "ok": status == "OK",
         "status": status,
         "contract": FREEZE_CONTRACT_VERSION,
-        "freeze_contract": freeze_manifest.get("freeze_contract_version"),
+        "supported_contracts": sorted(SUPPORTED_CONTRACTS),
+        "freeze_contract": declared,
         "missing_bindings": missing,
         # Called out separately: these are what a pre-repair freeze is missing, and the
         # reason it cannot be certified complete even though it remains inspectable.
         "missing_required_cores": sorted(m for m in REQUIRED_CORE_MODULES if m in missing),
+        "foreign_origins": violations,
         "mismatched": mismatched,
         "source_dir": SRC_DIR,
     }
 
 
 def verify_freeze_or_raise(freeze_manifest: dict) -> dict:
-    """`verify_freeze`, but an incomplete or stale binding is an error, not a return value."""
+    """`verify_freeze`, but any non-OK verdict is an error rather than a return value.
+
+    The message names the actual reason -- contract, missing binding, foreign origin or
+    stale hash -- so a refusal is never reported as a generic failure.
+    """
     report = verify_freeze(freeze_manifest)
     if not report["ok"]:
         raise FreezeBindingError(
             f"freeze source binding not verified ({report['status']}): "
-            f"missing={report['missing_bindings']} mismatched={report['mismatched']}. "
+            f"declared_contract={report['freeze_contract']!r} "
+            f"supported={report['supported_contracts']} "
+            f"missing={report['missing_bindings']} "
+            f"foreign_origins={[v['module'] for v in report['foreign_origins']]} "
+            f"mismatched={report['mismatched']}. "
             "This freeze does not describe the sources in the executing checkout.")
     return report
 
@@ -378,9 +501,25 @@ def freeze(force: bool = False) -> dict:
         # Previously this returned `existing` here, drift or not: the drift flag was written
         # to a side file and to stdout and then discarded, so re-running the freeze over
         # changed sources handed back the stale manifest as though it still applied. The
-        # side file is still written first -- the evidence is preserved either way -- but an
-        # unverified binding is now an error rather than a returned value.
+        # side file is written FIRST on every refusal path -- the diagnostic evidence
+        # survives regardless -- and only then is an invalid state raised.
         verify_freeze_or_raise(existing)
+
+        # Source bindings can be perfectly valid while the instrument is still a different
+        # one: `generation_hash` is taken over `version_payload`, which also covers the
+        # contract, the version stamp, `content_hashes`, the Bedrock configuration and the
+        # fixture manifest hash. A reviewer reproduced current hashes + supported contract +
+        # a changed `generation_hash` being returned as accepted. No field is excluded from
+        # this comparison: inventing an exclusion to make it pass would be manufacturing the
+        # very assurance the freeze exists to provide.
+        if drift:
+            raise FreezeGenerationMismatch(
+                "existing freeze describes a different generation identity: "
+                f"existing={existing.get('generation_hash')!r} "
+                f"recomputed={manifest['generation_hash']!r}. Source bindings verified, so "
+                "this is an instrument/configuration change, not a stale source hash. The "
+                f"existing freeze at {FREEZE_PATH} is unchanged and the recomputed manifest "
+                f"is preserved at {side} for inspection.")
         return existing
     json.dump(manifest, open(FREEZE_PATH, "w"), indent=2, default=str)
     print(json.dumps({"action": "frozen", "path": FREEZE_PATH,
