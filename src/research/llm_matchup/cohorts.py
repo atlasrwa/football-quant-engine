@@ -182,10 +182,34 @@ class HistoryIndex:
         self.recs = sorted(recs, key=lambda r: r.kickoff_unix)
 
     def current_season(self, team: str, before_unix: int) -> Optional[str]:
+        """Season-instance of the team's most recent match BEFORE `before_unix`.
+
+        This answers "which season did this team LAST PLAY IN?" -- not "which season does
+        the target fixture belong to?". For a fixture early in a new season-instance, before
+        the team has played in it, this returns the PREVIOUS season. Using it to filter
+        current-season evidence therefore serves prior-season history as current-season
+        state and lets cold-start floors be met by stale data.
+
+        Use `target_season(target_record)` for any target-conditioned evidence. This
+        function is retained because it answers a different, legitimate question, and its
+        behaviour is deliberately unchanged.
+        """
         seasons = [season_of(r) for r in self.recs
                    if r.kickoff_unix < before_unix and (r.home in (team,) or r.away in (team,)
                         or r.home_id == team or r.away_id == team)]
         return seasons[-1] if seasons else None
+
+    @staticmethod
+    def target_season(target: MatchRecord) -> str:
+        """The season-instance the TARGET fixture itself belongs to.
+
+        Derived from `season_of(target)` and from nothing else -- never inferred from either
+        team's history, so both sides are filtered by one key and neither can drift into a
+        different season. When a team has no prior matches in this season-instance the
+        evidence builders find zero rows and abstain, which is the documented cold-start
+        behaviour rather than a silent fallback to the prior season.
+        """
+        return season_of(target)
 
     def prior_records(self, team: str, before_unix: int, season: Optional[str],
                       venue: Optional[str] = None):

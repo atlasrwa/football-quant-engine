@@ -160,8 +160,10 @@ class EvidencePacketBuilderV2:
 
         A, B = target.home, target.away
         before = target.kickoff_unix
-        seasonA = self._fidx.base.current_season(A, before)
-        seasonB = self._fidx.base.current_season(B, before)
+        # TARGET fixture's own season-instance (A3): one key filters BOTH sides, so
+        # neither team can drift into a different season, and a team with no prior
+        # matches in it abstains instead of falling back to the previous season.
+        seasonA = seasonB = CH.HistoryIndex.target_season(target)
 
         # pre-match formation inputs for the TARGET (never the target's resolved formation)
         pf = prematch_formations or {}

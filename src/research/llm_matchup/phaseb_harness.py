@@ -128,8 +128,11 @@ class HarnessContext:
         for target in self.recs:
             if require_target_lineup and target.fixture_id not in self.coverage:
                 continue
-            sA = self._hidx.current_season(target.home, target.kickoff_unix)
-            sB = self._hidx.current_season(target.away, target.kickoff_unix)
+            # TARGET fixture's own season-instance (A3). Eligibility counting and
+            # formation projection both key on it, so a team with no prior matches in
+            # the target's season fails the min_prior gate instead of passing on
+            # prior-season history.
+            sA = sB = CH.HistoryIndex.target_season(target)
             nA = len(self._hidx.prior_records(target.home, target.kickoff_unix, sA))
             nB = len(self._hidx.prior_records(target.away, target.kickoff_unix, sB))
             if nA < min_prior or nB < min_prior:
