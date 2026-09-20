@@ -3,8 +3,9 @@
 These are the load-bearing correctness guarantees. Run with the repo venv:
     .venv/bin/python -m pytest tests/research/test_matchup_leakage.py -q
 """
-import sys, math
-sys.path.insert(0, "/home/ubuntu")
+import math
+import sys
+
 import numpy as np
 import pytest
 
@@ -142,3 +143,104 @@ def test_no_same_match_leakage_end_to_end():
 if __name__ == "__main__":
     import subprocess
     sys.exit(subprocess.call([sys.executable, "-m", "pytest", __file__, "-q"]))
+
+
+# =========================================================================================
+# Temporal-integrity counterexamples. Both were reproduced against the previous builders and
+# both are reachable in the real corpus (5319 matches): 56.55% of matches share a kickoff
+# with another match, and 134 of 10638 (fixture, team) pairs sit across a season boundary.
+# =========================================================================================
+
+def _sim_fixture_set():
+    """History for two teams, then TWO fixtures at the SAME kickoff instant.
+
+    `SIM1` is a blow-out, so if it leaks into `SIM2`'s snapshot it moves the league mean
+    enough to be unmistakable. Totals in the history are deliberately uniform so the league
+    mean is otherwise flat and the only thing that can shift it is the leak.
+    """
+    hist = [_mk(f"h{i}", "L", "S", 100 + i, "A", f"O{i}", 5, 5) for i in range(3)]
+    hist += [_mk(f"g{i}", "L", "S", 100 + i, "C", f"P{i}", 5, 5) for i in range(3)]
+    sim1 = _mk("SIM1", "L", "S", 200, "A", "Z", 40, 40)
+    sim2 = _mk("SIM2", "L", "S", 200, "C", "W", 5, 5)
+    return hist, sim1, sim2
+
+
+def test_strength_rating_ignores_a_simultaneous_match():
+    """A fixture's PIT snapshot must not contain a match that kicked off at the same instant.
+
+    The control is what makes this decisive: moving `SIM1` strictly later must not change
+    `SIM2`'s snapshot. Order-invariance alone would be satisfied by an implementation that
+    leaked identically in both orderings.
+    """
+    hist, sim1, sim2 = _sim_fixture_set()
+    simultaneous = F.StrengthRatings(hist + [sim1, sim2], "corner_kicks").attack("SIM2", "C")
+
+    later = _mk("SIM1", "L", "S", 300, "A", "Z", 40, 40)          # same match, strictly after
+    control = F.StrengthRatings(hist + [later, sim2], "corner_kicks").attack("SIM2", "C")
+
+    assert simultaneous == control, (
+        "SIM1 kicked off at the same instant as SIM2 and still moved SIM2's snapshot "
+        f"({simultaneous} vs {control})")
+
+
+def test_strength_rating_is_independent_of_simultaneous_input_order():
+    """Snapshots must not depend on the order simultaneous matches happen to be listed in.
+
+    `sorted(recs, key=kickoff_unix)` is stable, so the input list silently decided which of
+    a 15:00 round was processed first — and therefore which ones saw the others' results.
+    """
+    hist, sim1, sim2 = _sim_fixture_set()
+    forward = F.StrengthRatings(hist + [sim1, sim2], "corner_kicks")
+    reverse = F.StrengthRatings(hist + [sim2, sim1], "corner_kicks")
+
+    for fid, team in (("SIM1", "A"), ("SIM2", "C")):
+        assert forward.attack(fid, team) == reverse.attack(fid, team), f"attack {fid}/{team}"
+        assert forward.defense(fid, team) == reverse.defense(fid, team), f"defense {fid}/{team}"
+
+
+def test_league_env_ignores_a_simultaneous_match():
+    """The same simultaneity question for the league-environment baseline."""
+    recs = [_mk(f"m{i}", "L", "S", 100 + i, f"H{i}", f"A{i}", 5, 4) for i in range(21)]
+    t1 = _mk("T1", "L", "S", 500, "A", "B", 99, 99)
+    t2 = _mk("T2", "L", "S", 500, "C", "D", 99, 99)
+    env = F.LeagueEnvironment(recs + [t1, t2])
+
+    e1, e2 = env.env(t1, "corner_kicks", 20), env.env(t2, "corner_kicks", 20)
+    assert e1 == e2 == 9.0, f"simultaneous fixtures must see the same prior-only baseline: {e1}, {e2}"
+
+
+def test_target_season_is_the_fixtures_own_season_not_the_last_played():
+    """Season-boundary contamination: prior-season form must not be served as current-season.
+
+    Team A has six matches in S1 and none yet in S2. `current_season()` answers "S1" — the
+    season A last played in — so the previous builders returned S1 form for an S2 fixture and
+    satisfied the cold-start floor with stale data.
+    """
+    recs = [_mk(f"p{i}", "L", "S1", 10 + i, "A", f"O{i}", 7, 7) for i in range(6)]
+    tgt = _mk("T", "L", "S2", 1000, "A", "B", 0, 0)
+    recs.append(tgt)
+    idx = F.HistoryIndex(recs)
+
+    assert F.HistoryIndex.target_season(tgt) == "L:S2"
+    # `current_season` is deliberately unchanged — it answers a different question.
+    assert idx.current_season("A", 1000) == "L:S1"
+
+    stale = F._roll(idx, "A", "corner_kicks", "for", None, 1000, idx.current_season("A", 1000))
+    assert stale == 7.0, "precondition: the old season is what made the stale value available"
+
+    fresh = F._roll(idx, "A", "corner_kicks", "for", None, 1000, F.HistoryIndex.target_season(tgt))
+    assert fresh is None, "no current-season history means abstain, not prior-season form"
+
+
+def test_design_builder_abstains_across_a_season_boundary():
+    """End-to-end through the builder that consumes these features."""
+    recs = [_mk(f"p{i}", "L", "S1", 10 + i, "A", f"O{i}", 7, 7) for i in range(6)]
+    recs += [_mk(f"q{i}", "L", "S1", 20 + i, "B", f"R{i}", 7, 7) for i in range(6)]
+    tgt = _mk("T", "L", "S2", 1000, "A", "B", 0, 0)
+    recs.append(tgt)
+
+    feats = DesignBuilder(recs).f_champ(tgt, "corners")
+    assert feats, "the family must still be emitted, with abstentions rather than silence"
+    assert all(v is None for v in feats.values()), (
+        f"prior-season values leaked into an S2 fixture: "
+        f"{{k: v for k, v in feats.items() if v is not None}}")

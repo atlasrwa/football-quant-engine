@@ -92,8 +92,12 @@ class DesignBuilder:
     def f_home_away(self, rec: MatchRecord, market: str) -> dict:
         stats = {"goals": ["sot", "xg"], "corners": ["corner_kicks"],
                  "cards": ["cards"], "btts": ["sot"]}[market]
-        h_season = self.idx.current_season(rec.home_id, rec.kickoff_unix)
-        a_season = self.idx.current_season(rec.away_id, rec.kickoff_unix)
+        # The TARGET fixture's own season-instance, not the season each team last played
+        # in. `current_season()` returns the latter, which for a fixture early in a new
+        # season silently yields PRIOR-season form labelled as current-season and lets the
+        # cold-start floor be met by stale data. Both teams are in the fixture's season by
+        # definition, so one value serves both sides.
+        h_season = a_season = F.HistoryIndex.target_season(rec)
         out = {}
         for stat in stats:
             # home team's HOME form (for/against); away team's AWAY form
@@ -108,8 +112,12 @@ class DesignBuilder:
     # ---- family F4: explicit attack x defense matchup ----
     def f_matchup(self, rec: MatchRecord, market: str) -> dict:
         stats = POOLS[market]
-        h_season = self.idx.current_season(rec.home_id, rec.kickoff_unix)
-        a_season = self.idx.current_season(rec.away_id, rec.kickoff_unix)
+        # The TARGET fixture's own season-instance, not the season each team last played
+        # in. `current_season()` returns the latter, which for a fixture early in a new
+        # season silently yields PRIOR-season form labelled as current-season and lets the
+        # cold-start floor be met by stale data. Both teams are in the fixture's season by
+        # definition, so one value serves both sides.
+        h_season = a_season = F.HistoryIndex.target_season(rec)
         out = {}
         for stat in stats:
             if not (h_season and a_season):
@@ -157,8 +165,12 @@ class DesignBuilder:
         return self._team_state(rec, stats, prefix="rich")
 
     def _team_state(self, rec: MatchRecord, stats: list[str], prefix: str) -> dict:
-        h_season = self.idx.current_season(rec.home_id, rec.kickoff_unix)
-        a_season = self.idx.current_season(rec.away_id, rec.kickoff_unix)
+        # The TARGET fixture's own season-instance, not the season each team last played
+        # in. `current_season()` returns the latter, which for a fixture early in a new
+        # season silently yields PRIOR-season form labelled as current-season and lets the
+        # cold-start floor be met by stale data. Both teams are in the fixture's season by
+        # definition, so one value serves both sides.
+        h_season = a_season = F.HistoryIndex.target_season(rec)
         out = {}
         for stat in stats:
             for w in WINDOWS:
