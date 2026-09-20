@@ -86,12 +86,22 @@ freeze must stay *readable*: naming what it lacks is the point of inspecting it,
 refusal never blanks the binding detail.
 
 **Loaded origins are validated, not just file paths.** Hashing the file at the expected path
-proves nothing about which module object is executing. `loaded_origin_violations()` checks both
-`sys.modules[dotted]` (the general case) **and** each wrapper's own bound attribute
-(`controls_v3_sonnet46.CORE`, `eligibility_v3_sonnet46.ECORE`) — the narrow case where
-`sys.modules` is reassigned *after* the wrapper captured its reference, leaving the foreign
-object in use but invisible to a `sys.modules` scan. Neither check subsumes the other. The
-comparison itself is delegated to `golden_manifest._verified_source_path`, the mechanism
+proves nothing about which module object is executing. `loaded_origin_violations()` checks
+`sys.modules[dotted]` (the import registry — what a later import resolves to) **and** each
+wrapper's own bound attribute (`controls_v3_sonnet46.CORE`, `eligibility_v3_sonnet46.ECORE` —
+what the science actually calls, captured at the wrapper's import time).
+
+**These two can disagree, and both are retained.** An earlier version of this repair collected
+the registry entry and then *overwrote* it with the wrapper's, so only one was ever checked —
+the code did `found[core] = bound` while the comment claimed neither reference was preferred.
+A reviewer exploited exactly that: foreign object in `sys.modules`, local object on the wrapper,
+verdict `OK` over all 22 hashes. `_loaded_covered_objects()` now returns **every distinct
+reference**, deduplicated by object *identity* so the ordinary case (both names, same object) is
+checked once while genuinely different objects are both kept. A conflict cannot be resolved by
+preferring one reference, because either being foreign is a defect; the report names which one
+(`reference: "sys.modules"` or `"controls_v3_sonnet46.CORE"`).
+
+The comparison itself is delegated to `golden_manifest._verified_source_path`, the mechanism
 accepted in the preceding repair, rather than a second implementation with its own rules.
 
 Construction and verification run the same code: `current_module_hashes()` raises on a foreign
@@ -197,6 +207,20 @@ Counterexample 1 is the most serious: it meant the earlier claim that criterion 
 checkout attribution was **wrong**. Two independent single-checkout runs prove that two trees
 produce different hashes; they do not prove that a process running a foreign module is refused.
 
+**Counterexample 4 — the two references disagree.** The first attempt at counterexample 1 fixed
+only half of it. `_loaded_covered_objects()` recorded the `sys.modules` object and then replaced
+it with the wrapper's, so a *foreign registry with a local wrapper* verified `OK` and
+construction returned all 22 hashes. Measured against the previous module (`2ff9faea5`):
+
+| direction | registry | wrapper | before | after |
+|---|---|---|---|---|
+| `registry_foreign` | foreign | local | **`OK`** — the real gap | `FOREIGN_ORIGIN` via `sys.modules` |
+| `wrapper_foreign` | local | foreign | `FOREIGN_ORIGIN` — already caught | `FOREIGN_ORIGIN` via `<wrapper>.<attr>` |
+
+Only `registry_foreign` was genuinely unprotected; the `wrapper_foreign` cases are regression
+guards for the direction that already worked. Both are now covered for both cores, and
+construction fails closed in every case.
+
 ## 6. Tests
 
 New: `tests/research/test_v46_freeze_core_bindings.py` — 8 tests, offline, no corpus, no Bedrock
@@ -228,6 +252,8 @@ Added by this amendment (8 further cases):
 | contract: missing / unsupported / current (parametrised) | counterexample 2 | `MISSING_CONTRACT` / `UNSUPPORTED_CONTRACT` / `OK` |
 | generation drift with valid bindings | counterexample 3 | `FreezeGenerationMismatch`, side file kept, freeze unchanged |
 | matching generation identity | the positive control | returns the existing freeze |
+| disagreeing references, 2 directions × 2 cores | counterexample 4 | `FOREIGN_ORIGIN`, naming the offending reference |
+| identical references deduplicated | counterexample 4 | recorded once, both names credited |
 
 Each foreign-core case asserts the wrapper **actually holds the foreign object**
 (`wrapper_uses_foreign`) before asserting the refusal, so it cannot pass because the preload
@@ -257,7 +283,7 @@ pytest test_v46_freeze_core_bindings.py test_golden_v3_sonnet46.py test_controls
 # this amendment
 pytest tests/research/test_v46_freeze_core_bindings.py \
        tests/research/test_golden_manifest_source_binding.py -q
--> 23 passed in 4.99s
+-> 28 passed in 6.06s        (21 freeze-binding, 7 source-binding)
 ```
 
 `test_golden_manifest_source_binding.py` is included because this amendment reuses

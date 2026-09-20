@@ -185,54 +185,70 @@ def _observed_model_identities() -> dict:
 
 
 def _loaded_covered_objects() -> dict:
-    """Covered basename -> the module OBJECT in play, for those that are loaded.
+    """Covered basename -> every DISTINCT module object referring to it, each labelled.
 
-    Two sources, because neither covers the other:
+    Two independent sources, and both are kept:
 
-    * `sys.modules[dotted]` -- the general case. Any covered module loaded from somewhere
-      else appears here under its real name.
-    * the wrapper's own bound attribute (`controls_v3_sonnet46.CORE`) -- the narrow case
-      where `sys.modules` was reassigned *after* the wrapper imported its core, leaving the
-      foreign object in use but invisible to a `sys.modules` scan. This is the shape that
-      defeated the previous verifier.
+    * `sys.modules[dotted]` -- the import registry, what a later import resolves to.
+    * the wrapper's own bound attribute (`controls_v3_sonnet46.CORE`) -- what the science
+      actually calls, captured at the wrapper's import time.
+
+    These can DISAGREE, and an earlier version of this function collected the registry entry
+    and then overwrote it with the wrapper's, so only one was ever checked. A reviewer
+    exploited exactly that: foreign object in `sys.modules`, local object on the wrapper,
+    verdict `OK`. Both references are now retained and each is validated; a conflict cannot
+    be resolved by preferring one, because either reference being foreign is a defect.
+
+    Deduplicated by object IDENTITY, so the ordinary case where both names point at the same
+    module is checked once, while genuinely different objects are both kept.
 
     A covered module that is not loaded contributes nothing: there is no origin to check.
     """
-    found = {}
+    found: dict = {}
+
+    def _record(mod: str, label: str, obj) -> None:
+        if obj is None:
+            return
+        refs = found.setdefault(mod, [])
+        if any(existing is obj for _, existing in refs):
+            for i, (lbl, existing) in enumerate(refs):
+                if existing is obj and label not in lbl:
+                    refs[i] = (f"{lbl}+{label}", existing)   # same object, both names
+            return
+        refs.append((label, obj))
+
     for mod, dotted in _COVERED_DOTTED.items():
-        obj = sys.modules.get(dotted)
-        if obj is not None:
-            found[mod] = obj
+        _record(mod, "sys.modules", sys.modules.get(dotted))
     for wrapper, attr, core in WRAPPER_BOUND_CORES:
         wrapper_obj = sys.modules.get(f"src.research.llm_matchup.hardening.{wrapper}")
-        if wrapper_obj is None:
-            continue
-        bound = getattr(wrapper_obj, attr, None)
-        if bound is not None:
-            # The wrapper's reference wins: it is the object the science actually runs on.
-            found[core] = bound
+        if wrapper_obj is not None:
+            _record(core, f"{wrapper}.{attr}", getattr(wrapper_obj, attr, None))
     return found
 
 
 def loaded_origin_violations() -> list:
-    """Covered modules that are loaded from outside this checkout, as report rows.
+    """Every covered module reference loaded from outside this checkout, as report rows.
 
-    Delegates the comparison to `golden_manifest._verified_source_path`, the mechanism
-    accepted in the preceding repair, rather than adding a second one with its own rules.
-    It is underscore-private but deliberately shared: both modules live in `hardening/` and
-    a divergent copy here is exactly what this repair is meant to avoid.
+    Each retained reference is checked independently, so a foreign object is reported
+    whichever name holds it. Delegates the comparison to
+    `golden_manifest._verified_source_path`, the mechanism accepted in the preceding repair,
+    rather than adding a second one with its own rules. It is underscore-private but
+    deliberately shared: both modules live in `hardening/` and a divergent copy here is
+    exactly what this repair is meant to avoid.
     """
     violations = []
-    for mod, obj in sorted(_loaded_covered_objects().items()):
-        try:
-            GM._verified_source_path(obj, mod)
-        except GM.SourceBindingError as e:
-            violations.append({
-                "module": mod,
-                "loaded_from": os.path.realpath(getattr(obj, "__file__", "") or ""),
-                "expected": os.path.join(SRC_DIR, mod),
-                "detail": str(e),
-            })
+    for mod, refs in sorted(_loaded_covered_objects().items()):
+        for label, obj in refs:
+            try:
+                GM._verified_source_path(obj, mod)
+            except GM.SourceBindingError as e:
+                violations.append({
+                    "module": mod,
+                    "reference": label,
+                    "loaded_from": os.path.realpath(getattr(obj, "__file__", "") or ""),
+                    "expected": os.path.join(SRC_DIR, mod),
+                    "detail": str(e),
+                })
     return violations
 
 
@@ -256,7 +272,8 @@ def current_module_hashes(check_origins: bool = True) -> dict:
         if violations:
             raise FreezeBindingError(
                 "covered module(s) loaded from outside this checkout: "
-                + "; ".join(f"{v['module']} <- {v['loaded_from']}" for v in violations)
+                + "; ".join(f"{v['module']} via {v['reference']} <- {v['loaded_from']}"
+                            for v in violations)
                 + ". Refusing to hash local files as though they described the loaded code.")
     hashes, missing = {}, []
     for mod in REQUIRED_MODULES:

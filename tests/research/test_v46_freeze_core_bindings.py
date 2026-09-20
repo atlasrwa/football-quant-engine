@@ -426,3 +426,111 @@ def test_matching_generation_identity_returns_the_existing_freeze(checkout, tmp_
     assert result["outcome"] == "RETURNED", result
     assert result["detail"] == "IDENTITY_A"
     assert result["historical_unchanged"] is True
+
+
+# -------------------------------------------------------------------------------------
+# Counterexample 4: the two references DISAGREE. An earlier version collected the
+# `sys.modules` object and then overwrote it with the wrapper's, so only one was ever
+# checked -- foreign registry + local wrapper verified OK over all 22 hashes.
+# -------------------------------------------------------------------------------------
+
+SPLIT_REFERENCES = """
+    import importlib.util, json, os, sys
+    core, wrapper, attr, direction, foreign = %r, %r, %r, %r, %r
+    dotted = "src.research.llm_matchup.hardening." + core
+    local = os.path.join(os.getcwd(), "src/research/llm_matchup/hardening", core + ".py")
+    import src.research.llm_matchup.hardening
+
+    def load(path):
+        spec = importlib.util.spec_from_file_location(dotted, path)
+        mod = importlib.util.module_from_spec(spec)
+        sys.modules[dotted] = mod
+        spec.loader.exec_module(mod)
+        return mod
+
+    if direction == "registry_foreign":
+        # Wrapper imports the LOCAL core, then the registry is swapped to a foreign object.
+        w = __import__("src.research.llm_matchup.hardening." + wrapper, fromlist=[wrapper])
+        load(foreign)
+    else:
+        # Wrapper binds the FOREIGN core, then the registry is restored to a local object.
+        load(foreign)
+        w = __import__("src.research.llm_matchup.hardening." + wrapper, fromlist=[wrapper])
+        load(local)
+
+    from src.research.llm_matchup.hardening import freeze_v3_sonnet46 as FZ
+    report = FZ.verify_freeze({
+        "module_hashes": dict(FZ.current_module_hashes(check_origins=False)),
+        "freeze_contract_version": FZ.FREEZE_CONTRACT_VERSION})
+    try:
+        FZ.current_module_hashes()
+        construction = "RETURNED"
+    except FZ.FreezeBindingError:
+        construction = "RAISED"
+    print(json.dumps({
+        "registry_origin": os.path.realpath(sys.modules[dotted].__file__),
+        "wrapper_origin": os.path.realpath(getattr(w, attr).__file__),
+        "report": report, "construction": construction}))
+"""
+
+
+@pytest.mark.parametrize("core,wrapper,attr", [
+    ("controls_v3_core", "controls_v3_sonnet46", "CORE"),
+    ("eligibility_v3_core", "eligibility_v3_sonnet46", "ECORE"),
+])
+@pytest.mark.parametrize("direction,expected_ref", [
+    ("registry_foreign", "sys.modules"),
+    ("wrapper_foreign", "{wrapper}.{attr}"),
+])
+def test_disagreeing_references_are_both_checked(
+        checkout, tmp_path, core, wrapper, attr, direction, expected_ref):
+    """Either reference being foreign is a defect; neither may be preferred over the other.
+
+    Both directions, both cores. The assertion names WHICH reference was flagged, so a test
+    cannot pass because the other one happened to be foreign too.
+    """
+    foreign = _copy_checkout(str(tmp_path / f"split_{core}_{direction}"))
+    foreign_core = os.path.join(foreign, HARDENING_REL, core + ".py")
+    with open(foreign_core, "a") as f:
+        f.write("\nFOREIGN_CORE_MARKER_e91d = True\n")
+
+    result = _run(SPLIT_REFERENCES % (core, wrapper, attr, direction, foreign_core),
+                  cwd=checkout)
+
+    # Fixture precondition: the two references must genuinely disagree.
+    reg_foreign = result["registry_origin"].startswith(foreign + os.sep)
+    wrap_foreign = result["wrapper_origin"].startswith(foreign + os.sep)
+    assert reg_foreign != wrap_foreign, (
+        f"references did not diverge: registry={result['registry_origin']} "
+        f"wrapper={result['wrapper_origin']}")
+    assert reg_foreign is (direction == "registry_foreign")
+
+    report = result["report"]
+    assert report["status"] == "FOREIGN_ORIGIN", report
+    assert report["ok"] is False
+    flagged = [(v["module"], v["reference"]) for v in report["foreign_origins"]]
+    assert flagged == [(core + ".py", expected_ref.format(wrapper=wrapper, attr=attr))], flagged
+    assert result["construction"] == "RAISED", "construction must fail closed too"
+
+
+def test_identical_references_are_reported_once(checkout):
+    """The ordinary case: both names point at the same object, so it is checked once.
+
+    Deduplication is by object identity, so it must not mask a genuine second reference —
+    the test above is what proves that.
+    """
+    result = _run("""
+        import json
+        from src.research.llm_matchup.hardening import freeze_v3_sonnet46 as FZ
+        from src.research.llm_matchup.hardening import controls_v3_sonnet46 as C46
+        refs = FZ._loaded_covered_objects()["controls_v3_core.py"]
+        print(json.dumps({"n_refs": len(refs), "labels": [l for l, _ in refs],
+                          "report_ok": FZ.verify_freeze({
+                              "module_hashes": dict(FZ.current_module_hashes()),
+                              "freeze_contract_version": FZ.FREEZE_CONTRACT_VERSION})["ok"]}))
+    """, cwd=checkout)
+
+    assert result["n_refs"] == 1, f"same object recorded twice: {result['labels']}"
+    assert "sys.modules" in result["labels"][0] and "CORE" in result["labels"][0], (
+        "both names must be credited on the single retained reference")
+    assert result["report_ok"] is True
