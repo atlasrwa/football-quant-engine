@@ -231,3 +231,179 @@ Both halves of the claim established. No outcomes, no performance; derived refs 
 **P2/P3 carried forward:** `HarnessContext.__init__` loads the corpus itself (P3,
 testability); the rehearsal's proposals remain deterministic stubs, so it measures apparatus
 connectivity and not hypothesis quality.
+
+---
+
+# Surgical dual-provider amendment
+
+Three residual pre-spend issues, closed additively. No redesign, no broadened experiment.
+
+## 1. Packet provenance is established BEFORE the proposal is parsed
+
+**The defect.** `run_proposal` parsed the proposal first. A forbidden or malformed LLM
+response therefore produced a shadow record with **no packet provenance at all** — a stub
+target with `kickoff_unix=0` and `packet_binding_verified=false`. Invalid model output is
+still a *treatment result*: if it is not attributable to the exact packet the model saw, the
+rejection-reason distribution cannot be tied to any instrument.
+
+**The repair.** Packet verification is split into two stages that cannot be reordered by
+accident, because Stage A takes no proposal argument at all:
+
+| stage | function | depends on the proposal? |
+|---|---|---|
+| A | `verify_packet_envelope(packet, by_fixture, raw_fixture_id=…)` | **no** |
+| B | `verify_proposal_evidence_refs(packet, identity, evidence_refs=…)` | yes |
+
+Stage A verifies type, schema/cohort lineage, recomputed hash, fixture identity, kickoff,
+cutoff, and resolves the target **from the packet's own `fixture_id`**. The raw payload's
+`fixture_id` is read defensively — a payload malformed in every other respect must still not
+bind to a packet for another fixture — and a payload with no readable id is a *parse* failure,
+not a binding failure.
+
+**Failure precedence**, decided rather than emergent, and pinned by tests:
+
+```
+invalid packet                           -> PACKET_BINDING_FAILED
+valid packet + forbidden field           -> FORBIDDEN_PREDICTION_FIELD  (packet identity kept)
+valid packet + malformed proposal        -> AMBIGUOUS_PROPOSAL          (packet identity kept)
+valid packet + valid proposal + bad ref  -> PACKET_BINDING_FAILED
+```
+
+One collision the taxonomy does not resolve is **decided explicitly**: a payload carrying
+both a forbidden field *and* a mismatched fixture id reports `PACKET_BINDING_FAILED`, because
+the packet is the instrument. The status would otherwise lose the more fundamental fault — so
+the rejection reason names *both* causes and a test asserts it, rather than letting the
+"the LLM tried to predict" signal disappear silently.
+
+## 2. Packet cutoff must EQUAL the target kickoff
+
+v2 accepted `information_cutoff_unix <= target.kickoff_unix`. That is leak-free but **not
+sufficient**: deterministic measurement consumes every row with
+`kickoff_unix < target.kickoff_unix`, so a packet cut at 14:00 for a 15:00 kickoff conditions
+the model on a strictly smaller information set than the measurement it is compared against.
+For this confirmatory experiment the two must be identical, so equality is required.
+
+The test builds an earlier-cut packet and **re-hashes it correctly**, then asserts the
+rejection reason names the *cutoff* — not `hash_mismatch`. Without that assertion a botched
+re-hash would make the test pass for the wrong reason and leave the rule unverified.
+
+Equality is also confirmed as a *property of the production builder* on real data:
+`PACKET_CUTOFF_EQUALS_TARGET_KICKOFF_COUNT = 50/50`. This does not generalise arbitrary
+snapshot times; a future experiment needing them versions a new protocol.
+
+## 3. Provider provenance is genuinely dual-provider
+
+The registry is re-keyed from `metric -> capability` to
+**`(provider, canonical_metric) -> ProviderCapability`**. Under the old shape a metric had
+one capability and the second provider was *unrepresentable*.
+
+**`yellow_cards` is the proof the pair key is necessary.** FootyStats genuinely exposes
+`team_a_yellow_cards` (`footystats/normalizer.py:184`). TheStatsAPI exposes
+`overview.yellow_cards`, which `championship_adapter` then parks in a storage field *also*
+called `team_a_yellow_cards`. Identical spelling, two providers. **Storage schema ≠ provider.**
+
+| | FootyStats | TheStatsAPI |
+|---|---|---|
+| yellow_cards | `team_a_yellow_cards/team_b_yellow_cards` | `overview.yellow_cards` |
+| corners | `team_a_corners/team_b_corners` | `overview.corner_kicks` |
+| xG | `team_a_xg/team_b_xg` | `overview.expected_goals` |
+| npxG | **absent** — traced, not assumed | `np_expected_goals.all.{home\|away}` |
+
+Capabilities carry a `status`; only `MEASURABLE` is measurable and everything else fails
+closed. FootyStats entries are traced **only** from the real normalizer — nothing is
+populated from a documentation list. `total_shots` is declared `UNVALIDATED_EQUIVALENCE`
+rather than silently mapped, because FootyStats' shot count has never been measured against
+TheStatsAPI's. `semantic_equivalence_validated` is `False` on every entry.
+
+**No implicit anything.** `resolve_measurement_provider` resolves only the two single-provider
+policies and **raises** on `PREFERRED_PROVIDER_WITH_FALLBACK` and `VALIDATED_BLEND` — the
+cross-provider code path does not exist, which is how `IMPLICIT_PROVIDER_FALLBACK=false` and
+`IMPLICIT_PROVIDER_BLEND=false` are *earned* rather than asserted. Cross-provider resolution
+belongs to `src/research/reconciliation/reconciler.py`; the policy enum is imported from
+`src/research/reconciliation/policy.py` rather than re-declared, so no competing framework is
+created. `BridgeContext` additionally refuses to be constructed with a policy that resolves to
+a provider the corpus did not come from, so FootyStats provenance cannot be fabricated over
+TheStatsAPI-derived rows.
+
+**The current rehearsal is NOT a blend.** Its policy is frozen to `THESTATSAPI_ONLY`, which
+is what the traced load path actually is:
+`load_corpus -> multisrc_corpus.load_season -> championship_adapter.adapt_match(stats_json)`.
+
+## 4. npxG follows the existing evidence, rather than being re-pathed
+
+The old registry advertised npxG as supported at a **fictitious** path,
+`np_expected_goals.np_expected_goals`. `championship_adapter._cell` special-cases the metric:
+the node is the *root* key `np_expected_goals`, then `[period][side]`.
+
+Correcting the path would not have made npxG valid. `V5A1_PROVIDER_SEMANTICS_AUDIT.md §2`
+already measured the semantics: npxG exceeded **total** xG by >0.05 in **511 of 3,242** raw
+pairs (15.8%, worst −0.99), with a smooth non-penalty-shaped error distribution;
+classified `PROVIDER_SOURCE_INCONSISTENCY`; unrepairable because the corpus has no penalty
+field. So `("thestatsapi","npxg")` is `EXCLUDED_PROVIDER_SEMANTICS` — the entry is **retained
+with its true source path** for audit, because excluded is not the same as absent.
+`("footystats","npxg")` does not exist and is **not** inferred from FootyStats' xG.
+
+## 5. Source hashes bind provider identity (3H)
+
+`source_hash` now takes the resolved capability as a **parameter** and binds provider,
+capability id and the provider's own source field into every row *and* the payload header.
+Identical rows with identical values but a different provider produce a different hash — a
+provider substitution can no longer be invisible. `capability_identity(None)` raises rather
+than defaulting: a measurement whose provenance cannot be named must not produce a provenance
+hash, because a placeholder would collide across providers.
+
+## Versions — semantic responsibility, not cosmetics
+
+| version | change | why |
+|---|---|---|
+| `hypothesis_validator_v2 → v3` | **bumped** | verification order split; cutoff equality |
+| `deterministic_measurement_v2 → v3` | **bumped** | provider identity bound into source hashes |
+| `shadow_research_record_v2 → v3` | **bumped** | provider fields; parse-rejected records now carry verified packet identity |
+| `provider_capability_registry_v2 → v3` | **bumped** | re-keyed to `(provider, metric)` — a change of *identity* |
+| `hypothesis_proposal_v1` | unchanged | proposal *shape* identical; parse order is bridge execution, not schema |
+| `canonical_hypothesis_ir_v1` | unchanged | IR semantics and id derivation untouched |
+| `hypothesis_compiler_v1` | unchanged | canonicalization logic untouched |
+
+`cohort_identity_hash` and the target-bounded vintage embed `MEASUREMENT_VERSION` and
+therefore move with it. That is intended: a v2 hash asserted a weaker provenance claim than a
+v3 hash, and the two must not compare equal.
+
+## Exposed-50 V3 (V1 and V2 superseded, neither overwritten)
+
+V2's templates were all well-formed, so the amendment's headline claim would never have been
+exercised on real data. V3 adds a forbidden-field template, an unknown-field template and an
+npxG template.
+
+| | |
+|---|---|
+| fixtures / packets built / failures | 50 / 50 / 0 |
+| proposals → valid / rejected | 450 → 200 / 250 |
+| **parse rejections retaining packet identity** | **100** |
+| **N_REAL_PACKET_HASHES / N_NO_PACKET_RECORDS** | **450 / 0** |
+| packet-bound rejections | 0 |
+| valid / invalid evidence-ref bindings | 350 / 0 |
+| cutoff == kickoff | **50 / 50** |
+| measurement provider counts | `{thestatsapi: 450}` |
+| provider policy | `THESTATSAPI_ONLY` |
+| **N_NPXG_ACCEPTED** | **0** |
+| same-kickoff / target-outcome / future / source-hash mismatch | 0 / 0 / 0 / 0 |
+
+Rejections: `UNSUPPORTED_PROVIDER_SEMANTICS` 100 (npxG 50 + half-split `big_chances` 50),
+`UNSUPPORTED_METRIC` 50, `FORBIDDEN_PREDICTION_FIELD` 50, `AMBIGUOUS_PROPOSAL` 50. The 100
+parse rejections each carry a real, recomputed `packet_hash` — under the previous ordering all
+100 would have carried none.
+
+Leakage probes compare the complete measurement payload, now including
+`measurement_provider` and `provider_capability_id`.
+
+## Still true after this amendment
+
+V1/V2/season-boundary artifacts and CHAMPION byte-identical
+(`0b8f5ff3…c00c9`); no production path imports the bridge; `LIVE_SONNET_CALLS=0`,
+`BEDROCK_PAID_CALLS=0`, `NEW_SONNET_SPEND_USD=0`, Item 5 not attempted.
+
+**P2/P3 carried forward:** proposals remain deterministic stubs, so the rehearsal measures
+apparatus connectivity, not hypothesis quality (unchanged from V2). FootyStats capabilities
+are declared but not *exercised* — no FootyStats-backed corpus reaches this bridge yet, so
+their source fields are traced rather than round-tripped. `xg` is declared for both providers
+but sits outside the IR vocabulary, so it is not measurable here.
