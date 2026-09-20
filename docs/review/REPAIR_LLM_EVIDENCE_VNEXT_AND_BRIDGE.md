@@ -151,3 +151,83 @@ only — no corpus rows.
   not a blocker.
 * Model identity, spend enforcement, lock/preflight, output-root and freeze-coverage findings
   are untouched and remain open.
+
+---
+
+# Amendment — three pre-spend audit blockers closed
+
+`START 6a60d4248 · END 93247f7c1 · 5 commits · 153 tests passed`
+
+The audit was right on all three. Each was reproduced in the code before being repaired.
+
+## Blocker 1 — the bridge did not require the actual packet
+
+`run_proposal` defaulted to `packet_hash="NO_PACKET"`, so the executed path was
+`corpus → proposal → measurement`, with packet provenance and `evidence_refs` never
+structurally bound and a caller-supplied hash trusted without recomputation. V1's
+`N_PACKETS_BUILT=50` was reported while **no packet was built at all**.
+
+`run_proposal(raw, *, packet, proposal_source)` now requires the packet object. There is no
+NO_PACKET path. `packet_binding.verify_packet` checks lineage versions, fixture/kickoff
+binding against both proposal and target, a **recomputed** `packet_hash`, information cutoff,
+and that every `evidence_ref` exists in *this* packet. `PACKET_BINDING_FAILED` is its own
+status. `DETERMINISTIC_REHEARSAL` may omit refs; `LLM_PROPOSAL` may not.
+
+## Blocker 2 — provenance did not bind the measured values
+
+A historical stat can be corrected while ids, kickoffs, season and membership stay identical;
+the measurement changes and no identity moves. Added `cohort_source_hash`,
+`baseline_source_hash`, `measurement_input_hash` (canonical per-row tuples including the
+measured value, with `__NULL__` bound explicitly) and `target_bounded_vintage`.
+`cohort_identity_hash` is re-scoped to membership/structure and now binds chronological
+order. `corpus_vintage()` is **removed**, not left as a trap.
+
+## Blocker 3 — provider provenance was inferred from storage shape
+
+Traced, not guessed: `_to_adapter_shape` maps a **TheStatsAPI** fixture into FootyStats
+*schema*, and `adapt_match` reads `yellow_cards` from `overview.yellow_cards` in the
+TheStatsAPI `/stats` payload. The registry is now an explicit table (provider, source_path,
+container, period support, NULL semantics) and records `CORPUS_STORAGE_SCHEMA` separately
+from `provider`. Untraced metrics are not advertised as supported.
+
+**Versions** — bumped by semantic responsibility, with the unchanged ones documented:
+validator `v1→v2`, measurement `v1→v2`, shadow record `v1→v2`, registry `v1→v2`; proposal
+schema, canonical IR and compiler **unchanged** because their meaning did not change.
+
+## Exposed-50 V2 (V1 superseded, not overwritten)
+
+| | |
+|---|---|
+| packets built / failures | 50 / 0 |
+| proposals → valid / rejected | 300 → 200 / 100 |
+| **N_REAL_PACKET_HASHES / N_NO_PACKET_RECORDS** | **300 / 0** |
+| valid / invalid evidence-ref bindings | 300 / 0 |
+| same-kickoff / target-outcome / future / source-hash mismatch | 0 / 0 / 0 / 0 |
+
+Leakage probes compare the **complete** measurement payload (cohort, baseline, contrast, and
+all four identity hashes). V1 compared only `cohort`.
+
+## Season-boundary real-corpus diagnostic
+
+The exposed-50 cohort has zero boundary fixtures, so it never exercised the repair. Scanning
+the full corpus **without changing that cohort**:
+
+| | |
+|---|---|
+| corpus fixtures / team-target pairs | 5,319 / 10,638 |
+| season-boundary pairs | 134 (champ 40, epl 23, laliga 20, laliga2 18, ligue1 18, ligue2 15) |
+| **old semantic met support on prior-season rows** | **134 of 134** |
+| **new semantic abstains** | **134 of 134** |
+| new semantic valid on target-season history | 0 |
+
+Both halves of the claim established. No outcomes, no performance; derived refs only.
+
+## Still true after the amendment
+
+23 frozen artifacts + CHAMPION byte-identical; V1 rehearsal artifact untouched;
+`LIVE_SONNET_CALLS=0`, `BEDROCK_PAID_CALLS=0`, `NEW_SONNET_SPEND_USD=0`,
+`RAW_CORPUS_EXPORTED=false`, Item 5 not attempted.
+
+**P2/P3 carried forward:** `HarnessContext.__init__` loads the corpus itself (P3,
+testability); the rehearsal's proposals remain deterministic stubs, so it measures apparatus
+connectivity and not hypothesis quality.
