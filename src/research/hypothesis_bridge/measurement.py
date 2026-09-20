@@ -96,15 +96,88 @@ def baseline_sample(idx: CH.HistoryIndex, target: MatchRecord, ir: CanonicalHypo
 
 
 def cohort_identity(target: MatchRecord, ir: CanonicalHypothesis, cohort: Sample) -> str:
-    """Identity of the exact historical rows measured, so a record is reproducible."""
+    """MEMBERSHIP/STRUCTURE identity: which rows, in which order, for which hypothesis.
+
+    This deliberately does NOT bind the measured VALUES -- `source_hash` does that. Keeping
+    them separate lets a reader tell "a different set of matches was selected" from "the same
+    matches, with a stat that has since changed".
+
+    Order is bound, not sorted away: a `last_n` window selects by chronological position, so
+    two identical id sets in different orders are not the same cohort.
+    """
     payload = {
         "measurement_version": MEASUREMENT_VERSION,
         "hypothesis": ir.to_dict(),
         "target_fixture": target.fixture_id,
         "target_kickoff": target.kickoff_unix,
         "season": CH.HistoryIndex.target_season(target),
-        "fixtures": sorted(r.fixture_id for r in cohort.records),
+        "fixtures_ordered": [r.fixture_id for r in
+                             sorted(cohort.records, key=lambda r: (r.kickoff_unix, r.fixture_id))],
     }
+    return hashlib.sha256(json.dumps(payload, sort_keys=True, default=str).encode()).hexdigest()
+
+
+def source_hash(target: MatchRecord, ir: CanonicalHypothesis, sample: Sample,
+                team: Optional[str], role: str) -> str:
+    """VALUE identity: the exact deterministic inputs the measurement consumed.
+
+    Binding fixture ids, timestamps and membership is not enough for reproducibility: a
+    historical stat can be corrected while ids, kickoffs, season and cohort membership all
+    stay identical, and the measurement would then change with no provenance identity
+    changing. This binds the measured value itself, per row.
+
+    A NULL is bound as an explicit marker rather than skipped, so "not recorded" and "absent
+    from the cohort" are distinguishable. Rows are canonically ordered by (kickoff, fixture
+    id) so an input list in a different order yields the same hash where order is not
+    semantically meaningful.
+    """
+    rows = []
+    for r in sorted(sample.records, key=lambda r: (r.kickoff_unix, r.fixture_id)):
+        subjects = [team] if team is not None else [r.home_id, r.away_id]
+        for t in subjects:
+            v = CH.team_metric(r, t, ir.metric, ir.perspective, ir.period)
+            rows.append({
+                "fixture_id": r.fixture_id,
+                "kickoff_unix": r.kickoff_unix,
+                "competition": r.competition,
+                "season_id": r.season_id,
+                "team": t,
+                "metric": ir.metric,
+                "perspective": ir.perspective,
+                "period": ir.period,
+                "venue": ir.venue,
+                "value": ("__NULL__" if v is None else float(v)),
+            })
+    payload = {"measurement_version": MEASUREMENT_VERSION, "role": role,
+               "target_fixture": target.fixture_id, "target_kickoff": target.kickoff_unix,
+               "rows": rows}
+    return hashlib.sha256(json.dumps(payload, sort_keys=True, default=str).encode()).hexdigest()
+
+
+def target_bounded_vintage(idx: CH.HistoryIndex, target: MatchRecord,
+                           ir: CanonicalHypothesis) -> str:
+    """Data-vintage identity bounded by the TARGET.
+
+    Covers the historical surface available to this measurement at T -- the target's own
+    competition-season, strictly before T -- rather than the whole corpus. A row appended
+    after T cannot change it, which is the property that makes a shadow record for T stable
+    as the corpus grows forward.
+    """
+    season = CH.HistoryIndex.target_season(target)
+    rows = []
+    for r in sorted(idx.recs, key=lambda r: (r.kickoff_unix, r.fixture_id)):
+        if r.kickoff_unix >= target.kickoff_unix:            # STRICT
+            continue
+        if season_of(r) != season or r.competition != target.competition:
+            continue
+        for t in (r.home_id, r.away_id):
+            v = CH.team_metric(r, t, ir.metric, ir.perspective, ir.period)
+            rows.append([r.fixture_id, r.kickoff_unix, t,
+                         "__NULL__" if v is None else float(v)])
+    payload = {"measurement_version": MEASUREMENT_VERSION, "scope": "target_bounded",
+               "target_fixture": target.fixture_id, "target_kickoff": target.kickoff_unix,
+               "season": season, "metric": ir.metric, "perspective": ir.perspective,
+               "period": ir.period, "rows": rows}
     return hashlib.sha256(json.dumps(payload, sort_keys=True, default=str).encode()).hexdigest()
 
 
@@ -119,6 +192,11 @@ def measure(idx: CH.HistoryIndex, target: MatchRecord, ir: CanonicalHypothesis) 
     if baseline.mean is not None:
         contrast = cohort.mean - baseline.mean
 
+    team = team_id_for(target, ir.subject)
+    baseline_team = team if ir.comparator == "team_season_baseline" else None
+    cohort_sh = source_hash(target, ir, cohort, team, "cohort")
+    baseline_sh = source_hash(target, ir, baseline, baseline_team, "baseline")
+
     return {
         "measurement_version": MEASUREMENT_VERSION,
         "cohort": {"raw_n": cohort.raw_n, "effective_n": cohort.effective_n,
@@ -128,5 +206,14 @@ def measure(idx: CH.HistoryIndex, target: MatchRecord, ir: CanonicalHypothesis) 
                      "mean": baseline.mean},
         "deterministic_contrast": {"kind": "cohort_mean_minus_baseline_mean",
                                    "value": contrast},
+        # Membership/structure identity (which rows), kept distinct from value identity.
         "cohort_identity_hash": cohort_identity(target, ir, cohort),
+        # Value identities: these change when a measured historical value changes, even
+        # though ids, kickoffs, season and membership are all unchanged.
+        "cohort_source_hash": cohort_sh,
+        "baseline_source_hash": baseline_sh,
+        "measurement_input_hash": hashlib.sha256(
+            json.dumps({"cohort": cohort_sh, "baseline": baseline_sh,
+                        "hypothesis": ir.to_dict()},
+                       sort_keys=True).encode()).hexdigest(),
     }
