@@ -137,9 +137,14 @@ New: `tests/research/test_golden_manifest_source_binding.py` — 7 tests, offlin
 calls, each import-resolution assertion in an isolated subprocess with `cwd` set to the checkout
 under test and `PYTHONPATH` unset.
 
+Criterion 1's audit hook observes the interpreter's `open` audit event, which covers
+`builtins.open`/`io.open` — every read on the covered path — but not `os.open` or C-level reads.
+The claim it establishes is therefore "no deployed-tree file was opened through that event", not
+a proof that no byte was read by any mechanism.
+
 | # | Criterion | Test |
 |---|---|---|
-| 1 | independent checkout | audits every `open()`; no deployed-tree path may be read |
+| 1 | independent checkout | audits every `open` audit event; no deployed-tree path may be opened through it |
 | 2 | correct attribution | hashes equal that checkout's source bytes (uniquely marked, so it cannot pass by coincidence) |
 | 3 | foreign rejection | foreign `sampling` preloaded under its real dotted name → refused |
 | 4 | identical bytes | byte-identical foreign copy → still refused |
@@ -167,6 +172,10 @@ origin assertions compare a deployed path against a deployed root and pass vacuo
   *output/manifest* root is deliberately out of scope for a source-binding repair, so an
   independent checkout still reads and writes the deployed tree's manifest and ledger. Tracked as
   its own §D row; it does not affect what the fingerprint attests to.
+  **This bounds the §5 proof:** that check was run on the deployed host, where `OUT` resolves.
+  An independent checkout can now compute a *correct* fingerprint, but `load_manifest()` still
+  reaches the deployed tree — so `resume_golden_v3` is **not** checkout-independent end to end
+  after this repair, and nothing here should be read as claiming it is.
 * **Only the two modules the fingerprint already covered are verified.** This repair does not
   widen fingerprint coverage — that is the separate, still-open `freeze_v3_sonnet46.py`
   missing-core-module-bindings finding.
