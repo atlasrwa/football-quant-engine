@@ -40,7 +40,14 @@ from src.research.llm_matchup.hardening import versions_v3_sonnet46 as V46
 
 ROOT = "/home/ubuntu"
 OUT = os.path.join(ROOT, "research/llm_matchup/out")
-SRC_DIR = os.path.join(ROOT, "src/research/llm_matchup/hardening")
+
+#: The scientific sources this freeze hashes, resolved from the EXECUTING checkout rather
+#: than from `ROOT`. `SRC_DIR` was `<ROOT>/src/research/llm_matchup/hardening`, so a freeze
+#: built or verified from any other checkout hashed the DEPLOYED tree's modules while
+#: executing its own -- the same defect repaired in `golden_manifest` (PR #20), and it is
+#: repaired the same way here rather than with a second, inconsistent mechanism.
+#: `ROOT`, `OUT` and `PROTECTED` are artifact/output roots and are deliberately unchanged.
+SRC_DIR = os.path.join(GM.REPO_ROOT, "src", "research", "llm_matchup", "hardening")
 FREEZE_PATH = os.path.join(OUT, "FREEZE_LLM_MATCHUP_V3_SONNET46.json")
 
 # Paths this module must NEVER write. (V3_CHECKPOINT.md lives in research/llm_matchup/, NOT
@@ -62,7 +69,47 @@ MODULES = [
     "golden_v3_sonnet46.py", "controls_v3_sonnet46.py", "audit_prespend.py",
     "audit_request.py", "counter_golden.py", "eligibility.py",
     "eligibility_v3_sonnet46.py",
+    # --- added by the core-binding repair -------------------------------------------
+    # `controls_v3_sonnet46.py` and `eligibility_v3_sonnet46.py` above are THIN WRAPPERS:
+    # they import `controls_v3_core` / `eligibility_v3_core` and delegate the scientific
+    # decisions to them. Hashing only the wrappers meant the control definitions and the
+    # eligibility rules could change with the freeze still reporting the same instrument.
+    "controls_v3_core.py", "eligibility_v3_core.py",
+    # `controls_v3_core` records `RG.classify_bedrock_error(...)` into its control results
+    # (controls_v3_core.py:115 `err_class`, :135 `error_class`), so that classification is
+    # an input to control outcomes and must be bound too.
+    "resume_golden_v3.py",
 ]
+
+#: Every entry of `MODULES` is required: the freeze may not be built from, nor verified
+#: against, a partial source set. Named separately so the contract is explicit at the call
+#: sites below rather than implied by a loop.
+REQUIRED_MODULES = tuple(MODULES)
+
+#: The cores whose absence distinguishes a pre-repair freeze from one built under the
+#: repaired contract. A freeze lacking these is historical evidence, not a complete binding.
+REQUIRED_CORE_MODULES = (
+    "controls_v3_core.py", "eligibility_v3_core.py", "resume_golden_v3.py",
+)
+
+#: Bumped because the required source set grew. A freeze written before this repair cannot
+#: satisfy the new contract and must not be silently upgraded to look as though it does.
+FREEZE_CONTRACT_VERSION = "v3_sonnet46_freeze_contract_v2_core_bound"
+
+#: `atomic_io.py` is a direct dependency of both cores and is deliberately NOT required: it
+#: is an atomic-write utility and encodes no scientific decision. Recorded here so the
+#: exclusion is a stated judgement rather than an oversight.
+EXCLUDED_WITH_REASON = {
+    "atomic_io.py": "write utility; no scientific decision, no effect on any result value",
+}
+
+
+class FreezeBindingError(RuntimeError):
+    """A required scientific source binding is missing, unreadable or stale.
+
+    Raised instead of returning a report, so an incomplete or drifted binding cannot be
+    mistaken for a verified one by a caller that only checks a return value.
+    """
 
 
 def _sha256_file(path: str) -> str:
@@ -108,6 +155,83 @@ def _observed_model_identities() -> dict:
     }
 
 
+def current_module_hashes() -> dict:
+    """Hash every REQUIRED module from the executing checkout, or fail.
+
+    The previous implementation was `if os.path.exists(p): module_hashes[mod] = ...`, so a
+    required source that was renamed, moved or deleted simply vanished from the manifest and
+    the freeze still reported success over a smaller set. Absence is now an error.
+    """
+    hashes, missing = {}, []
+    for mod in REQUIRED_MODULES:
+        path = os.path.join(SRC_DIR, mod)
+        if not os.path.isfile(path):
+            missing.append(mod)
+            continue
+        hashes[mod] = _sha256_file(path)
+    if missing:
+        raise FreezeBindingError(
+            f"required source(s) absent from {SRC_DIR!r}: {sorted(missing)}. A freeze "
+            "cannot be built from a partial source set.")
+    return hashes
+
+
+def verify_freeze(freeze_manifest: dict) -> dict:
+    """Check a freeze's recorded source bindings against THIS checkout's sources.
+
+    Deliberately independent of `build_manifest()`, which reads eight result artifacts under
+    `OUT`. Binding integrity is a question about source files alone, so verifying it must not
+    require a golden batch, a controls run or any other artifact to exist.
+
+    Returns a report; it never raises for a *failed* verification (see
+    `verify_freeze_or_raise`), only for an unreadable executing checkout.
+
+        status  OK                     every required binding present and current
+                INCOMPLETE_BINDING     required hashes absent from the freeze (e.g. a
+                                       pre-repair freeze, which stays readable as history)
+                BINDING_MISMATCH       a recorded hash no longer matches this checkout
+    """
+    current = current_module_hashes()
+    recorded = (freeze_manifest or {}).get("module_hashes")
+    if not isinstance(recorded, dict):
+        return {"ok": False, "status": "INCOMPLETE_BINDING",
+                "contract": FREEZE_CONTRACT_VERSION,
+                "freeze_contract": (freeze_manifest or {}).get("freeze_contract_version"),
+                "missing_bindings": sorted(REQUIRED_MODULES),
+                "missing_required_cores": sorted(REQUIRED_CORE_MODULES),
+                "mismatched": [],
+                "detail": "freeze records no module_hashes mapping"}
+
+    missing = sorted(m for m in REQUIRED_MODULES if m not in recorded)
+    mismatched = sorted(m for m in REQUIRED_MODULES
+                        if m in recorded and recorded[m] != current[m])
+    status = ("OK" if not missing and not mismatched
+              else "INCOMPLETE_BINDING" if missing else "BINDING_MISMATCH")
+    return {
+        "ok": status == "OK",
+        "status": status,
+        "contract": FREEZE_CONTRACT_VERSION,
+        "freeze_contract": freeze_manifest.get("freeze_contract_version"),
+        "missing_bindings": missing,
+        # Called out separately: these are what a pre-repair freeze is missing, and the
+        # reason it cannot be certified complete even though it remains inspectable.
+        "missing_required_cores": sorted(m for m in REQUIRED_CORE_MODULES if m in missing),
+        "mismatched": mismatched,
+        "source_dir": SRC_DIR,
+    }
+
+
+def verify_freeze_or_raise(freeze_manifest: dict) -> dict:
+    """`verify_freeze`, but an incomplete or stale binding is an error, not a return value."""
+    report = verify_freeze(freeze_manifest)
+    if not report["ok"]:
+        raise FreezeBindingError(
+            f"freeze source binding not verified ({report['status']}): "
+            f"missing={report['missing_bindings']} mismatched={report['mismatched']}. "
+            "This freeze does not describe the sources in the executing checkout.")
+    return report
+
+
 def build_manifest() -> dict:
     m46 = G46.build_or_load_manifest()
     frozen45 = GM.load_manifest(G46.SONNET45_MANIFEST_PATH) or {}
@@ -118,11 +242,7 @@ def build_manifest() -> dict:
     prespend = _read_json(G46.PRESPEND_AUDIT_PATH) or {}
     elig = _read_json(os.path.join(G46.OUT, "golden_v3_sonnet46_eligibility.json")) or {}
 
-    module_hashes = {}
-    for mod in MODULES:
-        p = os.path.join(SRC_DIR, mod)
-        if os.path.exists(p):
-            module_hashes[mod] = _sha256_file(p)
+    module_hashes = current_module_hashes()
 
     artifact_hashes = {}
     for p in sorted(glob.glob(os.path.join(G46.OUT, "*"))):
@@ -130,6 +250,10 @@ def build_manifest() -> dict:
             artifact_hashes[os.path.basename(p)] = _sha256_file(p)
 
     version_payload = {
+        # Part of the hashed identity on purpose: the required source set is what this
+        # freeze claims to cover, so a freeze built under a different contract is a
+        # different claim and must not collide with this one.
+        "freeze_contract_version": FREEZE_CONTRACT_VERSION,
         "version_stamp": V46.version_stamp(),
         "content_hashes": G46.content_hashes(),
         "bedrock": {
@@ -239,14 +363,24 @@ def freeze(force: bool = False) -> dict:
     if os.path.exists(FREEZE_PATH) and not force:
         existing = _read_json(FREEZE_PATH) or {}
         drift = existing.get("generation_hash") != manifest["generation_hash"]
+        binding = verify_freeze(existing)
         side = os.path.join(
             OUT, f"FREEZE_LLM_MATCHUP_V3_SONNET46.reverify.{manifest['frozen_unix']}.json")
         json.dump({"existing_generation_hash": existing.get("generation_hash"),
                    "recomputed_generation_hash": manifest["generation_hash"],
-                   "instrument_drift_detected": drift, "recomputed": manifest},
+                   "instrument_drift_detected": drift,
+                   "source_binding": binding, "recomputed": manifest},
                   open(side, "w"), indent=2, default=str)
         print(json.dumps({"action": "reverify", "existing": FREEZE_PATH,
-                          "instrument_drift_detected": drift, "side_file": side}, indent=2))
+                          "instrument_drift_detected": drift,
+                          "source_binding_status": binding["status"], "side_file": side},
+                         indent=2))
+        # Previously this returned `existing` here, drift or not: the drift flag was written
+        # to a side file and to stdout and then discarded, so re-running the freeze over
+        # changed sources handed back the stale manifest as though it still applied. The
+        # side file is still written first -- the evidence is preserved either way -- but an
+        # unverified binding is now an error rather than a returned value.
+        verify_freeze_or_raise(existing)
         return existing
     json.dump(manifest, open(FREEZE_PATH, "w"), indent=2, default=str)
     print(json.dumps({"action": "frozen", "path": FREEZE_PATH,

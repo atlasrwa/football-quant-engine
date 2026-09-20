@@ -120,7 +120,15 @@ check_compatible(golden_v3_fixture_manifest.json, current) -> {'compatible': Tru
 
 A historical record remaining inspectable is not permission to resume execution. This repair
 restores the *meaning* of the compatibility check; it does not authorise a resume, which stays
-blocked by the §D items (live model resolution, spend enforcement, K=8 feasibility).
+blocked by the §D items that actually bear on this arm — live model resolution and spend
+enforcement.
+
+**Correction.** An earlier draft of this paragraph also listed *K=8 set-level control
+feasibility* as blocking a V3 resume. That was carried forward by repetition and is wrong:
+`control_coverage.py` lives entirely in `src/research/hypothesis_v8c/`, nothing under
+`src/research/llm_matchup/` references it, and no dependency ties it to the V3 resume path. K=8
+is a **V8C** finding and remains open **there** (`REPOSITORY_MAP.md` §D); it is not a gate on
+this arm and must not become a generic one by repetition.
 
 ## 6. Reproduction — after
 
