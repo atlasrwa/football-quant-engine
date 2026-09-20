@@ -10,33 +10,35 @@ from typing import Any, Optional
 
 from src.research.matchup.corpus import MatchRecord
 from src.research.llm_matchup import cohorts as CH
-from src.research.hypothesis_bridge import (canonical, measurement, proposal as P,
-                                            shadow, status as ST, validation)
+from src.research.hypothesis_bridge import (canonical, measurement, packet_binding as PB,
+                                            proposal as P, shadow, status as ST, validation)
 
 
 class BridgeContext:
     """Holds the corpus-derived index once; runs many proposals against it."""
 
-    def __init__(self, recs: list[MatchRecord], *, packet_version: str = "UNKNOWN_PACKET",
+    def __init__(self, recs: list[MatchRecord], *,
                  producer_commit: Optional[str] = None):
         self.recs = recs
         self.idx = CH.HistoryIndex(recs)
         self.by_fixture = {r.fixture_id: r for r in recs}
-        self.packet_version = packet_version
-        self.corpus_identity = shadow.corpus_vintage(recs)
         self.producer_commit = producer_commit or shadow.producer_code_commit()
 
-    def _record(self, prop, target, vr, ir=None, meas=None, packet_hash="NO_PACKET"):
+    def _record(self, prop, target, vr, ir=None, meas=None, packet_identity=None,
+                vintage=None):
         return shadow.build_record(
-            proposal=prop, target=target, packet_version=self.packet_version,
-            packet_hash=packet_hash, validation=vr, ir=ir, measurement=meas,
-            corpus_identity=self.corpus_identity, producer_commit=self.producer_commit)
+            proposal=prop, target=target, packet_identity=packet_identity, validation=vr,
+            ir=ir, measurement=meas, data_vintage=vintage,
+            producer_commit=self.producer_commit)
 
-    def run_proposal(self, raw: dict, *, packet_hash: str = "NO_PACKET") -> dict:
+    def run_proposal(self, raw: dict, *, packet: dict,
+                     proposal_source: str = PB.SOURCE_LLM_PROPOSAL) -> dict:
         """Always returns a shadow record. A rejection IS a research result.
 
-        Dropping rejections would make the rejection-reason distribution unmeasurable, which
-        is the main structural diagnostic this apparatus exists to produce.
+        `packet` is REQUIRED and is the actual evidence packet, not a hash string. There is
+        no NO_PACKET path: a hypothesis measured without the evidence it claims to be
+        grounded in is exactly what this bridge exists to refuse, so a missing or
+        non-binding packet is PACKET_BINDING_FAILED rather than a default.
         """
         # 1. Parse + numerical firewall. A prohibited field is its own status, not AMBIGUOUS:
         #    the proposal was well-formed and was refused for trying to carry a prediction.
@@ -57,8 +59,7 @@ class BridgeContext:
                                      competition_id="UNKNOWN", season_id="UNKNOWN",
                                      kickoff_unix=0, home="?", away="?", home_id="?",
                                      away_id="?", base={}, rich={}, extra={})
-            return self._record(stub, target,
-                                validation.ValidationResult(st, detail), packet_hash=packet_hash)
+            return self._record(stub, target, validation.ValidationResult(st, detail))
 
         target = self.by_fixture.get(prop.fixture_id)
         if target is None:
@@ -66,23 +67,35 @@ class BridgeContext:
                 fixture_id=prop.fixture_id, competition="UNKNOWN", competition_id="UNKNOWN",
                 season_id="UNKNOWN", kickoff_unix=0, home="?", away="?", home_id="?",
                 away_id="?", base={}, rich={}, extra={}),
-                validation.ValidationResult(ST.MISSING_DATA, "fixture not in corpus"),
-                packet_hash=packet_hash)
+                validation.ValidationResult(ST.MISSING_DATA, "fixture not in corpus"))
 
-        # 2. Canonicalization. No fuzzy fallback: unmappable is COMPILER_REFUSED.
+        # 2. Packet binding, BEFORE canonicalization: a hypothesis is only meaningful
+        #    against the evidence it was grounded in, and the hash is RECOMPUTED here rather
+        #    than trusted from the caller.
+        try:
+            packet_identity = PB.verify_packet(
+                packet, target, fixture_id=prop.fixture_id,
+                evidence_refs=prop.evidence_refs, proposal_source=proposal_source)
+        except PB.PacketBindingError as e:
+            return self._record(prop, target,
+                                validation.ValidationResult(ST.PACKET_BINDING_FAILED, str(e)))
+
+        # 3. Canonicalization. No fuzzy fallback: unmappable is COMPILER_REFUSED.
         try:
             ir = canonical.canonicalize(prop)
         except canonical.CanonicalizationRefused as e:
             return self._record(prop, target,
                                 validation.ValidationResult(ST.COMPILER_REFUSED, str(e)),
-                                packet_hash=packet_hash)
+                                packet_identity=packet_identity)
 
-        # 3. Provider / PIT / support.
+        # 4. Provider / PIT / support.
         vr = validation.validate(self.idx, target, ir)
+        vintage = measurement.target_bounded_vintage(self.idx, target, ir)
         if not vr.ok:
-            return self._record(prop, target, vr, ir=ir, packet_hash=packet_hash)
+            return self._record(prop, target, vr, ir=ir, packet_identity=packet_identity,
+                                vintage=vintage)
 
-        # 4. Deterministic measurement, only now.
+        # 5. Deterministic measurement, only now.
         try:
             meas = measurement.measure(self.idx, target, ir)
         except measurement.MeasurementFailed as e:
@@ -90,6 +103,7 @@ class BridgeContext:
                                 validation.ValidationResult(
                                     ST.MEASUREMENT_FAILED, str(e), raw_n=vr.raw_n,
                                     effective_n=vr.effective_n, coverage=vr.coverage),
-                                ir=ir, packet_hash=packet_hash)
+                                ir=ir, packet_identity=packet_identity, vintage=vintage)
 
-        return self._record(prop, target, vr, ir=ir, meas=meas, packet_hash=packet_hash)
+        return self._record(prop, target, vr, ir=ir, meas=meas,
+                            packet_identity=packet_identity, vintage=vintage)

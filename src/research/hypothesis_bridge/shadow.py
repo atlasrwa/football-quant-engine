@@ -34,23 +34,21 @@ def producer_code_commit() -> str:
     return "UNKNOWN_PRODUCER_COMMIT"
 
 
-def corpus_vintage(recs: list[MatchRecord]) -> str:
-    """Data-vintage identity: which corpus rows this record could have seen."""
-    payload = {"n": len(recs),
-               "max_kickoff": max((r.kickoff_unix for r in recs), default=None),
-               "fixture_digest": hashlib.sha256(
-                   "|".join(sorted(r.fixture_id for r in recs)).encode()).hexdigest()}
-    return hashlib.sha256(json.dumps(payload, sort_keys=True).encode()).hexdigest()
-
-
 def build_record(*, proposal: HypothesisProposal, target: MatchRecord,
-                 packet_version: str, packet_hash: str,
                  validation: ValidationResult,
+                 packet_identity: Optional[dict[str, Any]] = None,
                  ir: Optional[CanonicalHypothesis] = None,
                  measurement: Optional[dict[str, Any]] = None,
-                 corpus_identity: str = "UNKNOWN_CORPUS",
+                 data_vintage: Optional[str] = None,
                  producer_commit: Optional[str] = None) -> dict:
-    """Assemble and firewall-check a shadow record. Raises if anything predictive is present."""
+    """Assemble and firewall-check a shadow record. Raises if anything predictive is present.
+
+    `packet_identity` is the VERIFIED identity returned by `packet_binding.verify_packet` --
+    never a caller-supplied hash. It is None only on records that failed before binding could
+    be established, and `packet_binding_verified` says so explicitly rather than leaving a
+    reader to infer it from a placeholder string.
+    """
+    pid = packet_identity or {}
     record = {
         "record_version": SHADOW_RECORD_VERSION,
         "fixture_id": target.fixture_id,
@@ -59,15 +57,32 @@ def build_record(*, proposal: HypothesisProposal, target: MatchRecord,
         "proposal_id": proposal.proposal_id,
         "proposal_hash": proposal.proposal_hash(),
 
-        "packet_version": packet_version,
-        "packet_hash": packet_hash,
+        # Verified packet identity. Recomputed from the packet's own contents at bind time.
+        "packet_binding_verified": bool(packet_identity),
+        "packet_schema_version": pid.get("packet_schema_version"),
+        "packet_cohort_policy_version": pid.get("cohort_policy_version"),
+        "packet_hash": pid.get("packet_hash"),
+        "packet_fixture_id": pid.get("packet_fixture_id"),
+        "packet_kickoff_unix": pid.get("packet_kickoff_unix"),
+        "packet_information_cutoff_unix": pid.get("information_cutoff_unix"),
+        "evidence_refs_bound": pid.get("evidence_refs_bound"),
+        "proposal_source": pid.get("proposal_source"),
 
         "canonical_hypothesis_id": (ir.canonical_hypothesis_id if ir else None),
         "canonical_ir": (ir.to_dict() if ir else None),
         "canonical_ir_version": CANONICAL_IR_VERSION,
 
         "capability_hash": registry.capability_hash(),
-        "corpus_identity": corpus_identity,
+        "provider_registry_version": bridge_version_stamp()["capability_registry_version"],
+        # Target-bounded: rows appended after the target cannot move it, so a record stays
+        # stable as the corpus grows forward.
+        "data_vintage_target_bounded": data_vintage,
+        # Value identities, lifted out of the measurement payload so a rejected record that
+        # never measured still shows which surface it was validated against.
+        "cohort_source_hash": (measurement or {}).get("cohort_source_hash"),
+        "baseline_source_hash": (measurement or {}).get("baseline_source_hash"),
+        "measurement_input_hash": (measurement or {}).get("measurement_input_hash"),
+        "cohort_identity_hash": (measurement or {}).get("cohort_identity_hash"),
 
         "validator_version": VALIDATOR_VERSION,
         "compiler_version": COMPILER_VERSION,
