@@ -337,9 +337,10 @@ def test_proposal_fixture_not_matching_packet_refuses():
     recs, target = _corpus()
     other = _rec("OTHER", "S", 950, "A", "B")
     pkt = _packet(recs + [other], other)
-    r = _run(recs, BASE, packet=pkt)          # proposal says T, packet says OTHER
+    r = _run(recs + [other], BASE, packet=pkt)   # proposal says T, packet says OTHER
     assert r["validation_status"] == ST.PACKET_BINDING_FAILED
-    assert "packet_fixture!=proposal_fixture" in r["rejection_reason"]
+    # Caught in STAGE A, off the RAW payload -- before the proposal was ever parsed.
+    assert "raw_fixture!=packet_fixture" in r["rejection_reason"]
 
 
 def test_old_lineage_packet_refuses():
@@ -470,61 +471,352 @@ def test_source_hashes_are_stable_under_input_reordering():
 
 
 # =========================================================================================
-# Blocker 3 — provider provenance is explicit and traced, not inferred from storage shape.
+# Amendment 1 — PACKET PROVENANCE IS ESTABLISHED BEFORE THE PROPOSAL IS PARSED.
+#
+# Invalid model output is still a TREATMENT RESULT. If a forbidden or malformed response
+# loses the identity of the packet it was shown, the rejection-reason distribution cannot be
+# attributed to any instrument. Every test here asserts the packet identity SURVIVED, not
+# merely that the status was right.
 # =========================================================================================
 
-def test_yellow_cards_provenance_is_thestatsapi_not_footystats():
-    """The entry the previous container-based inference got wrong.
+def _assert_packet_identity_survived(rec, pkt):
+    """The record kept the REAL, recomputed identity of the packet the model saw."""
+    assert rec["packet_binding_verified"] is True
+    assert rec["packet_hash"] == pkt["packet_hash"]
+    assert rec["packet_schema_version"] == pkt["packet_schema_version"]
+    assert rec["packet_cohort_policy_version"] == pkt["cohort_policy_version"]
+    assert rec["packet_fixture_id"] == pkt["fixture"]["fixture_id"]
+    assert rec["packet_kickoff_unix"] == pkt["fixture"]["kickoff_unix"]
+    assert rec["packet_information_cutoff_unix"] == pkt["information_cutoff_unix"]
 
-    `team_a_yellow_cards` is a FootyStats-SCHEMA field, but `championship_adapter.adapt_match`
-    reads it from the TheStatsAPI /stats payload at `overview.yellow_cards`.
+
+def test_forbidden_prediction_field_keeps_verified_packet_identity():
+    """valid packet + probability=0.7 -> FORBIDDEN_PREDICTION_FIELD, packet identity intact."""
+    recs, target = _corpus()
+    pkt = _packet(recs, target)
+    r = _run(recs, {**BASE, "probability": 0.7}, packet=pkt)
+    assert r["validation_status"] == ST.FORBIDDEN_PREDICTION_FIELD
+    _assert_packet_identity_survived(r, pkt)
+
+
+def test_unknown_field_keeps_verified_packet_identity():
+    recs, target = _corpus()
+    pkt = _packet(recs, target)
+    r = _run(recs, {**BASE, "some_unknown_field": 1}, packet=pkt)
+    assert r["validation_status"] == ST.AMBIGUOUS_PROPOSAL
+    _assert_packet_identity_survived(r, pkt)
+
+
+def test_missing_required_field_keeps_verified_packet_identity():
+    recs, target = _corpus()
+    pkt = _packet(recs, target)
+    raw = {k: v for k, v in BASE.items() if k != "target_metric"}
+    r = _run(recs, raw, packet=pkt)
+    assert r["validation_status"] == ST.AMBIGUOUS_PROPOSAL
+    assert "missing_required:target_metric" in r["rejection_reason"]
+    _assert_packet_identity_survived(r, pkt)
+
+
+def test_non_mapping_proposal_still_keeps_packet_identity():
+    """A payload with no readable fixture_id must not be a BINDING failure -- it is a PARSE
+    failure, and Stage A has already proven the packet."""
+    recs, target = _corpus()
+    pkt = _packet(recs, target)
+    r = _run(recs, ["not", "a", "mapping"], packet=pkt)
+    assert r["validation_status"] == ST.AMBIGUOUS_PROPOSAL
+    _assert_packet_identity_survived(r, pkt)
+
+
+def test_tampered_packet_beats_malformed_proposal():
+    """INVALID packet + malformed proposal -> PACKET_BINDING_FAILED takes precedence."""
+    recs, target = _corpus()
+    pkt = _packet(recs, target)
+    pkt["fixture"]["kickoff_unix"] = target.kickoff_unix + 5      # stale hash now
+    r = _run(recs, {**BASE, "some_unknown_field": 1}, packet=pkt)
+    assert r["validation_status"] == ST.PACKET_BINDING_FAILED
+    assert r["packet_binding_verified"] is False
+    assert r["packet_hash"] is None
+
+
+def test_forbidden_field_plus_wrong_fixture_is_binding_failure_but_names_both():
+    """The one precedence collision the taxonomy does not resolve, DECIDED and pinned.
+
+    The packet outranks the proposal because it is the instrument -- but the
+    "the LLM tried to predict" signal must not vanish, so the reason names both.
     """
+    recs, target = _corpus()
+    other = _rec("OTHER", "S", 950, "A", "B")
+    pkt = _packet(recs + [other], other)
+    r = _run(recs + [other], {**BASE, "probability": 0.7}, packet=pkt)
+    assert r["validation_status"] == ST.PACKET_BINDING_FAILED
+    assert "raw_fixture!=packet_fixture" in r["rejection_reason"]
+    assert "prediction_field:probability" in r["rejection_reason"]
+
+
+def test_fabricated_evidence_ref_on_a_valid_proposal_is_binding_failure():
+    recs, target = _corpus()
+    pkt = _packet(recs, target)
+    r = _run(recs, {**BASE, "evidence_refs": ["ev_fabricated_999"]}, packet=pkt)
+    assert r["validation_status"] == ST.PACKET_BINDING_FAILED
+    assert "evidence_refs_not_in_packet" in r["rejection_reason"]
+
+
+def test_packet_verified_before_parse_is_observable_in_ordering():
+    """Behavioural proof of the ORDER, not just of the outcome.
+
+    A packet for a fixture the corpus does not hold fails in Stage A. If parsing still ran
+    first, a forbidden field would be reported instead -- so the status distinguishes the
+    two orderings.
+    """
+    recs, target = _corpus()
+    orphan = _rec("ORPHAN", "S", 960, "A", "B")
+    pkt = _packet(recs + [orphan], orphan)
+    r = _run(recs, {**BASE, "fixture_id": "ORPHAN", "probability": 0.9}, packet=pkt)
+    assert r["validation_status"] == ST.PACKET_BINDING_FAILED
+    assert "packet_fixture_not_in_corpus" in r["rejection_reason"]
+
+
+# =========================================================================================
+# Amendment 2 — the packet cutoff must EQUAL the target kickoff.
+# =========================================================================================
+
+def test_earlier_cutoff_correctly_rehashed_still_refuses():
+    """The trap this test exists to avoid: if the repack is wrong the packet fails on HASH
+    MISMATCH and the test passes for the wrong reason. So the reason must name the CUTOFF."""
+    recs, target = _corpus()
+    pkt = _packet(recs, target)
+    pkt["information_cutoff_unix"] = target.kickoff_unix - 3600
+    pkt["packet_hash"] = PB.recompute_packet_hash(pkt)            # correctly re-hashed
+    assert PB.recompute_packet_hash(pkt) == pkt["packet_hash"]
+    r = _run(recs, BASE, packet=pkt)
+    assert r["validation_status"] == ST.PACKET_BINDING_FAILED
+    assert "information_cutoff_must_equal_target_kickoff" in r["rejection_reason"]
+    assert "hash_mismatch" not in r["rejection_reason"]
+
+
+def test_the_real_builder_already_cuts_exactly_at_kickoff():
+    """Equality must be a property of the production builder, not just a rule we assert."""
+    recs, target = _corpus()
+    pkt = _packet(recs, target)
+    assert pkt["information_cutoff_unix"] == target.kickoff_unix
+    assert _run(recs, BASE, packet=pkt)["validation_status"] == ST.VALID_MEASURABLE
+
+
+# =========================================================================================
+# Amendment 3 — DUAL-PROVIDER capability model. FootyStats and TheStatsAPI stay separate.
+# =========================================================================================
+
+def _R():
     from src.research.hypothesis_bridge import registry as R
-    cap = R.capability_for("yellow_cards")
-    assert cap.provider == R.THESTATSAPI
-    assert cap.source_path == "overview.yellow_cards"
-    assert cap.container == "base", "it IS stored in the FootyStats-schema container"
-    assert R.CORPUS_STORAGE_SCHEMA == "footystats_schema", "schema != provider"
+    return R
 
 
-@pytest.mark.parametrize("metric,path,container", [
-    ("corners", "overview.corner_kicks", "rich"),
-    ("total_shots", "overview.total_shots", "extra"),
-    ("possession", "overview.ball_possession", "extra"),
-    ("tackles", "defending.tackles", "rich"),
-])
-def test_provenance_matches_the_traced_adapter_paths(metric, path, container):
-    from src.research.hypothesis_bridge import registry as R
-    cap = R.capability_for(metric)
-    assert cap.provider == R.THESTATSAPI
-    assert (cap.source_path, cap.container) == (path, container)
+def test_thestatsapi_corners_capability_has_the_exact_traced_source():
+    R = _R()
+    cap = R.capability_for(R.THESTATSAPI, "corners")
+    assert cap.provider == "thestatsapi"
+    assert cap.provider_source_field == "overview.corner_kicks"
+    assert cap.is_measurable
 
 
-def test_every_supported_metric_has_traced_provenance():
-    from src.research.hypothesis_bridge import registry as R
-    for metric, cap in R.CAPABILITIES.items():
-        assert cap.source_path and "." in cap.source_path, metric
-        assert cap.provider in R.providers_in_use(), metric
-        assert cap.null_semantics == R.NULL_SEMANTICS
+def test_footystats_corners_capability_is_traced_to_the_real_normalizer():
+    R = _R()
+    cap = R.capability_for(R.FOOTYSTATS, "corners")
+    assert cap.provider == "footystats"
+    assert cap.provider_source_field == "team_a_corners/team_b_corners"
+    assert "footystats/normalizer.py" in cap.traced_from
 
 
-def test_unsupported_metric_has_no_provider():
-    from src.research.hypothesis_bridge import registry as R
-    assert R.provider_for("expected_threat_v9") is None
-    assert not R.is_supported("expected_threat_v9")
+def test_same_canonical_metric_from_two_providers_is_two_distinct_capabilities():
+    """capability(footystats, corners) != capability(thestatsapi, corners)."""
+    R = _R()
+    fs = R.capability_for(R.FOOTYSTATS, "corners")
+    tsa = R.capability_for(R.THESTATSAPI, "corners")
+    assert fs.canonical_metric == tsa.canonical_metric == "corners"
+    assert fs != tsa
+    assert fs.capability_id != tsa.capability_id
+    assert fs.provider_source_field != tsa.provider_source_field
+    assert fs.semantic_equivalence_validated is False
+    assert tsa.semantic_equivalence_validated is False
 
 
-def test_capability_hash_moves_when_provenance_semantics_change():
-    """Mutation control: the hash must actually depend on the provenance table."""
-    from src.research.hypothesis_bridge import registry as R
-    before = R.capability_hash()
-    original = R.CAPABILITIES["yellow_cards"]
+def test_yellow_cards_is_the_provider_collision_and_both_sides_are_kept():
+    """The sharpest case in the whole registry.
+
+    FootyStats genuinely exposes `team_a_yellow_cards`. TheStatsAPI exposes
+    `overview.yellow_cards`, which `championship_adapter` then PARKS in a storage field ALSO
+    called `team_a_yellow_cards`. Same spelling, two providers. Provenance must survive it.
+    """
+    R = _R()
+    tsa = R.capability_for(R.THESTATSAPI, "yellow_cards")
+    fs = R.capability_for(R.FOOTYSTATS, "yellow_cards")
+    assert tsa.provider_source_field == "overview.yellow_cards"
+    assert fs.provider_source_field == "team_a_yellow_cards/team_b_yellow_cards"
+    assert tsa.storage_container == "base", "stored in the FootyStats-SCHEMA container"
+    assert R.CORPUS_STORAGE_SCHEMA == "footystats_schema", "schema is NOT the provider"
+    assert tsa.capability_id != fs.capability_id
+
+
+def test_same_value_different_provider_gives_a_different_source_hash():
+    """3H: provider identity is bound into measurement provenance."""
+    from src.research.hypothesis_bridge.measurement import source_hash, cohort_sample
+    from src.research.hypothesis_bridge.canonical import canonicalize
+    from src.research.hypothesis_bridge.proposal import parse_proposal
+    R = _R()
+    recs, target = _corpus()
+    from src.research.llm_matchup.cohorts import HistoryIndex
+    idx = HistoryIndex(recs)
+    ir = canonicalize(parse_proposal(BASE))
+    sample = cohort_sample(idx, target, ir)
+    team = target.home_id
+    tsa_h = source_hash(target, ir, sample, team, "cohort", R.capability_for(R.THESTATSAPI, "corners"))
+    fs_h = source_hash(target, ir, sample, team, "cohort", R.capability_for(R.FOOTYSTATS, "corners"))
+    assert tsa_h != fs_h, "identical rows and values must not share provenance across providers"
+
+
+def test_measurement_without_a_resolved_capability_fails_closed():
+    from src.research.hypothesis_bridge import measurement as M
+    with pytest.raises(M.MeasurementFailed):
+        M.capability_identity(None)
+
+
+def test_thestatsapi_npxg_is_not_measurable_under_the_existing_semantics_audit():
+    """V5A.1 measured npxG > xG in 15.8% of raw pairs and classified it
+    PROVIDER_SOURCE_INCONSISTENCY. That evidence governs until superseded."""
+    R = _R()
+    cap = R.capability_for(R.THESTATSAPI, "npxg")
+    assert cap is not None, "excluded is not the same as absent -- audit needs the entry"
+    assert cap.is_measurable is False
+    assert cap.status == R.EXCLUDED_PROVIDER_SEMANTICS
+    assert cap.exclusion_reason == "PROVIDER_SOURCE_INCONSISTENCY"
+    assert "V5A1_PROVIDER_SEMANTICS_AUDIT" in cap.exclusion_evidence
+    # and the real raw node, not the fictitious np_expected_goals.np_expected_goals
+    assert cap.provider_source_field == "np_expected_goals.all.{home|away}"
+
+
+def test_a_proposal_targeting_npxg_is_refused_end_to_end():
+    recs, target = _corpus()
+    r = _run(recs, {**BASE, "target_metric": "npxg"})
+    assert r["validation_status"] == ST.UNSUPPORTED_PROVIDER_SEMANTICS
+    assert "PROVIDER_SOURCE_INCONSISTENCY" in r["rejection_reason"]
+
+
+def test_footystats_npxg_is_absent_not_assumed_from_footystats_xg():
+    R = _R()
+    assert R.capability_for(R.FOOTYSTATS, "npxg") is None
+    # ...and its xG is NOT quietly promoted into one.
+    xg = R.capability_for(R.FOOTYSTATS, "xg")
+    assert xg.canonical_metric == "xg" and not xg.is_measurable
+
+
+def test_provider_specific_xg_is_never_assumed_equal():
+    """3G: both xGs are declared, with distinct sources and no equivalence claim."""
+    R = _R()
+    fs, tsa = R.capability_for(R.FOOTYSTATS, "xg"), R.capability_for(R.THESTATSAPI, "xg")
+    assert fs.provider_source_field == "team_a_xg/team_b_xg"
+    assert tsa.provider_source_field == "overview.expected_goals"
+    assert fs.capability_id != tsa.capability_id
+    assert not fs.semantic_equivalence_validated
+    assert not tsa.semantic_equivalence_validated
+
+
+def test_unknown_provider_fails_closed():
+    R = _R()
+    with pytest.raises(R.UnknownProvider):
+        R.capability_for("opta", "corners")
+    with pytest.raises(R.UnknownProvider):
+        R.is_measurable("", "corners")
+
+
+def test_unknown_provider_metric_pair_fails_closed():
+    R = _R()
+    assert R.capability_for(R.THESTATSAPI, "expected_threat_v9") is None
+    assert not R.is_measurable(R.THESTATSAPI, "expected_threat_v9")
+    # A metric one provider has and the other does not must NOT resolve for the other.
+    assert R.capability_for(R.FOOTYSTATS, "big_chances") is None
+    assert R.capability_for(R.THESTATSAPI, "big_chances") is not None
+
+
+def test_no_implicit_provider_fallback_in_validation():
+    """`big_chances` exists for TheStatsAPI only. Under FOOTYSTATS_ONLY it must NOT silently
+    resolve to the TheStatsAPI capability."""
+    from src.research.hypothesis_bridge.validation import validate_provider
+    from src.research.hypothesis_bridge.canonical import canonicalize
+    from src.research.hypothesis_bridge.proposal import parse_proposal
+    R = _R()
+    ir = canonicalize(parse_proposal({**BASE, "target_metric": "big_chances"}))
+    assert validate_provider(ir, R.THESTATSAPI) is None
+    refusal = validate_provider(ir, R.FOOTYSTATS)
+    assert refusal is not None and refusal.status == ST.UNSUPPORTED_METRIC
+    assert "does not fall back" in refusal.rejection_reason
+
+
+def test_blend_and_fallback_policies_are_refused_not_implemented():
+    """IMPLICIT_PROVIDER_BLEND=false is earned by the code path not existing."""
+    from src.research.reconciliation.policy import ReconciliationPolicy as RP
+    R = _R()
+    assert R.resolve_measurement_provider(RP.THESTATSAPI_ONLY) == "thestatsapi"
+    assert R.resolve_measurement_provider(RP.FOOTYSTATS_ONLY) == "footystats"
+    for policy in (RP.PREFERRED_PROVIDER_WITH_FALLBACK, RP.VALIDATED_BLEND):
+        with pytest.raises(R.ProviderPolicyUnsupported):
+            R.resolve_measurement_provider(policy)
+    with pytest.raises(R.ProviderPolicyUnsupported):
+        R.resolve_measurement_provider("THESTATSAPI_ONLY")       # a string is not a policy
+
+
+def test_a_context_cannot_claim_a_provider_the_corpus_did_not_come_from():
+    """No fabricated FootyStats provenance over TheStatsAPI-derived rows."""
+    from src.research.reconciliation.policy import ReconciliationPolicy as RP
+    R = _R()
+    recs, _ = _corpus()
+    with pytest.raises(R.UnknownProvider):
+        BridgeContext(recs, producer_commit="T", provider_policy=RP.FOOTYSTATS_ONLY)
+
+
+def test_the_rehearsal_provider_policy_is_frozen_to_thestatsapi_only():
+    R = _R()
+    assert R.FROZEN_REHEARSAL_POLICY.value == "THESTATSAPI_ONLY"
+    assert R.CORPUS_PROVIDER_LINEAGE == "thestatsapi"
+    recs, _ = _corpus()
+    assert _ctx(recs).measurement_provider == "thestatsapi"
+
+
+def test_shadow_record_names_the_provider_actually_used():
+    recs, target = _corpus()
+    r = _run(recs, BASE)
+    assert r["validation_status"] == ST.VALID_MEASURABLE
+    assert r["measurement_provider"] == "thestatsapi"
+    assert r["provider_policy"] == "THESTATSAPI_ONLY"
+    assert r["provider_source_field"] == "overview.corner_kicks"
+    assert r["provider_capability_id"].startswith("cap_thestatsapi_corners_")
+    assert r["measurement"]["measurement_provider"] == "thestatsapi"
+    assert r["corpus_storage_schema"] == "footystats_schema"
+
+
+def test_every_declared_capability_is_traced_and_provider_scoped():
+    R = _R()
+    for (provider, metric), cap in R.PROVIDER_CAPABILITIES.items():
+        assert provider in R.PROVIDERS, (provider, metric)
+        assert cap.provider == provider and cap.canonical_metric == metric
+        assert cap.provider_source_field, (provider, metric)
+        assert cap.traced_from, (provider, metric)
+        assert cap.null_semantics == R.NULL_IS_NOT_RECORDED
+        if not cap.is_measurable:
+            assert cap.status in {R.EXCLUDED_PROVIDER_SEMANTICS,
+                                  R.DECLARED_NOT_IN_BRIDGE_VOCABULARY,
+                                  R.UNVALIDATED_EQUIVALENCE}
+
+
+def test_registry_hash_moves_when_a_provider_identity_changes():
+    """Mutation control: the hash must actually depend on provider identity."""
+    R = _R()
+    before = R.registry_hash()
+    key = (R.THESTATSAPI, "yellow_cards")
+    original = R.PROVIDER_CAPABILITIES[key]
     try:
-        R.CAPABILITIES["yellow_cards"] = R.MetricCapability(
-            metric="yellow_cards", provider="footystats",      # the old, wrong provenance
-            source_path=original.source_path, container=original.container,
-            period_support=original.period_support, null_semantics=original.null_semantics)
-        assert R.capability_hash() != before
+        import dataclasses
+        R.PROVIDER_CAPABILITIES[key] = dataclasses.replace(original, provider="footystats")
+        assert R.registry_hash() != before
     finally:
-        R.CAPABILITIES["yellow_cards"] = original
-    assert R.capability_hash() == before
+        R.PROVIDER_CAPABILITIES[key] = original
+    assert R.registry_hash() == before

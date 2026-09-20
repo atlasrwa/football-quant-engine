@@ -15,7 +15,8 @@ from typing import Any, Optional
 from src.research.matchup.corpus import MatchRecord, season_of
 from src.research.llm_matchup import cohorts as CH
 from src.research.hypothesis_bridge.canonical import CanonicalHypothesis
-from src.research.hypothesis_bridge.versions import MEASUREMENT_VERSION
+from src.research.hypothesis_bridge.versions import (MEASUREMENT_VERSION,
+                                                     CAPABILITY_REGISTRY_VERSION)
 
 #: The support floor. Deliberately the SAME constant the evidence layer already enforces --
 #: this bridge must not create a second, weaker threshold so that more hypotheses pass.
@@ -117,9 +118,33 @@ def cohort_identity(target: MatchRecord, ir: CanonicalHypothesis, cohort: Sample
     return hashlib.sha256(json.dumps(payload, sort_keys=True, default=str).encode()).hexdigest()
 
 
+def capability_identity(capability) -> dict[str, Any]:
+    """The provider-identity block bound into every measurement hash.
+
+    A capability is REQUIRED. There is no "unknown provider" default: a measurement whose
+    provenance cannot be named must not produce a provenance hash at all, because a
+    placeholder would collide across providers -- the exact failure this binding exists to
+    prevent.
+    """
+    if capability is None:
+        raise MeasurementFailed("no_resolved_provider_capability")
+    return {
+        "provider": capability.provider,
+        "provider_capability_id": capability.capability_id,
+        "provider_source_field": capability.provider_source_field,
+        "capability_registry_version": CAPABILITY_REGISTRY_VERSION,
+    }
+
+
 def source_hash(target: MatchRecord, ir: CanonicalHypothesis, sample: Sample,
-                team: Optional[str], role: str) -> str:
+                team: Optional[str], role: str, capability) -> str:
     """VALUE identity: the exact deterministic inputs the measurement consumed.
+
+    PROVIDER-BOUND. The same numeric value read from a different provider is a different
+    observation, so `capability` -- provider, capability id and the provider's own source
+    field -- is bound into every row AND into the payload header. Without it, FootyStats
+    `team_a_corners` = 5 and TheStatsAPI `overview.corner_kicks` = 5 would be indistinguishable
+    in provenance, and a provider substitution would leave no trace.
 
     Binding fixture ids, timestamps and membership is not enough for reproducibility: a
     historical stat can be corrected while ids, kickoffs, season and cohort membership all
@@ -131,6 +156,7 @@ def source_hash(target: MatchRecord, ir: CanonicalHypothesis, sample: Sample,
     id) so an input list in a different order yields the same hash where order is not
     semantically meaningful.
     """
+    cap = capability_identity(capability)
     rows = []
     for r in sorted(sample.records, key=lambda r: (r.kickoff_unix, r.fixture_id)):
         subjects = [team] if team is not None else [r.home_id, r.away_id]
@@ -146,11 +172,13 @@ def source_hash(target: MatchRecord, ir: CanonicalHypothesis, sample: Sample,
                 "perspective": ir.perspective,
                 "period": ir.period,
                 "venue": ir.venue,
+                "provider": cap["provider"],
+                "provider_source_field": cap["provider_source_field"],
                 "value": ("__NULL__" if v is None else float(v)),
             })
     payload = {"measurement_version": MEASUREMENT_VERSION, "role": role,
                "target_fixture": target.fixture_id, "target_kickoff": target.kickoff_unix,
-               "rows": rows}
+               "provider_identity": cap, "rows": rows}
     return hashlib.sha256(json.dumps(payload, sort_keys=True, default=str).encode()).hexdigest()
 
 
@@ -181,8 +209,13 @@ def target_bounded_vintage(idx: CH.HistoryIndex, target: MatchRecord,
     return hashlib.sha256(json.dumps(payload, sort_keys=True, default=str).encode()).hexdigest()
 
 
-def measure(idx: CH.HistoryIndex, target: MatchRecord, ir: CanonicalHypothesis) -> dict[str, Any]:
-    """Descriptive measurement payload. No probability, no edge, no EV, no stake."""
+def measure(idx: CH.HistoryIndex, target: MatchRecord, ir: CanonicalHypothesis,
+            *, capability) -> dict[str, Any]:
+    """Descriptive measurement payload. No probability, no edge, no EV, no stake.
+
+    `capability` is the ALREADY-RESOLVED `(provider, metric)` capability. It is keyword-only
+    and mandatory so no caller can measure without naming the provider it measured.
+    """
     cohort = cohort_sample(idx, target, ir)
     baseline = baseline_sample(idx, target, ir)
     if cohort.mean is None:
@@ -194,11 +227,17 @@ def measure(idx: CH.HistoryIndex, target: MatchRecord, ir: CanonicalHypothesis) 
 
     team = team_id_for(target, ir.subject)
     baseline_team = team if ir.comparator == "team_season_baseline" else None
-    cohort_sh = source_hash(target, ir, cohort, team, "cohort")
-    baseline_sh = source_hash(target, ir, baseline, baseline_team, "baseline")
+    cohort_sh = source_hash(target, ir, cohort, team, "cohort", capability)
+    baseline_sh = source_hash(target, ir, baseline, baseline_team, "baseline", capability)
+    cap = capability_identity(capability)
 
     return {
         "measurement_version": MEASUREMENT_VERSION,
+        # The provider ACTUALLY used, resolved from the context's frozen policy -- never
+        # inferred from a field name and never a default.
+        "measurement_provider": cap["provider"],
+        "provider_capability_id": cap["provider_capability_id"],
+        "provider_source_field": cap["provider_source_field"],
         "cohort": {"raw_n": cohort.raw_n, "effective_n": cohort.effective_n,
                    "coverage": cohort.coverage, "mean": cohort.mean},
         "baseline": {"comparator": ir.comparator, "raw_n": baseline.raw_n,
@@ -214,6 +253,6 @@ def measure(idx: CH.HistoryIndex, target: MatchRecord, ir: CanonicalHypothesis) 
         "baseline_source_hash": baseline_sh,
         "measurement_input_hash": hashlib.sha256(
             json.dumps({"cohort": cohort_sh, "baseline": baseline_sh,
-                        "hypothesis": ir.to_dict()},
+                        "hypothesis": ir.to_dict(), "provider_identity": cap},
                        sort_keys=True).encode()).hexdigest(),
     }

@@ -26,14 +26,33 @@ class ValidationResult:
         return self.status == ST.VALID_MEASURABLE
 
 
-def validate_provider(ir: CanonicalHypothesis) -> Optional[ValidationResult]:
-    if not registry.is_supported(ir.metric):
-        return ValidationResult(ST.UNSUPPORTED_METRIC,
-                                f"metric not in the corpus capability registry: {ir.metric}")
-    if not registry.supports_period(ir.metric, ir.period):
+def validate_provider(ir: CanonicalHypothesis, provider: str) -> Optional[ValidationResult]:
+    """Capability is looked up on `(provider, metric)`, never on the metric alone.
+
+    `provider` is the one the context's frozen policy resolved to. A metric this provider
+    cannot observe is UNSUPPORTED_METRIC even when the OTHER provider can observe it: there
+    is no cross-provider fallback, because substituting a different provider's number would
+    silently change what was measured.
+    """
+    cap = registry.capability_for(provider, ir.metric)     # raises on an unknown provider
+    if cap is None:
+        return ValidationResult(
+            ST.UNSUPPORTED_METRIC,
+            f"no capability for (provider={provider}, metric={ir.metric}); this registry is "
+            f"provider-scoped and does not fall back to another provider")
+    if not cap.is_measurable:
+        # A traced capability that a semantics audit excluded. Named as a PROVIDER semantics
+        # failure, not a missing metric: the field exists and the provider's values for it
+        # do not mean what the metric name says.
         return ValidationResult(
             ST.UNSUPPORTED_PROVIDER_SEMANTICS,
-            f"{ir.metric} has no half-split mapping, so period={ir.period} is not measurable")
+            f"({provider},{ir.metric}) is {cap.status}: {cap.exclusion_reason} "
+            f"[{cap.exclusion_evidence}]")
+    if ir.period not in cap.period_support:
+        return ValidationResult(
+            ST.UNSUPPORTED_PROVIDER_SEMANTICS,
+            f"({provider},{ir.metric}) has no {ir.period} mapping, so period={ir.period} is "
+            f"not measurable")
     return None
 
 
@@ -75,17 +94,24 @@ def validate_support(idx: CH.HistoryIndex, target: MatchRecord,
     return ValidationResult(ST.VALID_MEASURABLE, None, **common)
 
 
-def validate(idx: CH.HistoryIndex, target: MatchRecord,
-             ir: CanonicalHypothesis) -> ValidationResult:
-    """Ordered: provider -> PIT -> support. First failure wins and names itself."""
-    for check in (validate_provider(ir),):
-        if check is not None:
-            return check
+def validate(idx: CH.HistoryIndex, target: MatchRecord, ir: CanonicalHypothesis,
+             *, provider: str) -> ValidationResult:
+    """Ordered: provider -> PIT -> support. First failure wins and names itself.
+
+    `provider` is mandatory and keyword-only: validation cannot be performed without knowing
+    which provider's capability is being claimed.
+    """
+    check = validate_provider(ir, provider)
+    if check is not None:
+        return check
     pit = validate_pit(idx, target, ir)
     if pit is not None:
         return pit
     result = validate_support(idx, target, ir)
+    cap = registry.capability_for(provider, ir.metric)
     result.detail["validator_version"] = VALIDATOR_VERSION
-    result.detail["capability_hash"] = registry.capability_hash()
-    result.detail["provider"] = registry.provider_for(ir.metric)
+    result.detail["capability_hash"] = registry.registry_hash()
+    result.detail["provider"] = provider
+    result.detail["provider_capability_id"] = cap.capability_id if cap else None
+    result.detail["provider_source_field"] = cap.provider_source_field if cap else None
     return result
