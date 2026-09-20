@@ -105,7 +105,10 @@ class EvidencePacketBuilder:
     def _team_block(self, team: str, opp: str, target: MatchRecord, venue: str,
                     metrics: list[tuple[str, str]], prefix: str) -> list[EvidenceItem]:
         items: list[EvidenceItem] = []
-        season = self.idx.current_season(team, target.kickoff_unix)
+        # TARGET fixture's own season-instance (A3): one key filters BOTH sides, so
+        # neither team can drift into a different season, and a team with no prior
+        # matches in it abstains instead of falling back to the previous season.
+        season = CH.HistoryIndex.target_season(target)
         for metric, side in metrics:
             # tier hierarchy: venue-conditioned -> overall -> None(prior)
             venue_vals = self.idx.prior_values(team, metric, side, target.kickoff_unix, season, venue=venue)
@@ -180,8 +183,10 @@ class EvidencePacketBuilder:
             ))
 
         # style clusters (data-driven)
-        seasonA = self.idx.current_season(A, target.kickoff_unix)
-        seasonB = self.idx.current_season(B, target.kickoff_unix)
+        # TARGET fixture's own season-instance (A3): one key filters BOTH sides, so
+        # neither team can drift into a different season, and a team with no prior
+        # matches in it abstains instead of falling back to the previous season.
+        seasonA = seasonB = CH.HistoryIndex.target_season(target)
         league_ref = {}
         for m in CH._STYLE_METRICS:
             vv = []

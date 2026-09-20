@@ -18,8 +18,33 @@ from __future__ import annotations
 ONTOLOGY_VERSION = "football_ontology_v2"
 SCHEMA_VERSION = "football_state_schema_v2"
 PROMPT_VERSION = "sonnet_prompt_v2"
-COHORT_POLICY_VERSION = "cohort_policy_v1"
-PACKET_SCHEMA_VERSION = "fixture_evidence_packet_v2"
+# --- corrected evidence lineage (target-season semantics) ------------------------
+# The evidence builders previously filtered "current-season" team state by the season each
+# team LAST PLAYED IN (`cohorts.HistoryIndex.current_season`). For a fixture early in a new
+# season-instance that is the PREVIOUS season, so prior-season history was served as
+# current-season state and cold-start floors were met by stale data. The builders now key on
+# `cohorts.HistoryIndex.target_season(target)` -- the season of the fixture being predicted.
+#
+# That is a different scientific instrument, so it gets a new lineage rather than reusing the
+# old identity:
+#
+#   OLD_LINEAGE  cohort_policy_v1 / fixture_evidence_packet_v2   HISTORICAL_FROZEN
+#   NEW_LINEAGE  cohort_policy_v2 / fixture_evidence_packet_v4   CORRECTED_SUCCESSOR
+#
+# `cohort_policy_v2` propagates through `hardening/versions_v2` -> `versions_v3` ->
+# `versions_v3_sonnet46`, because those arms build their packets through the very builder
+# that was corrected (`phaseb_harness` -> `EvidencePacketBuilderV2` -> `evidence.py`). That
+# propagation is the intended signal, not collateral damage: it changes `version_stamp()`,
+# so `adapter_v4._cache_key` changes and no corrected packet can ever read a cache entry
+# written under the old semantics.
+#
+# `fixture_evidence_packet_v4` skips v3: `hardening/versions_v2.PACKET_SCHEMA_VERSION` is
+# already `fixture_evidence_packet_v3`, and two different packet types must not share a name.
+#
+# The frozen 4.5/4.6 artifacts are NOT regenerated and remain byte-identical on disk. They
+# are historical evidence produced under the old lineage and are labelled as such.
+COHORT_POLICY_VERSION = "cohort_policy_v2"
+PACKET_SCHEMA_VERSION = "fixture_evidence_packet_v4"
 FORMATION_POLICY_VERSION = "formation_policy_v1"
 FORMATION_FAMILY_VERSION = "formation_family_v1"
 
