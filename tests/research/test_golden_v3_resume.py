@@ -5,8 +5,9 @@ these tests make ZERO Bedrock calls and must never be changed to call the real a
 
 Run: .venv/bin/python -m pytest tests/research/test_golden_v3_resume.py -q
 """
-import sys, json
-sys.path.insert(0, "/home/ubuntu")
+import json
+import sys
+
 import pytest
 
 from src.research.llm_matchup.hardening import golden_manifest as GM

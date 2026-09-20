@@ -21,12 +21,22 @@ authority basis as FORMATION_FAMILY_V1.json's own derivation rule.
 """
 from __future__ import annotations
 import json
+import os
 from typing import Optional
 
 from src.research.llm_matchup import formation as FM
 
 FORMATION_STRUCTURE_VERSION = "formation_structure_v1"
-_STRUCTURE_JSON = "/home/ubuntu/research/llm_matchup/FORMATION_STRUCTURE_V1.json"
+#: The versioned structure table, resolved from THIS module's own canonical location:
+#: <repo>/src/research/llm_matchup/hardening/ -> <repo>/research/llm_matchup/. It is a
+#: frozen scientific INPUT hashed into the V3 generation fingerprint, so it must come from
+#: the executing checkout for that fingerprint to describe the run. A hardcoded
+#: "/home/ubuntu" here made `current_generation_fingerprint()` unusable in an independent
+#: checkout and, where the deployed tree existed, let it hash a foreign table.
+_STRUCTURE_JSON = os.path.join(
+    os.path.realpath(os.path.join(
+        os.path.dirname(os.path.abspath(__file__)), *([os.pardir] * 4))),
+    "research", "llm_matchup", "FORMATION_STRUCTURE_V1.json")
 
 UNKNOWN_FORMATION_ID = "F_UNK"
 
