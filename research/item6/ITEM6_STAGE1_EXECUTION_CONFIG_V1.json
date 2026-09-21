@@ -1,0 +1,81 @@
+{
+ "execution_config_version": "item6_stage1_execution_config_v1",
+ "experiment": "ITEM6_NOVEL_HYPOTHESIS_DISCOVERY_AND_INCREMENTAL_VALUE",
+ "stage": "STAGE_1_GENERATION",
+
+ "model_provider": "aws_bedrock",
+ "model_profile_id": "us.anthropic.claude-sonnet-4-6",
+ "model_id": "anthropic.claude-sonnet-4-6",
+ "inference_profile_arn": "arn:aws:bedrock:us-east-1:865147226910:inference-profile/us.anthropic.claude-sonnet-4-6",
+ "region": "us-east-1",
+ "aws_account_id": "865147226910",
+ "model_verified_unix": 1789310000,
+ "model_verified_note": "Profile us.anthropic.claude-sonnet-4-6 verified ACTIVE (SYSTEM_DEFINED cross-region inference profile) on 2026-09-13 via list-inference-profiles; base model anthropic.claude-sonnet-4-6 is INFERENCE_PROFILE-only. Same lineage/verification as src/research/llm_matchup/hardening/versions_v3_sonnet46.py. Undated alias => weight-stability over calendar time is not guaranteed; resolved model identity is captured per call from the provider echo.",
+
+ "max_tokens": 8192,
+ "temperature": 0.0,
+ "top_p_declared": 1.0,
+ "top_p_on_wire": null,
+ "top_p_on_wire_note": "topP is a no-op at temperature 0.0 (greedy/deterministic) and is deliberately omitted from the Converse inferenceConfig, which carries only temperature and maxTokens. Declared and on-wire states are both recorded explicitly.",
+ "tool_choice": "forced_single_tool:emit_item6_mechanisms",
+ "max_turns": 1,
+ "max_search_calls": 0,
+ "network_search_enabled": false,
+ "external_tools_enabled": false,
+ "treatment_input_note": "The model receives ONLY the frozen point-in-time-safe Item 6 treatment input (frozen prompt body + tool schema + per-fixture identity + PIT-safe evidence packet). No web search, no external football lookup.",
+
+ "transport_implementation_version": "v5a2_transport_v1",
+ "transport_source_path": "src/research/hypothesis_oos/v5a2_transport.py",
+ "transport_source_sha256": "368224b9629c3d267963d189af55d8cbfce705d106fc33f4b5d2340f16728dd9",
+ "transport_preflight_requirement": "hasattr(client,'converse') asserted before first paid call (defect D4 guard).",
+
+ "token_count_implementation_version": "v6_token_count_v1",
+ "token_count_source_path": "src/research/hypothesis_oos/v6_token_count.py",
+ "token_count_source_sha256": "09077cefff3f6bc0dc18930f82dc6056ec9ed9e6870453c9f68458ed0bcdde99",
+ "input_token_bound_method": "utf8_byte_upper_bound_over_canonical_request_capped_at_max_request_bytes",
+ "input_token_bound_proof": "Claude tokenization is byte-level BPE, so a request of B UTF-8 bytes has at most B input tokens. The reservation uses the frozen ceiling MAX_REQUEST_UTF8_BYTES as the per-call input-token bound and the runner refuses any request whose canonical bytes exceed the ceiling; therefore input tokens are provably <= reserved bound. No empirical ratio, no rounding down.",
+
+ "request_builder_version": "item6_request_builder_v1",
+ "request_builder_source_path": "src/research/item6/execution/request_builder.py",
+ "request_builder_source_sha256": "ac1e72c7e9479afafba660135cee3109428bc68d5c6118eee6705186a966ac56",
+ "max_request_utf8_bytes": 32768,
+
+ "response_receipt_version": "item6_response_receipt_v1",
+ "response_receipt_policy": "Persist the raw provider Converse envelope (stopReason, usage, output message, resolved modelId) plus request_sha256 to a durable per-fixture receipt file BEFORE classifying. A trustworthy receipt means the fixture received its one treatment.",
+
+ "attempt_ledger_version": "item6_attempt_ledger_v1",
+ "execution_status_version": "item6_execution_status_v1",
+ "execution_status_source_path": "src/research/item6/execution/execution_status.py",
+ "execution_status_source_sha256": "e3156fd11bff839b6ab264afbf6c5b3b53f7854e1cdeae48bdf192c49be8454d",
+
+ "spend_guard_version": "item6_stage1_spend_guard_v1",
+ "spend_guard_source_path": "src/research/item6/execution/spend_guard.py",
+ "spend_guard_source_sha256": "41944718c6bd6300ef52b64c635a4896aa82bbf62e42a0051c446ea96420abc7",
+ "price_table_version": "item6_stage1_price_table_v1",
+
+ "neutralization_policy": "Per-fixture point-in-time-safe evidence packet is materialized by the live pipeline; no post-target field, market, outcome, future lineup, or future injury is admissible. Item 6 formalizer rejects provider-unsafe/future-leakage concepts. This execution config adds no scientific field and does not build the packet.",
+
+ "stage1_n_fixtures": 120,
+ "k_mechanisms_per_fixture": 5,
+ "model_calls_per_fixture": 1,
+ "planned_primary_model_calls": 120,
+ "absolute_max_paid_calls": 120,
+ "absolute_max_model_attempts": 120,
+ "max_retries_per_fixture": 0,
+ "max_paid_treatments_per_fixture": 1,
+ "one_response_contains_all_k": true,
+ "one_call_per_mechanism": false,
+
+ "attempt_marker_precedes_transmission": true,
+ "uncertain_attempt_not_retried": true,
+ "unknown_status_fails_closed": true,
+ "received_response_is_treatment": true,
+ "abstention_is_valid_treatment": true,
+ "abstention_triggers_retry": false,
+
+ "champion_independent": true,
+ "runner_has_no_champion_dependency": true,
+ "live_sonnet_calls": 0,
+ "bedrock_paid_calls": 0,
+ "new_spend_usd": 0
+}

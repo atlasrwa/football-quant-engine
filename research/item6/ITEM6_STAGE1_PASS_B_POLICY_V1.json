@@ -1,0 +1,48 @@
+{
+ "pass_b_policy_version": "item6_stage1_pass_b_policy_v1",
+ "role": "DIAGNOSTIC_ONLY",
+ "description": "Execution-policy clarification for the blinded semantic Pass B rater defined in STAGE1_QUALITY_PROTOCOL_V1. This artifact changes NO scientific role: Pass B remains the blinded semantic rater in the quality protocol. It only freezes that Pass B is diagnostic, is not part of the Stage-1 generation budget, and requires separate human spend authorization.",
+
+ "pass_b_required_for_primary_gate": false,
+ "pass_b_execution_deferred": true,
+ "pass_b_included_in_stage1_generation_budget": false,
+ "pass_b_paid_calls_authorized_by_stage1_generation_authorization": false,
+ "pass_b_may_run_only_after_primary_generation_evidence_is_frozen": true,
+ "pass_b_requires_separate_human_spend_authorization": true,
+
+ "pass_b_cannot": [
+  "change deterministic primary classification (F0..F5)",
+  "change the Stage-1 structural PASS/FAIL gate",
+  "override baseline equivalence",
+  "modify family signatures",
+  "turn FAIL into PASS"
+ ],
+
+ "primary_gate_components_all_deterministic": [
+  "BASELINE_EQUIVALENT_RATE",
+  "SEMANTIC_DUPLICATE_RATE",
+  "NOVEL_MEASURABLE_FAMILY_RATE",
+  "MULTIVARIABLE_INTERACTION_RATE",
+  "NEW_FAMILY_COUNT",
+  "FORMALIZATION_SURVIVAL_RATE"
+ ],
+ "primary_gate_computable_without_pass_b": true,
+ "primary_gate_computed_by": "src/research/item6/stage1_gate.py evaluate_gate() consuming src/research/item6/stage1_metrics.py Stage1Endpoints, which are computed from the deterministic formalizer + baseline-equivalence detector + deterministic family-signature dedup. Neither stage1_gate.py nor stage1_metrics.py imports quality_protocol (Pass B).",
+
+ "pass_b_future_authorization_contract": {
+  "note": "A future Pass B run is a SEPARATE experiment step requiring its own human spend authorization. That authorization must freeze ALL of the following before any paid diagnostic call.",
+  "must_freeze": [
+   "rater model / provider / profile id",
+   "rater prompt (blinded; sees only pre-target packet + mechanism + evidence refs + coverage spec)",
+   "rater output schema",
+   "number of paid calls",
+   "retry policy (default: max_retries=0, one-attempt discipline)",
+   "spend guard + monetary ceiling (separate from the Stage-1 generation ceiling)",
+   "blinding manifest (proof OOS/markets/settlement/ARM-D performance are not visible)"
+  ]
+ },
+
+ "pass_b_paid_calls_authorized_now": 0,
+ "pass_b_paid_calls": 0,
+ "new_spend_usd": 0
+}
