@@ -9,7 +9,7 @@ was made. CHAMPION untouched. Stage-1 live execution awaits explicit human spend
 
 ```
 START_HEAD      = bb85637c27233dc5981b968430cbff3260cd3817
-END_HEAD        = <set by commit step>
+END_HEAD        = 7e6e2bbd993571f6eefcde1a435ac3e180fd67d4
 PUSHED_HEAD     = <not pushed; awaiting authorization>
 BRANCH          = feat/item6-novel-hypothesis-discovery
 COMMITS_ADDED   = 1 (item6 build)
