@@ -1,0 +1,249 @@
+{
+ "abstract_coverage_prose": [
+  "A single provider metric compared as a team's own production against the corresponding same-metric concession of the opponent (an attack-vs-concession 'mirror' on one metric).",
+  "A single metric conditioned on ONE opponent-profile band (HIGH/MID/LOW) along ONE of the frozen profile axes, versus a subject baseline.",
+  "A single metric contrasted by the subject's home/away venue, versus a subject or venue baseline (a pure venue split).",
+  "A single metric's recent-window level contrasted with its long-run level (recent-vs-long-run deviation / form).",
+  "A team's production on one metric read directly against the corresponding opponent concession of that same metric (direct cross-entity same-metric).",
+  "A single metric read against its competition/league environment baseline.",
+  "Any single-dimensional profile/venue/competition split already expressible by the existing conditioning grammar (arity 0 or 1).",
+  "A single metric read over a deterministically-computed cohort of opponents similar to the fixture opponent (existing similarity comparator).",
+  "The two closed arity-2 interactions the grammar already supports: venue crossed with a single opponent-profile band, and same-competition crossed with a single opponent-profile band.",
+  "Simple deterministic salience ranking / selection over existing enumerated candidates (no new representational construct)."
+ ],
+ "comparators": [
+  "LEAGUE_ENVIRONMENT_BASELINE",
+  "OPPONENT_OVERALL_BASELINE",
+  "OPPONENT_VENUE_BASELINE",
+  "SIMILAR_OPPONENT_COHORT",
+  "SUBJECT_COMPETITION_BASELINE",
+  "SUBJECT_CONDITIONAL_VS_BASELINE",
+  "SUBJECT_OVERALL_BASELINE",
+  "SUBJECT_RECENT_VS_LONG_BASELINE",
+  "SUBJECT_VENUE_BASELINE",
+  "SUBJECT_VS_FIXTURE_OPPONENT"
+ ],
+ "condition_dimensions": [
+  "historical_venue_conditioning",
+  "opponent_profile",
+  "competition"
+ ],
+ "covered_families": [
+  {
+   "abstract_description": "A single provider metric compared as a team's own production against the corresponding same-metric concession of the opponent (an attack-vs-concession 'mirror' on one metric).",
+   "family_id": "BC_SAME_METRIC_MIRROR",
+   "structural_signature": {
+    "comparator_in": [
+     "SUBJECT_VS_FIXTURE_OPPONENT",
+     "OPPONENT_OVERALL_BASELINE",
+     "OPPONENT_VENUE_BASELINE"
+    ],
+    "max_condition_arity": 1,
+    "mirror_for_against": true,
+    "single_metric": true
+   }
+  },
+  {
+   "abstract_description": "A single metric conditioned on ONE opponent-profile band (HIGH/MID/LOW) along ONE of the frozen profile axes, versus a subject baseline.",
+   "family_id": "BC_UNIVARIATE_PROFILE_SPLIT",
+   "structural_signature": {
+    "comparator_in": [
+     "SUBJECT_CONDITIONAL_VS_BASELINE",
+     "SUBJECT_OVERALL_BASELINE"
+    ],
+    "condition_dims_subset_of": [
+     "opponent_profile"
+    ],
+    "max_condition_arity": 1,
+    "single_metric": true
+   }
+  },
+  {
+   "abstract_description": "A single metric contrasted by the subject's home/away venue, versus a subject or venue baseline (a pure venue split).",
+   "family_id": "BC_SIMPLE_VENUE_CONTRAST",
+   "structural_signature": {
+    "comparator_in": [
+     "SUBJECT_VENUE_BASELINE",
+     "SUBJECT_OVERALL_BASELINE",
+     "OPPONENT_VENUE_BASELINE"
+    ],
+    "condition_dims_subset_of": [
+     "historical_venue_conditioning"
+    ],
+    "max_condition_arity": 1,
+    "single_metric": true
+   }
+  },
+  {
+   "abstract_description": "A single metric's recent-window level contrasted with its long-run level (recent-vs-long-run deviation / form).",
+   "family_id": "BC_RECENT_VS_LONGRUN",
+   "structural_signature": {
+    "comparator_in": [
+     "SUBJECT_RECENT_VS_LONG_BASELINE"
+    ],
+    "max_condition_arity": 1,
+    "single_metric": true,
+    "window_in": [
+     "W5",
+     "W10"
+    ]
+   }
+  },
+  {
+   "abstract_description": "A team's production on one metric read directly against the corresponding opponent concession of that same metric (direct cross-entity same-metric).",
+   "family_id": "BC_TEAM_METRIC_X_OPP_CONCESSION",
+   "structural_signature": {
+    "comparator_in": [
+     "SUBJECT_VS_FIXTURE_OPPONENT"
+    ],
+    "max_condition_arity": 1,
+    "mirror_for_against": true,
+    "single_metric": true
+   }
+  },
+  {
+   "abstract_description": "A single metric read against its competition/league environment baseline.",
+   "family_id": "BC_ENVIRONMENT_BASELINE",
+   "structural_signature": {
+    "comparator_in": [
+     "LEAGUE_ENVIRONMENT_BASELINE",
+     "SUBJECT_COMPETITION_BASELINE"
+    ],
+    "max_condition_arity": 1,
+    "single_metric": true
+   }
+  },
+  {
+   "abstract_description": "Any single-dimensional profile/venue/competition split already expressible by the existing conditioning grammar (arity 0 or 1).",
+   "family_id": "BC_SINGLE_DIM_PROFILE_ALREADY_EXPRESSIBLE",
+   "structural_signature": {
+    "max_condition_arity": 1,
+    "single_metric": true
+   }
+  },
+  {
+   "abstract_description": "A single metric read over a deterministically-computed cohort of opponents similar to the fixture opponent (existing similarity comparator).",
+   "family_id": "BC_SIMILAR_OPPONENT_COHORT",
+   "structural_signature": {
+    "comparator_in": [
+     "SIMILAR_OPPONENT_COHORT"
+    ],
+    "max_condition_arity": 1,
+    "single_metric": true
+   }
+  },
+  {
+   "abstract_description": "The two closed arity-2 interactions the grammar already supports: venue crossed with a single opponent-profile band, and same-competition crossed with a single opponent-profile band.",
+   "family_id": "BC_COVERED_TWO_DIM_INTERACTION",
+   "structural_signature": {
+    "interaction_families_covered": true,
+    "max_condition_arity": 2
+   }
+  },
+  {
+   "abstract_description": "Simple deterministic salience ranking / selection over existing enumerated candidates (no new representational construct).",
+   "family_id": "BC_SALIENCE_RANKING",
+   "structural_signature": {
+    "is_selection_only": true
+   }
+  }
+ ],
+ "perspectives": [
+  "FOR",
+  "AGAINST"
+ ],
+ "profile_axes": [
+  "goals_for",
+  "goals_against",
+  "shots_on_target_for",
+  "shots_on_target_against",
+  "possession_for",
+  "shots_against"
+ ],
+ "research_family_labels": [
+  "ATTACK_VOLUME",
+  "DEFENSIVE_CONCESSION",
+  "SET_PIECE_GENERATION",
+  "DISCIPLINE",
+  "POSSESSION_CONTROL",
+  "FORM_VS_BASELINE",
+  "CROSS_ENTITY",
+  "ENVIRONMENT",
+  "MATCHUP_SIMILARITY"
+ ],
+ "subjects": [
+  "HOME_TEAM",
+  "AWAY_TEAM"
+ ],
+ "target_metrics": [
+  "goals",
+  "goals_conceded",
+  "shots",
+  "shots_on_target",
+  "shots_against",
+  "shots_on_target_against",
+  "big_chances",
+  "big_chances_against",
+  "corner_kicks",
+  "accurate_crosses",
+  "possession",
+  "touches_in_penalty_area",
+  "ball_recoveries",
+  "tackles",
+  "interceptions",
+  "blocks",
+  "clearances",
+  "fouls",
+  "yellow_cards",
+  "red_cards",
+  "cards_2h",
+  "offsides",
+  "passes",
+  "pass_accuracy"
+ ],
+ "unsupported_structures": [
+  {
+   "description": "A joint relationship between two or more DISTINCT provider metrics (not a single metric's for/against mirror) that cannot be reduced to one metric with one conditioning band.",
+   "structure_id": "US_MULTI_METRIC_INTERACTION"
+  },
+  {
+   "description": "A conditioning intersection over TWO DISTINCT opponent-profile axes simultaneously (profile x profile), which the grammar excludes by design.",
+   "structure_id": "US_TWO_DIM_OPP_PROFILE_INTERSECTION"
+  },
+  {
+   "description": "A threshold / piecewise / nonlinear relationship on a continuous observable (not the fixed HIGH/MID/LOW tercile banding).",
+   "structure_id": "US_THRESHOLD_NONLINEARITY"
+  },
+  {
+   "description": "A within-match state construction (e.g. half-level split, or conditioning on a prior scoreline/game-state) where the provider resolution actually supports it.",
+   "structure_id": "US_HALF_STATE_OR_GAME_STATE"
+  },
+  {
+   "description": "An asymmetric attack-vs-defence relationship across DIFFERENT metrics (subject's metric A vs opponent's metric B, A != B).",
+   "structure_id": "US_CROSS_METRIC_ASYMMETRY"
+  },
+  {
+   "description": "A sequencing / regime / trajectory construction over ordered prior matches beyond a simple recent-window mean.",
+   "structure_id": "US_SEQUENCING_REGIME"
+  }
+ ],
+ "version": "item6_baseline_coverage_v1",
+ "version_stamp": {
+  "baseline_coverage_version": "item6_baseline_coverage_v1",
+  "contains_worked_football_example": false,
+  "n_comparators": 10,
+  "n_covered_families": 10,
+  "n_profile_axes": 6,
+  "n_target_metrics": 24,
+  "n_unsupported_structures": 6,
+  "n_windows": 3,
+  "reads_llm_output": false,
+  "reads_oos_history": false,
+  "reads_outcomes": false
+ },
+ "windows": [
+  "ALL_PRIOR",
+  "W5",
+  "W10"
+ ]
+}
