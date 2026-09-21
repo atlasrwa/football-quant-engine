@@ -18,15 +18,17 @@ from src.research.item6.execution.runner import (RunnerConfig, RunnerFailClosed,
                                                  Stage1Runner, verify_frozen_identities)
 from src.research.item6.execution.spend_guard import PriceTable, SpendGuard
 from tests.research.item6.execution.conftest import (NON_LOOPBACK_CONNECTS,
-                                                     good_converse_response)
+                                                     good_converse_response, good_count_fn,
+                                                     make_count_fn)
 
 PRICE = "/home/ubuntu/research/item6/ITEM6_STAGE1_PRICE_TABLE_V1.json"
 
 
-def _runner(tmp_path, ceiling=100.0, verify=False) -> Stage1Runner:
+def _runner(tmp_path, ceiling=100.0, verify=False, count_fn=good_count_fn) -> Stage1Runner:
     cfg = RunnerConfig(out_dir=str(tmp_path / "exec_out"),
                        human_authorized_ceiling_usd=ceiling,
-                       price_table_path=PRICE, verify_identities=verify)
+                       price_table_path=PRICE, verify_identities=verify,
+                       count_tokens_fn=count_fn)
     return Stage1Runner(cfg)
 
 
@@ -195,13 +197,16 @@ def test_12_reservation_tracks_request_size():
     assert RB.reservation_input_token_bound(req) == RB.MAX_REQUEST_UTF8_BYTES
 
 
-# 13. provider usage exceeds planning estimate but remains below reservation -> integrity OK.
-def test_13_usage_above_estimate_below_reservation_ok(tmp_path):
-    r = _runner(tmp_path, ceiling=100.0)
-    # realized input 20000 tokens (>> ~6500 estimate) but < 32768 byte reservation bound.
+# 13. v2: the reservation uses the AUTHORITATIVE provider count, which matches what is
+#     billed. When the provider count reflects the true input, realized <= reserved holds.
+def test_13_provider_count_reservation_dominates_realized(tmp_path):
+    r = _runner(tmp_path, ceiling=100.0, count_fn=make_count_fn(20000))
+    # provider counts 20000 input tokens => reservation covers 20000 in + 8192 out. Realized
+    # input equals the counted 20000 and realized output (8000) <= the 8192 reserve.
     res = r.run_fixture(_fx(), lambda q: good_converse_response(input_tokens=20000,
                                                                output_tokens=8000))
     assert res.status == ES.TRANSPORT_OK
+    assert res.provider_counted_input_tokens == 20000
     assert r.guard.realized_usd <= r.guard.reserved_usd  # reservation dominated realized
     assert r.integrity_ok()
 

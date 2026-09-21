@@ -68,3 +68,23 @@ def good_converse_response(input_tokens: int = 6000, output_tokens: int = 1500):
         "modelId": "us.anthropic.claude-sonnet-4-6",
         "_resolved_model_id": "anthropic.claude-sonnet-4-6",
     }
+
+
+# v2 amendment: a deterministic local CountTokens stand-in. It NEVER touches the network and
+# returns only an input-token count (no generation), mirroring the AWS Bedrock CountTokens
+# control operation. `make_count_fn` lets a test fix the provider count it wants to exercise.
+DEFAULT_PROVIDER_COUNTED_INPUT_TOKENS = 6500
+
+
+def make_count_fn(input_tokens: int = DEFAULT_PROVIDER_COUNTED_INPUT_TOKENS):
+    """Return a CountTokens stand-in fn(modelId=..., input=...) -> {'inputTokens': n}."""
+    def _count(modelId, input):  # noqa: A002  match boto3 kwarg name
+        assert isinstance(modelId, str) and modelId
+        assert "converse" in input and "toolConfig" in input["converse"]
+        return {"inputTokens": input_tokens}
+    return _count
+
+
+def good_count_fn(modelId, input):  # noqa: A002  match boto3 kwarg name
+    """Default healthy CountTokens stand-in used by the legacy execution tests."""
+    return {"inputTokens": DEFAULT_PROVIDER_COUNTED_INPUT_TOKENS}

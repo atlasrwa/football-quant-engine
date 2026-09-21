@@ -49,6 +49,12 @@ RECEIPT_VERIFICATION_FAILED = "RECEIPT_VERIFICATION_FAILED"
 REQUEST_INTEGRITY_FAILURE = "REQUEST_INTEGRITY_FAILURE"
 UNKNOWN_EXECUTION_STATUS = "UNKNOWN_EXECUTION_STATUS"
 
+# v2 execution amendment: authoritative pre-call provider token counting. When the
+# CountTokens control operation cannot authoritatively count the exact inference request, the
+# paid inference is BLOCKED BEFORE TRANSMISSION (no attempt consumed, no spend). These are
+# distinct pre-call block statuses so a report can tell WHY the call never transmitted.
+CALL_BLOCKED_BY_TOKEN_COUNT = "CALL_BLOCKED_BY_TOKEN_COUNT"
+
 ALL_STATUSES: Tuple[str, ...] = (
     TRANSPORT_OK,
     MODEL_TRANSPORT_FAILURE,
@@ -57,6 +63,7 @@ ALL_STATUSES: Tuple[str, ...] = (
     UNCERTAIN_ATTEMPT_NOT_RETRIED,
     CALL_BLOCKED_BY_CALL_CAP,
     CALL_BLOCKED_BY_SPEND_CAP,
+    CALL_BLOCKED_BY_TOKEN_COUNT,
     RECEIPT_VERIFICATION_FAILED,
     REQUEST_INTEGRITY_FAILURE,
     UNKNOWN_EXECUTION_STATUS,
@@ -74,7 +81,8 @@ TERMINAL_UNAVAILABLE = frozenset({
     MODEL_TRANSPORT_FAILURE, MODEL_TIMEOUT, MODEL_PROVIDER_ERROR,
     UNCERTAIN_ATTEMPT_NOT_RETRIED, RECEIPT_VERIFICATION_FAILED,
 })
-BLOCKED_PRECALL = frozenset({CALL_BLOCKED_BY_CALL_CAP, CALL_BLOCKED_BY_SPEND_CAP})
+BLOCKED_PRECALL = frozenset({CALL_BLOCKED_BY_CALL_CAP, CALL_BLOCKED_BY_SPEND_CAP,
+                             CALL_BLOCKED_BY_TOKEN_COUNT})
 FAIL_CLOSED = frozenset({REQUEST_INTEGRITY_FAILURE, UNKNOWN_EXECUTION_STATUS})
 
 # No status ever permits a retry.
@@ -159,4 +167,5 @@ def version_stamp() -> Dict[str, object]:
         "retryable_statuses": [],
         "unknown_status_fails_closed": True,
         "received_response_is_treatment": True,
+        "token_count_failure_blocks_inference": True,
     }

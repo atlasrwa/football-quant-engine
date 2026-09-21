@@ -29,12 +29,23 @@ realized usage (for reporting and to prove reservations were conservative) but w
 shrink the cumulative reservation.
 
 INPUT TOKEN UPPER BOUND
-Never an average "$/call". The reservation uses the request-builder's byte-based upper bound
-(UTF-8 bytes of the canonical request, capped by the frozen MAX_REQUEST_UTF8_BYTES). Because
-Claude tokenization is byte-level BPE, input tokens <= request bytes, so the reservation
-cannot understate. If a live request's realized usage grows, it is still <= the reserved
-bound; if a request's own bytes exceed the frozen ceiling the runner refuses it upstream
-(REQUEST_INTEGRITY_FAILURE) rather than under-reserving.
+Never an average "$/call". The v1 reservation used the request-builder's byte-based upper
+bound (UTF-8 bytes of the canonical request, capped by the frozen MAX_REQUEST_UTF8_BYTES).
+Because Claude tokenization is byte-level BPE, input tokens <= request bytes, so that
+reservation cannot understate the tokens represented by transmitted bytes.
+
+AMENDMENT (v2): AUTHORITATIVE PROVIDER TOKEN COUNT
+A tool-enabled provider request may involve provider-side/system token accounting not
+literally represented by canonical transmitted UTF-8 bytes. So the input reservation must not
+depend EXCLUSIVELY on the byte bound. The v2 reserve path (`reserve_with_provider_count`)
+reserves input cost from the AUTHORITATIVE AWS Bedrock CountTokens result
+(`provider_counted_input_tokens`) obtained immediately before the paid call, while the byte
+ceiling (MAX_REQUEST_UTF8_BYTES) remains INDEPENDENTLY enforced upstream by the runner. Output
+is still reserved at the frozen MAX_TOKENS (never expected output). The reservation stays
+monotonic and is enforced against the human-authorized monetary ceiling; the runner blocks
+before inference if the next reservation would breach it. `SPEND_GUARD_VERSION` is bumped to
+v2 to reflect the changed spend semantics; the byte-bound method is retained for the
+independent-constraint proof and back-compat.
 """
 from __future__ import annotations
 
@@ -44,7 +55,11 @@ import tempfile
 from dataclasses import dataclass, field
 from typing import Dict, List, Optional
 
-SPEND_GUARD_VERSION = "item6_stage1_spend_guard_v1"
+SPEND_GUARD_VERSION = "item6_stage1_spend_guard_v2"
+
+# Input-token reservation methods.
+INPUT_RESERVATION_METHOD_BYTE_BOUND = "utf8_byte_upper_bound_over_canonical_request_capped_at_max_request_bytes"
+INPUT_RESERVATION_METHOD_PROVIDER_COUNT = "authoritative_provider_count_tokens"
 
 
 @dataclass
@@ -140,9 +155,16 @@ class SpendGuard:
         return (self.reserved_usd + res) <= self.ceiling_usd + 1e-12
 
     def reserve(self, *, fixture_id: str, input_token_bound: int,
-                max_output_tokens: int) -> float:
+                max_output_tokens: int,
+                input_reservation_method: str = INPUT_RESERVATION_METHOD_BYTE_BOUND
+                ) -> float:
         """Reserve for the next paid call. BOTH caps enforced independently. Persists the
-        reservation BEFORE the caller transmits, so a crash mid-call cannot lose the reserve."""
+        reservation BEFORE the caller transmits, so a crash mid-call cannot lose the reserve.
+
+        `input_token_bound` is the input-token count used for the reservation; the v2 runner
+        passes the AUTHORITATIVE provider CountTokens result here (method
+        `authoritative_provider_count_tokens`), while the byte ceiling remains enforced
+        independently by the runner. `input_reservation_method` is recorded for provenance."""
         if not self.call_cap_ok():
             raise CallCapExceeded(
                 f"call cap {self.call_cap} reached (reserved {self.n_calls_reserved})")
@@ -156,11 +178,38 @@ class SpendGuard:
         self.events.append({"event": "RESERVE", "fixture_id": fixture_id,
                             "reservation_usd": round(res, 6),
                             "input_token_bound": input_token_bound,
+                            "input_reservation_method": input_reservation_method,
                             "max_output_tokens": max_output_tokens,
                             "cumulative_reserved_usd": round(self.reserved_usd, 6),
                             "seq": self.n_calls_reserved})
         self._persist()
         return res
+
+    # ---- v2: authoritative provider-count reservation ---------------------------------
+    def reserve_with_provider_count(self, *, fixture_id: str,
+                                    provider_counted_input_tokens: int,
+                                    max_output_tokens: int) -> float:
+        """v2 reserve path: reserve input cost from the AUTHORITATIVE provider CountTokens
+        result rather than the byte bound. The runner enforces the byte ceiling independently
+        BEFORE calling this. Output is still reserved at the frozen max_output_tokens. Both
+        caps (call count + monetary ceiling) are enforced exactly as in `reserve`."""
+        if not isinstance(provider_counted_input_tokens, int) or \
+                isinstance(provider_counted_input_tokens, bool) or \
+                provider_counted_input_tokens <= 0:
+            raise SpendCapExceeded(
+                f"invalid provider_counted_input_tokens: {provider_counted_input_tokens!r}")
+        return self.reserve(
+            fixture_id=fixture_id,
+            input_token_bound=provider_counted_input_tokens,
+            max_output_tokens=max_output_tokens,
+            input_reservation_method=INPUT_RESERVATION_METHOD_PROVIDER_COUNT)
+
+    def spend_cap_ok_for_input_tokens(self, input_tokens: int,
+                                      max_output_tokens: int) -> bool:
+        """Pre-check whether reserving `input_tokens` (e.g. the provider count) plus the
+        frozen output reserve would remain within the human ceiling. Same 1e-12 tolerance."""
+        res = self.next_call_reservation(input_tokens, max_output_tokens)
+        return (self.reserved_usd + res) <= self.ceiling_usd + 1e-12
 
     # ---- post-call reconciliation -----------------------------------------------------
     def reconcile(self, *, fixture_id: str, actual_input_tokens: int,
@@ -203,6 +252,8 @@ class SpendGuard:
             "input_price_usd_per_1k": self.price.input_price_usd_per_1k,
             "output_price_usd_per_1k": self.price.output_price_usd_per_1k,
             "safety_multiplier": self.price.safety_multiplier,
+            "input_reservation_authority": INPUT_RESERVATION_METHOD_PROVIDER_COUNT,
+            "byte_ceiling_retained_independently": True,
             "events": self.events,
         }
 
@@ -215,6 +266,12 @@ def version_stamp() -> Dict:
         "call_cap_stop": True,
         "reservation_is_monotonic": True,
         "reservation_uses_average_per_call": False,
+        # v2: the AUTHORITATIVE input reservation is the provider CountTokens result; the byte
+        # upper bound remains available as an INDEPENDENT constraint (enforced by the runner as
+        # MAX_REQUEST_UTF8_BYTES) but is no longer the sole basis of the input reservation.
+        "reservation_uses_provider_token_count": True,
         "reservation_uses_input_byte_upper_bound": True,
         "reservation_uses_frozen_max_output_tokens": True,
+        "byte_ceiling_retained_independently": True,
+        "input_reservation_authority": INPUT_RESERVATION_METHOD_PROVIDER_COUNT,
     }
