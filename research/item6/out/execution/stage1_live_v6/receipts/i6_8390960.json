@@ -1,0 +1,217 @@
+{
+ "count_input_sha256": "d646d2ef57ba87766443190bce9bfc1539d586090a72c9abf592bfa6239f4efe",
+ "fixture_id": "i6_8390960",
+ "provider_counted_input_tokens": 12071,
+ "raw_response": {
+  "ResponseMetadata": {
+   "HTTPHeaders": {
+    "connection": "keep-alive",
+    "content-length": "11584",
+    "content-type": "application/json",
+    "date": "Tue, 22 Sep 2026 23:13:57 GMT",
+    "x-amzn-requestid": "a552f516-a0b1-4734-a89e-1c5fd4c65043"
+   },
+   "HTTPStatusCode": 200,
+   "MaxAttemptsReached": true,
+   "RequestId": "a552f516-a0b1-4734-a89e-1c5fd4c65043",
+   "RetryAttempts": 0
+  },
+  "_item6_live_transport": {
+   "authentic_provider_response": true,
+   "aws_request_id": "a552f516-a0b1-4734-a89e-1c5fd4c65043",
+   "converse_model_id": "us.anthropic.claude-sonnet-4-6",
+   "count_model_id": "anthropic.claude-sonnet-4-6",
+   "envelope_sha256": "0d13526d698c353e60bcd9afa1ad2091bb65b678feccffa5b6eb247bcb61c4da",
+   "http_status": 200,
+   "provider": "aws_bedrock",
+   "transport_version": "item6_bedrock_transport_v1"
+  },
+  "metrics": {
+   "latencyMs": 41199
+  },
+  "output": {
+   "message": {
+    "content": [
+     {
+      "toolUse": {
+       "input": {
+        "fixture_id": "i6_8390960",
+        "mechanisms": [
+         {
+          "conditioning_logic": "Condition on a joint state where one team (Team B) holds structurally high possession (all-prior mean ~61%) while the opponent (Team A) is near 50/50, then jointly examine each team's shots-to-shots-on-target ratio. This requires simultaneously conditioning on possession imbalance AND the joint shot/on-target relationship for both sides \u2014 not reducible to a single observable with one band.",
+          "data_resolution_required": "match",
+          "evidence_refs": [
+           "E:TEAM_B:possession:FOR:FULL_MATCH:ALL:ALL_PRIOR",
+           "E:TEAM_A:possession:FOR:FULL_MATCH:ALL:ALL_PRIOR",
+           "E:TEAM_B:shots:FOR:FULL_MATCH:ALL:ALL_PRIOR",
+           "E:TEAM_A:shots:FOR:FULL_MATCH:ALL:ALL_PRIOR",
+           "E:TEAM_B:shots_on_target:FOR:FULL_MATCH:ALL:ALL_PRIOR",
+           "E:TEAM_A:shots_on_target:FOR:FULL_MATCH:ALL:ALL_PRIOR"
+          ],
+          "expected_relationship_to_test": "The high-possession team's shots-on-target as a share of total shots is suppressed relative to the lower-possession team's equivalent ratio when possession imbalance is large; i.e., volume of shots rises with possession dominance but on-target conversion rate does not rise proportionally.",
+          "mechanism_id_local": "M1_POSSESSION_ASYMMETRY_SHOTS_CONVERSION",
+          "mechanism_statement": "When a large possession imbalance exists between two teams (Team B structurally dominates possession while Team A is near-parity), the relationship between each team's shots and shots-on-target diverges asymmetrically: the high-possession team's shot volume does not proportionally translate into on-target accuracy, while the lower-possession team's on-target rate relative to total shots may be comparatively higher.",
+          "observable_variables": [
+           "possession",
+           "shots",
+           "shots_on_target"
+          ],
+          "provider_requirements": [
+           "possession",
+           "shots",
+           "shots_on_target"
+          ],
+          "self_overlap_with": [
+           "M2_POSSESSION_CORNERS_JOINT"
+          ],
+          "why_not_baseline_equivalent": "This involves a joint three-variable relationship (possession, shots, shots_on_target) across two sides simultaneously, with an asymmetric cross-team comparison. It cannot be reduced to any single observable mirror, a single observable with one band, or a simple home/away split."
+         },
+         {
+          "conditioning_logic": "Jointly condition on each team's possession level and corner production. Team B holds ~61% possession all-prior but generates ~5.2 corners (near competition mean of ~5.0), while Team A holds ~49% possession but also generates ~4.9 corners. Measure whether, across historical matches, teams with possession levels as high as Team B's generate corners at a rate proportionally above competition baseline, or whether the relationship saturates.",
+          "data_resolution_required": "match",
+          "evidence_refs": [
+           "E:TEAM_B:possession:FOR:FULL_MATCH:ALL:ALL_PRIOR",
+           "E:TEAM_A:possession:FOR:FULL_MATCH:ALL:ALL_PRIOR",
+           "E:TEAM_B:corner_kicks:FOR:FULL_MATCH:ALL:ALL_PRIOR",
+           "E:TEAM_A:corner_kicks:FOR:FULL_MATCH:ALL:ALL_PRIOR",
+           "E:COMPETITION_CONTEXT:corner_kicks:NEUTRAL:FULL_MATCH:ALL:ALL_PRIOR",
+           "E:COMPETITION_CONTEXT:possession:NEUTRAL:FULL_MATCH:ALL:ALL_PRIOR"
+          ],
+          "expected_relationship_to_test": "Corner production saturates or decouples from possession share beyond a threshold level of possession dominance; teams with very high possession do not generate proportionally more corners than near-parity teams.",
+          "mechanism_id_local": "M2_POSSESSION_CORNERS_JOINT",
+          "mechanism_statement": "Team B's structurally high possession does not translate into a proportionally high corner-kick yield, while Team A generates corners near the competition average despite lower possession. The joint relationship between possession dominance and corner production differs across the two teams, suggesting that corner generation is not simply a function of possession share.",
+          "observable_variables": [
+           "possession",
+           "corner_kicks"
+          ],
+          "provider_requirements": [
+           "possession",
+           "corner_kicks"
+          ],
+          "self_overlap_with": [
+           "M1_POSSESSION_ASYMMETRY_SHOTS_CONVERSION"
+          ],
+          "why_not_baseline_equivalent": "This is a threshold/saturation non-linear relationship between a continuous possession variable and corner output \u2014 not a simple single-observable mirror or coarse band split. It requires jointly examining two observables across both teams against a competition baseline."
+         },
+         {
+          "conditioning_logic": "Condition jointly on each team's foul-committed rate and second-half card rate, comparing the cross-team asymmetry: Team A commits fewer fouls (10.0) than it receives (12.6), while Team B commits more fouls (11.8) than it receives (13.6 against). Measure whether the team that commits more fouls in a matchup accumulates more second-half cards, and whether the direction of the foul imbalance predicts which side's cards_2h is elevated.",
+          "data_resolution_required": "half",
+          "evidence_refs": [
+           "E:TEAM_A:fouls:FOR:FULL_MATCH:ALL:ALL_PRIOR",
+           "E:TEAM_A:fouls:AGAINST:FULL_MATCH:ALL:ALL_PRIOR",
+           "E:TEAM_B:fouls:FOR:FULL_MATCH:ALL:ALL_PRIOR",
+           "E:TEAM_B:fouls:AGAINST:FULL_MATCH:ALL:ALL_PRIOR",
+           "E:TEAM_A:cards_2h:FOR:SECOND_HALF:ALL:ALL_PRIOR",
+           "E:TEAM_B:cards_2h:FOR:SECOND_HALF:ALL:ALL_PRIOR",
+           "E:COMPETITION_CONTEXT:cards_2h:NEUTRAL:SECOND_HALF:ALL:ALL_PRIOR"
+          ],
+          "expected_relationship_to_test": "The team with the higher foul-commit rate relative to its opponent's foul-commit rate accumulates more second-half cards; the cross-team foul asymmetry rises with second-half card asymmetry.",
+          "mechanism_id_local": "M3_FOULS_CARDS_2H_ASYMMETRIC_CROSS",
+          "mechanism_statement": "The relationship between a team's foul rate and its second-half card accumulation is asymmetric across the two sides: Team A concedes more fouls against it (opponent fouls on Team A) than it commits, while Team B concedes more fouls against it than it commits in recent matches. The joint cross-team pattern of who commits fouls versus who receives second-half cards differs structurally, and this asymmetry is measurable as a joint two-observable, two-team relationship.",
+          "observable_variables": [
+           "fouls",
+           "cards_2h"
+          ],
+          "provider_requirements": [
+           "fouls",
+           "cards_2h"
+          ],
+          "self_overlap_with": [
+           "M4_FOULS_YELLOW_CARDS_HALF_SPLIT"
+          ],
+          "why_not_baseline_equivalent": "This is a joint two-observable (fouls, cards_2h), two-team asymmetric relationship. It requires simultaneously conditioning on both teams' foul rates and comparing the directional cross-team imbalance against second-half card outcomes \u2014 not reducible to a single observable mirror or one-band split."
+         },
+         {
+          "conditioning_logic": "Condition on the joint state of a team's recent-window foul rate versus all-prior foul rate, and simultaneously examine whether the cards_2h rate diverges from what the full-match yellow card rate implies. For Team B, recent fouls (9.8) are notably below all-prior (11.8), while cards_2h against Team B (1.8) remains elevated. Measure whether the gap between recent and all-prior foul rates predicts a divergence between full-match yellow cards and second-half card concentration.",
+          "data_resolution_required": "half",
+          "evidence_refs": [
+           "E:TEAM_B:fouls:FOR:FULL_MATCH:ALL:ALL_PRIOR",
+           "E:TEAM_B:fouls:FOR:FULL_MATCH:ALL:RECENT_5",
+           "E:TEAM_B:yellow_cards:FOR:FULL_MATCH:ALL:ALL_PRIOR",
+           "E:TEAM_B:yellow_cards:FOR:FULL_MATCH:ALL:RECENT_5",
+           "E:TEAM_B:cards_2h:FOR:SECOND_HALF:ALL:ALL_PRIOR",
+           "E:TEAM_A:fouls:FOR:FULL_MATCH:ALL:ALL_PRIOR",
+           "E:TEAM_A:fouls:FOR:FULL_MATCH:ALL:RECENT_5",
+           "E:TEAM_A:cards_2h:FOR:SECOND_HALF:ALL:ALL_PRIOR"
+          ],
+          "expected_relationship_to_test": "When a team's recent foul rate drops below its all-prior rate, second-half card concentration (cards_2h relative to yellow_cards) rises rather than falls, suggesting disciplinary pressure accumulates in the second half independently of first-half foul volume.",
+          "mechanism_id_local": "M4_FOULS_YELLOW_CARDS_HALF_SPLIT",
+          "mechanism_statement": "The relationship between a team's full-match foul rate and its yellow card accumulation differs between first and second halves. Specifically, when a team's recent foul rate diverges from its all-prior foul rate, the second-half card rate (cards_2h) may be disproportionately affected relative to what the full-match yellow card rate would suggest, indicating a within-match state-dependent accumulation pattern.",
+          "observable_variables": [
+           "fouls",
+           "yellow_cards",
+           "cards_2h"
+          ],
+          "provider_requirements": [
+           "fouls",
+           "yellow_cards",
+           "cards_2h"
+          ],
+          "self_overlap_with": [
+           "M3_FOULS_CARDS_2H_ASYMMETRIC_CROSS"
+          ],
+          "why_not_baseline_equivalent": "This involves three observables jointly (fouls, yellow_cards, cards_2h) with a within-match half-level split and a recent-vs-all-prior regime comparison simultaneously \u2014 structurally richer than any single-observable recent-vs-long-run comparison or a single half-level split alone."
+         },
+         {
+          "conditioning_logic": "Jointly condition on each team's possession level and offside rate (both all-prior and recent), then examine second-half goal rates. Team A: recent offsides FOR dropped to 1.0 (from 1.8 all-prior) while possession rose to 57.2% (from 49.3%); Team B: offsides FOR at 2.1 all-prior, rising to 3.0 recent, with possession at ~61%. Measure whether the combination of high possession AND high offsides (aggressive line-breaking) is associated with elevated second-half goals, versus high possession with low offsides.",
+          "data_resolution_required": "half",
+          "evidence_refs": [
+           "E:TEAM_A:possession:FOR:FULL_MATCH:ALL:ALL_PRIOR",
+           "E:TEAM_A:possession:FOR:FULL_MATCH:ALL:RECENT_5",
+           "E:TEAM_A:offsides:FOR:FULL_MATCH:ALL:ALL_PRIOR",
+           "E:TEAM_A:offsides:FOR:FULL_MATCH:ALL:RECENT_5",
+           "E:TEAM_A:goals:FOR:SECOND_HALF:ALL:ALL_PRIOR",
+           "E:TEAM_B:possession:FOR:FULL_MATCH:ALL:ALL_PRIOR",
+           "E:TEAM_B:offsides:FOR:FULL_MATCH:ALL:ALL_PRIOR",
+           "E:TEAM_B:offsides:FOR:FULL_MATCH:ALL:RECENT_5",
+           "E:TEAM_B:goals:FOR:SECOND_HALF:ALL:ALL_PRIOR"
+          ],
+          "expected_relationship_to_test": "Second-half goal production rises when a team jointly exhibits high possession and high offside rate (indicating aggressive forward runs against a high defensive line), compared to teams with high possession but low offside rates; the joint possession-offside interaction predicts second-half goal rate above what either variable alone would suggest.",
+          "mechanism_id_local": "M5_OFFSIDES_POSSESSION_GOALS_SECOND_HALF",
+          "mechanism_statement": "The joint relationship between a team's possession level, its offside rate, and its second-half goal production captures a structural attacking pattern: teams that hold high possession and generate high offsides (indicating high defensive lines and aggressive forward runs) may show a different second-half goal rate than teams with similar possession but lower offsides. Team A's recent offside rate has dropped sharply while possession has risen, and Team B maintains elevated offsides with high possession \u2014 this joint pattern across both teams relates to second-half goal production.",
+          "observable_variables": [
+           "possession",
+           "offsides",
+           "goals"
+          ],
+          "provider_requirements": [
+           "possession",
+           "offsides",
+           "goals"
+          ],
+          "self_overlap_with": [
+           "M1_POSSESSION_ASYMMETRY_SHOTS_CONVERSION"
+          ],
+          "why_not_baseline_equivalent": "This is a genuine joint three-variable relationship (possession, offsides, goals) with a within-match half-level split, combining a recent-vs-all-prior regime shift in one variable (offsides) with a simultaneous possession level \u2014 not reducible to any single-observable comparison or one-band conditioning."
+         }
+        ]
+       },
+       "name": "emit_item6_mechanisms",
+       "toolUseId": "tooluse_82TuaPjmvSxsiCHxs2dJZ0",
+       "type": "tool_use"
+      }
+     }
+    ],
+    "role": "assistant"
+   }
+  },
+  "stopReason": "tool_use",
+  "usage": {
+   "cacheReadInputTokens": 0,
+   "cacheWriteInputTokens": 0,
+   "inputTokens": 12054,
+   "outputTokens": 3492,
+   "totalTokens": 15546
+  }
+ },
+ "request_sha256": "9cc0f7e297ba02b67731c0c894075f5ac62e0116aebd4ccdeb0522f223a5b712",
+ "resolved_model_id": null,
+ "runner_version": "item6_stage1_runner_v2",
+ "usage": {
+  "cacheReadInputTokens": 0,
+  "cacheWriteInputTokens": 0,
+  "inputTokens": 12054,
+  "outputTokens": 3492,
+  "totalTokens": 15546
+ }
+}

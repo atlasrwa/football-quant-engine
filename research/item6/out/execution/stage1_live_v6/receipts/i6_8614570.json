@@ -1,0 +1,219 @@
+{
+ "count_input_sha256": "49e3f7db2f5a4e79534fa28b2e4d8d5e07ef3be0f56bb4916b768f475b7b1827",
+ "fixture_id": "i6_8614570",
+ "provider_counted_input_tokens": 12062,
+ "raw_response": {
+  "ResponseMetadata": {
+   "HTTPHeaders": {
+    "connection": "keep-alive",
+    "content-length": "11293",
+    "content-type": "application/json",
+    "date": "Tue, 22 Sep 2026 23:17:56 GMT",
+    "x-amzn-requestid": "579b59f4-21ef-4731-9e27-cf62091e66c4"
+   },
+   "HTTPStatusCode": 200,
+   "MaxAttemptsReached": true,
+   "RequestId": "579b59f4-21ef-4731-9e27-cf62091e66c4",
+   "RetryAttempts": 0
+  },
+  "_item6_live_transport": {
+   "authentic_provider_response": true,
+   "aws_request_id": "579b59f4-21ef-4731-9e27-cf62091e66c4",
+   "converse_model_id": "us.anthropic.claude-sonnet-4-6",
+   "count_model_id": "anthropic.claude-sonnet-4-6",
+   "envelope_sha256": "e12eb1e4f4264ca6069e907593cbb22da5a0633088dc1da77166db77db8a00e5",
+   "http_status": 200,
+   "provider": "aws_bedrock",
+   "transport_version": "item6_bedrock_transport_v1"
+  },
+  "metrics": {
+   "latencyMs": 37596
+  },
+  "output": {
+   "message": {
+    "content": [
+     {
+      "toolUse": {
+       "input": {
+        "fixture_id": "i6_8614570",
+        "mechanisms": [
+         {
+          "conditioning_logic": "Jointly condition on Team A's shots FOR (all-prior and recent-5) alongside Team A's shots_on_target FOR (all-prior and recent-5), crossed with Team B's shots_on_target AGAINST (all-prior vs recent-5 divergence). The mechanism requires both the attacking conversion ratio and the opponent's recent defensive trajectory to be evaluated simultaneously \u2014 neither alone captures the joint signal.",
+          "data_resolution_required": "match",
+          "evidence_refs": [
+           "E:TEAM_A:shots:FOR:FULL_MATCH:ALL:ALL_PRIOR",
+           "E:TEAM_A:shots:FOR:FULL_MATCH:ALL:RECENT_5",
+           "E:TEAM_A:shots_on_target:FOR:FULL_MATCH:ALL:ALL_PRIOR",
+           "E:TEAM_A:shots_on_target:FOR:FULL_MATCH:ALL:RECENT_5",
+           "E:TEAM_B:shots_on_target:AGAINST:FULL_MATCH:ALL:ALL_PRIOR",
+           "E:TEAM_B:shots_on_target:AGAINST:FULL_MATCH:ALL:RECENT_5"
+          ],
+          "expected_relationship_to_test": "When a team's recent shots-to-shots-on-target ratio deteriorates (more shots, fewer on target) while the opponent's shots_on_target allowed has recently tightened relative to their long-run average, total shots_on_target in the match is suppressed relative to what either team's individual shot volume would suggest.",
+          "mechanism_id_local": "M1",
+          "mechanism_statement": "Team A's shot-volume-to-shots-on-target conversion ratio (shots FOR vs shots_on_target FOR) interacts with Team B's recent defensive suppression of shots on target allowed: when one team generates many shots but a low on-target fraction while the opponent has recently been conceding fewer shots on target than their long-run average, the joint signal on attacking quality vs defensive tightening differs from either observable read alone.",
+          "observable_variables": [
+           "shots",
+           "shots_on_target"
+          ],
+          "provider_requirements": [
+           "shots",
+           "shots_on_target"
+          ],
+          "self_overlap_with": [
+           "M2"
+          ],
+          "why_not_baseline_equivalent": "This requires a joint relationship between two distinct observables (shots and shots_on_target) for one side, crossed with a divergence signal (recent vs all-prior) for the opponent's defensive version of the same pair \u2014 not reducible to any single observable with one conditioning band."
+         },
+         {
+          "conditioning_logic": "Compare Team A shots FOR all-prior vs recent-5 and shots_on_target FOR all-prior vs recent-5, against Team B shots FOR all-prior vs recent-5 and shots_on_target FOR all-prior vs recent-5. The conditioning is on the cross-team divergence in the shots-to-shots_on_target trajectory, not on either observable in isolation.",
+          "data_resolution_required": "match",
+          "evidence_refs": [
+           "E:TEAM_A:shots:FOR:FULL_MATCH:ALL:ALL_PRIOR",
+           "E:TEAM_A:shots:FOR:FULL_MATCH:ALL:RECENT_5",
+           "E:TEAM_A:shots_on_target:FOR:FULL_MATCH:ALL:ALL_PRIOR",
+           "E:TEAM_A:shots_on_target:FOR:FULL_MATCH:ALL:RECENT_5",
+           "E:TEAM_B:shots:FOR:FULL_MATCH:ALL:ALL_PRIOR",
+           "E:TEAM_B:shots:FOR:FULL_MATCH:ALL:RECENT_5",
+           "E:TEAM_B:shots_on_target:FOR:FULL_MATCH:ALL:ALL_PRIOR",
+           "E:TEAM_B:shots_on_target:FOR:FULL_MATCH:ALL:RECENT_5"
+          ],
+          "expected_relationship_to_test": "When one team's recent shots_on_target rate rises relative to their long-run level while the opponent's falls, the team with the improving on-target trajectory generates disproportionately more shots_on_target than raw shot volume alone would predict.",
+          "mechanism_id_local": "M2",
+          "mechanism_statement": "An asymmetric shots-volume vs shots-on-target relationship across the two sides: Team A produces shots at a higher rate than Team B (both all-prior and recent), but Team B's recent shots_on_target FOR has surged relative to their all-prior average while Team A's shots_on_target FOR has declined. This cross-team asymmetry in shot quality trajectories \u2014 one side improving on-target rate, the other declining \u2014 is a joint two-observable, two-team signal.",
+          "observable_variables": [
+           "shots",
+           "shots_on_target"
+          ],
+          "provider_requirements": [
+           "shots",
+           "shots_on_target"
+          ],
+          "self_overlap_with": [
+           "M1"
+          ],
+          "why_not_baseline_equivalent": "This is an asymmetric, cross-team joint relationship between two distinct observables (shots and shots_on_target) evaluated simultaneously for both sides \u2014 not a single observable with one band, and not a simple home/away or recent/all-prior split of one metric."
+         },
+         {
+          "conditioning_logic": "Jointly condition on Team B's possession FOR (recent-5 vs all-prior divergence) and Team B's fouls FOR (recent-5 vs all-prior divergence). When possession rises sharply and fouls drop sharply together, this signals a style shift that affects both the foul count and the corner kick count (teams with more possession tend to generate more corners but commit fewer fouls). The joint two-observable conditioning is required.",
+          "data_resolution_required": "match",
+          "evidence_refs": [
+           "E:TEAM_B:possession:FOR:FULL_MATCH:ALL:ALL_PRIOR",
+           "E:TEAM_B:possession:FOR:FULL_MATCH:ALL:RECENT_5",
+           "E:TEAM_B:fouls:FOR:FULL_MATCH:ALL:ALL_PRIOR",
+           "E:TEAM_B:fouls:FOR:FULL_MATCH:ALL:RECENT_5",
+           "E:TEAM_B:corner_kicks:FOR:FULL_MATCH:ALL:ALL_PRIOR",
+           "E:TEAM_B:corner_kicks:FOR:FULL_MATCH:ALL:RECENT_5",
+           "E:COMPETITION_CONTEXT:possession:NEUTRAL:FULL_MATCH:ALL:ALL_PRIOR",
+           "E:COMPETITION_CONTEXT:fouls:NEUTRAL:FULL_MATCH:ALL:ALL_PRIOR"
+          ],
+          "expected_relationship_to_test": "When a team's recent possession rises substantially above their long-run average while their recent fouls committed drop substantially below their long-run average, their corner kicks FOR rises and total match fouls are suppressed relative to what either observable's individual baseline would predict.",
+          "mechanism_id_local": "M3",
+          "mechanism_statement": "Team B's possession has recently surged well above their long-run average (and above the competition baseline) while their fouls committed have recently dropped sharply relative to their long-run average. This joint shift \u2014 more possession, fewer fouls \u2014 represents a regime change in Team B's playing style that jointly conditions corner kick and foul outcomes in a way neither observable alone captures.",
+          "observable_variables": [
+           "possession",
+           "fouls",
+           "corner_kicks"
+          ],
+          "provider_requirements": [
+           "possession",
+           "fouls",
+           "corner_kicks"
+          ],
+          "self_overlap_with": [
+           "M4"
+          ],
+          "why_not_baseline_equivalent": "This involves a genuine joint relationship among two distinct observables (possession and fouls) as simultaneous conditioning variables predicting a third (corner_kicks / fouls total) \u2014 not reducible to any single observable with one band."
+         },
+         {
+          "conditioning_logic": "Jointly condition on Team A's fouls FOR (recent-5 vs all-prior divergence) and Team A's yellow_cards FOR (recent-5 vs all-prior divergence). The mechanism requires both observables to be elevated simultaneously \u2014 the joint signal is richer than either single observable's recent-vs-prior divergence alone. The outcome of interest is cards_2h FOR (second-half cards), which is also available for both teams.",
+          "data_resolution_required": "half",
+          "evidence_refs": [
+           "E:TEAM_A:fouls:FOR:FULL_MATCH:ALL:ALL_PRIOR",
+           "E:TEAM_A:fouls:FOR:FULL_MATCH:ALL:RECENT_5",
+           "E:TEAM_A:yellow_cards:FOR:FULL_MATCH:ALL:ALL_PRIOR",
+           "E:TEAM_A:yellow_cards:FOR:FULL_MATCH:ALL:RECENT_5",
+           "E:TEAM_A:cards_2h:FOR:SECOND_HALF:ALL:ALL_PRIOR",
+           "E:COMPETITION_CONTEXT:fouls:NEUTRAL:FULL_MATCH:ALL:ALL_PRIOR",
+           "E:COMPETITION_CONTEXT:yellow_cards:NEUTRAL:FULL_MATCH:ALL:ALL_PRIOR",
+           "E:COMPETITION_CONTEXT:cards_2h:NEUTRAL:SECOND_HALF:ALL:ALL_PRIOR"
+          ],
+          "expected_relationship_to_test": "When a team's recent fouls committed and recent yellow cards both rise above their long-run averages simultaneously, their second-half card count (cards_2h) rises above what the long-run cards_2h average or either single observable's recent trend would predict in isolation.",
+          "mechanism_id_local": "M4",
+          "mechanism_statement": "Team A's fouls committed have recently surged well above their long-run average and above the competition baseline, while Team A's yellow cards FOR have also risen recently. Jointly, the combination of elevated recent fouls and elevated recent yellow cards FOR \u2014 both diverging from long-run levels simultaneously \u2014 signals a disciplinary regime that conditions second-half card outcomes (cards_2h) beyond what either observable alone predicts.",
+          "observable_variables": [
+           "fouls",
+           "yellow_cards",
+           "cards_2h"
+          ],
+          "provider_requirements": [
+           "fouls",
+           "yellow_cards",
+           "cards_2h"
+          ],
+          "self_overlap_with": [
+           "M3",
+           "M5"
+          ],
+          "why_not_baseline_equivalent": "This is a joint two-observable (fouls and yellow_cards) conditioning on a third observable (cards_2h) with a within-match period split (second half), combining a multi-observable joint signal with a half-level resolution \u2014 not reducible to any single observable with one band."
+         },
+         {
+          "conditioning_logic": "Jointly condition on Team A's offsides AGAINST (all-prior and recent-5, relative to competition baseline) and Team B's offsides FOR (all-prior and recent-5, relative to competition baseline). When both are elevated simultaneously, it signals that Team B's attacking runs are frequently disrupted by Team A's high line, which jointly suppresses Team B's goal opportunities and corner kicks while potentially increasing Team A's transition-based corner and goal opportunities.",
+          "data_resolution_required": "match",
+          "evidence_refs": [
+           "E:TEAM_A:offsides:AGAINST:FULL_MATCH:ALL:ALL_PRIOR",
+           "E:TEAM_A:offsides:AGAINST:FULL_MATCH:ALL:RECENT_5",
+           "E:TEAM_B:offsides:FOR:FULL_MATCH:ALL:ALL_PRIOR",
+           "E:TEAM_B:offsides:FOR:FULL_MATCH:ALL:RECENT_5",
+           "E:COMPETITION_CONTEXT:offsides:NEUTRAL:FULL_MATCH:ALL:ALL_PRIOR",
+           "E:TEAM_B:corner_kicks:FOR:FULL_MATCH:ALL:ALL_PRIOR",
+           "E:TEAM_B:goals:FOR:FULL_MATCH:ALL:ALL_PRIOR"
+          ],
+          "expected_relationship_to_test": "When the defending team's offsides AGAINST rate is elevated above the competition baseline and the attacking team's offsides FOR rate is also elevated, the attacking team's goals FOR and corner_kicks FOR are suppressed relative to what their shot volume or possession share alone would predict.",
+          "mechanism_id_local": "M5",
+          "mechanism_statement": "Team A's offsides AGAINST (opponents caught offside against Team A's defensive line) is substantially higher than the competition average and has risen further in recent matches, while Team B's offsides FOR (Team B caught offside) is also elevated relative to the competition average. The joint signal \u2014 Team A's high defensive line trapping opponents offside, combined with Team B's own tendency to be caught offside \u2014 creates a two-dimensional offside trap interaction that conditions corner kick and goal outcomes differently than either team's offside rate alone.",
+          "observable_variables": [
+           "offsides",
+           "corner_kicks",
+           "goals"
+          ],
+          "provider_requirements": [
+           "offsides",
+           "corner_kicks",
+           "goals"
+          ],
+          "self_overlap_with": [
+           "M4"
+          ],
+          "why_not_baseline_equivalent": "This involves two distinct opponent-descriptor dimensions simultaneously (Team A's defensive line behavior measured via offsides AGAINST, and Team B's attacking run behavior measured via offsides FOR), jointly conditioning a third observable (goals/corners) \u2014 not reducible to a single observable with one band."
+         }
+        ]
+       },
+       "name": "emit_item6_mechanisms",
+       "toolUseId": "tooluse_GGVjKX7lKQUJq18g22z77E",
+       "type": "tool_use"
+      }
+     }
+    ],
+    "role": "assistant"
+   }
+  },
+  "stopReason": "tool_use",
+  "usage": {
+   "cacheReadInputTokens": 0,
+   "cacheWriteInputTokens": 0,
+   "inputTokens": 12045,
+   "outputTokens": 3338,
+   "totalTokens": 15383
+  }
+ },
+ "request_sha256": "8c77b9fdc84885bd365a9028ef0743707d441d6ec1fb6592ad4438a19f586c2d",
+ "resolved_model_id": null,
+ "runner_version": "item6_stage1_runner_v2",
+ "usage": {
+  "cacheReadInputTokens": 0,
+  "cacheWriteInputTokens": 0,
+  "inputTokens": 12045,
+  "outputTokens": 3338,
+  "totalTokens": 15383
+ }
+}

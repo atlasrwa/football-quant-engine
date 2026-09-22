@@ -1,0 +1,206 @@
+{
+ "count_input_sha256": "8a82ea886e3a9f735877984ce95925e5a66e5a6a005025cb8e3f8439a437fa30",
+ "fixture_id": "i6_8558068",
+ "provider_counted_input_tokens": 12066,
+ "raw_response": {
+  "ResponseMetadata": {
+   "HTTPHeaders": {
+    "connection": "keep-alive",
+    "content-length": "8818",
+    "content-type": "application/json",
+    "date": "Tue, 22 Sep 2026 17:11:47 GMT",
+    "x-amzn-requestid": "35067d52-e802-4ea2-ac60-2b014ea2c9d6"
+   },
+   "HTTPStatusCode": 200,
+   "MaxAttemptsReached": true,
+   "RequestId": "35067d52-e802-4ea2-ac60-2b014ea2c9d6",
+   "RetryAttempts": 0
+  },
+  "_item6_live_transport": {
+   "authentic_provider_response": true,
+   "aws_request_id": "35067d52-e802-4ea2-ac60-2b014ea2c9d6",
+   "converse_model_id": "us.anthropic.claude-sonnet-4-6",
+   "count_model_id": "anthropic.claude-sonnet-4-6",
+   "envelope_sha256": "ee8a4cfd6df15f9bc2a1efbb8ece45917a8aa08ec6b9c99415bc0e333d907798",
+   "http_status": 200,
+   "provider": "aws_bedrock",
+   "transport_version": "item6_bedrock_transport_v1"
+  },
+  "metrics": {
+   "latencyMs": 28120
+  },
+  "output": {
+   "message": {
+    "content": [
+     {
+      "toolUse": {
+       "input": {
+        "fixture_id": "i6_8558068",
+        "mechanisms": [
+         {
+          "conditioning_logic": "Jointly condition on (a) Team A's possession FOR being above its own long-run mean and (b) Team B's corner_kicks AGAINST being above the competition context mean. Both conditions must hold simultaneously \u2014 neither alone is sufficient.",
+          "data_resolution_required": "match",
+          "evidence_refs": [
+           "E:TEAM_A:possession:FOR:FULL_MATCH:ALL:ALL_PRIOR",
+           "E:TEAM_A:possession:FOR:FULL_MATCH:ALL:RECENT_5",
+           "E:TEAM_A:corner_kicks:FOR:FULL_MATCH:ALL:ALL_PRIOR",
+           "E:TEAM_B:corner_kicks:AGAINST:FULL_MATCH:ALL:ALL_PRIOR",
+           "E:COMPETITION_CONTEXT:corner_kicks:NEUTRAL:FULL_MATCH:ALL:ALL_PRIOR",
+           "E:COMPETITION_CONTEXT:possession:NEUTRAL:FULL_MATCH:ALL:ALL_PRIOR"
+          ],
+          "expected_relationship_to_test": "Team A corner_kicks FOR rises when both conditions are met, and the joint effect exceeds the sum of each single-condition effect.",
+          "mechanism_id_local": "M1",
+          "mechanism_statement": "Team A's corner-kick production is jointly conditioned on both its own possession dominance and the opponent's (Team B's) corner-kick concession rate: when Team A holds elevated possession AND faces a side that concedes above-average corners, Team A's corner output rises beyond what either dimension alone would predict.",
+          "observable_variables": [
+           "corner_kicks",
+           "possession"
+          ],
+          "provider_requirements": [
+           "corner_kicks",
+           "possession"
+          ],
+          "self_overlap_with": [
+           "M2"
+          ],
+          "why_not_baseline_equivalent": "This requires two distinct observables (possession and corner_kicks) from two different teams to be evaluated jointly. It is not reducible to one observable with one coarse band \u2014 it is a genuine two-observable, cross-team interaction."
+         },
+         {
+          "conditioning_logic": "Compare Team A's corner_kicks FOR FIRST_HALF vs SECOND_HALF split, conditioned on whether Team B's possession FOR is below the competition context mean (indicating Team B typically cedes possession). The within-match half-level split is the key structural element.",
+          "data_resolution_required": "half",
+          "evidence_refs": [
+           "E:TEAM_A:corner_kicks:FOR:FIRST_HALF:ALL:ALL_PRIOR",
+           "E:TEAM_A:corner_kicks:FOR:SECOND_HALF:ALL:ALL_PRIOR",
+           "E:TEAM_B:possession:FOR:FULL_MATCH:ALL:ALL_PRIOR",
+           "E:TEAM_B:possession:FOR:FULL_MATCH:ALL:RECENT_5",
+           "E:COMPETITION_CONTEXT:possession:NEUTRAL:FULL_MATCH:ALL:ALL_PRIOR"
+          ],
+          "expected_relationship_to_test": "When Team B's possession FOR is suppressed relative to competition context, Team A's ratio of first-half corners to second-half corners rises (corners are less back-loaded) compared to matches where Team B holds more possession.",
+          "mechanism_id_local": "M2",
+          "mechanism_statement": "Team A's first-half corner production relative to its second-half corner production shifts depending on Team B's possession tendency: when Team B typically concedes high possession (i.e., plays low-block), Team A's corner generation is more evenly distributed across halves rather than back-loaded.",
+          "observable_variables": [
+           "corner_kicks",
+           "possession"
+          ],
+          "provider_requirements": [
+           "corner_kicks",
+           "possession"
+          ],
+          "self_overlap_with": [
+           "M1"
+          ],
+          "why_not_baseline_equivalent": "This is a within-match half-level split (first half vs second half corner distribution) conditioned on a cross-team possession dimension \u2014 requiring two distinct observables across two teams and a half-resolution split. Not reducible to a single observable with one band."
+         },
+         {
+          "conditioning_logic": "Jointly condition on (a) Team A's shots_on_target AGAINST being below competition context mean and (b) Team A's possession FOR being above competition context mean. Evaluate Team B's shots_on_target FOR under this joint condition versus either condition alone.",
+          "data_resolution_required": "match",
+          "evidence_refs": [
+           "E:TEAM_A:shots_on_target:AGAINST:FULL_MATCH:ALL:ALL_PRIOR",
+           "E:TEAM_A:shots_on_target:AGAINST:FULL_MATCH:ALL:RECENT_5",
+           "E:TEAM_A:possession:FOR:FULL_MATCH:ALL:ALL_PRIOR",
+           "E:TEAM_A:possession:FOR:FULL_MATCH:ALL:RECENT_5",
+           "E:TEAM_B:shots_on_target:FOR:FULL_MATCH:ALL:ALL_PRIOR",
+           "E:TEAM_B:shots_on_target:FOR:FULL_MATCH:ALL:RECENT_5",
+           "E:COMPETITION_CONTEXT:shots_on_target:NEUTRAL:FULL_MATCH:ALL:ALL_PRIOR"
+          ],
+          "expected_relationship_to_test": "Team B's shots_on_target FOR is more suppressed under the joint condition than under either single condition, indicating a compounding cross-observable interaction.",
+          "mechanism_id_local": "M3",
+          "mechanism_statement": "Team B's shots-on-target production is jointly suppressed when Team A's shots-on-target allowed is low AND Team A's possession dominance is high: the combination of a possession-heavy opponent that also concedes few shots on target creates a compounding suppression on Team B's attacking output.",
+          "observable_variables": [
+           "shots_on_target",
+           "possession"
+          ],
+          "provider_requirements": [
+           "shots_on_target",
+           "possession"
+          ],
+          "self_overlap_with": [
+           "M4"
+          ],
+          "why_not_baseline_equivalent": "Requires two distinct observables (shots_on_target and possession) evaluated jointly across both teams. Not a single-observable mirror or a single-band split."
+         },
+         {
+          "conditioning_logic": "Jointly condition on (a) Team B's fouls FOR being above competition context mean and (b) Team A's possession FOR being above competition context mean. Evaluate Team B's cards_2h FOR under this joint condition versus each single condition.",
+          "data_resolution_required": "half",
+          "evidence_refs": [
+           "E:TEAM_B:cards_2h:FOR:SECOND_HALF:ALL:ALL_PRIOR",
+           "E:TEAM_B:fouls:FOR:FULL_MATCH:ALL:ALL_PRIOR",
+           "E:TEAM_B:fouls:FOR:FULL_MATCH:ALL:RECENT_5",
+           "E:TEAM_A:possession:FOR:FULL_MATCH:ALL:ALL_PRIOR",
+           "E:TEAM_A:possession:FOR:FULL_MATCH:ALL:RECENT_5",
+           "E:COMPETITION_CONTEXT:cards_2h:NEUTRAL:SECOND_HALF:ALL:ALL_PRIOR",
+           "E:COMPETITION_CONTEXT:fouls:NEUTRAL:FULL_MATCH:ALL:ALL_PRIOR"
+          ],
+          "expected_relationship_to_test": "Team B's cards_2h FOR rises more steeply under the joint condition (high fouls AND facing high-possession opponent) than under either condition alone, indicating a non-additive interaction between foul tendency and possession pressure.",
+          "mechanism_id_local": "M4",
+          "mechanism_statement": "Team B's second-half card accumulation (cards_2h) is jointly related to both Team B's foul rate FOR and Team A's possession dominance: when Team B commits fouls at an elevated rate against a possession-heavy Team A, second-half card accumulation for Team B rises beyond what either foul rate or possession differential alone would predict.",
+          "observable_variables": [
+           "cards_2h",
+           "fouls",
+           "possession"
+          ],
+          "provider_requirements": [
+           "cards_2h",
+           "fouls",
+           "possession"
+          ],
+          "self_overlap_with": [
+           "M3"
+          ],
+          "why_not_baseline_equivalent": "Involves three distinct observables (cards_2h, fouls, possession) across two teams, with a within-match period restriction (second half). Not reducible to any single-observable mirror or single-band split."
+         },
+         {
+          "conditioning_logic": "Compare Team A's goals FOR FIRST_HALF vs SECOND_HALF ratio, conditioned on whether Team B's fouls FOR is above the competition context mean. The within-match half-level split in goals is the key structural element, conditioned on an opponent's foul-rate dimension.",
+          "data_resolution_required": "half",
+          "evidence_refs": [
+           "E:TEAM_A:goals:FOR:FIRST_HALF:ALL:ALL_PRIOR",
+           "E:TEAM_A:goals:FOR:SECOND_HALF:ALL:ALL_PRIOR",
+           "E:TEAM_B:fouls:FOR:FULL_MATCH:ALL:ALL_PRIOR",
+           "E:TEAM_B:fouls:FOR:FULL_MATCH:ALL:RECENT_5",
+           "E:COMPETITION_CONTEXT:fouls:NEUTRAL:FULL_MATCH:ALL:ALL_PRIOR",
+           "E:COMPETITION_CONTEXT:goals:NEUTRAL:FULL_MATCH:ALL:ALL_PRIOR"
+          ],
+          "expected_relationship_to_test": "When Team B's fouls FOR exceeds the competition context mean, Team A's second-half goals FOR rises relative to first-half goals FOR \u2014 the ratio of second-half to first-half goals for Team A is higher in high-foul-opponent contexts than in low-foul-opponent contexts.",
+          "mechanism_id_local": "M5",
+          "mechanism_statement": "Team A's goal scoring rate in the second half relative to the first half is asymmetrically related to Team B's defensive foul rate: when Team B commits fouls at a high rate (disrupting Team A's build-up), Team A's goals shift toward the second half rather than being evenly distributed, suggesting a threshold-like adaptation effect across halves.",
+          "observable_variables": [
+           "goals",
+           "fouls"
+          ],
+          "provider_requirements": [
+           "goals",
+           "fouls"
+          ],
+          "self_overlap_with": [],
+          "why_not_baseline_equivalent": "Requires a within-match half-level split on goals conditioned on a cross-team foul-rate dimension \u2014 two distinct observables (goals and fouls) across two teams with half-resolution. Not a single-observable mirror or single-band split."
+         }
+        ]
+       },
+       "name": "emit_item6_mechanisms",
+       "toolUseId": "tooluse_QhVn6uF36cstRsNfvFuoLC",
+       "type": "tool_use"
+      }
+     }
+    ],
+    "role": "assistant"
+   }
+  },
+  "stopReason": "tool_use",
+  "usage": {
+   "cacheReadInputTokens": 0,
+   "cacheWriteInputTokens": 0,
+   "inputTokens": 12049,
+   "outputTokens": 2679,
+   "totalTokens": 14728
+  }
+ },
+ "request_sha256": "fa2e96cd21d91f2bf87dc8d2f7a95961f37165443c5ebf259e26c54db0a22855",
+ "resolved_model_id": null,
+ "runner_version": "item6_stage1_runner_v2",
+ "usage": {
+  "cacheReadInputTokens": 0,
+  "cacheWriteInputTokens": 0,
+  "inputTokens": 12049,
+  "outputTokens": 2679,
+  "totalTokens": 14728
+ }
+}

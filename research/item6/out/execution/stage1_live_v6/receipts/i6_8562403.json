@@ -1,0 +1,194 @@
+{
+ "count_input_sha256": "9d5dbf7a600ccd0841fdc01df5f4b91418a00a8aca1114b218e1c50ac5d2fa14",
+ "fixture_id": "i6_8562403",
+ "provider_counted_input_tokens": 12065,
+ "raw_response": {
+  "ResponseMetadata": {
+   "HTTPHeaders": {
+    "connection": "keep-alive",
+    "content-length": "10940",
+    "content-type": "application/json",
+    "date": "Tue, 22 Sep 2026 16:48:23 GMT",
+    "x-amzn-requestid": "935ce6ff-5640-482e-9ea8-e86407c6633b"
+   },
+   "HTTPStatusCode": 200,
+   "MaxAttemptsReached": true,
+   "RequestId": "935ce6ff-5640-482e-9ea8-e86407c6633b",
+   "RetryAttempts": 0
+  },
+  "_item6_live_transport": {
+   "authentic_provider_response": true,
+   "aws_request_id": "935ce6ff-5640-482e-9ea8-e86407c6633b",
+   "converse_model_id": "us.anthropic.claude-sonnet-4-6",
+   "count_model_id": "anthropic.claude-sonnet-4-6",
+   "envelope_sha256": "9f1ec69bdbf342c73c2c30d6af0e9cc3de51eecd9ebc5c26e191a098f2e3e4a5",
+   "http_status": 200,
+   "provider": "aws_bedrock",
+   "transport_version": "item6_bedrock_transport_v1"
+  },
+  "metrics": {
+   "latencyMs": 39419
+  },
+  "output": {
+   "message": {
+    "content": [
+     {
+      "toolUse": {
+       "input": {
+        "fixture_id": "i6_8562403",
+        "mechanisms": [
+         {
+          "conditioning_logic": "Joint conditioning on (a) Team B's long-run possession advantage over Team A (all-prior) AND (b) the direction of Team A's recent possession shift relative to its own baseline. Both dimensions must be active simultaneously \u2014 not one at a time.",
+          "data_resolution_required": "match",
+          "evidence_refs": [
+           "E:TEAM_B:possession:FOR:FULL_MATCH:ALL:ALL_PRIOR",
+           "E:TEAM_B:possession:FOR:FULL_MATCH:ALL:RECENT_5",
+           "E:TEAM_A:possession:FOR:FULL_MATCH:ALL:ALL_PRIOR",
+           "E:TEAM_A:possession:FOR:FULL_MATCH:ALL:RECENT_5",
+           "E:TEAM_A:corner_kicks:FOR:FULL_MATCH:ALL:ALL_PRIOR",
+           "E:TEAM_A:corner_kicks:FOR:FULL_MATCH:ALL:RECENT_5",
+           "E:TEAM_B:corner_kicks:FOR:FULL_MATCH:ALL:ALL_PRIOR",
+           "E:TEAM_B:corner_kicks:FOR:FULL_MATCH:ALL:RECENT_5"
+          ],
+          "expected_relationship_to_test": "Total corner-kick volume rises when the possession differential between a structurally dominant-possession team and its opponent narrows in recent matches, relative to matches where the differential is stable or widening.",
+          "mechanism_id_local": "M1",
+          "mechanism_statement": "When a high-possession team (Team B, ~58% all-prior) faces a team whose recent possession share has shifted upward relative to its own long-run average (Team A: 48.3% all-prior vs 51.8% recent-5), the joint interaction between Team B's structural possession dominance and Team A's recent possession uplift conditions the total corner-kick volume differently than either team's corner rate alone would predict. Specifically, the combined corner production of both sides should be examined as a function of the possession differential between the two teams across the two time windows simultaneously.",
+          "observable_variables": [
+           "possession",
+           "corner_kicks"
+          ],
+          "provider_requirements": [
+           "possession",
+           "corner_kicks"
+          ],
+          "self_overlap_with": [],
+          "why_not_baseline_equivalent": "This requires jointly conditioning on two distinct observables (possession and corners) across two distinct time windows (all-prior vs recent-5) for two different teams simultaneously. It is not reducible to a single observable with one coarse band, nor to a simple home/away or competition split."
+         },
+         {
+          "conditioning_logic": "Condition jointly on: (a) the attacking team's (Team B) ratio of second-half to first-half goals FOR, and (b) the defending team's (Team A) ratio of second-half to first-half goals AGAINST. Both half-level splits for both teams must be active simultaneously.",
+          "data_resolution_required": "half",
+          "evidence_refs": [
+           "E:TEAM_B:goals:FOR:FIRST_HALF:ALL:ALL_PRIOR",
+           "E:TEAM_B:goals:FOR:SECOND_HALF:ALL:ALL_PRIOR",
+           "E:TEAM_A:goals:AGAINST:FIRST_HALF:ALL:ALL_PRIOR",
+           "E:TEAM_A:goals:AGAINST:SECOND_HALF:ALL:ALL_PRIOR"
+          ],
+          "expected_relationship_to_test": "Second-half goal volume rises when both the attacking team's second-half scoring uplift and the defending team's second-half defensive deterioration are jointly present, relative to matches where only one or neither condition holds.",
+          "mechanism_id_local": "M2",
+          "mechanism_statement": "Team B exhibits a pronounced asymmetry between its first-half and second-half goal-scoring rates (0.667 1H vs 0.901 2H FOR, all-prior), while Team A's goals-against are also split across halves (0.694 1H vs 0.778 2H). The joint relationship between Team B's half-level goal-scoring profile and Team A's half-level defensive concession profile \u2014 specifically whether Team B's second-half scoring uplift is amplified or suppressed when facing a team that concedes more in the second half \u2014 is a within-match, cross-team asymmetric mechanism not captured by any single-observable baseline.",
+          "observable_variables": [
+           "goals"
+          ],
+          "provider_requirements": [
+           "goals"
+          ],
+          "self_overlap_with": [],
+          "why_not_baseline_equivalent": "This is a within-match state (half-level) mechanism that is asymmetric across two different teams' observables (Team B FOR vs Team A AGAINST), requiring joint conditioning on two half-level splits from two sides. It cannot be reduced to a single observable with one band."
+         },
+         {
+          "conditioning_logic": "Condition jointly on: (a) Team B's recent-5 foul rate relative to its own all-prior baseline (regime shift upward), AND (b) Team A's recent-5 fouls-against relative to its own all-prior baseline (regime shift upward). Both regime shifts must be jointly present and measured against each team's own baseline \u2014 not against a competition average.",
+          "data_resolution_required": "half",
+          "evidence_refs": [
+           "E:TEAM_B:fouls:FOR:FULL_MATCH:ALL:ALL_PRIOR",
+           "E:TEAM_B:fouls:FOR:FULL_MATCH:ALL:RECENT_5",
+           "E:TEAM_A:fouls:AGAINST:FULL_MATCH:ALL:ALL_PRIOR",
+           "E:TEAM_A:fouls:AGAINST:FULL_MATCH:ALL:RECENT_5",
+           "E:TEAM_A:cards_2h:AGAINST:SECOND_HALF:ALL:ALL_PRIOR",
+           "E:TEAM_B:cards_2h:FOR:SECOND_HALF:ALL:ALL_PRIOR"
+          ],
+          "expected_relationship_to_test": "Second-half card volume rises when both the fouling team's recent foul rate and the fouled team's recent fouls-received rate are simultaneously elevated above their respective long-run baselines.",
+          "mechanism_id_local": "M3",
+          "mechanism_statement": "Team A's foul rate has increased sharply in recent matches (10.6 recent-5 FOR vs 10.8 all-prior FOR, stable) while the fouls conceded against Team A have risen more markedly (14.4 recent-5 AGAINST vs 12.2 all-prior AGAINST). Team B's foul rate has also shifted dramatically in recent matches (14.0 recent-5 FOR vs 10.3 all-prior FOR). The joint interaction between Team B's recent foul-rate surge and Team A's recent increase in fouls received \u2014 both deviating from their own baselines in the same direction \u2014 conditions second-half card volume (cards_2h) in a way that neither team's foul rate alone predicts.",
+          "observable_variables": [
+           "fouls",
+           "cards_2h"
+          ],
+          "provider_requirements": [
+           "fouls",
+           "cards_2h"
+          ],
+          "self_overlap_with": [],
+          "why_not_baseline_equivalent": "This involves two distinct observables (fouls and cards_2h), two teams' regime shifts measured against their own baselines simultaneously, and a within-match period (second half). It is not reducible to a single observable with one coarse band."
+         },
+         {
+          "conditioning_logic": "Condition jointly on: (a) the direction of a team's recent possession shift relative to its own all-prior baseline (compression vs expansion), AND (b) the direction of its recent shots-volume shift relative to its own all-prior baseline. The interaction of these two regime directions \u2014 specifically the case where shots surge while possession compresses \u2014 is the conditioning event.",
+          "data_resolution_required": "match",
+          "evidence_refs": [
+           "E:TEAM_B:possession:FOR:FULL_MATCH:ALL:ALL_PRIOR",
+           "E:TEAM_B:possession:FOR:FULL_MATCH:ALL:RECENT_5",
+           "E:TEAM_B:shots:FOR:FULL_MATCH:ALL:ALL_PRIOR",
+           "E:TEAM_B:shots:FOR:FULL_MATCH:ALL:RECENT_5",
+           "E:TEAM_B:shots_on_target:FOR:FULL_MATCH:ALL:ALL_PRIOR",
+           "E:TEAM_B:shots_on_target:FOR:FULL_MATCH:ALL:RECENT_5"
+          ],
+          "expected_relationship_to_test": "The shots-on-target share of total shots is suppressed when a team's shot volume surges in recent matches while its possession share simultaneously compresses relative to its own baseline, compared to matches where both move in the same direction.",
+          "mechanism_id_local": "M4",
+          "mechanism_statement": "Team B has a strong structural possession advantage (~58% all-prior FOR) but its recent possession share has compressed toward 53.2% (recent-5), while Team A's recent possession has risen to 51.8% (recent-5) from 48.3% (all-prior). Simultaneously, Team B's shots volume has surged in recent matches (19.4 recent-5 vs 14.5 all-prior FOR) while its shots-on-target conversion rate (shots_on_target / shots) can be computed across both windows. The joint relationship between a team's recent possession compression and its simultaneous shot-volume surge \u2014 i.e., whether increased shot volume without possession growth reflects a lower-quality shot profile \u2014 conditions the shots-to-shots-on-target ratio in a non-linear way.",
+          "observable_variables": [
+           "possession",
+           "shots",
+           "shots_on_target"
+          ],
+          "provider_requirements": [
+           "possession",
+           "shots",
+           "shots_on_target"
+          ],
+          "self_overlap_with": [
+           "M1"
+          ],
+          "why_not_baseline_equivalent": "This is a genuine joint relationship among three distinct observables (possession, shots, shots_on_target) with a non-linear/threshold structure (the divergence between possession and shot-volume regime directions). It cannot be reduced to any single observable with one band."
+         },
+         {
+          "conditioning_logic": "Condition jointly on: (a) Team B's recent-5 offside rate FOR relative to its own all-prior baseline (regime shift upward), AND (b) Team A's home vs away offside-drawn differential (AGAINST: HOME vs AWAY). Both dimensions \u2014 Team B's recent regime and Team A's venue-specific defensive line behavior \u2014 must be active simultaneously in a home fixture context.",
+          "data_resolution_required": "match",
+          "evidence_refs": [
+           "E:TEAM_B:offsides:FOR:FULL_MATCH:ALL:ALL_PRIOR",
+           "E:TEAM_B:offsides:FOR:FULL_MATCH:ALL:RECENT_5",
+           "E:TEAM_A:offsides:AGAINST:FULL_MATCH:ALL:ALL_PRIOR",
+           "E:TEAM_A:offsides:FOR:FULL_MATCH:HOME:ALL_PRIOR",
+           "E:TEAM_A:offsides:FOR:FULL_MATCH:AWAY:ALL_PRIOR"
+          ],
+          "expected_relationship_to_test": "Team B's offsides FOR are amplified in matches where Team A's home defensive line draws significantly more offsides than its away line AND Team B's own recent offside rate is already elevated above its baseline, relative to matches where only one condition holds.",
+          "mechanism_id_local": "M5",
+          "mechanism_statement": "Team A's offside rate away from home (1.059 all-prior AWAY) is substantially lower than at home (1.882 all-prior HOME), while Team B's offside rate FOR is elevated in recent matches (3.0 recent-5 vs 1.835 all-prior). The asymmetric interaction between Team B's recent offside surge and Team A's venue-conditioned defensive line depth (proxied by offsides drawn AGAINST) \u2014 where Team A draws more offsides at home than away \u2014 jointly conditions whether Team B's recent offside surge is amplified or suppressed in this specific home context. This is an asymmetric cross-team mechanism involving two distinct observables (offsides FOR for Team B, offsides AGAINST for Team A) conditioned on venue simultaneously.",
+          "observable_variables": [
+           "offsides"
+          ],
+          "provider_requirements": [
+           "offsides"
+          ],
+          "self_overlap_with": [],
+          "why_not_baseline_equivalent": "This involves two distinct teams' offside observables (Team B FOR and Team A AGAINST) conditioned simultaneously on two dimensions: Team B's recent regime shift and Team A's venue-specific differential. It is not a single observable with one band, and the asymmetry across teams' roles (attacker vs defender) makes it structurally richer than any mirror comparison."
+         }
+        ]
+       },
+       "name": "emit_item6_mechanisms",
+       "toolUseId": "tooluse_ZjsJqYP54KpE5jnDd6rGf5",
+       "type": "tool_use"
+      }
+     }
+    ],
+    "role": "assistant"
+   }
+  },
+  "stopReason": "tool_use",
+  "usage": {
+   "cacheReadInputTokens": 0,
+   "cacheWriteInputTokens": 0,
+   "inputTokens": 12048,
+   "outputTokens": 3199,
+   "totalTokens": 15247
+  }
+ },
+ "request_sha256": "755c08a8234ba65a166713fa5f590792aa86da6490858ef4a9b9b40d7ee79def",
+ "resolved_model_id": null,
+ "runner_version": "item6_stage1_runner_v2",
+ "usage": {
+  "cacheReadInputTokens": 0,
+  "cacheWriteInputTokens": 0,
+  "inputTokens": 12048,
+  "outputTokens": 3199,
+  "totalTokens": 15247
+ }
+}

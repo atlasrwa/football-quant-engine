@@ -1,0 +1,211 @@
+{
+ "count_input_sha256": "7c0a82462ffb2b3343850e5ebc4befba16663bee3026d93fb41aeb9d70700298",
+ "fixture_id": "i6_8412449",
+ "provider_counted_input_tokens": 12067,
+ "raw_response": {
+  "ResponseMetadata": {
+   "HTTPHeaders": {
+    "connection": "keep-alive",
+    "content-length": "10119",
+    "content-type": "application/json",
+    "date": "Tue, 22 Sep 2026 23:12:38 GMT",
+    "x-amzn-requestid": "5c234769-5f13-4eb6-a686-967ef346e06e"
+   },
+   "HTTPStatusCode": 200,
+   "MaxAttemptsReached": true,
+   "RequestId": "5c234769-5f13-4eb6-a686-967ef346e06e",
+   "RetryAttempts": 0
+  },
+  "_item6_live_transport": {
+   "authentic_provider_response": true,
+   "aws_request_id": "5c234769-5f13-4eb6-a686-967ef346e06e",
+   "converse_model_id": "us.anthropic.claude-sonnet-4-6",
+   "count_model_id": "anthropic.claude-sonnet-4-6",
+   "envelope_sha256": "1f7fa623db672110f08a550f83f264f7b709038698010bac0cdb63d607445ba5",
+   "http_status": 200,
+   "provider": "aws_bedrock",
+   "transport_version": "item6_bedrock_transport_v1"
+  },
+  "metrics": {
+   "latencyMs": 34165
+  },
+  "output": {
+   "message": {
+    "content": [
+     {
+      "toolUse": {
+       "input": {
+        "fixture_id": "i6_8412449",
+        "mechanisms": [
+         {
+          "conditioning_logic": "Jointly condition on Team A's shots FOR vs AGAINST differential AND Team B's goals FOR relative to shots FOR (conversion ratio). The mechanism asks whether the cross-team asymmetry \u2014 high shot generator (Team A) facing a low-conversion attacker (Team B) \u2014 produces a systematically different goals total than either team's shot or goal averages alone would imply.",
+          "data_resolution_required": "match",
+          "evidence_refs": [
+           "E:TEAM_A:shots:FOR:FULL_MATCH:ALL:ALL_PRIOR",
+           "E:TEAM_A:shots:AGAINST:FULL_MATCH:ALL:ALL_PRIOR",
+           "E:TEAM_B:goals:FOR:FULL_MATCH:ALL:ALL_PRIOR",
+           "E:TEAM_B:shots:FOR:FULL_MATCH:ALL:ALL_PRIOR",
+           "E:TEAM_A:goals:FOR:FULL_MATCH:ALL:ALL_PRIOR",
+           "E:TEAM_A:shots_on_target:FOR:FULL_MATCH:ALL:ALL_PRIOR",
+           "E:TEAM_B:shots_on_target:FOR:FULL_MATCH:ALL:ALL_PRIOR"
+          ],
+          "expected_relationship_to_test": "Total goals rises with shot volume only when conversion efficiency (goals per shot) is also elevated; when one side has high shots but low conversion, total goals is suppressed relative to what shot counts alone predict.",
+          "mechanism_id_local": "M1",
+          "mechanism_statement": "Team A's shot-volume dominance (high shots FOR, low shots AGAINST) jointly with Team B's poor conversion efficiency (goals FOR relative to shots FOR) conditions the total goals outcome: when one side generates many shots but the opposing side converts at a low rate, total goals may not rise proportionally with shot volume.",
+          "observable_variables": [
+           "shots",
+           "shots_on_target",
+           "goals"
+          ],
+          "provider_requirements": [
+           "shots",
+           "shots_on_target",
+           "goals"
+          ],
+          "self_overlap_with": [
+           "M2"
+          ],
+          "why_not_baseline_equivalent": "This is a joint relationship across two distinct observables (shots and goals) for two different sides simultaneously. It cannot be reduced to a single observable mirror or a single observable with one coarse band \u2014 it requires measuring the interaction between Team A's shot generation and Team B's conversion rate as a joint conditioning structure."
+         },
+         {
+          "conditioning_logic": "Jointly condition on Team A's shots_on_target FOR (high, above competition context) and Team B's shots_on_target AGAINST (also above competition context). The mechanism tests whether the co-occurrence of both conditions \u2014 attacker generates many shots on target AND defender concedes many shots on target \u2014 produces a multiplicative rather than additive effect on goals scored.",
+          "data_resolution_required": "match",
+          "evidence_refs": [
+           "E:TEAM_A:shots_on_target:FOR:FULL_MATCH:ALL:ALL_PRIOR",
+           "E:TEAM_A:shots_on_target:FOR:FULL_MATCH:ALL:RECENT_5",
+           "E:TEAM_B:shots_on_target:AGAINST:FULL_MATCH:ALL:ALL_PRIOR",
+           "E:TEAM_B:shots_on_target:AGAINST:FULL_MATCH:ALL:RECENT_5",
+           "E:TEAM_A:goals:FOR:FULL_MATCH:ALL:ALL_PRIOR",
+           "E:TEAM_B:goals:AGAINST:FULL_MATCH:ALL:ALL_PRIOR"
+          ],
+          "expected_relationship_to_test": "Goals FOR for the attacking team rises more steeply when both the attacker's shots_on_target FOR and the defender's shots_on_target AGAINST are simultaneously elevated, compared to when only one condition holds.",
+          "mechanism_id_local": "M2",
+          "mechanism_statement": "Team A's shots-on-target FOR versus Team B's shots-on-target AGAINST jointly determine whether Team A's high goal-scoring rate is sustained: when a high-volume attacking team faces a side that concedes many shots on target, the attacking team's goals FOR should be elevated beyond what either observable alone predicts.",
+          "observable_variables": [
+           "shots_on_target",
+           "goals"
+          ],
+          "provider_requirements": [
+           "shots_on_target",
+           "goals"
+          ],
+          "self_overlap_with": [
+           "M1"
+          ],
+          "why_not_baseline_equivalent": "This is a genuine joint relationship between two distinct observables (shots_on_target and goals) across two sides. It is not a single-observable mirror (shots_on_target FOR vs AGAINST for the same team) nor a single observable with one coarse band \u2014 it requires the simultaneous conditioning on both Team A's attacking output and Team B's defensive concession of shots on target."
+         },
+         {
+          "conditioning_logic": "Jointly condition on Team A's possession FOR (well above 50%) and Team B's fouls AGAINST (i.e., fouls committed by Team B, which is the fouls AGAINST perspective for Team B's opponents). The mechanism tests whether possession dominance combined with opponent foul pressure jointly drives corner kick generation above what either variable alone implies.",
+          "data_resolution_required": "match",
+          "evidence_refs": [
+           "E:TEAM_A:possession:FOR:FULL_MATCH:ALL:ALL_PRIOR",
+           "E:TEAM_A:possession:FOR:FULL_MATCH:ALL:RECENT_5",
+           "E:TEAM_B:fouls:FOR:FULL_MATCH:ALL:ALL_PRIOR",
+           "E:TEAM_B:fouls:FOR:FULL_MATCH:ALL:RECENT_5",
+           "E:TEAM_A:corner_kicks:FOR:FULL_MATCH:ALL:ALL_PRIOR",
+           "E:TEAM_A:corner_kicks:FOR:FULL_MATCH:ALL:RECENT_5",
+           "E:TEAM_B:corner_kicks:AGAINST:FULL_MATCH:ALL:ALL_PRIOR"
+          ],
+          "expected_relationship_to_test": "Corner kicks FOR the possession-dominant team rise when both possession dominance and opponent foul rate are simultaneously elevated, with the joint effect exceeding what either variable alone predicts.",
+          "mechanism_id_local": "M3",
+          "mechanism_statement": "Team A's possession dominance jointly with Team B's elevated foul rate AGAINST (fouls committed) conditions corner kick generation: when a possession-dominant team faces a side that commits many fouls, corner kicks FOR the dominant team should be elevated beyond what possession or fouls alone predict.",
+          "observable_variables": [
+           "possession",
+           "fouls",
+           "corner_kicks"
+          ],
+          "provider_requirements": [
+           "possession",
+           "fouls",
+           "corner_kicks"
+          ],
+          "self_overlap_with": [],
+          "why_not_baseline_equivalent": "This involves a joint relationship across two distinct observables (possession and fouls) conditioning a third (corner_kicks). It is not reducible to a single-observable mirror or a single coarse band \u2014 it requires measuring the interaction between Team A's possession share and Team B's foul-committing tendency as a joint structure."
+         },
+         {
+          "conditioning_logic": "Condition on the cross-team asymmetry between Team A's goals FOR in the first half and Team B's goals AGAINST in the first half, then test whether this asymmetry (one side likely leading at half-time) is associated with elevated cards_2h for the trailing side in the second half. This uses half-level goal splits to infer match state, then links that state to second-half card accumulation.",
+          "data_resolution_required": "half",
+          "evidence_refs": [
+           "E:TEAM_A:goals:FOR:FIRST_HALF:ALL:ALL_PRIOR",
+           "E:TEAM_B:goals:AGAINST:FIRST_HALF:ALL:ALL_PRIOR",
+           "E:TEAM_A:cards_2h:FOR:SECOND_HALF:ALL:ALL_PRIOR",
+           "E:TEAM_B:cards_2h:FOR:SECOND_HALF:ALL:ALL_PRIOR",
+           "E:COMPETITION_CONTEXT:cards_2h:NEUTRAL:SECOND_HALF:ALL:ALL_PRIOR",
+           "E:TEAM_B:goals:FOR:FIRST_HALF:ALL:ALL_PRIOR",
+           "E:TEAM_A:goals:AGAINST:FIRST_HALF:ALL:ALL_PRIOR"
+          ],
+          "expected_relationship_to_test": "Cards in the second half rise when the first-half goal asymmetry between the two sides is large, as the trailing team increases foul rate under pressure.",
+          "mechanism_id_local": "M4",
+          "mechanism_statement": "The asymmetry between Team A's first-half goal rate FOR and Team B's first-half goal rate AGAINST conditions whether the second-half card rate (cards_2h) is elevated: matches where one side scores heavily in the first half may produce a trailing team that commits more fouls and receives more cards in the second half.",
+          "observable_variables": [
+           "goals",
+           "cards_2h"
+          ],
+          "provider_requirements": [
+           "goals",
+           "cards_2h"
+          ],
+          "self_overlap_with": [],
+          "why_not_baseline_equivalent": "This is a within-match state dependence: it uses first-half goal splits (a half-level observable) to condition second-half card outcomes. It is not a single-observable comparison \u2014 it requires jointly reading first-half goals FOR one side and AGAINST the other to infer match state, then linking that state to a different observable (cards_2h) in the second half."
+         },
+         {
+          "conditioning_logic": "Jointly condition on Team B's offsides FOR AWAY (elevated relative to home) and Team A's possession FOR (dominant). The mechanism tests whether the combination of Team B's away-specific high-offside tendency (indicating a stretched attacking line) and Team A's possession dominance jointly suppresses Team B's shots and goals below what either variable alone predicts.",
+          "data_resolution_required": "match",
+          "evidence_refs": [
+           "E:TEAM_B:offsides:FOR:FULL_MATCH:AWAY:ALL_PRIOR",
+           "E:TEAM_B:offsides:FOR:FULL_MATCH:HOME:ALL_PRIOR",
+           "E:TEAM_A:possession:FOR:FULL_MATCH:ALL:ALL_PRIOR",
+           "E:TEAM_A:possession:FOR:FULL_MATCH:AWAY:ALL_PRIOR",
+           "E:TEAM_B:shots:FOR:FULL_MATCH:AWAY:ALL_PRIOR",
+           "E:TEAM_B:goals:FOR:FULL_MATCH:AWAY:ALL_PRIOR",
+           "E:TEAM_B:offsides:FOR:FULL_MATCH:ALL:ALL_PRIOR"
+          ],
+          "expected_relationship_to_test": "Team B's shots FOR and goals FOR are suppressed when Team B's away offsides rate is elevated and Team A's possession is simultaneously dominant, compared to matches where only one condition holds.",
+          "mechanism_id_local": "M5",
+          "mechanism_statement": "Team B's offsides FOR away versus home split, combined with Team A's possession dominance, conditions Team B's effective attacking threat: when a lower-possession team plays away and generates high offsides, it signals a high-line pressing or counter-attacking style that may be suppressed by a possession-dominant home side, reducing Team B's shots and goals.",
+          "observable_variables": [
+           "offsides",
+           "possession",
+           "shots",
+           "goals"
+          ],
+          "provider_requirements": [
+           "offsides",
+           "possession",
+           "shots",
+           "goals"
+          ],
+          "self_overlap_with": [],
+          "why_not_baseline_equivalent": "This involves two distinct opponent-descriptor dimensions simultaneously: Team B's venue-split offside tendency (away vs home) and Team A's possession dominance. It is not reducible to a single observable with one coarse band \u2014 it requires the joint conditioning on both Team B's away-specific attacking pattern and Team A's possession share."
+         }
+        ]
+       },
+       "name": "emit_item6_mechanisms",
+       "toolUseId": "tooluse_rH9yFA3l5HhgbzXhnM9INU",
+       "type": "tool_use"
+      }
+     }
+    ],
+    "role": "assistant"
+   }
+  },
+  "stopReason": "tool_use",
+  "usage": {
+   "cacheReadInputTokens": 0,
+   "cacheWriteInputTokens": 0,
+   "inputTokens": 12050,
+   "outputTokens": 2993,
+   "totalTokens": 15043
+  }
+ },
+ "request_sha256": "bdbcaf803e92c02f09e1840f1afd6e0e747bbce8593644a6849a4c4a14e3f4ff",
+ "resolved_model_id": null,
+ "runner_version": "item6_stage1_runner_v2",
+ "usage": {
+  "cacheReadInputTokens": 0,
+  "cacheWriteInputTokens": 0,
+  "inputTokens": 12050,
+  "outputTokens": 2993,
+  "totalTokens": 15043
+ }
+}

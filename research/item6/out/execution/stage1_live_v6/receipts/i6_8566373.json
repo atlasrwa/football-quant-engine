@@ -1,0 +1,214 @@
+{
+ "count_input_sha256": "c9b6b6e4280be870dca388ce3b1d9630d33f65589808e02fa92853979e2704b3",
+ "fixture_id": "i6_8566373",
+ "provider_counted_input_tokens": 12063,
+ "raw_response": {
+  "ResponseMetadata": {
+   "HTTPHeaders": {
+    "connection": "keep-alive",
+    "content-length": "11181",
+    "content-type": "application/json",
+    "date": "Tue, 22 Sep 2026 17:01:29 GMT",
+    "x-amzn-requestid": "e8caaaac-0755-4f66-9b6c-d74e605e5f70"
+   },
+   "HTTPStatusCode": 200,
+   "MaxAttemptsReached": true,
+   "RequestId": "e8caaaac-0755-4f66-9b6c-d74e605e5f70",
+   "RetryAttempts": 0
+  },
+  "_item6_live_transport": {
+   "authentic_provider_response": true,
+   "aws_request_id": "e8caaaac-0755-4f66-9b6c-d74e605e5f70",
+   "converse_model_id": "us.anthropic.claude-sonnet-4-6",
+   "count_model_id": "anthropic.claude-sonnet-4-6",
+   "envelope_sha256": "d7c0a4d2d240d5ff51fe4f1fdea39292b3b8f273544a28708fa158caecfa18ee",
+   "http_status": 200,
+   "provider": "aws_bedrock",
+   "transport_version": "item6_bedrock_transport_v1"
+  },
+  "metrics": {
+   "latencyMs": 41367
+  },
+  "output": {
+   "message": {
+    "content": [
+     {
+      "toolUse": {
+       "input": {
+        "fixture_id": "i6_8566373",
+        "mechanisms": [
+         {
+          "conditioning_logic": "Compute the ratio of shots-FOR to possession-FOR for TEAM_A across ALL_PRIOR and RECENT_5 windows; do the same for TEAM_B. Test whether the joint recent-vs-longrun shift in both observables simultaneously (possession up, shots up) reflects a stable or changing shots-per-possession rate, conditioning on both observables together rather than either alone.",
+          "data_resolution_required": "match",
+          "evidence_refs": [
+           "E:TEAM_A:possession:FOR:FULL_MATCH:ALL:ALL_PRIOR",
+           "E:TEAM_A:possession:FOR:FULL_MATCH:ALL:RECENT_5",
+           "E:TEAM_A:shots:FOR:FULL_MATCH:ALL:ALL_PRIOR",
+           "E:TEAM_A:shots:FOR:FULL_MATCH:ALL:RECENT_5",
+           "E:TEAM_B:possession:FOR:FULL_MATCH:ALL:ALL_PRIOR",
+           "E:TEAM_B:possession:FOR:FULL_MATCH:ALL:RECENT_5",
+           "E:TEAM_B:shots:FOR:FULL_MATCH:ALL:ALL_PRIOR",
+           "E:TEAM_B:shots:FOR:FULL_MATCH:ALL:RECENT_5"
+          ],
+          "expected_relationship_to_test": "When a team's recent possession share rises substantially above its long-run mean, its shots-per-possession rate is expected to either rise with it (compounding effect) or saturate/decline (diminishing returns); the direction of this joint shift is what the engine should measure.",
+          "mechanism_id_local": "M1_possession_shift_shots_conversion",
+          "mechanism_statement": "Team A's recent possession share has surged dramatically relative to its long-run average, while its recent shot volume has also risen sharply. The joint relationship between a team's possession-to-shots conversion efficiency (shots produced per unit of possession held) in recent form versus its long-run baseline reveals whether the recent possession gain is translating into proportionally more shots, or whether the conversion rate is saturating or diverging.",
+          "observable_variables": [
+           "possession",
+           "shots"
+          ],
+          "provider_requirements": [
+           "possession",
+           "shots"
+          ],
+          "self_overlap_with": [
+           "M2_shots_on_target_efficiency_joint"
+          ],
+          "why_not_baseline_equivalent": "This requires the joint ratio of two distinct observables (shots and possession) across two time windows simultaneously. It cannot be reduced to a single observable with one conditioning band \u2014 it is a cross-observable rate that must be computed jointly."
+         },
+         {
+          "conditioning_logic": "For each team, compute shots_on_target / shots across ALL_PRIOR and RECENT_5 windows. Test whether the recent increase in shot volume (both teams show higher recent shots) is accompanied by a proportional, improving, or degrading on-target rate \u2014 conditioning on both observables jointly, not either in isolation.",
+          "data_resolution_required": "match",
+          "evidence_refs": [
+           "E:TEAM_A:shots:FOR:FULL_MATCH:ALL:ALL_PRIOR",
+           "E:TEAM_A:shots:FOR:FULL_MATCH:ALL:RECENT_5",
+           "E:TEAM_A:shots_on_target:FOR:FULL_MATCH:ALL:ALL_PRIOR",
+           "E:TEAM_A:shots_on_target:FOR:FULL_MATCH:ALL:RECENT_5",
+           "E:TEAM_B:shots:FOR:FULL_MATCH:ALL:ALL_PRIOR",
+           "E:TEAM_B:shots:FOR:FULL_MATCH:ALL:RECENT_5",
+           "E:TEAM_B:shots_on_target:FOR:FULL_MATCH:ALL:ALL_PRIOR",
+           "E:TEAM_B:shots_on_target:FOR:FULL_MATCH:ALL:RECENT_5"
+          ],
+          "expected_relationship_to_test": "A team whose shot volume rises sharply in recent form is expected to show either a stable, rising, or declining on-target rate; the direction of this joint shift (volume \u00d7 precision) is the testable relationship.",
+          "mechanism_id_local": "M2_shots_on_target_efficiency_joint",
+          "mechanism_statement": "The joint relationship between a team's shots volume and its shots-on-target rate (shots_on_target / shots) captures shooting precision. When both teams show recent surges in shot volume, the team whose on-target rate holds up or improves under higher shot loads is structurally different from one whose precision degrades. This cross-observable joint relationship between shot volume and on-target conversion is not captured by either observable alone.",
+          "observable_variables": [
+           "shots",
+           "shots_on_target"
+          ],
+          "provider_requirements": [
+           "shots",
+           "shots_on_target"
+          ],
+          "self_overlap_with": [
+           "M1_possession_shift_shots_conversion"
+          ],
+          "why_not_baseline_equivalent": "This is a joint ratio across two distinct observables (shots and shots_on_target) compared across time windows. Neither observable alone, nor either compared to a single opponent-descriptor band, captures the precision-under-volume dynamic."
+         },
+         {
+          "conditioning_logic": "Condition jointly on TEAM_A's first-half vs second-half goals-FOR and goals-AGAINST rates alongside TEAM_B's first-half vs second-half goals-FOR and goals-AGAINST rates. The interaction of TEAM_A's second-half scoring tendency with TEAM_B's first-half conceding tendency (and vice versa) is the joint conditioning, not either team's half-split alone.",
+          "data_resolution_required": "half",
+          "evidence_refs": [
+           "E:TEAM_A:goals:FOR:FIRST_HALF:ALL:ALL_PRIOR",
+           "E:TEAM_A:goals:FOR:SECOND_HALF:ALL:ALL_PRIOR",
+           "E:TEAM_A:goals:AGAINST:FIRST_HALF:ALL:ALL_PRIOR",
+           "E:TEAM_A:goals:AGAINST:SECOND_HALF:ALL:ALL_PRIOR",
+           "E:TEAM_B:goals:FOR:FIRST_HALF:ALL:ALL_PRIOR",
+           "E:TEAM_B:goals:FOR:SECOND_HALF:ALL:ALL_PRIOR",
+           "E:TEAM_B:goals:AGAINST:FIRST_HALF:ALL:ALL_PRIOR",
+           "E:TEAM_B:goals:AGAINST:SECOND_HALF:ALL:ALL_PRIOR"
+          ],
+          "expected_relationship_to_test": "When one team is structurally a second-half scorer and the opponent is structurally a first-half conceder, the combined match goal-timing distribution is expected to be more concentrated in specific halves than either team's individual half-split would suggest in isolation.",
+          "mechanism_id_local": "M3_asymmetric_halfwise_goal_distribution",
+          "mechanism_statement": "The two teams show asymmetric within-match goal-scoring distributions across halves. TEAM_A scores and concedes more in the second half than the first, while TEAM_B concedes more in the first half than the second. The joint conditioning on both teams' half-level goal distributions simultaneously \u2014 rather than either team's half split in isolation \u2014 reveals whether the match's goal-timing profile is structurally skewed by the interaction of these asymmetries.",
+          "observable_variables": [
+           "goals"
+          ],
+          "provider_requirements": [
+           "goals"
+          ],
+          "self_overlap_with": [
+           "M4_cards2h_foul_joint_second_half"
+          ],
+          "why_not_baseline_equivalent": "This requires simultaneously conditioning on two distinct opponent-descriptor dimensions (each team's half-level goal distribution) and their interaction. It is not reducible to a single observable with one coarse band, nor to a simple home/away or recent/longrun split."
+         },
+         {
+          "conditioning_logic": "For each team, compute the ratio of cards_2h-FOR to fouls-FOR (all-prior). Then compare this ratio between the two teams and against the competition context. Test whether a team with a higher foul rate also shows a proportionally higher or disproportionately higher second-half card rate \u2014 i.e., whether the foul-to-card conversion in the second half is linear or exhibits a threshold/saturation pattern.",
+          "data_resolution_required": "half",
+          "evidence_refs": [
+           "E:TEAM_A:fouls:FOR:FULL_MATCH:ALL:ALL_PRIOR",
+           "E:TEAM_A:fouls:FOR:FULL_MATCH:ALL:RECENT_5",
+           "E:TEAM_A:cards_2h:FOR:SECOND_HALF:ALL:ALL_PRIOR",
+           "E:TEAM_B:fouls:FOR:FULL_MATCH:ALL:ALL_PRIOR",
+           "E:TEAM_B:fouls:FOR:FULL_MATCH:ALL:RECENT_5",
+           "E:TEAM_B:cards_2h:FOR:SECOND_HALF:ALL:ALL_PRIOR",
+           "E:COMPETITION_CONTEXT:fouls:NEUTRAL:FULL_MATCH:ALL:ALL_PRIOR",
+           "E:COMPETITION_CONTEXT:cards_2h:NEUTRAL:SECOND_HALF:ALL:ALL_PRIOR"
+          ],
+          "expected_relationship_to_test": "A team with a higher foul rate is expected to show a rising second-half card rate, but the rate of increase in cards per foul may saturate or accelerate beyond a foul-rate threshold, rather than scaling linearly.",
+          "mechanism_id_local": "M4_cards2h_foul_joint_second_half",
+          "mechanism_statement": "Second-half card accumulation (cards_2h) is jointly related to foul production rates. A team that commits many fouls overall but whose second-half card rate is disproportionately high relative to its foul rate suggests a non-linear threshold effect \u2014 card issuance per foul rises in the second half beyond what foul volume alone predicts. The joint relationship between fouls-FOR and cards_2h-FOR, compared across both teams, is the mechanism.",
+          "observable_variables": [
+           "fouls",
+           "cards_2h"
+          ],
+          "provider_requirements": [
+           "fouls",
+           "cards_2h"
+          ],
+          "self_overlap_with": [
+           "M3_asymmetric_halfwise_goal_distribution"
+          ],
+          "why_not_baseline_equivalent": "This is a joint cross-observable relationship (fouls \u00d7 cards_2h) with a within-match period dimension (second half only for cards), requiring two distinct observables to be related to each other. It is not a single observable with one band."
+         },
+         {
+          "conditioning_logic": "Jointly condition on each team's possession-FOR rate and the opponent's offsides-FOR rate (which equals the team's offsides-AGAINST). Test whether the team with higher possession (TEAM_B) is associated with fewer opponent offside attempts, and whether TEAM_A's higher offside rate co-occurs with lower possession \u2014 examining the cross-team asymmetry in this joint relationship.",
+          "data_resolution_required": "match",
+          "evidence_refs": [
+           "E:TEAM_A:possession:FOR:FULL_MATCH:ALL:ALL_PRIOR",
+           "E:TEAM_A:possession:FOR:FULL_MATCH:ALL:RECENT_5",
+           "E:TEAM_A:offsides:FOR:FULL_MATCH:ALL:ALL_PRIOR",
+           "E:TEAM_A:offsides:FOR:FULL_MATCH:ALL:RECENT_5",
+           "E:TEAM_A:offsides:AGAINST:FULL_MATCH:ALL:ALL_PRIOR",
+           "E:TEAM_B:possession:FOR:FULL_MATCH:ALL:ALL_PRIOR",
+           "E:TEAM_B:possession:FOR:FULL_MATCH:ALL:RECENT_5",
+           "E:TEAM_B:offsides:FOR:FULL_MATCH:ALL:ALL_PRIOR",
+           "E:TEAM_B:offsides:FOR:FULL_MATCH:ALL:RECENT_5",
+           "E:TEAM_B:offsides:AGAINST:FULL_MATCH:ALL:ALL_PRIOR",
+           "E:TEAM_B:offsides:AGAINST:FULL_MATCH:ALL:RECENT_5"
+          ],
+          "expected_relationship_to_test": "A team with higher possession is expected to suppress opponent offside attempts (opponent offsides-FOR falls as possession-AGAINST rises), while a lower-possession team pressing higher up the pitch is expected to generate more offsides; the asymmetry between the two teams in this joint possession-offside relationship is the testable direction.",
+          "mechanism_id_local": "M5_offside_trap_vs_possession_asymmetry",
+          "mechanism_statement": "TEAM_A generates substantially more offsides than TEAM_B (both for and against), while TEAM_B holds more possession. The joint relationship between a team's possession share and the offsides it draws from the opponent (offsides-AGAINST) captures whether high-possession teams suppress opponent offside attempts \u2014 i.e., whether possession dominance and opponent offside rate are inversely related across these two teams in a way that is asymmetric between them.",
+          "observable_variables": [
+           "possession",
+           "offsides"
+          ],
+          "provider_requirements": [
+           "possession",
+           "offsides"
+          ],
+          "self_overlap_with": [],
+          "why_not_baseline_equivalent": "This involves two distinct observables (possession and offsides) measured asymmetrically across the two teams simultaneously. It is not a single observable with one band, and the cross-team asymmetric joint relationship is structurally richer than any covered class."
+         }
+        ]
+       },
+       "name": "emit_item6_mechanisms",
+       "toolUseId": "tooluse_cKCC4JBmOh1q0YR7zhsn1W",
+       "type": "tool_use"
+      }
+     }
+    ],
+    "role": "assistant"
+   }
+  },
+  "stopReason": "tool_use",
+  "usage": {
+   "cacheReadInputTokens": 0,
+   "cacheWriteInputTokens": 0,
+   "inputTokens": 12046,
+   "outputTokens": 3436,
+   "totalTokens": 15482
+  }
+ },
+ "request_sha256": "eedf869bd23e228ec1d0cdaf1ff29dd037b8c77d596e2e67e9d51e19c9314c40",
+ "resolved_model_id": null,
+ "runner_version": "item6_stage1_runner_v2",
+ "usage": {
+  "cacheReadInputTokens": 0,
+  "cacheWriteInputTokens": 0,
+  "inputTokens": 12046,
+  "outputTokens": 3436,
+  "totalTokens": 15482
+ }
+}

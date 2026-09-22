@@ -1,0 +1,220 @@
+{
+ "count_input_sha256": "d35bbd66cbbb6d5f58f96e5f01d0ae7c389f01ca7a52efdfe6c8a5b5aee41619",
+ "fixture_id": "i6_8390854",
+ "provider_counted_input_tokens": 12066,
+ "raw_response": {
+  "ResponseMetadata": {
+   "HTTPHeaders": {
+    "connection": "keep-alive",
+    "content-length": "11728",
+    "content-type": "application/json",
+    "date": "Tue, 22 Sep 2026 23:14:40 GMT",
+    "x-amzn-requestid": "bf359a0c-fbe9-4e61-8857-9b596ab87d4a"
+   },
+   "HTTPStatusCode": 200,
+   "MaxAttemptsReached": true,
+   "RequestId": "bf359a0c-fbe9-4e61-8857-9b596ab87d4a",
+   "RetryAttempts": 0
+  },
+  "_item6_live_transport": {
+   "authentic_provider_response": true,
+   "aws_request_id": "bf359a0c-fbe9-4e61-8857-9b596ab87d4a",
+   "converse_model_id": "us.anthropic.claude-sonnet-4-6",
+   "count_model_id": "anthropic.claude-sonnet-4-6",
+   "envelope_sha256": "6fd5806f9b83e397c825f2c43d213b3a44909dc05240b406eedb3fd99fdda5c9",
+   "http_status": 200,
+   "provider": "aws_bedrock",
+   "transport_version": "item6_bedrock_transport_v1"
+  },
+  "metrics": {
+   "latencyMs": 42174
+  },
+  "output": {
+   "message": {
+    "content": [
+     {
+      "toolUse": {
+       "input": {
+        "fixture_id": "i6_8390854",
+        "mechanisms": [
+         {
+          "conditioning_logic": "Condition jointly on (a) Team A's shots-for being below Team B's shots-against average AND (b) Team A's shots-on-target-for relative to Team A's shots-for (conversion rate proxy). Measure whether the ratio of shots_on_target-for to shots-for for Team A, crossed with Team B's shots_on_target-against rate, predicts Team A goals-for beyond what either observable alone captures.",
+          "data_resolution_required": "match",
+          "evidence_refs": [
+           "E:TEAM_A:shots:FOR:FULL_MATCH:ALL:ALL_PRIOR",
+           "E:TEAM_A:shots:FOR:FULL_MATCH:ALL:RECENT_5",
+           "E:TEAM_A:shots_on_target:FOR:FULL_MATCH:ALL:ALL_PRIOR",
+           "E:TEAM_A:shots_on_target:FOR:FULL_MATCH:ALL:RECENT_5",
+           "E:TEAM_A:goals:FOR:FULL_MATCH:ALL:ALL_PRIOR",
+           "E:TEAM_A:goals:FOR:FULL_MATCH:ALL:RECENT_5",
+           "E:TEAM_B:shots_on_target:AGAINST:FULL_MATCH:ALL:ALL_PRIOR",
+           "E:TEAM_B:shots_on_target:AGAINST:FULL_MATCH:ALL:RECENT_5",
+           "E:TEAM_B:shots:AGAINST:FULL_MATCH:ALL:ALL_PRIOR"
+          ],
+          "expected_relationship_to_test": "Team A goals-for rises with the joint product of Team A's shots-on-target-for rate and Team B's shots-on-target-against rate, even when Team A's raw shot volume is below Team B's; the relationship saturates as shot volume increases beyond a threshold.",
+          "mechanism_id_local": "M1",
+          "mechanism_statement": "Team A's shot-volume deficit relative to Team B is jointly associated with a conversion-efficiency gap: when Team A produces fewer shots but Team B allows a higher shots-on-target rate against them, the joint relationship between Team A's shots-for, Team A's shots-on-target-for, and Team B's shots-on-target-against determines whether Team A's goal output is suppressed or sustained relative to its shot count.",
+          "observable_variables": [
+           "shots",
+           "shots_on_target",
+           "goals"
+          ],
+          "provider_requirements": [
+           "shots",
+           "shots_on_target",
+           "goals"
+          ],
+          "self_overlap_with": [
+           "M2"
+          ],
+          "why_not_baseline_equivalent": "This requires a joint relationship across three distinct observables (shots, shots_on_target, goals) for two sides simultaneously \u2014 not a single observable against one opponent-descriptor band. The conversion-rate proxy (shots_on_target / shots) is a non-linear ratio, and the cross-team conditioning on both Team A's offensive efficiency and Team B's defensive leakage cannot be reduced to any single-observable mirror or coarse band."
+         },
+         {
+          "conditioning_logic": "Condition on the within-match half split for both teams simultaneously: measure Team A goals-for H1 vs H2 crossed with Team B goals-against H1 vs H2. The joint half-level asymmetry (Team A back-loaded scoring, Team B's H1 vs H2 defensive profile) is the conditioning structure.",
+          "data_resolution_required": "half",
+          "evidence_refs": [
+           "E:TEAM_A:goals:FOR:FIRST_HALF:ALL:ALL_PRIOR",
+           "E:TEAM_A:goals:FOR:SECOND_HALF:ALL:ALL_PRIOR",
+           "E:TEAM_A:goals:AGAINST:FIRST_HALF:ALL:ALL_PRIOR",
+           "E:TEAM_A:goals:AGAINST:SECOND_HALF:ALL:ALL_PRIOR",
+           "E:TEAM_B:goals:FOR:FIRST_HALF:ALL:ALL_PRIOR",
+           "E:TEAM_B:goals:FOR:SECOND_HALF:ALL:ALL_PRIOR",
+           "E:TEAM_B:goals:AGAINST:FIRST_HALF:ALL:ALL_PRIOR",
+           "E:TEAM_B:goals:AGAINST:SECOND_HALF:ALL:ALL_PRIOR",
+           "E:COMPETITION_CONTEXT:goals:NEUTRAL:FULL_MATCH:ALL:ALL_PRIOR"
+          ],
+          "expected_relationship_to_test": "Second-half goals in this fixture rise relative to first-half goals when Team A's historical back-loading of goals-for aligns with Team B's half-level defensive vulnerability pattern; the combined second-half goal rate exceeds the first-half rate more than the competition baseline would predict.",
+          "mechanism_id_local": "M2",
+          "mechanism_statement": "Team A's second-half goal production relative to first-half goal production is jointly conditioned on Team B's asymmetric half-level goal-conceding pattern: Team B concedes more in the first half (0.793 against in H1) than the second half (0.902 against in H2 \u2014 actually slightly more in H2), while Team A scores more in the second half (0.789 FOR H2 vs 0.422 FOR H1). The joint half-level scoring and conceding profiles of both teams together determine whether total goals are front- or back-loaded.",
+          "observable_variables": [
+           "goals"
+          ],
+          "provider_requirements": [
+           "goals"
+          ],
+          "self_overlap_with": [
+           "M1",
+           "M5"
+          ],
+          "why_not_baseline_equivalent": "This uses a within-match state split (half-level) for both teams simultaneously \u2014 a two-dimensional half-level conditioning across two sides. It is not a single observable with one coarse band; it requires the joint half-level profiles of Team A's offensive timing and Team B's defensive timing to be measured together."
+         },
+         {
+          "conditioning_logic": "Condition jointly on (a) Team A's fouls-for being above competition average AND (b) Team B's fouls-for being above competition average. Within that joint condition, measure whether the combined foul load predicts cards_2h above the level predicted by either team's card rate alone. Team A fouls-for (11.876) and Team B fouls-for (12.315) both exceed competition average (11.753); Team A yellow-cards-for (2.233) exceeds competition average (2.009).",
+          "data_resolution_required": "half",
+          "evidence_refs": [
+           "E:TEAM_A:fouls:FOR:FULL_MATCH:ALL:ALL_PRIOR",
+           "E:TEAM_A:fouls:FOR:FULL_MATCH:ALL:RECENT_5",
+           "E:TEAM_A:yellow_cards:FOR:FULL_MATCH:ALL:ALL_PRIOR",
+           "E:TEAM_A:yellow_cards:FOR:FULL_MATCH:ALL:RECENT_5",
+           "E:TEAM_A:cards_2h:FOR:SECOND_HALF:ALL:ALL_PRIOR",
+           "E:TEAM_B:fouls:FOR:FULL_MATCH:ALL:ALL_PRIOR",
+           "E:TEAM_B:fouls:FOR:FULL_MATCH:ALL:RECENT_5",
+           "E:TEAM_B:yellow_cards:FOR:FULL_MATCH:ALL:ALL_PRIOR",
+           "E:TEAM_B:cards_2h:FOR:SECOND_HALF:ALL:ALL_PRIOR",
+           "E:COMPETITION_CONTEXT:fouls:NEUTRAL:FULL_MATCH:ALL:ALL_PRIOR",
+           "E:COMPETITION_CONTEXT:cards_2h:NEUTRAL:SECOND_HALF:ALL:ALL_PRIOR"
+          ],
+          "expected_relationship_to_test": "Second-half cards rise with the joint above-average foul production of both teams; the relationship is non-additive \u2014 the combined foul surplus predicts cards_2h more than the sum of individual team card rates would suggest.",
+          "mechanism_id_local": "M3",
+          "mechanism_statement": "Team A's foul rate and yellow-card rate jointly interact with Team B's foul rate to determine second-half card volume: when both teams have above-competition-average foul rates, the second-half cards (cards_2h) are elevated beyond what either team's card rate alone predicts, reflecting a compounding disciplinary dynamic.",
+          "observable_variables": [
+           "fouls",
+           "yellow_cards",
+           "cards_2h"
+          ],
+          "provider_requirements": [
+           "fouls",
+           "yellow_cards",
+           "cards_2h"
+          ],
+          "self_overlap_with": [],
+          "why_not_baseline_equivalent": "This is a joint relationship across three distinct observables (fouls, yellow_cards, cards_2h) for both teams simultaneously, with a non-linear (compounding/interaction) structure. It cannot be reduced to a single observable against one opponent-descriptor band or a simple home/away split."
+         },
+         {
+          "conditioning_logic": "Condition on Team A's recent possession (RECENT_5: 41%) being substantially below its all-prior average (47.7%) and below Team B's away possession (48.7%). Within this low-possession regime, measure whether Team A's corner-kicks-for rate (all-prior: 4.213, recent-5: 3.4) declines proportionally, sub-proportionally, or supra-proportionally relative to the possession drop \u2014 testing for a threshold or saturation in the possession-to-corners relationship.",
+          "data_resolution_required": "match",
+          "evidence_refs": [
+           "E:TEAM_A:possession:FOR:FULL_MATCH:ALL:ALL_PRIOR",
+           "E:TEAM_A:possession:FOR:FULL_MATCH:ALL:RECENT_5",
+           "E:TEAM_A:possession:FOR:FULL_MATCH:HOME:ALL_PRIOR",
+           "E:TEAM_A:corner_kicks:FOR:FULL_MATCH:ALL:ALL_PRIOR",
+           "E:TEAM_A:corner_kicks:FOR:FULL_MATCH:ALL:RECENT_5",
+           "E:TEAM_A:corner_kicks:FOR:FULL_MATCH:HOME:ALL_PRIOR",
+           "E:TEAM_B:possession:FOR:FULL_MATCH:AWAY:ALL_PRIOR",
+           "E:TEAM_B:possession:FOR:FULL_MATCH:ALL:RECENT_5",
+           "E:COMPETITION_CONTEXT:possession:NEUTRAL:FULL_MATCH:ALL:ALL_PRIOR",
+           "E:COMPETITION_CONTEXT:corner_kicks:NEUTRAL:FULL_MATCH:ALL:ALL_PRIOR"
+          ],
+          "expected_relationship_to_test": "Team A's corner-kicks-for rate declines as possession falls below a threshold, but the relationship is non-linear: corner production does not decline proportionally with possession loss, suggesting a saturation or floor effect at low possession levels.",
+          "mechanism_id_local": "M4",
+          "mechanism_statement": "Team A's possession deficit (recent 5-match average of 41% vs Team B's 46.8% away) jointly interacts with Team A's corner-kick generation to determine whether low-possession teams can sustain corner volume: when Team A's possession drops significantly below 50%, its corner-kicks-for rate may diverge from what possession alone would predict, revealing a non-linear relationship between possession level and corner production.",
+          "observable_variables": [
+           "possession",
+           "corner_kicks"
+          ],
+          "provider_requirements": [
+           "possession",
+           "corner_kicks"
+          ],
+          "self_overlap_with": [],
+          "why_not_baseline_equivalent": "This tests a threshold/non-linear dependence of one observable (corners) on a continuous level of another observable (possession), not a simple coarse band. The joint use of two distinct observables (possession and corner_kicks) with a non-linear conditioning structure is not reducible to a single-observable mirror or one-band split."
+         },
+         {
+          "conditioning_logic": "Condition jointly on Team A's H1 vs H2 corners-for split AND Team B's H1 vs H2 corners-against split. Both profiles show a consistent back-loading pattern. Measure whether the joint alignment of both teams' half-level corner profiles predicts a larger H2-vs-H1 corner differential than the competition baseline or either team's profile alone would suggest.",
+          "data_resolution_required": "half",
+          "evidence_refs": [
+           "E:TEAM_A:corner_kicks:FOR:FIRST_HALF:ALL:ALL_PRIOR",
+           "E:TEAM_A:corner_kicks:FOR:SECOND_HALF:ALL:ALL_PRIOR",
+           "E:TEAM_B:corner_kicks:AGAINST:FIRST_HALF:ALL:ALL_PRIOR",
+           "E:TEAM_B:corner_kicks:AGAINST:SECOND_HALF:ALL:ALL_PRIOR",
+           "E:TEAM_A:corner_kicks:AGAINST:FIRST_HALF:ALL:ALL_PRIOR",
+           "E:TEAM_A:corner_kicks:AGAINST:SECOND_HALF:ALL:ALL_PRIOR",
+           "E:TEAM_B:corner_kicks:FOR:FIRST_HALF:ALL:ALL_PRIOR",
+           "E:TEAM_B:corner_kicks:FOR:SECOND_HALF:ALL:ALL_PRIOR",
+           "E:COMPETITION_CONTEXT:corner_kicks:NEUTRAL:FULL_MATCH:ALL:ALL_PRIOR"
+          ],
+          "expected_relationship_to_test": "Total corners in the second half exceed total corners in the first half by a margin greater than the competition baseline when both the attacking team's H2 corner-production tendency and the defending team's H2 corner-conceding tendency are jointly elevated above their respective H1 levels.",
+          "mechanism_id_local": "M5",
+          "mechanism_statement": "The asymmetry between Team A's half-level corner production (H1: 1.771 FOR, H2: 2.446 FOR) and Team B's half-level corner conceding (H1: 2.274 AGAINST, H2: 2.857 AGAINST) jointly determines whether corner volume is back-loaded in this fixture: both teams' half-level corner profiles point in the same direction (more corners in H2), and the joint alignment of these two distinct half-level profiles \u2014 one offensive, one defensive \u2014 is the mechanism.",
+          "observable_variables": [
+           "corner_kicks"
+          ],
+          "provider_requirements": [
+           "corner_kicks"
+          ],
+          "self_overlap_with": [
+           "M2"
+          ],
+          "why_not_baseline_equivalent": "This uses within-match half-level splits for two distinct roles (Team A offensive, Team B defensive) simultaneously \u2014 a two-dimensional half-level conditioning. It is not a single observable with one coarse band; it requires the joint half-level profiles of both teams to be measured together, and the alignment of both profiles is the structural feature being tested."
+         }
+        ]
+       },
+       "name": "emit_item6_mechanisms",
+       "toolUseId": "tooluse_iaBgVnbYTRdtPh5raiARLr",
+       "type": "tool_use"
+      }
+     }
+    ],
+    "role": "assistant"
+   }
+  },
+  "stopReason": "tool_use",
+  "usage": {
+   "cacheReadInputTokens": 0,
+   "cacheWriteInputTokens": 0,
+   "inputTokens": 12049,
+   "outputTokens": 3723,
+   "totalTokens": 15772
+  }
+ },
+ "request_sha256": "b6266bb8e5a69658973085baae47383da9c7b9ea47fcdb9fe6b5b762bc945ef8",
+ "resolved_model_id": null,
+ "runner_version": "item6_stage1_runner_v2",
+ "usage": {
+  "cacheReadInputTokens": 0,
+  "cacheWriteInputTokens": 0,
+  "inputTokens": 12049,
+  "outputTokens": 3723,
+  "totalTokens": 15772
+ }
+}

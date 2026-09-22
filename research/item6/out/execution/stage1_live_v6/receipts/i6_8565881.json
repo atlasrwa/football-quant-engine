@@ -1,0 +1,224 @@
+{
+ "count_input_sha256": "5bf38418e615353076bb943c41fd7857397a3f4a2f984a96aef49c20cfd8ce0c",
+ "fixture_id": "i6_8565881",
+ "provider_counted_input_tokens": 12065,
+ "raw_response": {
+  "ResponseMetadata": {
+   "HTTPHeaders": {
+    "connection": "keep-alive",
+    "content-length": "10430",
+    "content-type": "application/json",
+    "date": "Tue, 22 Sep 2026 17:00:11 GMT",
+    "x-amzn-requestid": "54cd3e11-e296-45b8-8208-34a3b28ea961"
+   },
+   "HTTPStatusCode": 200,
+   "MaxAttemptsReached": true,
+   "RequestId": "54cd3e11-e296-45b8-8208-34a3b28ea961",
+   "RetryAttempts": 0
+  },
+  "_item6_live_transport": {
+   "authentic_provider_response": true,
+   "aws_request_id": "54cd3e11-e296-45b8-8208-34a3b28ea961",
+   "converse_model_id": "us.anthropic.claude-sonnet-4-6",
+   "count_model_id": "anthropic.claude-sonnet-4-6",
+   "envelope_sha256": "054a11f82672f648089f2cac8d46f97a48b07af56e6d32adb8f391fdb9a369fe",
+   "http_status": 200,
+   "provider": "aws_bedrock",
+   "transport_version": "item6_bedrock_transport_v1"
+  },
+  "metrics": {
+   "latencyMs": 36790
+  },
+  "output": {
+   "message": {
+    "content": [
+     {
+      "toolUse": {
+       "input": {
+        "fixture_id": "i6_8565881",
+        "mechanisms": [
+         {
+          "conditioning_logic": "Condition on matches where Team B's shots-against (recent-5: 17.4 vs season: 12.97) AND shots-on-target-against (recent-5: 8.0 vs season: 4.58) are simultaneously elevated above their respective season baselines. Measure whether goals-against also rises jointly, and whether the co-elevation of both shot observables is more predictive than either alone.",
+          "data_resolution_required": "match",
+          "evidence_refs": [
+           "E:TEAM_B:shots:AGAINST:FULL_MATCH:ALL:ALL_PRIOR",
+           "E:TEAM_B:shots:AGAINST:FULL_MATCH:ALL:RECENT_5",
+           "E:TEAM_B:shots_on_target:AGAINST:FULL_MATCH:ALL:ALL_PRIOR",
+           "E:TEAM_B:shots_on_target:AGAINST:FULL_MATCH:ALL:RECENT_5",
+           "E:TEAM_B:goals:AGAINST:FULL_MATCH:ALL:ALL_PRIOR",
+           "E:TEAM_B:goals:AGAINST:FULL_MATCH:ALL:RECENT_5"
+          ],
+          "expected_relationship_to_test": "When both shots-against and shots-on-target-against are simultaneously above season baseline, goals-against rises more than when only one is elevated \u2014 a super-additive joint relationship.",
+          "mechanism_id_local": "M1",
+          "mechanism_statement": "Team B's shot-volume conceded has surged sharply in recent matches relative to its season-long average, while its shots-on-target conceded has surged even more dramatically in the same window. The joint condition of both shot-volume AND shot-quality conceded rising together \u2014 rather than either alone \u2014 may be associated with elevated goal-conceding outcomes for Team B, beyond what either observable alone would suggest.",
+          "observable_variables": [
+           "shots",
+           "shots_on_target",
+           "goals"
+          ],
+          "provider_requirements": [
+           "shots",
+           "shots_on_target",
+           "goals"
+          ],
+          "self_overlap_with": [
+           "M2"
+          ],
+          "why_not_baseline_equivalent": "This requires a joint two-observable condition (shots-against AND shots-on-target-against both elevated simultaneously), not a single observable with one coarse band. The engine does not currently measure the interaction between two distinct shot-quality observables on the same side."
+         },
+         {
+          "conditioning_logic": "Condition on matches where the attacking team (Team A role) has a home venue uplift in shots (home: 13.58 vs away: 10.84) AND the defending team (Team B role) is in a recent-form regime of elevated shots-on-target conceded. Measure whether corner kicks and goals for the attacking side are jointly elevated under this dual condition.",
+          "data_resolution_required": "match",
+          "evidence_refs": [
+           "E:TEAM_A:shots:FOR:FULL_MATCH:HOME:ALL_PRIOR",
+           "E:TEAM_A:shots:FOR:FULL_MATCH:AWAY:ALL_PRIOR",
+           "E:TEAM_B:shots_on_target:AGAINST:FULL_MATCH:ALL:RECENT_5",
+           "E:TEAM_B:shots_on_target:AGAINST:FULL_MATCH:ALL:ALL_PRIOR",
+           "E:TEAM_A:corner_kicks:FOR:FULL_MATCH:HOME:ALL_PRIOR",
+           "E:TEAM_A:goals:FOR:FULL_MATCH:HOME:ALL_PRIOR"
+          ],
+          "expected_relationship_to_test": "When Team A's home shot-production advantage is paired with Team B's recent elevated shots-on-target-against regime, corner kicks and goals for Team A rise together \u2014 a cross-team, cross-observable joint relationship.",
+          "mechanism_id_local": "M2",
+          "mechanism_statement": "Team A produces more shots at home than away, while Team B concedes far more shots-on-target in recent form than its season average. The asymmetric pairing of Team A's home shot-production uplift against Team B's recent defensive deterioration in shot quality allowed may jointly condition corner-kick and goal outcomes beyond what either team's single-observable baseline captures.",
+          "observable_variables": [
+           "shots",
+           "shots_on_target",
+           "corner_kicks",
+           "goals"
+          ],
+          "provider_requirements": [
+           "shots",
+           "shots_on_target",
+           "corner_kicks",
+           "goals"
+          ],
+          "self_overlap_with": [
+           "M1"
+          ],
+          "why_not_baseline_equivalent": "This involves two distinct observables (shots and shots-on-target) across two different teams simultaneously, plus a venue dimension for one and a recent-form regime for the other. It is not reducible to a single observable with one conditioning band."
+         },
+         {
+          "conditioning_logic": "Condition on matches where Team B's possession is below the competition midpoint (50%) AND Team B's fouls are above the competition average (10.22). Measure whether yellow cards for Team B and corner kicks for Team A are jointly elevated under this two-dimensional condition, compared to when only one condition holds.",
+          "data_resolution_required": "match",
+          "evidence_refs": [
+           "E:TEAM_B:possession:FOR:FULL_MATCH:ALL:ALL_PRIOR",
+           "E:TEAM_B:possession:FOR:FULL_MATCH:ALL:RECENT_5",
+           "E:TEAM_B:fouls:FOR:FULL_MATCH:ALL:ALL_PRIOR",
+           "E:TEAM_B:fouls:FOR:FULL_MATCH:ALL:RECENT_5",
+           "E:TEAM_B:yellow_cards:FOR:FULL_MATCH:ALL:ALL_PRIOR",
+           "E:TEAM_A:corner_kicks:FOR:FULL_MATCH:ALL:ALL_PRIOR",
+           "E:COMPETITION_CONTEXT:possession:NEUTRAL:FULL_MATCH:ALL:ALL_PRIOR",
+           "E:COMPETITION_CONTEXT:fouls:NEUTRAL:FULL_MATCH:ALL:ALL_PRIOR"
+          ],
+          "expected_relationship_to_test": "When a team simultaneously holds below-median possession and above-median fouls, its yellow cards rise and the opponent's corner kicks rise \u2014 a joint two-observable relationship that saturates or amplifies relative to either condition alone.",
+          "mechanism_id_local": "M3",
+          "mechanism_statement": "Team B operates in a persistent low-possession regime (season avg ~44%, recent ~45%) while also committing high fouls (season avg ~12.5, recent ~12.6). The joint condition of below-median possession AND above-median fouls for the same team may be associated with elevated yellow-card and corner-kick outcomes for the opposing team, as a two-dimensional defensive pressure profile.",
+          "observable_variables": [
+           "possession",
+           "fouls",
+           "yellow_cards",
+           "corner_kicks"
+          ],
+          "provider_requirements": [
+           "possession",
+           "fouls",
+           "yellow_cards",
+           "corner_kicks"
+          ],
+          "self_overlap_with": [
+           "M4"
+          ],
+          "why_not_baseline_equivalent": "This requires two distinct observables (possession AND fouls) to be jointly conditioned for the same team, which is not reducible to a single observable with one coarse band. The engine does not currently measure the interaction between possession level and foul rate."
+         },
+         {
+          "conditioning_logic": "Condition on fixtures where both the home team's cards_2h-against AND the away team's cards_2h-for are simultaneously above the competition second-half average. Measure whether total second-half cards in such fixtures is elevated beyond the sum of individual team baselines, indicating a non-additive joint effect.",
+          "data_resolution_required": "half",
+          "evidence_refs": [
+           "E:TEAM_A:cards_2h:AGAINST:SECOND_HALF:ALL:ALL_PRIOR",
+           "E:TEAM_A:cards_2h:FOR:SECOND_HALF:ALL:ALL_PRIOR",
+           "E:TEAM_B:cards_2h:FOR:SECOND_HALF:ALL:ALL_PRIOR",
+           "E:TEAM_B:cards_2h:AGAINST:SECOND_HALF:ALL:ALL_PRIOR",
+           "E:COMPETITION_CONTEXT:cards_2h:NEUTRAL:SECOND_HALF:ALL:ALL_PRIOR",
+           "E:TEAM_A:fouls:FOR:FULL_MATCH:ALL:ALL_PRIOR",
+           "E:TEAM_B:fouls:FOR:FULL_MATCH:ALL:ALL_PRIOR"
+          ],
+          "expected_relationship_to_test": "When both teams independently carry above-competition second-half card rates, total second-half cards in the fixture rises more than a simple additive combination of individual baselines \u2014 suggesting a threshold or amplification effect from the joint profile.",
+          "mechanism_id_local": "M4",
+          "mechanism_statement": "Team A's second-half cards conceded (1.816 per match) substantially exceed both its own first-half rate and the competition second-half average (0.972), while Team B's second-half cards are also above competition average (1.642 vs 0.972). The joint second-half card accumulation profile of both teams \u2014 each independently elevated above competition norms \u2014 may condition whether total second-half cards in this fixture saturates at a higher threshold than either team's individual profile alone would predict.",
+          "observable_variables": [
+           "cards_2h",
+           "fouls",
+           "yellow_cards"
+          ],
+          "provider_requirements": [
+           "cards_2h",
+           "fouls",
+           "yellow_cards"
+          ],
+          "self_overlap_with": [
+           "M3"
+          ],
+          "why_not_baseline_equivalent": "This conditions on two distinct team-level observables simultaneously (Team A's cards_2h-against AND Team B's cards_2h-for) both exceeding a competition baseline, which is a two-team, two-perspective joint condition not reducible to a single observable with one band."
+         },
+         {
+          "conditioning_logic": "Condition on matches where a team's shots-for is above its season average while its offsides-for is simultaneously below its season average (divergent regime). Measure whether corner kicks and goals for that team are elevated in this joint regime compared to matches where both move in the same direction.",
+          "data_resolution_required": "match",
+          "evidence_refs": [
+           "E:TEAM_A:shots:FOR:FULL_MATCH:ALL:ALL_PRIOR",
+           "E:TEAM_A:shots:FOR:FULL_MATCH:ALL:RECENT_5",
+           "E:TEAM_A:offsides:FOR:FULL_MATCH:ALL:ALL_PRIOR",
+           "E:TEAM_A:offsides:FOR:FULL_MATCH:ALL:RECENT_5",
+           "E:TEAM_A:offsides:FOR:FULL_MATCH:HOME:ALL_PRIOR",
+           "E:TEAM_A:corner_kicks:FOR:FULL_MATCH:ALL:ALL_PRIOR",
+           "E:TEAM_A:goals:FOR:FULL_MATCH:ALL:ALL_PRIOR",
+           "E:TEAM_A:goals:FOR:FULL_MATCH:ALL:RECENT_5"
+          ],
+          "expected_relationship_to_test": "When shot volume rises while offside rate falls simultaneously for the same team, corner kicks and goals for that team rise \u2014 the divergent joint regime is associated with more effective attacking penetration than either observable alone captures.",
+          "mechanism_id_local": "M5",
+          "mechanism_statement": "Team A's offsides-for has declined from its season average (2.38 all-prior, 2.81 at home) to a lower recent level (1.6 recent-5), while Team A's shots-for has increased in recent matches (14.0 recent-5 vs 12.21 season). This divergence \u2014 more shots but fewer offsides \u2014 may indicate a structural shift in Team A's attacking line positioning or build-up pattern. The joint condition of rising shot volume alongside falling offside rate for the same team may be associated with a different corner-kick and goal profile than either observable alone would suggest.",
+          "observable_variables": [
+           "shots",
+           "offsides",
+           "corner_kicks",
+           "goals"
+          ],
+          "provider_requirements": [
+           "shots",
+           "offsides",
+           "corner_kicks",
+           "goals"
+          ],
+          "self_overlap_with": [],
+          "why_not_baseline_equivalent": "This requires a joint two-observable condition (shots-for rising AND offsides-for falling simultaneously) for the same team, which is an asymmetric cross-observable relationship not reducible to a single observable with one coarse band."
+         }
+        ]
+       },
+       "name": "emit_item6_mechanisms",
+       "toolUseId": "tooluse_2ZMBK8sKXe0oy9VgYwAafG",
+       "type": "tool_use"
+      }
+     }
+    ],
+    "role": "assistant"
+   }
+  },
+  "stopReason": "tool_use",
+  "usage": {
+   "cacheReadInputTokens": 0,
+   "cacheWriteInputTokens": 0,
+   "inputTokens": 12048,
+   "outputTokens": 3136,
+   "totalTokens": 15184
+  }
+ },
+ "request_sha256": "13772bf821b91c02fa4ca61d2b529187d94be5cc96bf52451170f4ff644e870e",
+ "resolved_model_id": null,
+ "runner_version": "item6_stage1_runner_v2",
+ "usage": {
+  "cacheReadInputTokens": 0,
+  "cacheWriteInputTokens": 0,
+  "inputTokens": 12048,
+  "outputTokens": 3136,
+  "totalTokens": 15184
+ }
+}

@@ -1,0 +1,210 @@
+{
+ "count_input_sha256": "a741743e3abeb4b2221ba95959a45791a9591196364f776d3f9c068cde3a2205",
+ "fixture_id": "i6_8543966",
+ "provider_counted_input_tokens": 12071,
+ "raw_response": {
+  "ResponseMetadata": {
+   "HTTPHeaders": {
+    "connection": "keep-alive",
+    "content-length": "11239",
+    "content-type": "application/json",
+    "date": "Tue, 22 Sep 2026 16:44:24 GMT",
+    "x-amzn-requestid": "94b02751-5cac-49d2-bf81-1e823de5e11b"
+   },
+   "HTTPStatusCode": 200,
+   "MaxAttemptsReached": true,
+   "RequestId": "94b02751-5cac-49d2-bf81-1e823de5e11b",
+   "RetryAttempts": 0
+  },
+  "_item6_live_transport": {
+   "authentic_provider_response": true,
+   "aws_request_id": "94b02751-5cac-49d2-bf81-1e823de5e11b",
+   "converse_model_id": "us.anthropic.claude-sonnet-4-6",
+   "count_model_id": "anthropic.claude-sonnet-4-6",
+   "envelope_sha256": "e7c733ca858fcbc953fa7f9e48aec0988a51470c7e8576bf78f199577d82a6d8",
+   "http_status": 200,
+   "provider": "aws_bedrock",
+   "transport_version": "item6_bedrock_transport_v1"
+  },
+  "metrics": {
+   "latencyMs": 39751
+  },
+  "output": {
+   "message": {
+    "content": [
+     {
+      "toolUse": {
+       "input": {
+        "fixture_id": "i6_8543966",
+        "mechanisms": [
+         {
+          "conditioning_logic": "Jointly examine Team B's shots FOR at home vs. away AND Team B's shots_on_target FOR at home vs. away, cross-referenced against Team A's shots FOR at home vs. away. The mechanism tests whether the venue-driven collapse in Team B's shot volume is accompanied by a disproportionate collapse in shot accuracy (shots_on_target / shots ratio), while Team A shows no such asymmetry \u2014 requiring two observables (shots and shots_on_target) evaluated simultaneously across two teams.",
+          "data_resolution_required": "match",
+          "evidence_refs": [
+           "E:TEAM_B:shots:FOR:FULL_MATCH:HOME:ALL_PRIOR",
+           "E:TEAM_B:shots:FOR:FULL_MATCH:AWAY:ALL_PRIOR",
+           "E:TEAM_B:shots_on_target:FOR:FULL_MATCH:HOME:ALL_PRIOR",
+           "E:TEAM_B:shots_on_target:FOR:FULL_MATCH:AWAY:ALL_PRIOR",
+           "E:TEAM_A:shots:FOR:FULL_MATCH:HOME:ALL_PRIOR",
+           "E:TEAM_A:shots:FOR:FULL_MATCH:AWAY:ALL_PRIOR",
+           "E:TEAM_A:shots_on_target:FOR:FULL_MATCH:HOME:ALL_PRIOR",
+           "E:TEAM_A:shots_on_target:FOR:FULL_MATCH:AWAY:ALL_PRIOR"
+          ],
+          "expected_relationship_to_test": "Team B's shots_on_target rate (shots_on_target / shots) away is suppressed relative to home to a greater degree than Team A's equivalent home/away differential; the joint divergence between the two teams' venue-conditioned shot quality rises with the away-venue penalty on Team B",
+          "mechanism_id_local": "M1",
+          "mechanism_statement": "Team B's shot volume and shots-on-target production are jointly conditioned by venue: away from home, both metrics collapse substantially relative to home performance, while Team A's shot-generation is venue-stable. The joint cross-team asymmetry in how venue affects shot volume versus shot accuracy (shots-on-target ratio) for each side cannot be captured by any single-observable venue split.",
+          "observable_variables": [
+           "shots",
+           "shots_on_target",
+           "possession"
+          ],
+          "provider_requirements": [
+           "shots",
+           "shots_on_target"
+          ],
+          "self_overlap_with": [],
+          "why_not_baseline_equivalent": "This is not a single-observable venue split: it requires the joint relationship between two distinct observables (shots and shots_on_target) for each team simultaneously, and then compares the asymmetric venue effect across the two teams \u2014 a two-observable, two-team asymmetric structure."
+         },
+         {
+          "conditioning_logic": "Condition on both Team A's yellow_cards FOR at home vs. away AND Team B's yellow_cards FOR at home vs. away simultaneously. Cross-reference with each team's foul rates by venue to test whether the joint home-venue disciplinary restraint of both teams compounds (i.e., the combined yellow card total is lower than what either team's individual venue adjustment would predict independently).",
+          "data_resolution_required": "match",
+          "evidence_refs": [
+           "E:TEAM_A:yellow_cards:FOR:FULL_MATCH:HOME:ALL_PRIOR",
+           "E:TEAM_A:yellow_cards:FOR:FULL_MATCH:AWAY:ALL_PRIOR",
+           "E:TEAM_B:yellow_cards:FOR:FULL_MATCH:HOME:ALL_PRIOR",
+           "E:TEAM_B:yellow_cards:FOR:FULL_MATCH:AWAY:ALL_PRIOR",
+           "E:TEAM_A:fouls:FOR:FULL_MATCH:HOME:ALL_PRIOR",
+           "E:TEAM_A:fouls:FOR:FULL_MATCH:AWAY:ALL_PRIOR",
+           "E:TEAM_B:fouls:FOR:FULL_MATCH:HOME:ALL_PRIOR",
+           "E:TEAM_B:fouls:FOR:FULL_MATCH:AWAY:ALL_PRIOR"
+          ],
+          "expected_relationship_to_test": "The joint total of yellow cards in matches where Team A is home and Team B is away is suppressed relative to the sum of each team's all-venue yellow card averages; the suppression is greater than either team's individual venue adjustment alone",
+          "mechanism_id_local": "M2",
+          "mechanism_statement": "Team A accumulates yellow cards at a substantially higher rate away than at home, while Team B's yellow card production is higher at home than away. When Team A plays at home (this fixture), the joint interaction of Team A's home disciplinary restraint and Team B's away disciplinary restraint produces a combined yellow card environment that is jointly lower than either team's all-venue average \u2014 a two-team, two-dimension joint suppression not reducible to one team's venue split alone.",
+          "observable_variables": [
+           "yellow_cards",
+           "fouls"
+          ],
+          "provider_requirements": [
+           "yellow_cards",
+           "fouls"
+          ],
+          "self_overlap_with": [],
+          "why_not_baseline_equivalent": "This requires simultaneously conditioning on two distinct opponent-descriptor dimensions (Team A's home disciplinary profile AND Team B's away disciplinary profile) and examining their joint interaction \u2014 not a single observable with one coarse band."
+         },
+         {
+          "conditioning_logic": "For each team, compute the ratio of corner_kicks FOR to possession FOR, split by home and away venue. Test whether Team B's possession-to-corners conversion rate collapses away from home (where both possession and corners drop) more than Team A's equivalent ratio changes by venue. The mechanism requires jointly tracking two observables (possession and corners) across two teams and two venue conditions.",
+          "data_resolution_required": "match",
+          "evidence_refs": [
+           "E:TEAM_B:corner_kicks:FOR:FULL_MATCH:HOME:ALL_PRIOR",
+           "E:TEAM_B:corner_kicks:FOR:FULL_MATCH:AWAY:ALL_PRIOR",
+           "E:TEAM_B:possession:FOR:FULL_MATCH:HOME:ALL_PRIOR",
+           "E:TEAM_B:possession:FOR:FULL_MATCH:AWAY:ALL_PRIOR",
+           "E:TEAM_A:corner_kicks:FOR:FULL_MATCH:HOME:ALL_PRIOR",
+           "E:TEAM_A:corner_kicks:FOR:FULL_MATCH:AWAY:ALL_PRIOR",
+           "E:TEAM_A:possession:FOR:FULL_MATCH:HOME:ALL_PRIOR",
+           "E:TEAM_A:possession:FOR:FULL_MATCH:AWAY:ALL_PRIOR"
+          ],
+          "expected_relationship_to_test": "Team B's corners-per-possession-unit away is suppressed relative to home to a greater degree than Team A's equivalent home/away differential; the cross-team asymmetry in possession-to-corners conversion rises with the away-venue penalty on Team B",
+          "mechanism_id_local": "M3",
+          "mechanism_statement": "Team B's corner kick production shows a strong venue asymmetry (home vs. away), while Team A's corner production is venue-stable. The joint relationship between possession differential and corner kick differential \u2014 specifically whether the team with the larger possession share generates a disproportionately higher corner share \u2014 differs between the two teams and is conditioned on venue. This tests whether possession-to-corners conversion efficiency is asymmetric across teams and venue.",
+          "observable_variables": [
+           "corner_kicks",
+           "possession"
+          ],
+          "provider_requirements": [
+           "corner_kicks",
+           "possession"
+          ],
+          "self_overlap_with": [
+           "M1"
+          ],
+          "why_not_baseline_equivalent": "This is a joint two-observable relationship (possession and corner_kicks) evaluated asymmetrically across two teams and two venue conditions \u2014 not reducible to a single observable with one conditioning band."
+         },
+         {
+          "conditioning_logic": "Condition on the within-match half split: compare Team A's cards_2h FOR (second half) against the competition context baseline, and simultaneously compare Team A's goals AGAINST in the second half versus the first half. Test whether the combination of above-average second-half card accumulation and elevated second-half goals-against (relative to first-half goals-against) co-occur more than either signal alone would predict \u2014 requiring joint second-half state conditioning on two observables.",
+          "data_resolution_required": "half",
+          "evidence_refs": [
+           "E:TEAM_A:cards_2h:FOR:SECOND_HALF:ALL:ALL_PRIOR",
+           "E:TEAM_A:cards_2h:AGAINST:SECOND_HALF:ALL:ALL_PRIOR",
+           "E:COMPETITION_CONTEXT:cards_2h:NEUTRAL:SECOND_HALF:ALL:ALL_PRIOR",
+           "E:TEAM_A:goals:AGAINST:SECOND_HALF:ALL:ALL_PRIOR",
+           "E:TEAM_A:goals:AGAINST:FIRST_HALF:ALL:ALL_PRIOR",
+           "E:TEAM_B:cards_2h:FOR:SECOND_HALF:ALL:ALL_PRIOR",
+           "E:TEAM_B:goals:AGAINST:SECOND_HALF:ALL:ALL_PRIOR",
+           "E:TEAM_B:goals:AGAINST:FIRST_HALF:ALL:ALL_PRIOR"
+          ],
+          "expected_relationship_to_test": "Teams with above-competition-average second-half card accumulation also show a higher ratio of second-half to first-half goals conceded; the joint elevation of both signals rises together rather than independently",
+          "mechanism_id_local": "M4",
+          "mechanism_statement": "Team A's second-half card accumulation (cards_2h FOR) is elevated relative to the competition context, while Team A's goals conceded are skewed toward the second half relative to the first half. The joint relationship between second-half disciplinary load and second-half defensive vulnerability \u2014 whether teams that accumulate more second-half cards also concede more second-half goals \u2014 represents a within-match state interaction across two distinct observables.",
+          "observable_variables": [
+           "cards_2h",
+           "goals"
+          ],
+          "provider_requirements": [
+           "cards_2h",
+           "goals"
+          ],
+          "self_overlap_with": [],
+          "why_not_baseline_equivalent": "This requires a within-match half-level split (second half) jointly applied to two distinct observables (cards_2h and goals) and cross-referenced against the competition baseline \u2014 not a single observable with one coarse band."
+         },
+         {
+          "conditioning_logic": "Jointly condition on Team A's offsides FOR at home AND Team B's offsides FOR away, cross-referenced with each team's possession profile by venue. Test whether the combined offside count in this venue configuration is higher than the sum of each team's all-venue offside averages, and whether the possession differential mediates the joint offside elevation (i.e., the team with more possession generates more offsides in an attacking-dominant role).",
+          "data_resolution_required": "match",
+          "evidence_refs": [
+           "E:TEAM_A:offsides:FOR:FULL_MATCH:HOME:ALL_PRIOR",
+           "E:TEAM_A:offsides:FOR:FULL_MATCH:AWAY:ALL_PRIOR",
+           "E:TEAM_B:offsides:FOR:FULL_MATCH:HOME:ALL_PRIOR",
+           "E:TEAM_B:offsides:FOR:FULL_MATCH:AWAY:ALL_PRIOR",
+           "E:TEAM_A:possession:FOR:FULL_MATCH:HOME:ALL_PRIOR",
+           "E:TEAM_B:possession:FOR:FULL_MATCH:AWAY:ALL_PRIOR",
+           "E:TEAM_A:offsides:FOR:FULL_MATCH:ALL:ALL_PRIOR",
+           "E:TEAM_B:offsides:FOR:FULL_MATCH:ALL:ALL_PRIOR"
+          ],
+          "expected_relationship_to_test": "The joint offside total rises when both teams' venue-specific offside tendencies align in the same direction (both elevated in their respective venue roles); possession differential moderates which team's offside contribution dominates",
+          "mechanism_id_local": "M5",
+          "mechanism_statement": "Team A's offsides FOR show a notable home/away asymmetry (higher at home than away), while Team B's offsides FOR show the opposite pattern (higher away than at home). The joint interaction of both teams' offside tendencies in this specific venue configuration (Team A at home, Team B away) produces a combined offside environment that differs from what either team's individual venue adjustment would predict \u2014 testing whether the two teams' offside profiles reinforce or offset each other when their respective venue tendencies align in the same direction.",
+          "observable_variables": [
+           "offsides",
+           "possession"
+          ],
+          "provider_requirements": [
+           "offsides",
+           "possession"
+          ],
+          "self_overlap_with": [
+           "M3"
+          ],
+          "why_not_baseline_equivalent": "This requires simultaneously conditioning on two distinct opponent-descriptor dimensions (Team A's home offside profile AND Team B's away offside profile) and cross-referencing with possession \u2014 a two-team, two-observable, two-venue-dimension joint structure."
+         }
+        ]
+       },
+       "name": "emit_item6_mechanisms",
+       "toolUseId": "tooluse_R0NFLhdC3pAvIgqAJKVUuz",
+       "type": "tool_use"
+      }
+     }
+    ],
+    "role": "assistant"
+   }
+  },
+  "stopReason": "tool_use",
+  "usage": {
+   "cacheReadInputTokens": 0,
+   "cacheWriteInputTokens": 0,
+   "inputTokens": 12054,
+   "outputTokens": 3312,
+   "totalTokens": 15366
+  }
+ },
+ "request_sha256": "1132ec79a54fb9afd3b72b685f09aed8399c0be81ed5e8b2475c999154173e2f",
+ "resolved_model_id": null,
+ "runner_version": "item6_stage1_runner_v2",
+ "usage": {
+  "cacheReadInputTokens": 0,
+  "cacheWriteInputTokens": 0,
+  "inputTokens": 12054,
+  "outputTokens": 3312,
+  "totalTokens": 15366
+ }
+}

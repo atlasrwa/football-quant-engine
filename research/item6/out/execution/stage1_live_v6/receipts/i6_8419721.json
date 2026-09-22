@@ -1,0 +1,210 @@
+{
+ "count_input_sha256": "ee16b71e3c5e5844fcce94a6865ee044c908416b554287ba5896704ae8bd3233",
+ "fixture_id": "i6_8419721",
+ "provider_counted_input_tokens": 12068,
+ "raw_response": {
+  "ResponseMetadata": {
+   "HTTPHeaders": {
+    "connection": "keep-alive",
+    "content-length": "11358",
+    "content-type": "application/json",
+    "date": "Tue, 22 Sep 2026 16:34:31 GMT",
+    "x-amzn-requestid": "92bc8281-d14e-494e-8a76-76a6e8cf70f5"
+   },
+   "HTTPStatusCode": 200,
+   "MaxAttemptsReached": true,
+   "RequestId": "92bc8281-d14e-494e-8a76-76a6e8cf70f5",
+   "RetryAttempts": 0
+  },
+  "_item6_live_transport": {
+   "authentic_provider_response": true,
+   "aws_request_id": "92bc8281-d14e-494e-8a76-76a6e8cf70f5",
+   "converse_model_id": "us.anthropic.claude-sonnet-4-6",
+   "count_model_id": "anthropic.claude-sonnet-4-6",
+   "envelope_sha256": "2a81c265d00f9e72ffc9b3b1ee5b0106a1e7f20dcda5dbf9084ce6ea1ba2c9c2",
+   "http_status": 200,
+   "provider": "aws_bedrock",
+   "transport_version": "item6_bedrock_transport_v1"
+  },
+  "metrics": {
+   "latencyMs": 38529
+  },
+  "output": {
+   "message": {
+    "content": [
+     {
+      "toolUse": {
+       "input": {
+        "fixture_id": "i6_8419721",
+        "mechanisms": [
+         {
+          "conditioning_logic": "Condition on matches where Team A's shots FOR is elevated relative to its own long-run mean (recent-5 vs ALL_PRIOR divergence) while corner_kicks FOR is simultaneously depressed relative to its own long-run mean. Measure whether shots_on_target FOR rises or falls in this joint state compared to the baseline where both observables move together.",
+          "data_resolution_required": "match",
+          "evidence_refs": [
+           "E:TEAM_A:shots:FOR:FULL_MATCH:ALL:ALL_PRIOR",
+           "E:TEAM_A:shots:FOR:FULL_MATCH:ALL:RECENT_5",
+           "E:TEAM_A:shots_on_target:FOR:FULL_MATCH:ALL:ALL_PRIOR",
+           "E:TEAM_A:shots_on_target:FOR:FULL_MATCH:ALL:RECENT_5",
+           "E:TEAM_A:corner_kicks:FOR:FULL_MATCH:ALL:ALL_PRIOR",
+           "E:TEAM_A:corner_kicks:FOR:FULL_MATCH:ALL:RECENT_5"
+          ],
+          "expected_relationship_to_test": "When shot volume rises but corner production falls simultaneously, shots-on-target rate rises relative to the baseline where both observables are at their long-run levels \u2014 suggesting a more direct, central attacking mode rather than wide/set-piece-driven pressure.",
+          "mechanism_id_local": "M1",
+          "mechanism_statement": "Team A's shot volume has risen sharply in recent matches while its conversion efficiency (shots-on-target rate) has also improved, but its corner-kick production has simultaneously declined. The joint relationship between shot volume, shots-on-target, and corner-kick production \u2014 specifically whether a team generating more shots but fewer corners is operating in a qualitatively different attacking mode \u2014 is worth measuring across historical match observations.",
+          "observable_variables": [
+           "shots",
+           "shots_on_target",
+           "corner_kicks"
+          ],
+          "provider_requirements": [
+           "shots",
+           "shots_on_target",
+           "corner_kicks"
+          ],
+          "self_overlap_with": [
+           "M2"
+          ],
+          "why_not_baseline_equivalent": "This requires a joint conditioning on two distinct observables (shots and corner_kicks) simultaneously diverging from their own baselines in opposite directions, then measuring a third observable (shots_on_target). No single-observable mirror or single-band split covers this three-variable joint relationship."
+         },
+         {
+          "conditioning_logic": "Condition on matches where a team's shots_on_target FOR (recent-5) diverges upward from its ALL_PRIOR mean while shots_on_target AGAINST (recent-5) diverges downward from its ALL_PRIOR mean. Measure whether possession FOR is also elevated in this joint state, or whether the asymmetric shots-on-target pattern occurs independently of possession share.",
+          "data_resolution_required": "match",
+          "evidence_refs": [
+           "E:TEAM_B:shots_on_target:FOR:FULL_MATCH:ALL:ALL_PRIOR",
+           "E:TEAM_B:shots_on_target:FOR:FULL_MATCH:ALL:RECENT_5",
+           "E:TEAM_B:shots_on_target:AGAINST:FULL_MATCH:ALL:ALL_PRIOR",
+           "E:TEAM_B:shots_on_target:AGAINST:FULL_MATCH:ALL:RECENT_5",
+           "E:TEAM_B:possession:FOR:FULL_MATCH:ALL:ALL_PRIOR",
+           "E:TEAM_B:possession:FOR:FULL_MATCH:ALL:RECENT_5"
+          ],
+          "expected_relationship_to_test": "When shots_on_target FOR rises and shots_on_target AGAINST falls simultaneously, possession FOR rises with this joint state \u2014 but the relationship saturates or reverses when possession is already near or above 50%, suggesting diminishing returns to possession-driven shot suppression.",
+          "mechanism_id_local": "M2",
+          "mechanism_statement": "Team B's shots-on-target FOR has surged in recent matches (6.0 vs 3.971 long-run) while its shots_on_target AGAINST has dropped (2.8 vs 3.956 long-run), creating an asymmetric divergence across the two sides of the same observable. The joint relationship between a team's own shots-on-target production trend and the shots-on-target it concedes \u2014 specifically whether these two dimensions move independently or co-vary \u2014 is worth measuring to understand whether recent form reflects genuine two-way improvement or a sample artifact.",
+          "observable_variables": [
+           "shots_on_target",
+           "possession"
+          ],
+          "provider_requirements": [
+           "shots_on_target",
+           "possession"
+          ],
+          "self_overlap_with": [
+           "M1"
+          ],
+          "why_not_baseline_equivalent": "This involves an asymmetric joint relationship across two distinct perspectives (FOR vs AGAINST) of the same observable, further conditioned on a second observable (possession). It cannot be reduced to a single observable's own-vs-allowed mirror or a single coarse band."
+         },
+         {
+          "conditioning_logic": "Condition on match-level observations where the attacking team's offsides FOR is elevated (above its own long-run mean) while the defending team's offsides AGAINST is simultaneously low (below its own long-run mean). Measure whether corner_kicks FOR and shots FOR are suppressed in this joint state relative to matches where both offside rates are near their respective means.",
+          "data_resolution_required": "match",
+          "evidence_refs": [
+           "E:TEAM_A:offsides:AGAINST:FULL_MATCH:ALL:ALL_PRIOR",
+           "E:TEAM_A:offsides:FOR:FULL_MATCH:ALL:ALL_PRIOR",
+           "E:TEAM_B:offsides:FOR:FULL_MATCH:ALL:ALL_PRIOR",
+           "E:TEAM_B:offsides:AGAINST:FULL_MATCH:ALL:ALL_PRIOR",
+           "E:TEAM_A:corner_kicks:FOR:FULL_MATCH:ALL:ALL_PRIOR",
+           "E:TEAM_A:shots:FOR:FULL_MATCH:ALL:ALL_PRIOR"
+          ],
+          "expected_relationship_to_test": "When an attacking team's offside rate is high and the defending team's offside-concession rate is low simultaneously, the attacking team's corner_kicks and shots are suppressed \u2014 indicating that a high-line, well-organized defense neutralizes forward runs and reduces attacking volume.",
+          "mechanism_id_local": "M3",
+          "mechanism_statement": "Team A concedes substantially more offsides than it generates (2.264 against vs 1.708 for, ALL_PRIOR), while Team B generates more offsides than it concedes (1.926 for vs 0.926 against). The joint relationship between one team's offside-generation tendency and the opponent's offside-concession tendency \u2014 specifically whether high offside-generation by one side against a low-offside-conceding opponent suppresses corner and shot production \u2014 is worth measuring as a two-observable, two-team interaction.",
+          "observable_variables": [
+           "offsides",
+           "corner_kicks",
+           "shots"
+          ],
+          "provider_requirements": [
+           "offsides",
+           "corner_kicks",
+           "shots"
+          ],
+          "self_overlap_with": [],
+          "why_not_baseline_equivalent": "This requires jointly conditioning on two distinct observables (offsides FOR for one team, offsides AGAINST for the opponent) from two different teams simultaneously, then measuring a third observable. This is a two-team, two-observable interaction not reducible to any single-observable mirror or single-band split."
+         },
+         {
+          "conditioning_logic": "Condition on matches where a team's fouls FOR (full match) is elevated above its own long-run mean. Within those matches, measure whether cards_2h FOR is disproportionately elevated relative to yellow_cards FOR (full match), testing whether foul-heavy teams accumulate cards non-linearly in the second half versus the first half.",
+          "data_resolution_required": "half",
+          "evidence_refs": [
+           "E:TEAM_A:cards_2h:FOR:SECOND_HALF:ALL:ALL_PRIOR",
+           "E:TEAM_A:cards_2h:AGAINST:SECOND_HALF:ALL:ALL_PRIOR",
+           "E:TEAM_A:fouls:FOR:FULL_MATCH:ALL:ALL_PRIOR",
+           "E:TEAM_A:fouls:FOR:FULL_MATCH:ALL:RECENT_5",
+           "E:TEAM_A:yellow_cards:FOR:FULL_MATCH:ALL:ALL_PRIOR",
+           "E:TEAM_B:cards_2h:FOR:SECOND_HALF:ALL:ALL_PRIOR",
+           "E:TEAM_B:fouls:FOR:FULL_MATCH:ALL:ALL_PRIOR",
+           "E:TEAM_B:fouls:FOR:FULL_MATCH:ALL:RECENT_5",
+           "E:COMPETITION_CONTEXT:cards_2h:NEUTRAL:SECOND_HALF:ALL:ALL_PRIOR"
+          ],
+          "expected_relationship_to_test": "When a team's full-match foul rate is elevated above its long-run mean, its second-half card accumulation rises disproportionately relative to its full-match yellow card rate \u2014 suggesting a threshold or acceleration effect where foul accumulation in the first half leads to heightened card risk in the second half.",
+          "mechanism_id_local": "M4",
+          "mechanism_statement": "Team A generates substantially more cards in the second half than it concedes (1.603 FOR vs 1.123 AGAINST, cards_2h), while Team B's second-half card rates are nearly symmetric (1.324 FOR vs 1.397 AGAINST). The joint relationship between a team's second-half foul rate and its second-half card accumulation \u2014 specifically whether elevated foul production in the full match predicts asymmetric second-half card accumulation \u2014 is worth measuring as a within-match state interaction across two observables.",
+          "observable_variables": [
+           "fouls",
+           "cards_2h",
+           "yellow_cards"
+          ],
+          "provider_requirements": [
+           "fouls",
+           "cards_2h",
+           "yellow_cards"
+          ],
+          "self_overlap_with": [],
+          "why_not_baseline_equivalent": "This involves a within-match state split (second half vs full match) jointly conditioned on a second distinct observable (fouls), testing a non-linear threshold relationship. It is not reducible to a single observable's half-level split alone or a single coarse band."
+         },
+         {
+          "conditioning_logic": "Condition on matches where a team's second-half corner_kicks FOR exceeds its first-half corner_kicks FOR by more than its long-run half-differential. Measure whether goals FOR in the second half are also elevated relative to the first half in those same matches, versus matches where the corner-kick half-differential is near zero or reversed.",
+          "data_resolution_required": "half",
+          "evidence_refs": [
+           "E:TEAM_A:corner_kicks:FOR:FIRST_HALF:ALL:ALL_PRIOR",
+           "E:TEAM_A:corner_kicks:FOR:SECOND_HALF:ALL:ALL_PRIOR",
+           "E:TEAM_A:goals:FOR:FIRST_HALF:ALL:ALL_PRIOR",
+           "E:TEAM_A:goals:FOR:SECOND_HALF:ALL:ALL_PRIOR",
+           "E:TEAM_B:corner_kicks:FOR:FIRST_HALF:ALL:ALL_PRIOR",
+           "E:TEAM_B:corner_kicks:FOR:SECOND_HALF:ALL:ALL_PRIOR",
+           "E:TEAM_B:goals:FOR:FIRST_HALF:ALL:ALL_PRIOR",
+           "E:TEAM_B:goals:FOR:SECOND_HALF:ALL:ALL_PRIOR"
+          ],
+          "expected_relationship_to_test": "When a team's second-half corner production exceeds its first-half corner production by more than its historical norm, its second-half goal production also rises relative to its first-half goal production \u2014 suggesting that corner-kick momentum within a match is a leading indicator of second-half scoring uplift.",
+          "mechanism_id_local": "M5",
+          "mechanism_statement": "Team A's corner-kick production is split across halves (2.169 first half vs 2.815 second half FOR, ALL_PRIOR), and its goals are similarly back-loaded (0.589 first half vs 0.877 second half FOR). Team B shows a similar half-level pattern for goals (0.574 first half vs 0.838 second half FOR). The joint relationship between a team's corner-kick half-level distribution and its goal-scoring half-level distribution \u2014 specifically whether teams that generate disproportionately more corners in the second half also score disproportionately more goals in the second half \u2014 is worth measuring as a two-observable, within-match sequencing interaction.",
+          "observable_variables": [
+           "corner_kicks",
+           "goals"
+          ],
+          "provider_requirements": [
+           "corner_kicks",
+           "goals"
+          ],
+          "self_overlap_with": [],
+          "why_not_baseline_equivalent": "This requires jointly conditioning on the within-match half-level differential of one observable (corner_kicks) to predict the within-match half-level differential of a second distinct observable (goals). It involves two observables and a within-match sequencing structure, not reducible to any single-observable half split or single-band conditioning."
+         }
+        ]
+       },
+       "name": "emit_item6_mechanisms",
+       "toolUseId": "tooluse_VUM5eLH2TmMqaQ9kpDBUmW",
+       "type": "tool_use"
+      }
+     }
+    ],
+    "role": "assistant"
+   }
+  },
+  "stopReason": "tool_use",
+  "usage": {
+   "cacheReadInputTokens": 0,
+   "cacheWriteInputTokens": 0,
+   "inputTokens": 12051,
+   "outputTokens": 3342,
+   "totalTokens": 15393
+  }
+ },
+ "request_sha256": "6178f15bb50c8cb3089286a6dcc0391ec5d10fb0d5bab9573f7b28333e1e230f",
+ "resolved_model_id": null,
+ "runner_version": "item6_stage1_runner_v2",
+ "usage": {
+  "cacheReadInputTokens": 0,
+  "cacheWriteInputTokens": 0,
+  "inputTokens": 12051,
+  "outputTokens": 3342,
+  "totalTokens": 15393
+ }
+}

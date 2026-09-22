@@ -1,0 +1,220 @@
+{
+ "count_input_sha256": "c342b4af8dd3d5a8ff9d97ef722511670c9e1d40631b2b6bb20ff28270805bc9",
+ "fixture_id": "i6_8574403",
+ "provider_counted_input_tokens": 12067,
+ "raw_response": {
+  "ResponseMetadata": {
+   "HTTPHeaders": {
+    "connection": "keep-alive",
+    "content-length": "11785",
+    "content-type": "application/json",
+    "date": "Tue, 22 Sep 2026 23:33:15 GMT",
+    "x-amzn-requestid": "d5cae6ad-189c-42da-a3b6-2ac7ce6c7bdd"
+   },
+   "HTTPStatusCode": 200,
+   "MaxAttemptsReached": true,
+   "RequestId": "d5cae6ad-189c-42da-a3b6-2ac7ce6c7bdd",
+   "RetryAttempts": 0
+  },
+  "_item6_live_transport": {
+   "authentic_provider_response": true,
+   "aws_request_id": "d5cae6ad-189c-42da-a3b6-2ac7ce6c7bdd",
+   "converse_model_id": "us.anthropic.claude-sonnet-4-6",
+   "count_model_id": "anthropic.claude-sonnet-4-6",
+   "envelope_sha256": "5f93e4c601c2aa0bb498aeb64136568287e8e20f6ebeee3a8bd33e09563e9418",
+   "http_status": 200,
+   "provider": "aws_bedrock",
+   "transport_version": "item6_bedrock_transport_v1"
+  },
+  "metrics": {
+   "latencyMs": 39322
+  },
+  "output": {
+   "message": {
+    "content": [
+     {
+      "toolUse": {
+       "input": {
+        "fixture_id": "i6_8574403",
+        "mechanisms": [
+         {
+          "conditioning_logic": "Condition on matches where Team A's shots FOR (recent) is substantially below its all-prior average AND shots AGAINST (recent) is above its all-prior average simultaneously. Within that joint state, measure whether corner kicks FOR also compress below the all-prior average.",
+          "data_resolution_required": "match",
+          "evidence_refs": [
+           "E:TEAM_A:shots:FOR:FULL_MATCH:ALL:ALL_PRIOR",
+           "E:TEAM_A:shots:FOR:FULL_MATCH:ALL:RECENT_5",
+           "E:TEAM_A:shots:AGAINST:FULL_MATCH:ALL:ALL_PRIOR",
+           "E:TEAM_A:shots:AGAINST:FULL_MATCH:ALL:RECENT_5",
+           "E:TEAM_A:corner_kicks:FOR:FULL_MATCH:ALL:ALL_PRIOR",
+           "E:TEAM_A:corner_kicks:FOR:FULL_MATCH:ALL:RECENT_5"
+          ],
+          "expected_relationship_to_test": "When Team A's shots FOR and shots AGAINST both move adversely together (recent vs all-prior), corner kicks FOR are suppressed relative to the all-prior baseline, indicating a compounding attacking-output depression rather than an isolated shooting slump.",
+          "mechanism_id_local": "M1",
+          "mechanism_statement": "Team A's shot-volume collapse in recent matches (shots FOR) co-occurs with a simultaneous rise in shots conceded (shots AGAINST), creating a joint offensive-defensive deterioration pattern. The relationship between the joint direction of both observables moving adversely at the same time is tested against whether corner kicks FOR also compress, since corners are a downstream product of attacking pressure.",
+          "observable_variables": [
+           "shots",
+           "shots_on_target",
+           "corner_kicks"
+          ],
+          "provider_requirements": [
+           "shots",
+           "shots_on_target",
+           "corner_kicks"
+          ],
+          "self_overlap_with": [
+           "M2"
+          ],
+          "why_not_baseline_equivalent": "This requires a joint condition on two distinct observables (shots FOR and shots AGAINST) moving in opposite adverse directions simultaneously, then measuring a third observable (corners FOR) within that joint state. No single-observable mirror or single-band split captures this three-variable joint relationship."
+         },
+         {
+          "conditioning_logic": "Jointly condition on Team A playing at home (activating its home shot-production uplift) and Team B's away shots FOR being below Team A's home shots FOR. Within this joint venue-asymmetry context, measure whether shots_on_target FOR Team A relative to shots_on_target FOR Team B diverges more than the all-prior averages alone would predict.",
+          "data_resolution_required": "match",
+          "evidence_refs": [
+           "E:TEAM_A:shots:FOR:FULL_MATCH:HOME:ALL_PRIOR",
+           "E:TEAM_A:shots:FOR:FULL_MATCH:AWAY:ALL_PRIOR",
+           "E:TEAM_B:shots:FOR:FULL_MATCH:AWAY:ALL_PRIOR",
+           "E:TEAM_B:shots:FOR:FULL_MATCH:HOME:ALL_PRIOR",
+           "E:TEAM_A:shots_on_target:FOR:FULL_MATCH:HOME:ALL_PRIOR",
+           "E:TEAM_A:shots_on_target:FOR:FULL_MATCH:AWAY:ALL_PRIOR",
+           "E:TEAM_B:shots_on_target:FOR:FULL_MATCH:AWAY:ALL_PRIOR",
+           "E:TEAM_A:possession:FOR:FULL_MATCH:HOME:ALL_PRIOR",
+           "E:TEAM_A:possession:FOR:FULL_MATCH:AWAY:ALL_PRIOR"
+          ],
+          "expected_relationship_to_test": "The asymmetric venue sensitivity between the two teams (Team A's large home/away shots split vs Team B's smaller split) is associated with a widened shots-on-target differential in Team A's favour when Team A is at home, beyond what either team's overall average implies.",
+          "mechanism_id_local": "M2",
+          "mechanism_statement": "Team A exhibits an asymmetric home/away split in shots FOR (home notably higher than away) while Team B exhibits a much smaller home/away split in shots FOR. The joint interaction of Team A's home shot-production advantage and Team B's relative venue-insensitivity in shots is tested against whether the combined shots-on-target differential between the two sides is amplified or suppressed compared to what each team's all-prior average would suggest.",
+          "observable_variables": [
+           "shots",
+           "shots_on_target",
+           "possession"
+          ],
+          "provider_requirements": [
+           "shots",
+           "shots_on_target",
+           "possession"
+          ],
+          "self_overlap_with": [
+           "M1"
+          ],
+          "why_not_baseline_equivalent": "This involves two distinct opponent-descriptor dimensions simultaneously: venue role (home/away) interacted with the cross-team asymmetry in venue sensitivity for shots. It is not reducible to a single observable with one coarse band, nor to a simple home/away split of one team's own observable."
+         },
+         {
+          "conditioning_logic": "Condition on matches where the fouling team (Team B) has a high all-prior fouls FOR rate relative to competition context AND the opposing team (Team A) has an above-competition-average yellow cards FOR rate. Within this joint high-foul / high-card-propensity context, measure whether second-half cards (cards_2h) for both sides jointly exceed the competition baseline.",
+          "data_resolution_required": "half",
+          "evidence_refs": [
+           "E:TEAM_B:fouls:FOR:FULL_MATCH:ALL:ALL_PRIOR",
+           "E:TEAM_B:fouls:FOR:FULL_MATCH:ALL:RECENT_5",
+           "E:TEAM_A:fouls:FOR:FULL_MATCH:ALL:ALL_PRIOR",
+           "E:TEAM_A:fouls:FOR:FULL_MATCH:ALL:RECENT_5",
+           "E:TEAM_A:yellow_cards:FOR:FULL_MATCH:ALL:ALL_PRIOR",
+           "E:TEAM_B:yellow_cards:FOR:FULL_MATCH:ALL:ALL_PRIOR",
+           "E:TEAM_A:cards_2h:FOR:SECOND_HALF:ALL:ALL_PRIOR",
+           "E:TEAM_B:cards_2h:FOR:SECOND_HALF:ALL:ALL_PRIOR",
+           "E:COMPETITION_CONTEXT:fouls:NEUTRAL:FULL_MATCH:ALL:ALL_PRIOR",
+           "E:COMPETITION_CONTEXT:cards_2h:NEUTRAL:SECOND_HALF:ALL:ALL_PRIOR"
+          ],
+          "expected_relationship_to_test": "When one team's chronic foul rate FOR is elevated above competition context and the opposing team's yellow card rate FOR is also above competition context, the combined second-half cards total rises above what either team's individual cards_2h average predicts, indicating a multiplicative rather than additive disciplinary escalation.",
+          "mechanism_id_local": "M3",
+          "mechanism_statement": "Both teams show elevated foul rates (both FOR and AGAINST) relative to the competition context baseline, but Team A's recent foul rate FOR has dropped sharply while Team B's remains elevated. The joint relationship between one team's foul rate and the other team's yellow card accumulation is tested: specifically, whether Team B's high chronic foul rate FOR, combined with Team A's elevated yellow cards FOR (all-prior), produces a second-half cards total that exceeds what each team's individual cards_2h average would predict in isolation.",
+          "observable_variables": [
+           "fouls",
+           "yellow_cards",
+           "cards_2h"
+          ],
+          "provider_requirements": [
+           "fouls",
+           "yellow_cards",
+           "cards_2h"
+          ],
+          "self_overlap_with": [
+           "M4"
+          ],
+          "why_not_baseline_equivalent": "This is a joint relationship across two distinct observables (fouls FOR for one team and yellow_cards FOR for the other team) used together to condition on a second-half outcome (cards_2h). It is asymmetric across the two sides and cannot be reduced to a single observable mirror or a single-band split."
+         },
+         {
+          "conditioning_logic": "Condition on matches involving Team A where both Team A's goals FOR and goals AGAINST are back-loaded (second-half mean exceeds first-half mean), and Team B also shows a back-loaded goals FOR pattern. Within this joint back-loading condition, measure whether the second-half share of total match goals exceeds the competition context's implied 50/50 half-split.",
+          "data_resolution_required": "half",
+          "evidence_refs": [
+           "E:TEAM_A:goals:FOR:FIRST_HALF:ALL:ALL_PRIOR",
+           "E:TEAM_A:goals:FOR:SECOND_HALF:ALL:ALL_PRIOR",
+           "E:TEAM_A:goals:AGAINST:FIRST_HALF:ALL:ALL_PRIOR",
+           "E:TEAM_A:goals:AGAINST:SECOND_HALF:ALL:ALL_PRIOR",
+           "E:TEAM_B:goals:FOR:FIRST_HALF:ALL:ALL_PRIOR",
+           "E:TEAM_B:goals:FOR:SECOND_HALF:ALL:ALL_PRIOR",
+           "E:TEAM_B:goals:AGAINST:FIRST_HALF:ALL:ALL_PRIOR",
+           "E:TEAM_B:goals:AGAINST:SECOND_HALF:ALL:ALL_PRIOR",
+           "E:COMPETITION_CONTEXT:goals:NEUTRAL:FULL_MATCH:ALL:ALL_PRIOR"
+          ],
+          "expected_relationship_to_test": "When both teams independently exhibit back-loaded goal distributions (second half > first half for both FOR and AGAINST), the second half of their head-to-head match produces a disproportionately higher share of total goals relative to the competition baseline half-distribution, indicating a compounding rather than averaging effect.",
+          "mechanism_id_local": "M4",
+          "mechanism_statement": "Team A's goals FOR split between first and second half reveals a back-loaded scoring pattern (second half higher than first half), while Team A's goals AGAINST is also back-loaded. Team B shows a similar back-loaded goals FOR pattern. The joint within-match half-level scoring distribution for both teams is tested against whether the second half produces a disproportionately higher share of total match goals relative to the competition context's implied half-distribution.",
+          "observable_variables": [
+           "goals"
+          ],
+          "provider_requirements": [
+           "goals"
+          ],
+          "self_overlap_with": [
+           "M3"
+          ],
+          "why_not_baseline_equivalent": "This requires a joint within-match half-level conditioning on two teams' half-distributions simultaneously (Team A's FOR and AGAINST half-split AND Team B's FOR half-split), which is structurally richer than a single observable's half-level split for one team. It is a within-match state dependence conditioned on both sides' half-level patterns jointly."
+         },
+         {
+          "conditioning_logic": "Condition on matches where Team A's possession FOR (home) is above the competition context average AND Team B's possession FOR (away) is below the competition context average, creating a joint possession-dominance context. Within this joint condition, measure whether Team A's corner kicks FOR at home rises disproportionately (non-linearly) relative to the linear expectation from possession alone, compared to matches where possession is only marginally above the competition baseline.",
+          "data_resolution_required": "match",
+          "evidence_refs": [
+           "E:TEAM_A:possession:FOR:FULL_MATCH:HOME:ALL_PRIOR",
+           "E:TEAM_A:possession:FOR:FULL_MATCH:AWAY:ALL_PRIOR",
+           "E:TEAM_B:possession:FOR:FULL_MATCH:AWAY:ALL_PRIOR",
+           "E:TEAM_B:possession:FOR:FULL_MATCH:HOME:ALL_PRIOR",
+           "E:TEAM_A:corner_kicks:FOR:FULL_MATCH:HOME:ALL_PRIOR",
+           "E:TEAM_A:corner_kicks:FOR:FULL_MATCH:AWAY:ALL_PRIOR",
+           "E:TEAM_B:corner_kicks:FOR:FULL_MATCH:AWAY:ALL_PRIOR",
+           "E:COMPETITION_CONTEXT:possession:NEUTRAL:FULL_MATCH:ALL:ALL_PRIOR",
+           "E:COMPETITION_CONTEXT:corner_kicks:NEUTRAL:FULL_MATCH:ALL:ALL_PRIOR"
+          ],
+          "expected_relationship_to_test": "When Team A holds a joint possession advantage at home against a chronically low-possession away side, corner kicks FOR for Team A rise at a rate that saturates or accelerates beyond what a linear possession-to-corners relationship would predict, suggesting a threshold effect in possession dominance on corner generation.",
+          "mechanism_id_local": "M5",
+          "mechanism_statement": "Team A's possession FOR is above competition context average overall but drops when away, while Team B's possession FOR is below competition context average and also drops when away. The joint interaction of Team A's home possession advantage and Team B's chronic low-possession profile is tested against corner kick generation: specifically, whether the team with the possession advantage (Team A at home) generates corners at a rate that rises non-linearly once possession exceeds a threshold above the competition baseline, rather than scaling linearly with possession.",
+          "observable_variables": [
+           "possession",
+           "corner_kicks"
+          ],
+          "provider_requirements": [
+           "possession",
+           "corner_kicks"
+          ],
+          "self_overlap_with": [],
+          "why_not_baseline_equivalent": "This tests a threshold/non-linear dependence of corner kicks on possession, jointly conditioned on both teams' possession profiles simultaneously (Team A's home possession uplift and Team B's chronic low-possession away profile). It is not reducible to a single observable with one coarse band, nor to a simple home/away split of corners alone."
+         }
+        ]
+       },
+       "name": "emit_item6_mechanisms",
+       "toolUseId": "tooluse_mMLJoZShOc5tW4PLPfYdMP",
+       "type": "tool_use"
+      }
+     }
+    ],
+    "role": "assistant"
+   }
+  },
+  "stopReason": "tool_use",
+  "usage": {
+   "cacheReadInputTokens": 0,
+   "cacheWriteInputTokens": 0,
+   "inputTokens": 12050,
+   "outputTokens": 3464,
+   "totalTokens": 15514
+  }
+ },
+ "request_sha256": "178823c315da42c89083efd3b2a2ac8dc713d6bf2fdf827e7bfcbfa59b3dc268",
+ "resolved_model_id": null,
+ "runner_version": "item6_stage1_runner_v2",
+ "usage": {
+  "cacheReadInputTokens": 0,
+  "cacheWriteInputTokens": 0,
+  "inputTokens": 12050,
+  "outputTokens": 3464,
+  "totalTokens": 15514
+ }
+}

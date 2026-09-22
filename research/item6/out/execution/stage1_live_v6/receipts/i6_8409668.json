@@ -1,0 +1,224 @@
+{
+ "count_input_sha256": "6c0dbf48149c18d861ed074539f7acccbe1d229f84b83fa1a17145025f691492",
+ "fixture_id": "i6_8409668",
+ "provider_counted_input_tokens": 12066,
+ "raw_response": {
+  "ResponseMetadata": {
+   "HTTPHeaders": {
+    "connection": "keep-alive",
+    "content-length": "11611",
+    "content-type": "application/json",
+    "date": "Tue, 22 Sep 2026 23:07:32 GMT",
+    "x-amzn-requestid": "a6c7a7a7-c064-4d7c-88d6-d012d42f27ab"
+   },
+   "HTTPStatusCode": 200,
+   "MaxAttemptsReached": true,
+   "RequestId": "a6c7a7a7-c064-4d7c-88d6-d012d42f27ab",
+   "RetryAttempts": 0
+  },
+  "_item6_live_transport": {
+   "authentic_provider_response": true,
+   "aws_request_id": "a6c7a7a7-c064-4d7c-88d6-d012d42f27ab",
+   "converse_model_id": "us.anthropic.claude-sonnet-4-6",
+   "count_model_id": "anthropic.claude-sonnet-4-6",
+   "envelope_sha256": "fc7c257b14ea39b4f10d65569fe89724ca1bf9fb6f83c9abd832f7fdeac27cb1",
+   "http_status": 200,
+   "provider": "aws_bedrock",
+   "transport_version": "item6_bedrock_transport_v1"
+  },
+  "metrics": {
+   "latencyMs": 41614
+  },
+  "output": {
+   "message": {
+    "content": [
+     {
+      "toolUse": {
+       "input": {
+        "fixture_id": "i6_8409668",
+        "mechanisms": [
+         {
+          "conditioning_logic": "Condition on matches where both teams hold below-competition-average possession (competition mean ~50%), then examine whether the team with higher shot volume relative to its possession share generates corners at a rate above what its raw possession alone would predict.",
+          "data_resolution_required": "match",
+          "evidence_refs": [
+           "E:TEAM_A:possession:FOR:FULL_MATCH:ALL:ALL_PRIOR",
+           "E:TEAM_A:shots:FOR:FULL_MATCH:ALL:ALL_PRIOR",
+           "E:TEAM_A:corner_kicks:FOR:FULL_MATCH:ALL:ALL_PRIOR",
+           "E:TEAM_B:possession:FOR:FULL_MATCH:ALL:ALL_PRIOR",
+           "E:TEAM_B:shots:FOR:FULL_MATCH:ALL:ALL_PRIOR",
+           "E:TEAM_B:corner_kicks:FOR:FULL_MATCH:ALL:ALL_PRIOR",
+           "E:COMPETITION_CONTEXT:possession:NEUTRAL:FULL_MATCH:ALL:ALL_PRIOR",
+           "E:COMPETITION_CONTEXT:corner_kicks:NEUTRAL:FULL_MATCH:ALL:ALL_PRIOR",
+           "E:COMPETITION_CONTEXT:shots:NEUTRAL:FULL_MATCH:ALL:ALL_PRIOR"
+          ],
+          "expected_relationship_to_test": "Corner kick production rises with shot volume even when possession is suppressed, and the relationship between shots and corners is steeper for the lower-possession side than for higher-possession sides.",
+          "mechanism_id_local": "M1",
+          "mechanism_statement": "When a low-possession team (Team A, ~42% possession) faces an opponent that also operates with low possession (~39%), the combined possession-deficit context suppresses corner kick production for both sides relative to the competition norm, but the team that generates more shots despite low possession (Team A: ~11.7 shots FOR vs Team B: ~10.8 shots FOR) may disproportionately convert shot volume into corners. The joint relationship between a team's own possession share and its shot volume in determining corner kick output is the mechanism to test.",
+          "observable_variables": [
+           "possession",
+           "shots",
+           "corner_kicks"
+          ],
+          "provider_requirements": [
+           "possession",
+           "shots",
+           "corner_kicks"
+          ],
+          "self_overlap_with": [
+           "M2"
+          ],
+          "why_not_baseline_equivalent": "This requires jointly conditioning on two distinct observables (possession AND shots) for the same team, not a single observable against one coarse band. It tests a non-linear interaction between possession share and shot volume in producing corners, which is not reducible to any single-observable mirror or single-band split."
+         },
+         {
+          "conditioning_logic": "Condition on matches where the defending team (Team B role) simultaneously allows above-competition-average shots AND holds below-competition-average possession, then measure corner kicks allowed in those matches versus matches where only one condition holds.",
+          "data_resolution_required": "match",
+          "evidence_refs": [
+           "E:TEAM_B:shots:AGAINST:FULL_MATCH:ALL:ALL_PRIOR",
+           "E:TEAM_B:shots:AGAINST:FULL_MATCH:ALL:RECENT_5",
+           "E:TEAM_B:possession:FOR:FULL_MATCH:ALL:ALL_PRIOR",
+           "E:TEAM_B:possession:FOR:FULL_MATCH:ALL:RECENT_5",
+           "E:TEAM_B:corner_kicks:AGAINST:FULL_MATCH:ALL:ALL_PRIOR",
+           "E:TEAM_B:corner_kicks:AGAINST:FULL_MATCH:ALL:RECENT_5",
+           "E:COMPETITION_CONTEXT:shots:NEUTRAL:FULL_MATCH:ALL:ALL_PRIOR",
+           "E:COMPETITION_CONTEXT:possession:NEUTRAL:FULL_MATCH:ALL:ALL_PRIOR"
+          ],
+          "expected_relationship_to_test": "Corner kicks allowed are elevated when both high shots-against and low possession co-occur, with the joint condition producing a higher corner rate than either condition alone.",
+          "mechanism_id_local": "M2",
+          "mechanism_statement": "Team B concedes a structurally high volume of shots (ALL_PRIOR ~16.9, RECENT_5 ~17.4) while also holding low possession (~39.5%). The joint condition of high shots-against AND low possession-for defines a defensive posture where the opponent (Team A) is likely to generate corners at an elevated rate. Test whether the combination of opponent high shots-against rate and own low possession jointly predicts elevated corner kicks allowed, beyond what either variable alone would suggest.",
+          "observable_variables": [
+           "shots",
+           "possession",
+           "corner_kicks"
+          ],
+          "provider_requirements": [
+           "shots",
+           "possession",
+           "corner_kicks"
+          ],
+          "self_overlap_with": [
+           "M1"
+          ],
+          "why_not_baseline_equivalent": "This is a genuine two-observable joint conditioning (shots-against AND possession-for) on the same team, not a single observable with one coarse band. The interaction between these two dimensions is the novel structure."
+         },
+         {
+          "conditioning_logic": "Condition on matches where a team's red card rate exceeds the competition average AND the team concedes above-average shot volumes. Within those matches, compare the ratio of second-half cards to full-match yellow cards against the baseline ratio in matches where only one condition holds.",
+          "data_resolution_required": "half",
+          "evidence_refs": [
+           "E:TEAM_B:red_cards:FOR:FULL_MATCH:ALL:ALL_PRIOR",
+           "E:TEAM_B:red_cards:FOR:FULL_MATCH:AWAY:ALL_PRIOR",
+           "E:TEAM_B:shots:AGAINST:FULL_MATCH:ALL:ALL_PRIOR",
+           "E:TEAM_B:cards_2h:FOR:SECOND_HALF:ALL:ALL_PRIOR",
+           "E:TEAM_B:yellow_cards:FOR:FULL_MATCH:ALL:ALL_PRIOR",
+           "E:COMPETITION_CONTEXT:red_cards:NEUTRAL:FULL_MATCH:ALL:ALL_PRIOR",
+           "E:COMPETITION_CONTEXT:cards_2h:NEUTRAL:SECOND_HALF:ALL:ALL_PRIOR",
+           "E:COMPETITION_CONTEXT:shots:NEUTRAL:FULL_MATCH:ALL:ALL_PRIOR"
+          ],
+          "expected_relationship_to_test": "The second-half card rate rises disproportionately (relative to full-match yellow cards) when both elevated red card propensity and high shots-against co-occur, indicating a non-additive escalation in the second half.",
+          "mechanism_id_local": "M3",
+          "mechanism_statement": "Team B carries a notably elevated red card rate (ALL_PRIOR ~0.375 per match, away ~0.5) relative to the competition norm (~0.137). When a team with a high red card rate also concedes high shot volumes (Team B: ~16.9 shots against), test whether the co-occurrence of elevated red card propensity and high shots-against is associated with a disproportionate increase in second-half cards (cards_2h) relative to full-match yellow cards, suggesting a within-match escalation pattern driven by the joint pressure of numerical disadvantage risk and shot volume.",
+          "observable_variables": [
+           "red_cards",
+           "shots",
+           "cards_2h",
+           "yellow_cards"
+          ],
+          "provider_requirements": [
+           "red_cards",
+           "shots",
+           "cards_2h",
+           "yellow_cards"
+          ],
+          "self_overlap_with": [
+           "M4"
+          ],
+          "why_not_baseline_equivalent": "This jointly conditions on two distinct observables (red card rate AND shots-against) and examines a within-match temporal asymmetry (second-half cards vs full-match cards), combining a two-observable joint condition with a half-level split. Neither element alone is covered."
+         },
+         {
+          "conditioning_logic": "Condition on match-ups where Team A's cards_2h FOR exceeds its cards_2h AGAINST, AND Team B's cards_2h AGAINST exceeds its cards_2h FOR (i.e., both asymmetries align to inflate second-half cards). Within those match-ups, also examine whether foul rates (Team A fouls FOR ~10.75, Team B fouls AGAINST ~12.96) reinforce the card escalation pattern.",
+          "data_resolution_required": "half",
+          "evidence_refs": [
+           "E:TEAM_A:cards_2h:FOR:SECOND_HALF:ALL:ALL_PRIOR",
+           "E:TEAM_A:cards_2h:AGAINST:SECOND_HALF:ALL:ALL_PRIOR",
+           "E:TEAM_B:cards_2h:FOR:SECOND_HALF:ALL:ALL_PRIOR",
+           "E:TEAM_B:cards_2h:AGAINST:SECOND_HALF:ALL:ALL_PRIOR",
+           "E:TEAM_A:fouls:FOR:FULL_MATCH:ALL:ALL_PRIOR",
+           "E:TEAM_B:fouls:AGAINST:FULL_MATCH:ALL:ALL_PRIOR",
+           "E:COMPETITION_CONTEXT:cards_2h:NEUTRAL:SECOND_HALF:ALL:ALL_PRIOR"
+          ],
+          "expected_relationship_to_test": "Total second-half cards are elevated when both teams' individual second-half card asymmetries (FOR vs AGAINST) point toward higher card production, and this joint alignment produces a higher second-half card total than either team's individual rate alone predicts.",
+          "mechanism_id_local": "M4",
+          "mechanism_statement": "Team A generates more second-half cards (FOR: 1.375) than it concedes (AGAINST: 0.875) in the second half, while Team B concedes more second-half cards (AGAINST: 1.625) than it produces (FOR: 1.125). Test whether the asymmetry between a team's own second-half card production and its opponent's second-half card allowance \u2014 when both point in the same direction \u2014 jointly predicts an elevated total second-half card count, beyond what each team's individual card rate would suggest in isolation.",
+          "observable_variables": [
+           "cards_2h",
+           "fouls"
+          ],
+          "provider_requirements": [
+           "cards_2h",
+           "fouls"
+          ],
+          "self_overlap_with": [
+           "M3"
+          ],
+          "why_not_baseline_equivalent": "This is an asymmetric cross-team relationship: it jointly uses Team A's FOR/AGAINST second-half card asymmetry AND Team B's FOR/AGAINST second-half card asymmetry as two distinct dimensions, then adds fouls as a third observable. This is not reducible to a single observable mirror or single-band split."
+         },
+         {
+          "conditioning_logic": "Condition on match-ups where one team improves defensively in the second half (lower goals-against in 2H vs 1H) while the opponent improves offensively in the second half (higher goals-for in 2H vs 1H). Examine whether the net within-match goal distribution (1H vs 2H total goals) is systematically shifted relative to competition baseline, and whether shots_on_target half-level splits reinforce or contradict the goal-timing pattern.",
+          "data_resolution_required": "half",
+          "evidence_refs": [
+           "E:TEAM_A:goals:FOR:FIRST_HALF:ALL:ALL_PRIOR",
+           "E:TEAM_A:goals:FOR:SECOND_HALF:ALL:ALL_PRIOR",
+           "E:TEAM_A:goals:AGAINST:FIRST_HALF:ALL:ALL_PRIOR",
+           "E:TEAM_A:goals:AGAINST:SECOND_HALF:ALL:ALL_PRIOR",
+           "E:TEAM_B:goals:FOR:FIRST_HALF:ALL:ALL_PRIOR",
+           "E:TEAM_B:goals:FOR:SECOND_HALF:ALL:ALL_PRIOR",
+           "E:TEAM_B:goals:AGAINST:FIRST_HALF:ALL:ALL_PRIOR",
+           "E:TEAM_B:goals:AGAINST:SECOND_HALF:ALL:ALL_PRIOR",
+           "E:TEAM_A:shots_on_target:FOR:FULL_MATCH:ALL:ALL_PRIOR",
+           "E:TEAM_B:shots_on_target:FOR:FULL_MATCH:ALL:ALL_PRIOR",
+           "E:COMPETITION_CONTEXT:goals:NEUTRAL:FULL_MATCH:ALL:ALL_PRIOR"
+          ],
+          "expected_relationship_to_test": "When one team's second-half defensive improvement and the opponent's second-half offensive improvement co-occur, the within-match goal distribution shifts toward the second half, and this shift is amplified relative to what either team's individual half-level goal rate alone predicts.",
+          "mechanism_id_local": "M5",
+          "mechanism_statement": "Team A scores more goals in the second half (FOR 2H: 0.583) than the first half (FOR 1H: 0.583 \u2014 equal), while conceding more in the first half (AGAINST 1H: 0.875) than the second half (AGAINST 2H: 0.75). Team B scores more in the second half (FOR 2H: 0.708) than the first half (FOR 1H: 0.542), and concedes more in the first half (AGAINST 1H: 0.5) than the second half (AGAINST 2H: 0.792 \u2014 reversed). Test whether the joint half-level goal-scoring and goal-conceding profiles of both teams \u2014 specifically the interaction between Team A's defensive improvement in the second half and Team B's offensive improvement in the second half \u2014 predicts a distinctive within-match goal-timing pattern (more goals in one half than the other) that differs from what each team's individual half-level rates would suggest.",
+          "observable_variables": [
+           "goals",
+           "shots_on_target"
+          ],
+          "provider_requirements": [
+           "goals",
+           "shots_on_target"
+          ],
+          "self_overlap_with": [],
+          "why_not_baseline_equivalent": "This jointly conditions on two distinct half-level observables (goals FOR by half AND goals AGAINST by half) for both teams simultaneously, testing a cross-team interaction across two within-match periods. It is not reducible to a single observable's recent vs long-run level, a single half-level split, or a single-band conditioning."
+         }
+        ]
+       },
+       "name": "emit_item6_mechanisms",
+       "toolUseId": "tooluse_dVR4XBnqZX20d7WHPjDTOS",
+       "type": "tool_use"
+      }
+     }
+    ],
+    "role": "assistant"
+   }
+  },
+  "stopReason": "tool_use",
+  "usage": {
+   "cacheReadInputTokens": 0,
+   "cacheWriteInputTokens": 0,
+   "inputTokens": 12049,
+   "outputTokens": 3576,
+   "totalTokens": 15625
+  }
+ },
+ "request_sha256": "4e9f3ef04b58f4b0807823db6c31c26699882184387b8f4c9ec6feae0f0970f6",
+ "resolved_model_id": null,
+ "runner_version": "item6_stage1_runner_v2",
+ "usage": {
+  "cacheReadInputTokens": 0,
+  "cacheWriteInputTokens": 0,
+  "inputTokens": 12049,
+  "outputTokens": 3576,
+  "totalTokens": 15625
+ }
+}

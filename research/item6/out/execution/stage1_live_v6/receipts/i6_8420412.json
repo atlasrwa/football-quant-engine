@@ -1,0 +1,215 @@
+{
+ "count_input_sha256": "0cf292410e1bb0a9c37f69b5cff92d6d6c3644e4354b46aea66a0cfd7b66519a",
+ "fixture_id": "i6_8420412",
+ "provider_counted_input_tokens": 12063,
+ "raw_response": {
+  "ResponseMetadata": {
+   "HTTPHeaders": {
+    "connection": "keep-alive",
+    "content-length": "10509",
+    "content-type": "application/json",
+    "date": "Tue, 22 Sep 2026 16:55:45 GMT",
+    "x-amzn-requestid": "5b7055fb-4a59-422b-ac37-66115e21216a"
+   },
+   "HTTPStatusCode": 200,
+   "MaxAttemptsReached": true,
+   "RequestId": "5b7055fb-4a59-422b-ac37-66115e21216a",
+   "RetryAttempts": 0
+  },
+  "_item6_live_transport": {
+   "authentic_provider_response": true,
+   "aws_request_id": "5b7055fb-4a59-422b-ac37-66115e21216a",
+   "converse_model_id": "us.anthropic.claude-sonnet-4-6",
+   "count_model_id": "anthropic.claude-sonnet-4-6",
+   "envelope_sha256": "4aef0ff72c93551a4cbe66309c1a86fdf86bef3d8afe4bca6eff36f1f40f43ef",
+   "http_status": 200,
+   "provider": "aws_bedrock",
+   "transport_version": "item6_bedrock_transport_v1"
+  },
+  "metrics": {
+   "latencyMs": 35941
+  },
+  "output": {
+   "message": {
+    "content": [
+     {
+      "toolUse": {
+       "input": {
+        "fixture_id": "i6_8420412",
+        "mechanisms": [
+         {
+          "conditioning_logic": "Jointly condition on each team's possession share and shot production simultaneously, computing shots-per-possession-unit for each side and comparing the cross-team asymmetry. This is not a single-observable mirror but a ratio relationship across two distinct observables for two sides.",
+          "data_resolution_required": "match",
+          "evidence_refs": [
+           "E:TEAM_A:possession:FOR:FULL_MATCH:ALL:ALL_PRIOR",
+           "E:TEAM_A:shots:FOR:FULL_MATCH:ALL:ALL_PRIOR",
+           "E:TEAM_A:shots:FOR:FULL_MATCH:ALL:RECENT_5",
+           "E:TEAM_B:possession:FOR:FULL_MATCH:ALL:ALL_PRIOR",
+           "E:TEAM_B:possession:FOR:FULL_MATCH:ALL:RECENT_5",
+           "E:TEAM_B:shots:FOR:FULL_MATCH:ALL:ALL_PRIOR",
+           "E:TEAM_B:shots:FOR:FULL_MATCH:ALL:RECENT_5"
+          ],
+          "expected_relationship_to_test": "Team A's shots-per-possession-unit rises relative to Team B's as Team B's possession advantage widens; i.e., the side with lower possession produces disproportionately more shots per possession unit held",
+          "mechanism_id_local": "M1_possession_shots_asymmetry",
+          "mechanism_statement": "Team B holds substantially higher possession than Team A across all windows, yet both teams produce similar shot volumes. The joint relationship between possession dominance and shot conversion efficiency (shots per unit possession) differs asymmetrically between the two sides, suggesting that Team A generates shots at a higher rate relative to its possession share than Team B does relative to its possession share.",
+          "observable_variables": [
+           "possession",
+           "shots",
+           "shots_on_target"
+          ],
+          "provider_requirements": [
+           "possession",
+           "shots"
+          ],
+          "self_overlap_with": [
+           "M2_possession_corners_asymmetry"
+          ],
+          "why_not_baseline_equivalent": "Requires jointly relating two distinct observables (possession and shots) across both sides simultaneously; cannot be reduced to one observable with one conditioning band or a simple home/away split."
+         },
+         {
+          "conditioning_logic": "Jointly condition on each team's possession share and corner kick production/concession simultaneously, examining whether the team with lower possession generates corners at a rate inconsistent with its possession deficit. Compare all-prior vs recent-5 windows to detect a regime shift.",
+          "data_resolution_required": "match",
+          "evidence_refs": [
+           "E:TEAM_A:possession:FOR:FULL_MATCH:ALL:ALL_PRIOR",
+           "E:TEAM_A:possession:FOR:FULL_MATCH:ALL:RECENT_5",
+           "E:TEAM_A:corner_kicks:FOR:FULL_MATCH:ALL:ALL_PRIOR",
+           "E:TEAM_A:corner_kicks:FOR:FULL_MATCH:ALL:RECENT_5",
+           "E:TEAM_B:possession:FOR:FULL_MATCH:ALL:ALL_PRIOR",
+           "E:TEAM_B:possession:FOR:FULL_MATCH:ALL:RECENT_5",
+           "E:TEAM_B:corner_kicks:AGAINST:FULL_MATCH:ALL:ALL_PRIOR",
+           "E:TEAM_B:corner_kicks:AGAINST:FULL_MATCH:ALL:RECENT_5"
+          ],
+          "expected_relationship_to_test": "Corner kick generation by the lower-possession team rises relative to its possession share as the possession gap widens; the relationship between possession and corners is non-proportional and asymmetric across the two sides",
+          "mechanism_id_local": "M2_possession_corners_asymmetry",
+          "mechanism_statement": "Team B dominates possession yet Team A generates more corners per match in recent form than its season average, while Team B's corners against have dropped in recent matches. The joint relationship between possession share and corner generation differs asymmetrically: the lower-possession side (Team A) earns corners at a rate disproportionate to its possession share, while the higher-possession side (Team B) concedes fewer corners recently despite allowing more possession to opponents historically.",
+          "observable_variables": [
+           "possession",
+           "corner_kicks"
+          ],
+          "provider_requirements": [
+           "possession",
+           "corner_kicks"
+          ],
+          "self_overlap_with": [
+           "M1_possession_shots_asymmetry"
+          ],
+          "why_not_baseline_equivalent": "Involves a joint two-observable relationship (possession \u00d7 corners) across both sides with an asymmetric cross-team structure, plus a regime-shift comparison between all-prior and recent-5 windows \u2014 not reducible to a single observable with one band."
+         },
+         {
+          "conditioning_logic": "Jointly condition on Team A's foul production and Team B's foul production simultaneously, then examine how the cross-team foul differential relates to second-half card totals for each side. The conditioning uses two opponent-descriptor dimensions (each team's foul rate) together with the second-half period split.",
+          "data_resolution_required": "half",
+          "evidence_refs": [
+           "E:TEAM_A:fouls:FOR:FULL_MATCH:ALL:ALL_PRIOR",
+           "E:TEAM_A:fouls:FOR:FULL_MATCH:ALL:RECENT_5",
+           "E:TEAM_A:cards_2h:FOR:SECOND_HALF:ALL:ALL_PRIOR",
+           "E:TEAM_A:yellow_cards:FOR:FULL_MATCH:ALL:ALL_PRIOR",
+           "E:TEAM_B:fouls:FOR:FULL_MATCH:ALL:ALL_PRIOR",
+           "E:TEAM_B:fouls:FOR:FULL_MATCH:ALL:RECENT_5",
+           "E:TEAM_B:cards_2h:FOR:SECOND_HALF:ALL:ALL_PRIOR",
+           "E:COMPETITION_CONTEXT:fouls:NEUTRAL:FULL_MATCH:ALL:ALL_PRIOR",
+           "E:COMPETITION_CONTEXT:cards_2h:NEUTRAL:SECOND_HALF:ALL:ALL_PRIOR"
+          ],
+          "expected_relationship_to_test": "Second-half cards for the higher-fouling side rise as the cross-team foul differential widens; the relationship between foul differential and second-half cards is stronger in the second half than the full-match card rate would imply",
+          "mechanism_id_local": "M3_fouls_cards_2h_joint",
+          "mechanism_statement": "Team A commits substantially more fouls than the competition average and more than Team B, while also accumulating more second-half cards than Team B. The joint relationship between a team's foul rate and its second-half card accumulation \u2014 conditioned on the opponent's foul rate \u2014 captures whether high-fouling teams facing lower-fouling opponents see a disproportionate escalation in second-half disciplinary events.",
+          "observable_variables": [
+           "fouls",
+           "cards_2h",
+           "yellow_cards"
+          ],
+          "provider_requirements": [
+           "fouls",
+           "cards_2h",
+           "yellow_cards"
+          ],
+          "self_overlap_with": [],
+          "why_not_baseline_equivalent": "Requires jointly relating two distinct observables (fouls and cards_2h) conditioned on both teams' foul rates simultaneously, with a within-match period split (second half). This is a two-observable joint relationship with a half-level resolution \u2014 not a single-observable mirror."
+         },
+         {
+          "conditioning_logic": "Jointly condition on each team's shots-on-target production and goals scored simultaneously, computing the conversion ratio (goals per shot on target) for each side across all-prior and recent-5 windows. Compare whether the conversion gap between sides persists or narrows in recent form.",
+          "data_resolution_required": "match",
+          "evidence_refs": [
+           "E:TEAM_A:shots_on_target:FOR:FULL_MATCH:ALL:ALL_PRIOR",
+           "E:TEAM_A:shots_on_target:FOR:FULL_MATCH:ALL:RECENT_5",
+           "E:TEAM_A:goals:FOR:FULL_MATCH:ALL:ALL_PRIOR",
+           "E:TEAM_A:goals:FOR:FULL_MATCH:ALL:RECENT_5",
+           "E:TEAM_B:shots_on_target:FOR:FULL_MATCH:ALL:ALL_PRIOR",
+           "E:TEAM_B:shots_on_target:FOR:FULL_MATCH:ALL:RECENT_5",
+           "E:TEAM_B:goals:FOR:FULL_MATCH:ALL:ALL_PRIOR",
+           "E:TEAM_B:goals:FOR:FULL_MATCH:ALL:RECENT_5"
+          ],
+          "expected_relationship_to_test": "The team with higher goals-per-shot-on-target maintains that conversion advantage even when shots-on-target volumes converge; the conversion ratio is a persistent asymmetric property not explained by shot volume alone",
+          "mechanism_id_local": "M4_shots_on_target_goals_conversion_joint",
+          "mechanism_statement": "Team B scores goals at a markedly higher rate than Team A (1.882 vs 1.342 per match all-prior) despite both teams producing similar shot and shots-on-target volumes. The joint relationship between shots-on-target production and goals scored \u2014 i.e., the shots-on-target-to-goals conversion ratio \u2014 differs substantially between the two sides, and this asymmetry is not captured by examining either observable in isolation.",
+          "observable_variables": [
+           "shots_on_target",
+           "goals"
+          ],
+          "provider_requirements": [
+           "shots_on_target",
+           "goals"
+          ],
+          "self_overlap_with": [],
+          "why_not_baseline_equivalent": "Requires jointly relating two distinct observables (shots_on_target and goals) for both sides simultaneously to compute a ratio; the cross-team asymmetry in conversion is not captured by either observable's mirror comparison alone."
+         },
+         {
+          "conditioning_logic": "Jointly condition on Team B's possession share and its offsides-against rate across the all-prior vs recent-5 windows simultaneously, testing whether the surge in offsides-against co-occurs with the possession increase as a joint regime shift rather than independent trends.",
+          "data_resolution_required": "match",
+          "evidence_refs": [
+           "E:TEAM_B:offsides:AGAINST:FULL_MATCH:ALL:ALL_PRIOR",
+           "E:TEAM_B:offsides:AGAINST:FULL_MATCH:ALL:RECENT_5",
+           "E:TEAM_B:possession:FOR:FULL_MATCH:ALL:ALL_PRIOR",
+           "E:TEAM_B:possession:FOR:FULL_MATCH:ALL:RECENT_5",
+           "E:TEAM_A:offsides:FOR:FULL_MATCH:ALL:ALL_PRIOR",
+           "E:TEAM_A:offsides:FOR:FULL_MATCH:ALL:RECENT_5",
+           "E:TEAM_A:possession:FOR:FULL_MATCH:ALL:ALL_PRIOR",
+           "E:TEAM_A:possession:FOR:FULL_MATCH:ALL:RECENT_5"
+          ],
+          "expected_relationship_to_test": "Offsides-against for the high-possession team rises as possession share increases beyond a threshold level, suggesting a non-linear or threshold relationship between possession dominance and defensive line exposure to offside traps",
+          "mechanism_id_local": "M5_offsides_possession_regime_shift",
+          "mechanism_statement": "Team B's offsides conceded (opponents caught offside against Team B) has surged dramatically in recent matches (3.8 recent-5 vs 1.895 all-prior), coinciding with Team B's possession share also rising in recent form (65.8 recent-5 vs 59.5 all-prior). This joint regime shift across two observables \u2014 possession and offsides-against \u2014 suggests a structural change in Team B's defensive line behavior as possession dominance increases, which is not captured by examining either observable's recent-vs-all-prior trend in isolation.",
+          "observable_variables": [
+           "offsides",
+           "possession"
+          ],
+          "provider_requirements": [
+           "offsides",
+           "possession"
+          ],
+          "self_overlap_with": [
+           "M1_possession_shots_asymmetry",
+           "M2_possession_corners_asymmetry"
+          ],
+          "why_not_baseline_equivalent": "Involves a joint two-observable relationship (possession \u00d7 offsides) with a regime-shift structure across ordered time windows (all-prior vs recent-5), and tests a threshold/non-linear dependence rather than a simple recent-vs-long-run comparison of a single observable."
+         }
+        ]
+       },
+       "name": "emit_item6_mechanisms",
+       "toolUseId": "tooluse_RFPQL73VxUAxzHX7L6ixn9",
+       "type": "tool_use"
+      }
+     }
+    ],
+    "role": "assistant"
+   }
+  },
+  "stopReason": "tool_use",
+  "usage": {
+   "cacheReadInputTokens": 0,
+   "cacheWriteInputTokens": 0,
+   "inputTokens": 12046,
+   "outputTokens": 3179,
+   "totalTokens": 15225
+  }
+ },
+ "request_sha256": "bcab747d2b24870d62486581d80139b737f49c4cf2f5280c74e72d799e77ca49",
+ "resolved_model_id": null,
+ "runner_version": "item6_stage1_runner_v2",
+ "usage": {
+  "cacheReadInputTokens": 0,
+  "cacheWriteInputTokens": 0,
+  "inputTokens": 12046,
+  "outputTokens": 3179,
+  "totalTokens": 15225
+ }
+}

@@ -1,0 +1,222 @@
+{
+ "count_input_sha256": "acdcfeacac2fa17cc9ad9b0d5fcb32a6376beb22a0aca2d997e593107e045963",
+ "fixture_id": "i6_8572743",
+ "provider_counted_input_tokens": 12066,
+ "raw_response": {
+  "ResponseMetadata": {
+   "HTTPHeaders": {
+    "connection": "keep-alive",
+    "content-length": "11428",
+    "content-type": "application/json",
+    "date": "Tue, 22 Sep 2026 17:09:09 GMT",
+    "x-amzn-requestid": "b3b615d9-cec7-4d98-8b3b-f5b59c4a87ae"
+   },
+   "HTTPStatusCode": 200,
+   "MaxAttemptsReached": true,
+   "RequestId": "b3b615d9-cec7-4d98-8b3b-f5b59c4a87ae",
+   "RetryAttempts": 0
+  },
+  "_item6_live_transport": {
+   "authentic_provider_response": true,
+   "aws_request_id": "b3b615d9-cec7-4d98-8b3b-f5b59c4a87ae",
+   "converse_model_id": "us.anthropic.claude-sonnet-4-6",
+   "count_model_id": "anthropic.claude-sonnet-4-6",
+   "envelope_sha256": "3bb796f1c24f6450dea50ca720788319f58f56bc66779ba2fd18cd665b3ac72e",
+   "http_status": 200,
+   "provider": "aws_bedrock",
+   "transport_version": "item6_bedrock_transport_v1"
+  },
+  "metrics": {
+   "latencyMs": 39735
+  },
+  "output": {
+   "message": {
+    "content": [
+     {
+      "toolUse": {
+       "input": {
+        "fixture_id": "i6_8572743",
+        "mechanisms": [
+         {
+          "conditioning_logic": "Condition on the joint state where Team A's recent shots_on_target FOR is elevated relative to its long-run mean AND Team B's recent shots AGAINST is elevated relative to its long-run mean. Measure whether the cross-product of these two deviations is associated with Team A goals FOR beyond what each deviation predicts independently.",
+          "data_resolution_required": "match",
+          "evidence_refs": [
+           "E:TEAM_A:shots:FOR:FULL_MATCH:ALL:ALL_PRIOR",
+           "E:TEAM_A:shots:FOR:FULL_MATCH:ALL:RECENT_5",
+           "E:TEAM_A:shots_on_target:FOR:FULL_MATCH:ALL:ALL_PRIOR",
+           "E:TEAM_A:shots_on_target:FOR:FULL_MATCH:ALL:RECENT_5",
+           "E:TEAM_A:goals:FOR:FULL_MATCH:ALL:ALL_PRIOR",
+           "E:TEAM_A:goals:FOR:FULL_MATCH:ALL:RECENT_5",
+           "E:TEAM_B:shots:AGAINST:FULL_MATCH:ALL:ALL_PRIOR",
+           "E:TEAM_B:shots:AGAINST:FULL_MATCH:ALL:RECENT_5"
+          ],
+          "expected_relationship_to_test": "Team A goals FOR rises more steeply when both Team A's shot quality (shots_on_target/shots ratio) is above its long-run level AND the opponent's shots-allowed is above its long-run level, compared to when only one condition holds.",
+          "mechanism_id_local": "M1",
+          "mechanism_statement": "Team A's shot volume has risen in recent matches while its shots-on-target conversion rate (shots_on_target / shots) has also improved recently, whereas Team B concedes markedly more shots in recent matches than its long-run average. The joint condition of one team's improving shot quality alongside the opponent's recent defensive deterioration in shot-volume-allowed may produce a non-additive relationship with goals scored that neither observable alone captures.",
+          "observable_variables": [
+           "shots",
+           "shots_on_target",
+           "goals"
+          ],
+          "provider_requirements": [
+           "shots",
+           "shots_on_target",
+           "goals"
+          ],
+          "self_overlap_with": [
+           "M2"
+          ],
+          "why_not_baseline_equivalent": "This requires jointly conditioning on two distinct observables from two different perspectives (Team A's own shot quality trend AND Team B's defensive shot-volume trend) simultaneously. It is not reducible to a single observable with one coarse band, nor to a simple home/away or recent-vs-long-run split on a single metric."
+         },
+         {
+          "conditioning_logic": "Condition on matches where Team A's possession FOR is below a threshold (e.g. below competition mean of 50%) AND Team B's possession FOR is also below its own long-run mean. Measure whether corner_kicks FOR Team A and shots FOR Team A jointly behave differently in this dual-low-possession regime versus when possession is more balanced.",
+          "data_resolution_required": "match",
+          "evidence_refs": [
+           "E:TEAM_A:possession:FOR:FULL_MATCH:ALL:ALL_PRIOR",
+           "E:TEAM_A:possession:FOR:FULL_MATCH:ALL:RECENT_5",
+           "E:TEAM_B:possession:FOR:FULL_MATCH:ALL:ALL_PRIOR",
+           "E:TEAM_B:possession:FOR:FULL_MATCH:ALL:RECENT_5",
+           "E:TEAM_A:corner_kicks:FOR:FULL_MATCH:ALL:ALL_PRIOR",
+           "E:TEAM_A:shots:FOR:FULL_MATCH:ALL:ALL_PRIOR",
+           "E:COMPETITION_CONTEXT:possession:NEUTRAL:FULL_MATCH:ALL:ALL_PRIOR",
+           "E:COMPETITION_CONTEXT:corner_kicks:NEUTRAL:FULL_MATCH:ALL:ALL_PRIOR"
+          ],
+          "expected_relationship_to_test": "When both teams are simultaneously below their respective possession baselines, Team A's corner_kicks FOR and shots FOR show a different joint distribution than when possession is more one-sided, suggesting a non-linear interaction between the two teams' possession deficits.",
+          "mechanism_id_local": "M2",
+          "mechanism_statement": "Team A operates with a persistent below-average possession share (long-run ~44.8%, recent ~42.8%) while Team B has recently dropped below its own long-run possession average. When both teams are simultaneously in a low-possession regime, the joint possession deficit may be associated with a distinct corner-kick and shots pattern compared to matches where only one team is possession-deficient.",
+          "observable_variables": [
+           "possession",
+           "corner_kicks",
+           "shots"
+          ],
+          "provider_requirements": [
+           "possession",
+           "corner_kicks",
+           "shots"
+          ],
+          "self_overlap_with": [
+           "M1"
+          ],
+          "why_not_baseline_equivalent": "This conditions on two distinct opponent-descriptor dimensions simultaneously (Team A's own possession level AND Team B's possession level), and examines the joint relationship with two output observables. It cannot be reduced to a single observable split by one coarse band."
+         },
+         {
+          "conditioning_logic": "Condition on matches where Team A's offsides FOR is simultaneously elevated above its long-run mean AND Team B's offsides AGAINST is elevated above its long-run mean. Measure whether Team A's goals FOR is associated with this joint elevation differently than when only one offside dimension is elevated.",
+          "data_resolution_required": "match",
+          "evidence_refs": [
+           "E:TEAM_A:offsides:FOR:FULL_MATCH:ALL:ALL_PRIOR",
+           "E:TEAM_A:offsides:FOR:FULL_MATCH:ALL:RECENT_5",
+           "E:TEAM_B:offsides:AGAINST:FULL_MATCH:ALL:ALL_PRIOR",
+           "E:TEAM_B:offsides:AGAINST:FULL_MATCH:ALL:RECENT_5",
+           "E:TEAM_A:goals:FOR:FULL_MATCH:ALL:ALL_PRIOR",
+           "E:TEAM_A:goals:FOR:FULL_MATCH:ALL:RECENT_5"
+          ],
+          "expected_relationship_to_test": "Team A goals FOR rises when both Team A's offsides FOR and Team B's offsides AGAINST are jointly above their respective long-run means, consistent with a high-line defensive regime by Team B that creates more behind-the-line opportunities alongside more offside traps.",
+          "mechanism_id_local": "M3",
+          "mechanism_statement": "Team A's offsides FOR has spiked sharply in recent matches (long-run ~1.48, recent ~3.2) while Team B's offsides AGAINST has also spiked recently (long-run ~1.10, recent ~2.6). The joint elevation of both Team A's offensive line-breaking attempts and Team B's defensive line exposure may interact with Team A's goals FOR in a non-additive way \u2014 high offsides on both sides simultaneously may indicate a high-line defensive setup by Team B that creates both more offsides traps and more goal opportunities.",
+          "observable_variables": [
+           "offsides",
+           "goals"
+          ],
+          "provider_requirements": [
+           "offsides",
+           "goals"
+          ],
+          "self_overlap_with": [],
+          "why_not_baseline_equivalent": "This is a genuine joint relationship between two distinct observables from asymmetric perspectives (Team A's offensive offsides production AND Team B's defensive offsides concession) and their combined association with a third observable (goals). It requires two distinct opponent-descriptor dimensions simultaneously and is not reducible to any single-observable split."
+         },
+         {
+          "conditioning_logic": "Condition on the within-match half structure: compare first-half vs second-half goal production for Team A FOR against Team B's first-half vs second-half goals AGAINST. Measure whether the joint second-half skew of both Team A's attacking output and Team B's defensive vulnerability produces a compounding effect on second-half goals, and whether this is further associated with elevated second-half card activity (cards_2h).",
+          "data_resolution_required": "half",
+          "evidence_refs": [
+           "E:TEAM_A:goals:FOR:FIRST_HALF:ALL:ALL_PRIOR",
+           "E:TEAM_A:goals:FOR:SECOND_HALF:ALL:ALL_PRIOR",
+           "E:TEAM_B:goals:AGAINST:FIRST_HALF:ALL:ALL_PRIOR",
+           "E:TEAM_B:goals:AGAINST:SECOND_HALF:ALL:ALL_PRIOR",
+           "E:TEAM_A:cards_2h:FOR:SECOND_HALF:ALL:ALL_PRIOR",
+           "E:TEAM_B:cards_2h:FOR:SECOND_HALF:ALL:ALL_PRIOR",
+           "E:COMPETITION_CONTEXT:cards_2h:NEUTRAL:SECOND_HALF:ALL:ALL_PRIOR"
+          ],
+          "expected_relationship_to_test": "Second-half goals in matches involving Team A (home) and Team B (away) are elevated relative to first-half goals, and this elevation is associated with higher cards_2h, consistent with a late-game intensity regime driven by the joint half-level asymmetry of both teams.",
+          "mechanism_id_local": "M4",
+          "mechanism_statement": "Team A's second-half goal production (long-run 0.586 per match) exceeds its first-half production (0.557), while Team B concedes more goals in the second half (0.757) than the first half (0.614). The asymmetry between Team A's half-level goal distribution FOR and Team B's half-level goal distribution AGAINST \u2014 both favouring the second half \u2014 may jointly amplify second-half goal activity beyond what either team's half-split alone would predict.",
+          "observable_variables": [
+           "goals",
+           "cards_2h"
+          ],
+          "provider_requirements": [
+           "goals",
+           "cards_2h"
+          ],
+          "self_overlap_with": [
+           "M5"
+          ],
+          "why_not_baseline_equivalent": "This uses within-match half-level resolution for two teams simultaneously across two distinct observables (goals and cards_2h), conditioning on the joint half-skew of both Team A's attacking and Team B's defensive profiles. It is not a single observable split by one coarse band."
+         },
+         {
+          "conditioning_logic": "Condition on matches where Team A's yellow_cards FOR is below its long-run mean AND Team B's yellow_cards FOR is above its long-run mean simultaneously. Within this asymmetric disciplinary regime, measure whether corner_kicks AGAINST Team A (i.e. FOR Team B) and second-half cards (cards_2h) are jointly elevated relative to matches where the disciplinary asymmetry is reversed or absent.",
+          "data_resolution_required": "half",
+          "evidence_refs": [
+           "E:TEAM_A:yellow_cards:FOR:FULL_MATCH:ALL:ALL_PRIOR",
+           "E:TEAM_A:yellow_cards:FOR:FULL_MATCH:ALL:RECENT_5",
+           "E:TEAM_B:yellow_cards:FOR:FULL_MATCH:ALL:ALL_PRIOR",
+           "E:TEAM_B:yellow_cards:FOR:FULL_MATCH:ALL:RECENT_5",
+           "E:TEAM_A:fouls:AGAINST:FULL_MATCH:ALL:ALL_PRIOR",
+           "E:TEAM_A:fouls:AGAINST:FULL_MATCH:ALL:RECENT_5",
+           "E:TEAM_B:fouls:FOR:FULL_MATCH:ALL:ALL_PRIOR",
+           "E:TEAM_B:fouls:FOR:FULL_MATCH:ALL:RECENT_5",
+           "E:TEAM_B:corner_kicks:FOR:FULL_MATCH:ALL:ALL_PRIOR",
+           "E:TEAM_B:corner_kicks:FOR:FULL_MATCH:ALL:RECENT_5",
+           "E:TEAM_A:cards_2h:AGAINST:SECOND_HALF:ALL:ALL_PRIOR",
+           "E:TEAM_B:cards_2h:FOR:SECOND_HALF:ALL:ALL_PRIOR"
+          ],
+          "expected_relationship_to_test": "When Team A is in a low-yellow-card regime and Team B is in a high-yellow-card regime simultaneously, corner_kicks FOR Team B and cards_2h are jointly elevated, consistent with Team B pressing more aggressively and generating both more set-piece opportunities and more disciplinary events.",
+          "mechanism_id_local": "M5",
+          "mechanism_statement": "Team A's yellow cards FOR have declined sharply in recent matches (long-run ~2.36, recent ~1.6) while Team B's yellow cards FOR have risen recently (long-run ~2.34, recent ~2.6), and Team B's fouls FOR have declined recently (long-run ~12.39, recent ~10.6) while Team A's fouls AGAINST have also declined recently (long-run ~12.24, recent ~11.0). The joint divergence in disciplinary and foul profiles \u2014 one team becoming less aggressive while the other becomes more so \u2014 may interact with corner-kick production in the second half in a way not captured by either team's disciplinary profile alone.",
+          "observable_variables": [
+           "yellow_cards",
+           "fouls",
+           "corner_kicks",
+           "cards_2h"
+          ],
+          "provider_requirements": [
+           "yellow_cards",
+           "fouls",
+           "corner_kicks",
+           "cards_2h"
+          ],
+          "self_overlap_with": [
+           "M4"
+          ],
+          "why_not_baseline_equivalent": "This conditions on two distinct observables from asymmetric perspectives across both teams (Team A's yellow_cards FOR declining AND Team B's yellow_cards FOR rising) and examines their joint association with two further observables (corner_kicks and cards_2h). It requires simultaneous conditioning on two opponent-descriptor dimensions and involves an asymmetric cross-team relationship."
+         }
+        ]
+       },
+       "name": "emit_item6_mechanisms",
+       "toolUseId": "tooluse_n6uGcPgX1okRM2HLYzI7Km",
+       "type": "tool_use"
+      }
+     }
+    ],
+    "role": "assistant"
+   }
+  },
+  "stopReason": "tool_use",
+  "usage": {
+   "cacheReadInputTokens": 0,
+   "cacheWriteInputTokens": 0,
+   "inputTokens": 12049,
+   "outputTokens": 3480,
+   "totalTokens": 15529
+  }
+ },
+ "request_sha256": "4e8e832f7366a30127f3fc5b98001594ba28829078c76e732e6cd2eb44b505b8",
+ "resolved_model_id": null,
+ "runner_version": "item6_stage1_runner_v2",
+ "usage": {
+  "cacheReadInputTokens": 0,
+  "cacheWriteInputTokens": 0,
+  "inputTokens": 12049,
+  "outputTokens": 3480,
+  "totalTokens": 15529
+ }
+}

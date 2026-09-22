@@ -1,0 +1,196 @@
+{
+ "count_input_sha256": "b3f73841464fa843e2d7b038ede05425e97eefc2e55b168941247ed2f4d4b100",
+ "fixture_id": "i6_8408042",
+ "provider_counted_input_tokens": 12065,
+ "raw_response": {
+  "ResponseMetadata": {
+   "HTTPHeaders": {
+    "connection": "keep-alive",
+    "content-length": "10854",
+    "content-type": "application/json",
+    "date": "Tue, 22 Sep 2026 17:00:47 GMT",
+    "x-amzn-requestid": "a2484486-ce54-4b8f-8cb3-c905afa50bbe"
+   },
+   "HTTPStatusCode": 200,
+   "MaxAttemptsReached": true,
+   "RequestId": "a2484486-ce54-4b8f-8cb3-c905afa50bbe",
+   "RetryAttempts": 0
+  },
+  "_item6_live_transport": {
+   "authentic_provider_response": true,
+   "aws_request_id": "a2484486-ce54-4b8f-8cb3-c905afa50bbe",
+   "converse_model_id": "us.anthropic.claude-sonnet-4-6",
+   "count_model_id": "anthropic.claude-sonnet-4-6",
+   "envelope_sha256": "6a9de9afb4ea997d65674312b3b4c7bdcdeb1cb15f58f08aec8543c8a9c20251",
+   "http_status": 200,
+   "provider": "aws_bedrock",
+   "transport_version": "item6_bedrock_transport_v1"
+  },
+  "metrics": {
+   "latencyMs": 36512
+  },
+  "output": {
+   "message": {
+    "content": [
+     {
+      "toolUse": {
+       "input": {
+        "fixture_id": "i6_8408042",
+        "mechanisms": [
+         {
+          "conditioning_logic": "Joint conditioning on Team A's possession FOR (home and all-venue) and Team B's shots FOR split by venue (HOME vs AWAY). The mechanism requires simultaneously observing that Team A holds dominant possession AND that Team B's away shot rate is substantially below their home shot rate \u2014 two distinct observables across two distinct venue dimensions for different sides.",
+          "data_resolution_required": "match",
+          "evidence_refs": [
+           "E:TEAM_A:possession:FOR:FULL_MATCH:ALL:ALL_PRIOR",
+           "E:TEAM_A:possession:FOR:FULL_MATCH:HOME:ALL_PRIOR",
+           "E:TEAM_A:possession:FOR:FULL_MATCH:AWAY:ALL_PRIOR",
+           "E:TEAM_B:shots:FOR:FULL_MATCH:HOME:ALL_PRIOR",
+           "E:TEAM_B:shots:FOR:FULL_MATCH:AWAY:ALL_PRIOR",
+           "E:TEAM_B:shots:FOR:FULL_MATCH:ALL:ALL_PRIOR"
+          ],
+          "expected_relationship_to_test": "When Team A's possession FOR is elevated and Team B's shots FOR AWAY is markedly lower than Team B's shots FOR HOME, Team B's total shot count in the fixture is suppressed relative to Team B's all-venue average.",
+          "mechanism_id_local": "M1",
+          "mechanism_statement": "Team B's shot volume exhibits a strong home/away asymmetry that, when combined with Team A's possession dominance, creates a joint suppression of Team B's shot production in away contexts: Team B generates substantially fewer shots away than at home, while Team A consistently holds high possession both home and away, suggesting that when a high-possession Team A hosts a Team B whose away shot volume is markedly lower than their home volume, Team B's shots are jointly suppressed beyond what either observable alone would indicate.",
+          "observable_variables": [
+           "possession",
+           "shots"
+          ],
+          "provider_requirements": [
+           "possession",
+           "shots"
+          ],
+          "self_overlap_with": [
+           "M2"
+          ],
+          "why_not_baseline_equivalent": "This is not a single-observable mirror or a single observable with one coarse band. It requires a joint relationship between two distinct observables (possession for one team, shots for the other) and two distinct venue-dimension splits simultaneously \u2014 one for each team \u2014 which cannot be reduced to any single-observable comparison or single-band conditioning."
+         },
+         {
+          "conditioning_logic": "Joint conditioning on Team A's shots_on_target AGAINST (all-venue) relative to competition context, and Team B's shots_on_target FOR split by venue (HOME vs AWAY). The mechanism fires when Team A suppresses opponent shots-on-target below league average AND Team B's away shots-on-target is substantially below their home rate.",
+          "data_resolution_required": "match",
+          "evidence_refs": [
+           "E:TEAM_A:shots_on_target:AGAINST:FULL_MATCH:ALL:ALL_PRIOR",
+           "E:COMPETITION_CONTEXT:shots_on_target:NEUTRAL:FULL_MATCH:ALL:ALL_PRIOR",
+           "E:TEAM_B:shots_on_target:FOR:FULL_MATCH:HOME:ALL_PRIOR",
+           "E:TEAM_B:shots_on_target:FOR:FULL_MATCH:AWAY:ALL_PRIOR",
+           "E:TEAM_B:shots_on_target:FOR:FULL_MATCH:ALL:ALL_PRIOR"
+          ],
+          "expected_relationship_to_test": "When Team A's shots_on_target AGAINST is below competition context AND Team B's shots_on_target FOR AWAY is below Team B's shots_on_target FOR HOME, Team B's shots-on-target in the fixture is doubly suppressed relative to Team B's all-venue average.",
+          "mechanism_id_local": "M2",
+          "mechanism_statement": "Team B's shots-on-target production shows a pronounced home/away split, while Team A's shots-on-target allowed is consistently below the competition average. The joint relationship between Team A's defensive shots-on-target suppression and Team B's away-specific reduction in shots-on-target creates a compounding effect on Team B's on-target output that is not captured by either observable in isolation.",
+          "observable_variables": [
+           "shots_on_target",
+           "possession"
+          ],
+          "provider_requirements": [
+           "shots_on_target"
+          ],
+          "self_overlap_with": [
+           "M1"
+          ],
+          "why_not_baseline_equivalent": "Requires a joint relationship between two distinct observables (shots_on_target allowed by Team A, shots_on_target produced by Team B) each conditioned on a different dimension (competition baseline for one, venue split for the other). This is an asymmetric cross-team, cross-observable joint relationship not reducible to any single-observable or single-band covered case."
+         },
+         {
+          "conditioning_logic": "Joint conditioning on Team B's fouls FOR split by venue (AWAY vs HOME) and Team A's fouls AGAINST (i.e., fouls drawn by Team A's opponents, which reflects how many fouls Team A draws). The mechanism requires simultaneously observing Team B's elevated away foul rate and Team A's above-average fouls-against rate \u2014 two distinct observables for two different sides.",
+          "data_resolution_required": "match",
+          "evidence_refs": [
+           "E:TEAM_B:fouls:FOR:FULL_MATCH:AWAY:ALL_PRIOR",
+           "E:TEAM_B:fouls:FOR:FULL_MATCH:HOME:ALL_PRIOR",
+           "E:TEAM_A:fouls:AGAINST:FULL_MATCH:ALL:ALL_PRIOR",
+           "E:COMPETITION_CONTEXT:fouls:NEUTRAL:FULL_MATCH:ALL:ALL_PRIOR",
+           "E:TEAM_B:yellow_cards:FOR:FULL_MATCH:AWAY:ALL_PRIOR",
+           "E:TEAM_B:yellow_cards:FOR:FULL_MATCH:ALL:ALL_PRIOR",
+           "E:COMPETITION_CONTEXT:yellow_cards:NEUTRAL:FULL_MATCH:ALL:ALL_PRIOR"
+          ],
+          "expected_relationship_to_test": "When Team B's fouls FOR AWAY exceeds Team B's fouls FOR HOME, and Team A's fouls AGAINST exceeds the competition context fouls average, yellow cards FOR Team B in the fixture rise above Team B's all-venue yellow card average.",
+          "mechanism_id_local": "M3",
+          "mechanism_statement": "Team B accumulates yellow cards at a rate substantially above the competition average, and this elevated foul/card rate is further amplified in away matches where Team B commits more fouls than at home. When Team B plays away against a team (Team A) that draws fouls at above-average rates, the joint interaction of Team B's away foul tendency and Team A's foul-drawing rate predicts elevated yellow card volume beyond what either team's individual card average suggests.",
+          "observable_variables": [
+           "yellow_cards",
+           "fouls"
+          ],
+          "provider_requirements": [
+           "yellow_cards",
+           "fouls"
+          ],
+          "self_overlap_with": [
+           "M4"
+          ],
+          "why_not_baseline_equivalent": "This is a joint relationship between two distinct observables (fouls and yellow cards) across two teams, conditioned simultaneously on venue split for one team and opponent foul-drawing rate for the other. It is not a single-observable mirror or a single-band split."
+         },
+         {
+          "conditioning_logic": "Joint conditioning on Team A's cards_2h AGAINST (second half) and Team B's cards_2h FOR (second half), both relative to the competition context cards_2h baseline. The mechanism requires simultaneously observing that Team A allows above-average second-half cards AND Team B produces above-average second-half cards \u2014 a joint cross-team relationship within a specific within-match period.",
+          "data_resolution_required": "half",
+          "evidence_refs": [
+           "E:TEAM_A:cards_2h:AGAINST:SECOND_HALF:ALL:ALL_PRIOR",
+           "E:TEAM_B:cards_2h:FOR:SECOND_HALF:ALL:ALL_PRIOR",
+           "E:COMPETITION_CONTEXT:cards_2h:NEUTRAL:SECOND_HALF:ALL:ALL_PRIOR",
+           "E:TEAM_A:cards_2h:FOR:SECOND_HALF:ALL:ALL_PRIOR",
+           "E:TEAM_B:cards_2h:AGAINST:SECOND_HALF:ALL:ALL_PRIOR"
+          ],
+          "expected_relationship_to_test": "When Team A's cards_2h AGAINST exceeds the competition context cards_2h baseline AND Team B's cards_2h FOR also exceeds that baseline, total second-half cards in the fixture rise above the competition average in a compounding (super-additive) manner.",
+          "mechanism_id_local": "M4",
+          "mechanism_statement": "Second-half card accumulation (cards_2h) is jointly shaped by both teams' second-half card tendencies in an asymmetric way: Team A concedes more cards in the second half than it earns, while Team B earns more second-half cards than it concedes. The interaction of Team B's elevated second-half card production and Team A's elevated second-half card concession creates a compounding second-half card environment that is not captured by either team's individual second-half card rate alone.",
+          "observable_variables": [
+           "cards_2h"
+          ],
+          "provider_requirements": [
+           "cards_2h"
+          ],
+          "self_overlap_with": [
+           "M3"
+          ],
+          "why_not_baseline_equivalent": "This mechanism requires a joint relationship between two distinct team-role perspectives on the same within-match-period observable (cards_2h FOR for one team, cards_2h AGAINST for the other), conditioned on a competition baseline. It is not a single-observable mirror (which would compare one team's FOR against the opponent's AGAINST for the same observable without the joint interaction logic) and it exploits the within-match half-level resolution."
+         },
+         {
+          "conditioning_logic": "Joint conditioning on Team B's goals FOR split by half (FIRST_HALF vs SECOND_HALF) and Team A's goals AGAINST split by half (FIRST_HALF vs SECOND_HALF). The mechanism requires simultaneously observing that Team B scores disproportionately in the second half AND that Team A concedes disproportionately in the second half \u2014 a joint within-match temporal interaction across two teams.",
+          "data_resolution_required": "half",
+          "evidence_refs": [
+           "E:TEAM_B:goals:FOR:FIRST_HALF:ALL:ALL_PRIOR",
+           "E:TEAM_B:goals:FOR:SECOND_HALF:ALL:ALL_PRIOR",
+           "E:TEAM_A:goals:AGAINST:FIRST_HALF:ALL:ALL_PRIOR",
+           "E:TEAM_A:goals:AGAINST:SECOND_HALF:ALL:ALL_PRIOR",
+           "E:COMPETITION_CONTEXT:goals:NEUTRAL:FULL_MATCH:ALL:ALL_PRIOR"
+          ],
+          "expected_relationship_to_test": "When Team B's goals FOR SECOND_HALF substantially exceeds Team B's goals FOR FIRST_HALF, and Team A's goals AGAINST SECOND_HALF substantially exceeds Team A's goals AGAINST FIRST_HALF, second-half goal volume in the fixture rises above what the full-match averages and competition context would predict.",
+          "mechanism_id_local": "M5",
+          "mechanism_statement": "Team B's goal-scoring shows a pronounced first-half versus second-half asymmetry (markedly more goals in the second half than the first), while Team A's goals conceded are also back-loaded (more conceded in the second half). The joint within-match temporal structure \u2014 Team B's second-half goal surge combined with Team A's second-half defensive vulnerability \u2014 creates a compounding late-match goal environment that is not captured by either team's full-match goal averages alone.",
+          "observable_variables": [
+           "goals"
+          ],
+          "provider_requirements": [
+           "goals"
+          ],
+          "self_overlap_with": [],
+          "why_not_baseline_equivalent": "This requires a joint relationship between two distinct team-role perspectives on the same observable (goals) each split by within-match half, for two different teams simultaneously. It is not a single-observable with one coarse band \u2014 it combines a half-level split for one team's offensive output with a half-level split for the other team's defensive output, requiring both dimensions to be active at once."
+         }
+        ]
+       },
+       "name": "emit_item6_mechanisms",
+       "toolUseId": "tooluse_muyGlN3aXDzBKVLuOjh2xo",
+       "type": "tool_use"
+      }
+     }
+    ],
+    "role": "assistant"
+   }
+  },
+  "stopReason": "tool_use",
+  "usage": {
+   "cacheReadInputTokens": 0,
+   "cacheWriteInputTokens": 0,
+   "inputTokens": 12048,
+   "outputTokens": 3092,
+   "totalTokens": 15140
+  }
+ },
+ "request_sha256": "a75fda9d8b0f1a1f4fa237341bc63dec5deac9475e5ee63551bc523615712331",
+ "resolved_model_id": null,
+ "runner_version": "item6_stage1_runner_v2",
+ "usage": {
+  "cacheReadInputTokens": 0,
+  "cacheWriteInputTokens": 0,
+  "inputTokens": 12048,
+  "outputTokens": 3092,
+  "totalTokens": 15140
+ }
+}

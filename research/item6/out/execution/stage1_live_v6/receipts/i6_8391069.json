@@ -1,0 +1,206 @@
+{
+ "count_input_sha256": "d54f827812602e10f26ecb3433fb8dcc8f82c691619a87166e029e1fcfba2acd",
+ "fixture_id": "i6_8391069",
+ "provider_counted_input_tokens": 12070,
+ "raw_response": {
+  "ResponseMetadata": {
+   "HTTPHeaders": {
+    "connection": "keep-alive",
+    "content-length": "10874",
+    "content-type": "application/json",
+    "date": "Tue, 22 Sep 2026 17:03:30 GMT",
+    "x-amzn-requestid": "b330aca5-7047-4e0b-9be4-d77bd172e6fc"
+   },
+   "HTTPStatusCode": 200,
+   "MaxAttemptsReached": true,
+   "RequestId": "b330aca5-7047-4e0b-9be4-d77bd172e6fc",
+   "RetryAttempts": 0
+  },
+  "_item6_live_transport": {
+   "authentic_provider_response": true,
+   "aws_request_id": "b330aca5-7047-4e0b-9be4-d77bd172e6fc",
+   "converse_model_id": "us.anthropic.claude-sonnet-4-6",
+   "count_model_id": "anthropic.claude-sonnet-4-6",
+   "envelope_sha256": "f39f434ed1142c66e9f06907ce3f559f9661e43e385bb9734f16b3e18da1aadf",
+   "http_status": 200,
+   "provider": "aws_bedrock",
+   "transport_version": "item6_bedrock_transport_v1"
+  },
+  "metrics": {
+   "latencyMs": 39001
+  },
+  "output": {
+   "message": {
+    "content": [
+     {
+      "toolUse": {
+       "input": {
+        "fixture_id": "i6_8391069",
+        "mechanisms": [
+         {
+          "conditioning_logic": "Compare the joint ratio of goals-FOR to shots-FOR (and goals-FOR to shots_on_target-FOR) in the ALL_PRIOR window versus the RECENT_5 window for Team A. The mechanism tests whether a recent spike in shots is accompanied by a commensurate rise in goals, or whether the two observables diverge \u2014 a non-linear / saturation relationship not captured by either observable alone.",
+          "data_resolution_required": "match",
+          "evidence_refs": [
+           "E:TEAM_A:shots:FOR:FULL_MATCH:ALL:ALL_PRIOR",
+           "E:TEAM_A:shots:FOR:FULL_MATCH:ALL:RECENT_5",
+           "E:TEAM_A:goals:FOR:FULL_MATCH:ALL:ALL_PRIOR",
+           "E:TEAM_A:goals:FOR:FULL_MATCH:ALL:RECENT_5",
+           "E:TEAM_A:shots_on_target:FOR:FULL_MATCH:ALL:ALL_PRIOR",
+           "E:TEAM_A:shots_on_target:FOR:FULL_MATCH:ALL:RECENT_5"
+          ],
+          "expected_relationship_to_test": "Team A's recent shots spike is expected to show diminishing returns in goals relative to the all-prior baseline, i.e. goals-per-shot ratio falls as shot volume rises",
+          "mechanism_id_local": "M1",
+          "mechanism_statement": "Team A's shot volume has surged in recent matches while its conversion rate (goals per shot) has not kept pace, suggesting a divergence between shot production and scoring efficiency. Jointly measuring shots FOR and goals FOR across the all-prior versus recent-5 windows reveals whether elevated shot counts translate into proportionally elevated goals, or whether the relationship saturates/decouples.",
+          "observable_variables": [
+           "shots",
+           "goals",
+           "shots_on_target"
+          ],
+          "provider_requirements": [
+           "shots",
+           "goals",
+           "shots_on_target"
+          ],
+          "self_overlap_with": [
+           "M2"
+          ],
+          "why_not_baseline_equivalent": "This requires the joint relationship between two distinct observables (shots and goals) across two time windows simultaneously. It is not reducible to a single observable with one conditioning band; the engine would need to evaluate the ratio of two observables and whether that ratio changes across windows."
+         },
+         {
+          "conditioning_logic": "For Team B, compute the joint relationship between shots_on_target AGAINST and goals AGAINST in the ALL_PRIOR window versus the RECENT_5 window. The mechanism tests whether the recent rise in shots conceded is accompanied by a disproportionate rise in goals conceded (implying a quality/conversion shift) or a proportionate one (implying a volume shift only).",
+          "data_resolution_required": "match",
+          "evidence_refs": [
+           "E:TEAM_B:shots:AGAINST:FULL_MATCH:ALL:ALL_PRIOR",
+           "E:TEAM_B:shots:AGAINST:FULL_MATCH:ALL:RECENT_5",
+           "E:TEAM_B:shots_on_target:AGAINST:FULL_MATCH:ALL:ALL_PRIOR",
+           "E:TEAM_B:shots_on_target:AGAINST:FULL_MATCH:ALL:RECENT_5",
+           "E:TEAM_B:goals:AGAINST:FULL_MATCH:ALL:ALL_PRIOR",
+           "E:TEAM_B:goals:AGAINST:FULL_MATCH:ALL:RECENT_5"
+          ],
+          "expected_relationship_to_test": "In Team B's recent matches, goals conceded rises faster than shots_on_target conceded relative to the all-prior baseline, indicating a worsening shot-to-goal conversion rate against them beyond what shot volume alone explains",
+          "mechanism_id_local": "M2",
+          "mechanism_statement": "Team B's defensive solidity (shots conceded) has deteriorated sharply in recent matches while its goals-against has also risen, but the two observables move at different rates. Jointly tracking shots_on_target AGAINST and goals AGAINST across all-prior versus recent-5 windows tests whether Team B's recent defensive breakdown is driven by volume of shots allowed, quality of shots allowed, or both simultaneously.",
+          "observable_variables": [
+           "shots",
+           "shots_on_target",
+           "goals"
+          ],
+          "provider_requirements": [
+           "shots",
+           "shots_on_target",
+           "goals"
+          ],
+          "self_overlap_with": [
+           "M1"
+          ],
+          "why_not_baseline_equivalent": "Requires joint evaluation of two distinct defensive observables (shots_on_target AGAINST and goals AGAINST) and their ratio across two time windows \u2014 not reducible to a single observable with one band."
+         },
+         {
+          "conditioning_logic": "Jointly condition on Team A's corners FOR (all-prior and recent-5) and Team B's corners AGAINST (all-prior and recent-5) simultaneously, testing whether the combination of a stable attacker and a recently-leaky defender produces a corner total that diverges from what either team's individual baseline would suggest. This is an asymmetric cross-team joint relationship.",
+          "data_resolution_required": "match",
+          "evidence_refs": [
+           "E:TEAM_A:corner_kicks:FOR:FULL_MATCH:ALL:ALL_PRIOR",
+           "E:TEAM_A:corner_kicks:FOR:FULL_MATCH:ALL:RECENT_5",
+           "E:TEAM_B:corner_kicks:AGAINST:FULL_MATCH:ALL:ALL_PRIOR",
+           "E:TEAM_B:corner_kicks:AGAINST:FULL_MATCH:ALL:RECENT_5",
+           "E:COMPETITION_CONTEXT:corner_kicks:NEUTRAL:FULL_MATCH:ALL:ALL_PRIOR"
+          ],
+          "expected_relationship_to_test": "The joint pairing of Team A's stable corner production with Team B's sharply elevated recent corners-conceded rate is associated with a higher corner total than either team's own all-prior average would predict in isolation",
+          "mechanism_id_local": "M3",
+          "mechanism_statement": "Team B's corner kicks conceded have spiked dramatically in recent matches (8.4 recent vs 5.1 all-prior) while Team A's corner kicks earned are stable. This asymmetric divergence between Team B's recent corners-against and Team A's corners-for suggests a structural mismatch: the joint combination of Team A's corner production rate and Team B's corner-concession rate in recent form may predict a corner total that neither observable alone would indicate.",
+          "observable_variables": [
+           "corner_kicks"
+          ],
+          "provider_requirements": [
+           "corner_kicks"
+          ],
+          "self_overlap_with": [],
+          "why_not_baseline_equivalent": "This is an asymmetric cross-team joint relationship: it pairs one team's FOR observable with the opponent's AGAINST observable and explicitly tests whether the recent-form divergence between the two (one stable, one spiking) creates a non-additive signal. The engine's mirror covers same-observable FOR vs AGAINST symmetrically; this tests the asymmetric divergence in recent-form trajectories jointly."
+         },
+         {
+          "conditioning_logic": "For both teams, jointly compare cards_2h (second-half period) FOR and AGAINST against full-match yellow_cards FOR and AGAINST, and against the competition cards_2h baseline. The mechanism tests whether the within-match temporal distribution of cards (first half vs second half) is consistent with a uniform distribution or whether cards concentrate in the second half \u2014 a within-match state dependence requiring half-level resolution.",
+          "data_resolution_required": "half",
+          "evidence_refs": [
+           "E:TEAM_A:cards_2h:FOR:SECOND_HALF:ALL:ALL_PRIOR",
+           "E:TEAM_A:cards_2h:AGAINST:SECOND_HALF:ALL:ALL_PRIOR",
+           "E:TEAM_A:yellow_cards:FOR:FULL_MATCH:ALL:ALL_PRIOR",
+           "E:TEAM_A:yellow_cards:AGAINST:FULL_MATCH:ALL:ALL_PRIOR",
+           "E:TEAM_B:cards_2h:FOR:SECOND_HALF:ALL:ALL_PRIOR",
+           "E:TEAM_B:cards_2h:AGAINST:SECOND_HALF:ALL:ALL_PRIOR",
+           "E:TEAM_B:yellow_cards:FOR:FULL_MATCH:ALL:ALL_PRIOR",
+           "E:TEAM_B:yellow_cards:AGAINST:FULL_MATCH:ALL:ALL_PRIOR",
+           "E:COMPETITION_CONTEXT:cards_2h:NEUTRAL:SECOND_HALF:ALL:ALL_PRIOR",
+           "E:COMPETITION_CONTEXT:yellow_cards:NEUTRAL:FULL_MATCH:ALL:ALL_PRIOR"
+          ],
+          "expected_relationship_to_test": "Cards concentrate disproportionately in the second half relative to a uniform within-match distribution, and this concentration is more pronounced when both teams have elevated second-half card rates relative to their full-match averages",
+          "mechanism_id_local": "M4",
+          "mechanism_statement": "Team A's second-half cards rate and Team B's second-half cards rate differ from their respective full-match yellow card rates in ways that suggest the second half of this fixture may have a distinct disciplinary profile. Jointly measuring each team's cards_2h (second-half cards FOR and AGAINST) against their full-match yellow_cards and the competition's cards_2h baseline tests whether the second half concentrates disciplinary events beyond what the full-match rate implies.",
+          "observable_variables": [
+           "cards_2h",
+           "yellow_cards"
+          ],
+          "provider_requirements": [
+           "cards_2h",
+           "yellow_cards"
+          ],
+          "self_overlap_with": [],
+          "why_not_baseline_equivalent": "Requires within-match half-level resolution (cards_2h vs full-match yellow_cards) and a joint cross-team comparison of second-half disciplinary rates against the competition baseline \u2014 not reducible to a single observable with one coarse band."
+         },
+         {
+          "conditioning_logic": "Jointly condition on Team A's offsides AGAINST (recent-5 vs all-prior) and Team B's offsides FOR (recent-5 vs all-prior), further conditioning on possession to assess whether the offside pattern is consistent with Team B's possession profile. The mechanism tests whether the two observables move in opposite directions simultaneously \u2014 an asymmetric cross-team joint relationship \u2014 and whether possession mediates this divergence.",
+          "data_resolution_required": "match",
+          "evidence_refs": [
+           "E:TEAM_A:offsides:AGAINST:FULL_MATCH:ALL:ALL_PRIOR",
+           "E:TEAM_A:offsides:AGAINST:FULL_MATCH:ALL:RECENT_5",
+           "E:TEAM_B:offsides:FOR:FULL_MATCH:ALL:ALL_PRIOR",
+           "E:TEAM_B:offsides:FOR:FULL_MATCH:ALL:RECENT_5",
+           "E:TEAM_A:possession:FOR:FULL_MATCH:ALL:ALL_PRIOR",
+           "E:TEAM_A:possession:FOR:FULL_MATCH:ALL:RECENT_5",
+           "E:TEAM_B:possession:FOR:FULL_MATCH:ALL:ALL_PRIOR",
+           "E:TEAM_B:possession:FOR:FULL_MATCH:ALL:RECENT_5"
+          ],
+          "expected_relationship_to_test": "When Team A's offsides-against rate spikes while Team B's offsides-for rate drops simultaneously, the joint signal diverges from what either team's individual baseline predicts, suggesting a structural mismatch in attacking depth versus defensive line positioning that is not captured by either observable alone",
+          "mechanism_id_local": "M5",
+          "mechanism_statement": "Team A's offsides conceded (AGAINST) have spiked sharply in recent matches (4.2 recent vs 2.0 all-prior) while Team B's offsides FOR have dropped (0.8 recent vs 1.9 all-prior). This creates a cross-team asymmetric divergence in the offsides dimension: one team is suddenly generating far more offsides traps while the opponent is running fewer offside-risk attacking movements. Jointly measuring Team A's offsides AGAINST and Team B's offsides FOR across all-prior and recent-5 windows tests whether this divergence reflects a structural tactical shift in how the two teams interact.",
+          "observable_variables": [
+           "offsides",
+           "possession"
+          ],
+          "provider_requirements": [
+           "offsides",
+           "possession"
+          ],
+          "self_overlap_with": [],
+          "why_not_baseline_equivalent": "Requires jointly evaluating two distinct observables (offsides and possession) across two teams in opposite directions simultaneously \u2014 an asymmetric cross-team joint relationship across two observable dimensions, not reducible to any single-observable mirror or single-band split."
+         }
+        ]
+       },
+       "name": "emit_item6_mechanisms",
+       "toolUseId": "tooluse_4rbvIaANqWKDtaWaE20xBo",
+       "type": "tool_use"
+      }
+     }
+    ],
+    "role": "assistant"
+   }
+  },
+  "stopReason": "tool_use",
+  "usage": {
+   "cacheReadInputTokens": 0,
+   "cacheWriteInputTokens": 0,
+   "inputTokens": 12053,
+   "outputTokens": 3208,
+   "totalTokens": 15261
+  }
+ },
+ "request_sha256": "cdcdf739266611576b45d3a73ff4c35462ec7fad7ea68f9158455a21a37a0e48",
+ "resolved_model_id": null,
+ "runner_version": "item6_stage1_runner_v2",
+ "usage": {
+  "cacheReadInputTokens": 0,
+  "cacheWriteInputTokens": 0,
+  "inputTokens": 12053,
+  "outputTokens": 3208,
+  "totalTokens": 15261
+ }
+}

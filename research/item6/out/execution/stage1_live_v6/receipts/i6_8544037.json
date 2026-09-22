@@ -1,0 +1,215 @@
+{
+ "count_input_sha256": "6abf96ac55a820ba551f8c74637532f11cf71cf7903a99c06fd8816eaa91fe87",
+ "fixture_id": "i6_8544037",
+ "provider_counted_input_tokens": 12068,
+ "raw_response": {
+  "ResponseMetadata": {
+   "HTTPHeaders": {
+    "connection": "keep-alive",
+    "content-length": "11567",
+    "content-type": "application/json",
+    "date": "Tue, 22 Sep 2026 23:09:26 GMT",
+    "x-amzn-requestid": "a5779728-d200-4665-acc3-44f5711f73c6"
+   },
+   "HTTPStatusCode": 200,
+   "MaxAttemptsReached": true,
+   "RequestId": "a5779728-d200-4665-acc3-44f5711f73c6",
+   "RetryAttempts": 0
+  },
+  "_item6_live_transport": {
+   "authentic_provider_response": true,
+   "aws_request_id": "a5779728-d200-4665-acc3-44f5711f73c6",
+   "converse_model_id": "us.anthropic.claude-sonnet-4-6",
+   "count_model_id": "anthropic.claude-sonnet-4-6",
+   "envelope_sha256": "9d559b07cf1a5783003d50880a0bcc6971069b5bcc2fa543a75ffb2389e32dd1",
+   "http_status": 200,
+   "provider": "aws_bedrock",
+   "transport_version": "item6_bedrock_transport_v1"
+  },
+  "metrics": {
+   "latencyMs": 37872
+  },
+  "output": {
+   "message": {
+    "content": [
+     {
+      "toolUse": {
+       "input": {
+        "fixture_id": "i6_8544037",
+        "mechanisms": [
+         {
+          "conditioning_logic": "Jointly condition on both teams' shots FOR, shots_on_target FOR, and goals FOR (all-prior full-match). Compute the implicit shot-to-goal and shots-on-target-to-goal ratios for each team and test whether the gap between Team A's ratio and Team B's ratio is associated with a directional difference in goals scored in the match, beyond what either team's raw shot volume alone would predict.",
+          "data_resolution_required": "match",
+          "evidence_refs": [
+           "E:TEAM_A:shots:FOR:FULL_MATCH:ALL:ALL_PRIOR",
+           "E:TEAM_A:shots_on_target:FOR:FULL_MATCH:ALL:ALL_PRIOR",
+           "E:TEAM_A:goals:FOR:FULL_MATCH:ALL:ALL_PRIOR",
+           "E:TEAM_B:shots:FOR:FULL_MATCH:ALL:ALL_PRIOR",
+           "E:TEAM_B:shots_on_target:FOR:FULL_MATCH:ALL:ALL_PRIOR",
+           "E:TEAM_B:goals:FOR:FULL_MATCH:ALL:ALL_PRIOR",
+           "E:COMPETITION_CONTEXT:shots:NEUTRAL:FULL_MATCH:ALL:ALL_PRIOR",
+           "E:COMPETITION_CONTEXT:goals:NEUTRAL:FULL_MATCH:ALL:ALL_PRIOR"
+          ],
+          "expected_relationship_to_test": "Matches where Team A's shots-on-target-to-goals ratio is higher than Team B's are associated with Team A scoring more goals relative to Team B than the raw shot volumes would suggest; the joint ratio gap rises with the goal differential between the two sides.",
+          "mechanism_id_local": "M1",
+          "mechanism_statement": "Team B's shot-volume-to-goals conversion asymmetry: Team B generates shots at a rate comparable to the competition average but converts them into goals at a markedly lower rate than Team A, suggesting that when two teams with divergent shot-to-goal ratios meet, the team with the higher conversion efficiency (Team A) produces more goals relative to its shot count than the team with the lower conversion efficiency (Team B), even when raw shot volumes are similar.",
+          "observable_variables": [
+           "shots",
+           "shots_on_target",
+           "goals"
+          ],
+          "provider_requirements": [
+           "shots",
+           "shots_on_target",
+           "goals"
+          ],
+          "self_overlap_with": [],
+          "why_not_baseline_equivalent": "This requires jointly relating three distinct observables (shots, shots_on_target, goals) for both teams simultaneously to form a cross-team ratio comparison. It cannot be reduced to a single observable mirrored against what the opponent allows, nor to one observable with one conditioning band."
+         },
+         {
+          "conditioning_logic": "Jointly condition on Team B's possession FOR (all-prior and recent-5), Team B's fouls FOR (all-prior and recent-5), and Team B's yellow_cards FOR (all-prior and recent-5). Test whether the joint state of below-competition-average possession AND above-competition-average fouls is associated with elevated yellow card counts relative to what either variable alone predicts.",
+          "data_resolution_required": "match",
+          "evidence_refs": [
+           "E:TEAM_B:possession:FOR:FULL_MATCH:ALL:ALL_PRIOR",
+           "E:TEAM_B:possession:FOR:FULL_MATCH:ALL:RECENT_5",
+           "E:TEAM_B:fouls:FOR:FULL_MATCH:ALL:ALL_PRIOR",
+           "E:TEAM_B:fouls:FOR:FULL_MATCH:ALL:RECENT_5",
+           "E:TEAM_B:yellow_cards:FOR:FULL_MATCH:ALL:ALL_PRIOR",
+           "E:TEAM_B:yellow_cards:FOR:FULL_MATCH:ALL:RECENT_5",
+           "E:COMPETITION_CONTEXT:possession:NEUTRAL:FULL_MATCH:ALL:ALL_PRIOR",
+           "E:COMPETITION_CONTEXT:fouls:NEUTRAL:FULL_MATCH:ALL:ALL_PRIOR",
+           "E:COMPETITION_CONTEXT:yellow_cards:NEUTRAL:FULL_MATCH:ALL:ALL_PRIOR"
+          ],
+          "expected_relationship_to_test": "When a team's possession is below the competition mean and its foul rate is above the competition mean simultaneously, its yellow card rate rises above what either variable in isolation would predict; the joint deficit-plus-foul condition amplifies card accumulation.",
+          "mechanism_id_local": "M2",
+          "mechanism_statement": "Team B's possession-deficit combined with high foul rate: Team B habitually operates with below-average possession (well below 50%) while simultaneously committing fouls at a rate above the competition average, especially in recent matches. When a low-possession team also has a high foul rate, the joint combination is associated with elevated yellow card and total card volumes for that team, beyond what either possession or fouls alone would predict.",
+          "observable_variables": [
+           "possession",
+           "fouls",
+           "yellow_cards"
+          ],
+          "provider_requirements": [
+           "possession",
+           "fouls",
+           "yellow_cards"
+          ],
+          "self_overlap_with": [
+           "M4"
+          ],
+          "why_not_baseline_equivalent": "This involves a genuine joint relationship between two distinct observables (possession and fouls) as co-predictors of a third (yellow_cards). It is not reducible to any single observable mirrored against opponent allowance, nor to one observable with one coarse band."
+         },
+         {
+          "conditioning_logic": "Jointly condition on Team A's shots_on_target AGAINST (all-prior) and Team B's shots_on_target AGAINST (all-prior and recent-5), and cross-reference with each team's goals AGAINST. Test whether the gap between Team B's shots-on-target allowed and Team A's shots-on-target allowed is associated with a directional asymmetry in goals conceded across the two teams in the same match.",
+          "data_resolution_required": "match",
+          "evidence_refs": [
+           "E:TEAM_A:shots_on_target:AGAINST:FULL_MATCH:ALL:ALL_PRIOR",
+           "E:TEAM_A:shots_on_target:AGAINST:FULL_MATCH:ALL:RECENT_5",
+           "E:TEAM_A:goals:AGAINST:FULL_MATCH:ALL:ALL_PRIOR",
+           "E:TEAM_B:shots_on_target:AGAINST:FULL_MATCH:ALL:ALL_PRIOR",
+           "E:TEAM_B:shots_on_target:AGAINST:FULL_MATCH:ALL:RECENT_5",
+           "E:TEAM_B:goals:AGAINST:FULL_MATCH:ALL:ALL_PRIOR",
+           "E:COMPETITION_CONTEXT:shots_on_target:NEUTRAL:FULL_MATCH:ALL:ALL_PRIOR"
+          ],
+          "expected_relationship_to_test": "The team that allows more shots-on-target (Team B) concedes more goals than the team that allows fewer shots-on-target (Team A); the asymmetry in shots-on-target allowed between the two teams rises with the asymmetry in goals conceded.",
+          "mechanism_id_local": "M3",
+          "mechanism_statement": "Cross-team asymmetric shots-on-target allowed: Team A allows shots-on-target at a rate close to the competition average, while Team B allows shots-on-target at a rate substantially above the competition average. When the defending team (Team B) allows markedly more shots-on-target than the attacking team (Team A) allows, the total goals conceded by the higher-allowing side rises disproportionately relative to the lower-allowing side, creating an asymmetric goals-against pattern between the two teams.",
+          "observable_variables": [
+           "shots_on_target",
+           "goals"
+          ],
+          "provider_requirements": [
+           "shots_on_target",
+           "goals"
+          ],
+          "self_overlap_with": [
+           "M1"
+          ],
+          "why_not_baseline_equivalent": "This is an asymmetric cross-team relationship involving two different observables (shots_on_target AGAINST and goals AGAINST) for both sides simultaneously. It is not a single observable mirrored against what the opponent allows; it requires comparing the two teams' defensive profiles jointly."
+         },
+         {
+          "conditioning_logic": "Jointly condition on Team A's possession FOR HOME, Team B's fouls FOR AWAY versus HOME split, and Team B's yellow_cards FOR AWAY versus HOME split. Test whether the combination of Team A's home possession dominance and Team B's away-reduced foul rate produces a different total foul and card environment than the all-venue averages for either team would predict.",
+          "data_resolution_required": "match",
+          "evidence_refs": [
+           "E:TEAM_A:possession:FOR:FULL_MATCH:HOME:ALL_PRIOR",
+           "E:TEAM_A:possession:FOR:FULL_MATCH:AWAY:ALL_PRIOR",
+           "E:TEAM_B:fouls:FOR:FULL_MATCH:HOME:ALL_PRIOR",
+           "E:TEAM_B:fouls:FOR:FULL_MATCH:AWAY:ALL_PRIOR",
+           "E:TEAM_B:yellow_cards:FOR:FULL_MATCH:HOME:ALL_PRIOR",
+           "E:TEAM_B:yellow_cards:FOR:FULL_MATCH:AWAY:ALL_PRIOR",
+           "E:COMPETITION_CONTEXT:fouls:NEUTRAL:FULL_MATCH:ALL:ALL_PRIOR",
+           "E:COMPETITION_CONTEXT:yellow_cards:NEUTRAL:FULL_MATCH:ALL:ALL_PRIOR"
+          ],
+          "expected_relationship_to_test": "When the home team holds high possession and the away team's foul rate is suppressed away from home relative to its home rate, total match fouls and cards are lower than the sum of each team's all-venue averages would suggest; the venue-conditioned joint interaction suppresses the card environment.",
+          "mechanism_id_local": "M4",
+          "mechanism_statement": "Team B's venue-conditioned foul rate interacts with Team A's possession dominance: Team B commits substantially more fouls at home than away, while Team A maintains high possession both home and away. When a high-possession team (Team A, playing at home) faces a side whose foul rate is elevated specifically in home contexts (Team B, playing away), the joint interaction of Team A's possession dominance and Team B's away-suppressed foul rate may alter the card and foul environment relative to what each team's overall averages suggest.",
+          "observable_variables": [
+           "possession",
+           "fouls",
+           "yellow_cards"
+          ],
+          "provider_requirements": [
+           "possession",
+           "fouls",
+           "yellow_cards"
+          ],
+          "self_overlap_with": [
+           "M2"
+          ],
+          "why_not_baseline_equivalent": "This requires simultaneously conditioning on two distinct opponent-descriptor dimensions (venue split for fouls/cards AND possession level), and involves a cross-team joint relationship. It is not reducible to a single observable with one coarse band or a simple home/away split of one observable."
+         },
+         {
+          "conditioning_logic": "Jointly condition on Team A's goals FOR FIRST_HALF and SECOND_HALF (all-prior) and Team B's goals FOR FIRST_HALF and SECOND_HALF (all-prior), as well as Team B's goals AGAINST FIRST_HALF and SECOND_HALF. Test whether the within-match half-level distribution of goals differs directionally between the two teams \u2014 specifically whether Team A's first-half goal rate exceeds Team B's first-half goal rate by more than the second-half comparison, and whether this half-level asymmetry is associated with the match's half-level goal split.",
+          "data_resolution_required": "half",
+          "evidence_refs": [
+           "E:TEAM_A:goals:FOR:FIRST_HALF:ALL:ALL_PRIOR",
+           "E:TEAM_A:goals:FOR:SECOND_HALF:ALL:ALL_PRIOR",
+           "E:TEAM_A:goals:AGAINST:FIRST_HALF:ALL:ALL_PRIOR",
+           "E:TEAM_A:goals:AGAINST:SECOND_HALF:ALL:ALL_PRIOR",
+           "E:TEAM_B:goals:FOR:FIRST_HALF:ALL:ALL_PRIOR",
+           "E:TEAM_B:goals:FOR:SECOND_HALF:ALL:ALL_PRIOR",
+           "E:TEAM_B:goals:AGAINST:FIRST_HALF:ALL:ALL_PRIOR",
+           "E:TEAM_B:goals:AGAINST:SECOND_HALF:ALL:ALL_PRIOR"
+          ],
+          "expected_relationship_to_test": "Team A's goals are front-loaded (first half rate higher relative to Team B's first-half rate), while Team B's goals are back-loaded; the half-level asymmetry between the two teams rises with the difference in their first-half versus second-half goal rates, and this pattern is detectable at the half level rather than only at full-match resolution.",
+          "mechanism_id_local": "M5",
+          "mechanism_statement": "Half-level goal distribution asymmetry between the two teams: Team A scores more goals in the first half than the second half, while Team B scores more goals in the second half than the first half (and concedes more in the first half). This creates a within-match temporal asymmetry where the two teams' goal-scoring profiles peak in different halves, which is not captured by full-match totals alone.",
+          "observable_variables": [
+           "goals"
+          ],
+          "provider_requirements": [
+           "goals"
+          ],
+          "self_overlap_with": [],
+          "why_not_baseline_equivalent": "This requires within-match half-level resolution and a joint cross-team comparison of half-specific goal distributions. It is not a single observable at full-match level, nor a simple recent-vs-long-run comparison; it involves a two-dimensional (team \u00d7 half) structure that cannot be reduced to one observable with one band."
+         }
+        ]
+       },
+       "name": "emit_item6_mechanisms",
+       "toolUseId": "tooluse_pDvQPCDzw8q9n2wrrk6RCE",
+       "type": "tool_use"
+      }
+     }
+    ],
+    "role": "assistant"
+   }
+  },
+  "stopReason": "tool_use",
+  "usage": {
+   "cacheReadInputTokens": 0,
+   "cacheWriteInputTokens": 0,
+   "inputTokens": 12051,
+   "outputTokens": 3464,
+   "totalTokens": 15515
+  }
+ },
+ "request_sha256": "bfea2e279ea4f6856c62933dbe853b5f4ee1006661a4b0397b1717a1aff67e1e",
+ "resolved_model_id": null,
+ "runner_version": "item6_stage1_runner_v2",
+ "usage": {
+  "cacheReadInputTokens": 0,
+  "cacheWriteInputTokens": 0,
+  "inputTokens": 12051,
+  "outputTokens": 3464,
+  "totalTokens": 15515
+ }
+}

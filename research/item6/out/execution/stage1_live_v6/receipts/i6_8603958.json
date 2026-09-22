@@ -1,0 +1,207 @@
+{
+ "count_input_sha256": "8297b2ec4082763db92ec352afc1d564d31e590717357d57e74e9bd213cb6935",
+ "fixture_id": "i6_8603958",
+ "provider_counted_input_tokens": 12063,
+ "raw_response": {
+  "ResponseMetadata": {
+   "HTTPHeaders": {
+    "connection": "keep-alive",
+    "content-length": "10227",
+    "content-type": "application/json",
+    "date": "Tue, 22 Sep 2026 23:06:10 GMT",
+    "x-amzn-requestid": "ef7314ca-cc8a-4503-ad71-52d1410043b7"
+   },
+   "HTTPStatusCode": 200,
+   "MaxAttemptsReached": true,
+   "RequestId": "ef7314ca-cc8a-4503-ad71-52d1410043b7",
+   "RetryAttempts": 0
+  },
+  "_item6_live_transport": {
+   "authentic_provider_response": true,
+   "aws_request_id": "ef7314ca-cc8a-4503-ad71-52d1410043b7",
+   "converse_model_id": "us.anthropic.claude-sonnet-4-6",
+   "count_model_id": "anthropic.claude-sonnet-4-6",
+   "envelope_sha256": "bee51d61ea760a5a437afdbbd88e89d3e35baf783a5e09cee0cf38302a9c03ae",
+   "http_status": 200,
+   "provider": "aws_bedrock",
+   "transport_version": "item6_bedrock_transport_v1"
+  },
+  "metrics": {
+   "latencyMs": 37399
+  },
+  "output": {
+   "message": {
+    "content": [
+     {
+      "toolUse": {
+       "input": {
+        "fixture_id": "i6_8603958",
+        "mechanisms": [
+         {
+          "conditioning_logic": "Condition on matches where the possession differential between the two sides exceeds a threshold (e.g., Team B holds >55% possession), then measure whether Team A's foul rate is elevated relative to its unconditional average. This is a joint two-observable interaction, not a single-observable band.",
+          "data_resolution_required": "match",
+          "evidence_refs": [
+           "E:TEAM_A:fouls:FOR:FULL_MATCH:ALL:ALL_PRIOR",
+           "E:TEAM_A:fouls:FOR:FULL_MATCH:AWAY:ALL_PRIOR",
+           "E:TEAM_B:possession:FOR:FULL_MATCH:ALL:ALL_PRIOR",
+           "E:TEAM_B:possession:FOR:FULL_MATCH:AWAY:ALL_PRIOR",
+           "E:TEAM_A:possession:FOR:FULL_MATCH:ALL:ALL_PRIOR",
+           "E:TEAM_B:fouls:AGAINST:FULL_MATCH:ALL:ALL_PRIOR"
+          ],
+          "expected_relationship_to_test": "Team A's foul production rises as Team B's possession share increases beyond a threshold, reflecting a suppression-and-foul dynamic that saturates at high possession differentials.",
+          "mechanism_id_local": "M1",
+          "mechanism_statement": "Team B's dominant possession profile (historically ~61%) combined with Team A's high foul rate (historically ~17.2 fouls/match, elevated away at ~18.3) creates a joint condition where Team A's foul production rises as a function of Team B's possession dominance \u2014 i.e., the interaction between one team's possession share and the opposing team's foul rate jointly predicts foul volume beyond what either observable alone captures.",
+          "observable_variables": [
+           "possession",
+           "fouls"
+          ],
+          "provider_requirements": [
+           "possession",
+           "fouls"
+          ],
+          "self_overlap_with": [
+           "M2"
+          ],
+          "why_not_baseline_equivalent": "This requires jointly conditioning on two distinct observables from two different teams simultaneously (Team B's possession AND Team A's foul rate), which cannot be reduced to a single observable with one coarse band. It is an asymmetric cross-team interaction."
+         },
+         {
+          "conditioning_logic": "Condition on matches where Team B's possession exceeds a threshold (e.g., >55%), then measure the joint distribution of Team A corners conceded and Team B corners produced. Compare against each team's unconditional corner averages to test whether the possession-corner relationship is super-additive.",
+          "data_resolution_required": "match",
+          "evidence_refs": [
+           "E:TEAM_B:possession:FOR:FULL_MATCH:ALL:ALL_PRIOR",
+           "E:TEAM_B:corner_kicks:FOR:FULL_MATCH:ALL:ALL_PRIOR",
+           "E:TEAM_A:corner_kicks:AGAINST:FULL_MATCH:ALL:ALL_PRIOR",
+           "E:TEAM_A:possession:FOR:FULL_MATCH:ALL:ALL_PRIOR",
+           "E:TEAM_B:corner_kicks:FOR:FULL_MATCH:AWAY:ALL_PRIOR",
+           "E:TEAM_A:corner_kicks:AGAINST:FULL_MATCH:ALL:RECENT_5"
+          ],
+          "expected_relationship_to_test": "Total corner volume rises with Team B's possession dominance, with Team A's corners-against and Team B's corners-for both elevated above their unconditional means when possession differential is large.",
+          "mechanism_id_local": "M2",
+          "mechanism_statement": "Team B's high possession share jointly interacts with Team A's corner kick concession rate: when Team B dominates possession, Team A concedes significantly more corners than its unconditional average, while Team B's corner production is also elevated \u2014 creating a compounding corner-volume effect driven by the joint possession-corner relationship across both teams.",
+          "observable_variables": [
+           "possession",
+           "corner_kicks"
+          ],
+          "provider_requirements": [
+           "possession",
+           "corner_kicks"
+          ],
+          "self_overlap_with": [
+           "M1"
+          ],
+          "why_not_baseline_equivalent": "This is a joint two-observable, two-team interaction (possession differential AND corner production/concession for both sides simultaneously), not reducible to a single observable with one band. The super-additive structure requires measuring both observables together."
+         },
+         {
+          "conditioning_logic": "Split goals by half for both teams simultaneously. Condition on the joint first-half vs. second-half goal rates for both Team A (FOR and AGAINST) and Team B (FOR and AGAINST) to test whether the second half produces a disproportionate share of total goals relative to competition context norms.",
+          "data_resolution_required": "half",
+          "evidence_refs": [
+           "E:TEAM_B:goals:FOR:FIRST_HALF:ALL:ALL_PRIOR",
+           "E:TEAM_B:goals:FOR:SECOND_HALF:ALL:ALL_PRIOR",
+           "E:TEAM_A:goals:AGAINST:FIRST_HALF:ALL:ALL_PRIOR",
+           "E:TEAM_A:goals:AGAINST:SECOND_HALF:ALL:ALL_PRIOR",
+           "E:TEAM_A:goals:FOR:FIRST_HALF:ALL:ALL_PRIOR",
+           "E:TEAM_A:goals:FOR:SECOND_HALF:ALL:ALL_PRIOR",
+           "E:COMPETITION_CONTEXT:goals:NEUTRAL:FULL_MATCH:ALL:ALL_PRIOR"
+          ],
+          "expected_relationship_to_test": "Second-half goal volume for both teams combined is elevated relative to first-half volume, and this asymmetry is more pronounced than the competition-context baseline implies.",
+          "mechanism_id_local": "M3",
+          "mechanism_statement": "Team B exhibits a pronounced within-match goal-scoring asymmetry: its second-half goal rate (~1.015/match) is substantially higher than its first-half rate (~0.662/match), while Team A's goals-against are also back-loaded (first-half ~0.667, second-half ~0.750). The joint half-level scoring profiles of both teams \u2014 measured simultaneously \u2014 test whether the second-half goal environment is structurally elevated beyond what full-match averages imply.",
+          "observable_variables": [
+           "goals"
+          ],
+          "provider_requirements": [
+           "goals"
+          ],
+          "self_overlap_with": [
+           "M4"
+          ],
+          "why_not_baseline_equivalent": "This requires jointly conditioning on half-level splits for both teams' FOR and AGAINST goal rates simultaneously, comparing the within-match state structure across both sides \u2014 not a single observable with one band. The half-level resolution and cross-team joint structure make it structurally richer."
+         },
+         {
+          "conditioning_logic": "Jointly condition on: (1) Team A's second-half card rate and foul rate, (2) Team B's second-half card rate and possession dominance, and (3) competition context second-half card norm. Test whether the combined second-half card environment when a high-fouling team faces a possession-dominant team exceeds what either team's individual card rate or the competition norm predicts.",
+          "data_resolution_required": "half",
+          "evidence_refs": [
+           "E:TEAM_A:cards_2h:FOR:SECOND_HALF:ALL:ALL_PRIOR",
+           "E:TEAM_B:cards_2h:FOR:SECOND_HALF:ALL:ALL_PRIOR",
+           "E:COMPETITION_CONTEXT:cards_2h:NEUTRAL:SECOND_HALF:ALL:ALL_PRIOR",
+           "E:TEAM_A:fouls:FOR:FULL_MATCH:ALL:ALL_PRIOR",
+           "E:TEAM_B:possession:FOR:FULL_MATCH:ALL:ALL_PRIOR",
+           "E:TEAM_A:yellow_cards:FOR:FULL_MATCH:AWAY:ALL_PRIOR"
+          ],
+          "expected_relationship_to_test": "Second-half total cards are elevated above competition context norms when a high-fouling team (Team A) faces a possession-dominant team (Team B), with the joint effect exceeding the sum of individual team deviations from the norm.",
+          "mechanism_id_local": "M4",
+          "mechanism_statement": "Team B's second-half card accumulation (cards_2h FOR ~1.723/match) combined with Team A's second-half card accumulation (cards_2h FOR ~2.389/match) \u2014 both measured against the competition context second-half card norm (~1.35/match) \u2014 tests whether the joint second-half disciplinary environment in this specific matchup is structurally elevated above competition norms, driven by the interaction of Team A's high foul rate and Team B's possession-dominant style creating late-match friction.",
+          "observable_variables": [
+           "cards_2h",
+           "fouls",
+           "possession"
+          ],
+          "provider_requirements": [
+           "cards_2h",
+           "fouls",
+           "possession"
+          ],
+          "self_overlap_with": [
+           "M1",
+           "M3"
+          ],
+          "why_not_baseline_equivalent": "This involves three observables jointly (cards_2h, fouls, possession), two teams' second-half profiles simultaneously, and a within-match state (second half) \u2014 not reducible to any single observable with one band or a simple home/away split."
+         },
+         {
+          "conditioning_logic": "Compute the ratio of shots_on_target to shots for Team B (FOR) and for Team A (AGAINST) separately, then jointly condition on whether Team B's shot-conversion-to-target ratio is suppressed when facing teams with Team A's defensive shot-filtering profile. Test whether the joint ratio structure predicts shots_on_target volume better than either team's raw shots or shots_on_target average alone.",
+          "data_resolution_required": "match",
+          "evidence_refs": [
+           "E:TEAM_B:shots:FOR:FULL_MATCH:ALL:ALL_PRIOR",
+           "E:TEAM_B:shots_on_target:FOR:FULL_MATCH:ALL:ALL_PRIOR",
+           "E:TEAM_A:shots:AGAINST:FULL_MATCH:ALL:ALL_PRIOR",
+           "E:TEAM_A:shots_on_target:AGAINST:FULL_MATCH:ALL:ALL_PRIOR",
+           "E:COMPETITION_CONTEXT:shots:NEUTRAL:FULL_MATCH:ALL:ALL_PRIOR",
+           "E:COMPETITION_CONTEXT:shots_on_target:NEUTRAL:FULL_MATCH:ALL:ALL_PRIOR",
+           "E:TEAM_B:shots:FOR:FULL_MATCH:AWAY:ALL_PRIOR",
+           "E:TEAM_B:shots_on_target:FOR:FULL_MATCH:AWAY:ALL_PRIOR"
+          ],
+          "expected_relationship_to_test": "Team B's shots-on-target production is suppressed relative to its raw shot volume when facing a team (Team A) whose shots-on-target-against rate is below the competition norm, indicating a non-linear filtering effect that saturates as defensive quality improves.",
+          "mechanism_id_local": "M5",
+          "mechanism_statement": "Team B's shot-to-shots-on-target conversion ratio (shots ~14.9, shots_on_target ~4.86, all-prior) versus Team A's shots-against-to-shots-on-target-against ratio (shots_against ~12.4, shots_on_target_against ~3.97) jointly characterize the shot quality / defensive filtering interaction: when Team B's volume shooting meets Team A's relatively efficient shot-suppression, the net shots-on-target environment may be suppressed relative to what Team B's raw shot volume alone implies. This tests a non-linear, ratio-based relationship between two observables across both teams.",
+          "observable_variables": [
+           "shots",
+           "shots_on_target"
+          ],
+          "provider_requirements": [
+           "shots",
+           "shots_on_target"
+          ],
+          "self_overlap_with": [],
+          "why_not_baseline_equivalent": "This is a ratio/non-linear relationship between two distinct observables (shots and shots_on_target) measured asymmetrically across both teams \u2014 Team B's offensive conversion ratio interacting with Team A's defensive filtering ratio. It cannot be reduced to a single observable with one band."
+         }
+        ]
+       },
+       "name": "emit_item6_mechanisms",
+       "toolUseId": "tooluse_YKBlmy5Z6PQevJnoP1Pnkq",
+       "type": "tool_use"
+      }
+     }
+    ],
+    "role": "assistant"
+   }
+  },
+  "stopReason": "tool_use",
+  "usage": {
+   "cacheReadInputTokens": 0,
+   "cacheWriteInputTokens": 0,
+   "inputTokens": 12046,
+   "outputTokens": 3041,
+   "totalTokens": 15087
+  }
+ },
+ "request_sha256": "af19b7e772152587de0c8a9a3f1146b87825a54711d52d69c6c9987bd699690a",
+ "resolved_model_id": null,
+ "runner_version": "item6_stage1_runner_v2",
+ "usage": {
+  "cacheReadInputTokens": 0,
+  "cacheWriteInputTokens": 0,
+  "inputTokens": 12046,
+  "outputTokens": 3041,
+  "totalTokens": 15087
+ }
+}

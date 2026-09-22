@@ -1,0 +1,207 @@
+{
+ "count_input_sha256": "6c24699ff7ef7d92e16e8cce9d22c2526e7417d46137202de97680495cbbcb86",
+ "fixture_id": "i6_8420347",
+ "provider_counted_input_tokens": 12066,
+ "raw_response": {
+  "ResponseMetadata": {
+   "HTTPHeaders": {
+    "connection": "keep-alive",
+    "content-length": "9150",
+    "content-type": "application/json",
+    "date": "Tue, 22 Sep 2026 16:38:24 GMT",
+    "x-amzn-requestid": "efa7576d-f8a2-41a1-accc-b9c888ff49cb"
+   },
+   "HTTPStatusCode": 200,
+   "MaxAttemptsReached": true,
+   "RequestId": "efa7576d-f8a2-41a1-accc-b9c888ff49cb",
+   "RetryAttempts": 0
+  },
+  "_item6_live_transport": {
+   "authentic_provider_response": true,
+   "aws_request_id": "efa7576d-f8a2-41a1-accc-b9c888ff49cb",
+   "converse_model_id": "us.anthropic.claude-sonnet-4-6",
+   "count_model_id": "anthropic.claude-sonnet-4-6",
+   "envelope_sha256": "71674ca434189e483ca3d994e42554840378124fbb2dfe9f6053044aff80eef4",
+   "http_status": 200,
+   "provider": "aws_bedrock",
+   "transport_version": "item6_bedrock_transport_v1"
+  },
+  "metrics": {
+   "latencyMs": 32517
+  },
+  "output": {
+   "message": {
+    "content": [
+     {
+      "toolUse": {
+       "input": {
+        "fixture_id": "i6_8420347",
+        "mechanisms": [
+         {
+          "conditioning_logic": "Condition on matches where the attacking team (Team A) exhibits a high shots-FOR but low shots_on_target-FOR ratio (low conversion accuracy), while the defending team (Team B) allows a relatively low shots_on_target AGAINST rate. In such joint conditions, measure Team A's corner_kicks FOR.",
+          "data_resolution_required": "match",
+          "evidence_refs": [
+           "E:TEAM_A:shots:FOR:FULL_MATCH:ALL:ALL_PRIOR",
+           "E:TEAM_A:shots_on_target:FOR:FULL_MATCH:ALL:ALL_PRIOR",
+           "E:TEAM_A:shots_on_target:FOR:FULL_MATCH:ALL:RECENT_5",
+           "E:TEAM_A:corner_kicks:FOR:FULL_MATCH:ALL:ALL_PRIOR",
+           "E:TEAM_B:shots_on_target:AGAINST:FULL_MATCH:ALL:ALL_PRIOR"
+          ],
+          "expected_relationship_to_test": "Team A corner_kicks FOR rises when Team A's shot accuracy is low (many shots, few on target) and Team B suppresses on-target shots, as off-target attempts and blocked shots are more likely to produce corners than goals",
+          "mechanism_id_local": "M1",
+          "mechanism_statement": "Team A's shot-volume-to-shots-on-target conversion ratio (shots FOR vs shots_on_target FOR) is jointly considered alongside Team B's defensive suppression of shots_on_target AGAINST, to test whether the combined low-accuracy / high-volume-allowed pairing produces a different corner-kick yield than either observable alone would predict.",
+          "observable_variables": [
+           "shots",
+           "shots_on_target",
+           "corner_kicks"
+          ],
+          "provider_requirements": [
+           "shots",
+           "shots_on_target",
+           "corner_kicks"
+          ],
+          "self_overlap_with": [
+           "M2"
+          ],
+          "why_not_baseline_equivalent": "This requires a joint relationship between two distinct observables (shots and shots_on_target) for Team A and a separate observable (shots_on_target AGAINST) for Team B simultaneously \u2014 not reducible to any single observable with one coarse band."
+         },
+         {
+          "conditioning_logic": "Condition on matches where Team B holds above-average possession (FOR) and simultaneously generates above-average corners FOR. Measure whether Team A's corners AGAINST co-varies with Team B's possession level across this joint distribution, or whether corner generation is decoupled from possession for Team B.",
+          "data_resolution_required": "match",
+          "evidence_refs": [
+           "E:TEAM_B:corner_kicks:FOR:FULL_MATCH:ALL:ALL_PRIOR",
+           "E:TEAM_B:corner_kicks:FOR:FULL_MATCH:ALL:RECENT_5",
+           "E:TEAM_B:possession:FOR:FULL_MATCH:ALL:ALL_PRIOR",
+           "E:TEAM_B:possession:FOR:FULL_MATCH:ALL:RECENT_5",
+           "E:TEAM_A:corner_kicks:AGAINST:FULL_MATCH:ALL:ALL_PRIOR"
+          ],
+          "expected_relationship_to_test": "Team B's corner_kicks FOR rises with possession FOR up to a threshold, but the relationship saturates or decouples at high possession levels, suggesting a non-linear rather than proportional link between possession dominance and corner generation",
+          "mechanism_id_local": "M2",
+          "mechanism_statement": "The asymmetry between Team B's corner_kicks FOR (high, rising in recent form) and Team A's corner_kicks AGAINST (also elevated) is tested jointly against Team B's possession FOR, to determine whether Team B's corner dominance is possession-driven or possession-independent.",
+          "observable_variables": [
+           "corner_kicks",
+           "possession"
+          ],
+          "provider_requirements": [
+           "corner_kicks",
+           "possession"
+          ],
+          "self_overlap_with": [
+           "M1"
+          ],
+          "why_not_baseline_equivalent": "This tests a non-linear / threshold relationship between two distinct observables (possession and corner_kicks) for the same team, not a simple single-observable band split."
+         },
+         {
+          "conditioning_logic": "Condition on matches where Team A holds below-average possession (FOR below competition mean of 50). Within those matches, compare Team A's goals FOR in the first half versus second half. Team A scores markedly more in the second half (0.767) than first half (0.279) overall; test whether this half-skew is amplified or suppressed when possession deficit is larger.",
+          "data_resolution_required": "half",
+          "evidence_refs": [
+           "E:TEAM_A:goals:FOR:FIRST_HALF:ALL:ALL_PRIOR",
+           "E:TEAM_A:goals:FOR:SECOND_HALF:ALL:ALL_PRIOR",
+           "E:TEAM_A:possession:FOR:FULL_MATCH:ALL:ALL_PRIOR",
+           "E:TEAM_A:possession:FOR:FULL_MATCH:ALL:RECENT_5",
+           "E:COMPETITION_CONTEXT:possession:NEUTRAL:FULL_MATCH:ALL:ALL_PRIOR"
+          ],
+          "expected_relationship_to_test": "Team A's second-half goals FOR rises relative to first-half goals FOR as Team A's possession deficit deepens, suggesting a counter-attacking or late-game pattern that is more pronounced when possession is ceded",
+          "mechanism_id_local": "M3",
+          "mechanism_statement": "Team A's goals FOR split by half (first half vs second half) is tested jointly against Team A's possession deficit (Team A possession FOR is below 50, opponent possession is above 50), to determine whether Team A's scoring pattern is concentrated in a specific half when playing as the lower-possession side.",
+          "observable_variables": [
+           "goals",
+           "possession"
+          ],
+          "provider_requirements": [
+           "goals",
+           "possession"
+          ],
+          "self_overlap_with": [
+           "M4"
+          ],
+          "why_not_baseline_equivalent": "This is a within-match state split (half-level) conditioned simultaneously on a continuous possession-deficit dimension \u2014 requiring both half resolution and a joint second observable, not covered by any single-observable or single-band baseline."
+         },
+         {
+          "conditioning_logic": "Condition on matches where Team B commits above-average fouls FOR. Within those matches, compare Team B's goals FOR in the first half versus second half, and also measure yellow_cards FOR. Test whether the high-foul regime is associated with a front-loaded goal pattern and elevated card accumulation.",
+          "data_resolution_required": "half",
+          "evidence_refs": [
+           "E:TEAM_B:goals:FOR:FIRST_HALF:ALL:ALL_PRIOR",
+           "E:TEAM_B:goals:FOR:SECOND_HALF:ALL:ALL_PRIOR",
+           "E:TEAM_B:fouls:FOR:FULL_MATCH:ALL:ALL_PRIOR",
+           "E:TEAM_B:fouls:FOR:FULL_MATCH:ALL:RECENT_5",
+           "E:TEAM_B:yellow_cards:FOR:FULL_MATCH:ALL:ALL_PRIOR"
+          ],
+          "expected_relationship_to_test": "In matches where Team B's fouls FOR is elevated, Team B's first-half goals FOR is disproportionately higher relative to second half, and yellow_cards FOR is also elevated \u2014 suggesting a joint aggressive-early-dominance regime",
+          "mechanism_id_local": "M4",
+          "mechanism_statement": "Team B's goals FOR split by half (first half vs second half) is tested jointly against Team B's fouls FOR, to determine whether Team B's strong first-half scoring (0.806 per match) is associated with a high-foul, physically aggressive style that also generates yellow cards, and whether this joint pattern shifts across halves.",
+          "observable_variables": [
+           "goals",
+           "fouls",
+           "yellow_cards"
+          ],
+          "provider_requirements": [
+           "goals",
+           "fouls",
+           "yellow_cards"
+          ],
+          "self_overlap_with": [
+           "M3"
+          ],
+          "why_not_baseline_equivalent": "This involves a three-observable joint relationship (goals by half, fouls, yellow_cards) with a within-match half-level split conditioned on a continuous foul-rate dimension \u2014 not reducible to any single observable or single band."
+         },
+         {
+          "conditioning_logic": "Condition on matches where both Team A's fouls FOR and Team B's fouls AGAINST are simultaneously above the competition mean. Within that joint high-foul context, measure cards_2h FOR and AGAINST for both teams. Compare to the baseline cards_2h rate in matches where only one side's foul rate is elevated.",
+          "data_resolution_required": "half",
+          "evidence_refs": [
+           "E:TEAM_A:fouls:FOR:FULL_MATCH:ALL:ALL_PRIOR",
+           "E:TEAM_A:fouls:FOR:FULL_MATCH:ALL:RECENT_5",
+           "E:TEAM_B:fouls:AGAINST:FULL_MATCH:ALL:ALL_PRIOR",
+           "E:TEAM_B:fouls:AGAINST:FULL_MATCH:ALL:RECENT_5",
+           "E:TEAM_A:cards_2h:FOR:SECOND_HALF:ALL:ALL_PRIOR",
+           "E:TEAM_B:cards_2h:FOR:SECOND_HALF:ALL:ALL_PRIOR",
+           "E:COMPETITION_CONTEXT:cards_2h:NEUTRAL:SECOND_HALF:ALL:ALL_PRIOR",
+           "E:COMPETITION_CONTEXT:fouls:NEUTRAL:FULL_MATCH:ALL:ALL_PRIOR"
+          ],
+          "expected_relationship_to_test": "cards_2h (for both teams combined) rises when both Team A fouls FOR and Team B fouls AGAINST are jointly elevated above competition mean, with the joint condition producing a greater second-half card rate than either team's individual foul elevation alone",
+          "mechanism_id_local": "M5",
+          "mechanism_statement": "The joint relationship between Team A's fouls FOR and Team B's fouls AGAINST (both elevated relative to competition context) is tested against second-half cards (cards_2h) for both teams, to determine whether a high-mutual-foul-rate match context produces a disproportionate second-half card escalation beyond what each team's individual card rate would predict.",
+          "observable_variables": [
+           "fouls",
+           "cards_2h",
+           "yellow_cards"
+          ],
+          "provider_requirements": [
+           "fouls",
+           "cards_2h",
+           "yellow_cards"
+          ],
+          "self_overlap_with": [],
+          "why_not_baseline_equivalent": "This requires a joint condition on two distinct observables (fouls FOR for Team A and fouls AGAINST for Team B) simultaneously, tested against a within-match-period outcome (second-half cards) \u2014 involving two opponent-descriptor dimensions and a half-level split, not covered by any single-observable baseline."
+         }
+        ]
+       },
+       "name": "emit_item6_mechanisms",
+       "toolUseId": "tooluse_dvX6zgjZHx6DgrNtkFiwlp",
+       "type": "tool_use"
+      }
+     }
+    ],
+    "role": "assistant"
+   }
+  },
+  "stopReason": "tool_use",
+  "usage": {
+   "cacheReadInputTokens": 0,
+   "cacheWriteInputTokens": 0,
+   "inputTokens": 12049,
+   "outputTokens": 2719,
+   "totalTokens": 14768
+  }
+ },
+ "request_sha256": "704d50a1554bcd4225357cfeb40baedcf5d196dec5c21b19ccaf23bbb0704ffe",
+ "resolved_model_id": null,
+ "runner_version": "item6_stage1_runner_v2",
+ "usage": {
+  "cacheReadInputTokens": 0,
+  "cacheWriteInputTokens": 0,
+  "inputTokens": 12049,
+  "outputTokens": 2719,
+  "totalTokens": 14768
+ }
+}

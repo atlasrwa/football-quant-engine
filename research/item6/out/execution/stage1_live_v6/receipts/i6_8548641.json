@@ -1,0 +1,208 @@
+{
+ "count_input_sha256": "8a329b31e83c14ce38f4b314c5e176237c3dd4ea17ae7301edf2631c31ff89d6",
+ "fixture_id": "i6_8548641",
+ "provider_counted_input_tokens": 12068,
+ "raw_response": {
+  "ResponseMetadata": {
+   "HTTPHeaders": {
+    "connection": "keep-alive",
+    "content-length": "9686",
+    "content-type": "application/json",
+    "date": "Tue, 22 Sep 2026 23:10:00 GMT",
+    "x-amzn-requestid": "bc0303c4-a2e0-465d-b0e2-68e0b2638ee0"
+   },
+   "HTTPStatusCode": 200,
+   "MaxAttemptsReached": true,
+   "RequestId": "bc0303c4-a2e0-465d-b0e2-68e0b2638ee0",
+   "RetryAttempts": 0
+  },
+  "_item6_live_transport": {
+   "authentic_provider_response": true,
+   "aws_request_id": "bc0303c4-a2e0-465d-b0e2-68e0b2638ee0",
+   "converse_model_id": "us.anthropic.claude-sonnet-4-6",
+   "count_model_id": "anthropic.claude-sonnet-4-6",
+   "envelope_sha256": "8c9c27143fdbff925b6edfee6ccf9cfb342254aefad0339bd0930ac2e2b6a6e6",
+   "http_status": 200,
+   "provider": "aws_bedrock",
+   "transport_version": "item6_bedrock_transport_v1"
+  },
+  "metrics": {
+   "latencyMs": 33180
+  },
+  "output": {
+   "message": {
+    "content": [
+     {
+      "toolUse": {
+       "input": {
+        "fixture_id": "i6_8548641",
+        "mechanisms": [
+         {
+          "conditioning_logic": "Measure the joint relationship between (shots FOR, shots_on_target FOR) as a pair across historical matches for Team A, conditioning on whether the ratio shots_on_target/shots is above or below its own long-run average, and test whether goals FOR co-varies with that ratio rather than with raw shot volume alone.",
+          "data_resolution_required": "match",
+          "evidence_refs": [
+           "E:TEAM_A:shots:FOR:FULL_MATCH:ALL:ALL_PRIOR",
+           "E:TEAM_A:shots:FOR:FULL_MATCH:ALL:RECENT_5",
+           "E:TEAM_A:shots_on_target:FOR:FULL_MATCH:ALL:ALL_PRIOR",
+           "E:TEAM_A:shots_on_target:FOR:FULL_MATCH:ALL:RECENT_5",
+           "E:TEAM_A:goals:FOR:FULL_MATCH:ALL:ALL_PRIOR",
+           "E:TEAM_A:goals:FOR:FULL_MATCH:ALL:RECENT_5"
+          ],
+          "expected_relationship_to_test": "Goals FOR rises with the shots_on_target-to-shots ratio rather than with raw shots volume; when shot volume rises but the ratio falls, goal output is suppressed relative to what shot volume alone would predict.",
+          "mechanism_id_local": "M1",
+          "mechanism_statement": "Team A's shot volume has risen sharply in recent matches while its shots-on-target rate has not kept pace, suggesting a divergence between shot quantity and shot quality that jointly conditions goal output differently from either observable alone.",
+          "observable_variables": [
+           "shots",
+           "shots_on_target",
+           "goals"
+          ],
+          "provider_requirements": [
+           "shots",
+           "shots_on_target",
+           "goals"
+          ],
+          "self_overlap_with": [
+           "M2"
+          ],
+          "why_not_baseline_equivalent": "This requires a joint two-observable relationship (shots AND shots_on_target together as a ratio) to condition goal output \u2014 not a single observable against one band. The engine's covered class handles each observable independently against opponent descriptors or venue, not the interaction between two distinct attacking-quality observables."
+         },
+         {
+          "conditioning_logic": "For Team B, measure the joint distribution of (shots FOR, shots_on_target FOR, goals FOR) across historical matches. Test whether matches where shots_on_target FOR is elevated relative to shots FOR (high on-target ratio) still produce suppressed goals, indicating a conversion-rate floor independent of volume.",
+          "data_resolution_required": "match",
+          "evidence_refs": [
+           "E:TEAM_B:shots:FOR:FULL_MATCH:ALL:ALL_PRIOR",
+           "E:TEAM_B:shots:FOR:FULL_MATCH:ALL:RECENT_5",
+           "E:TEAM_B:shots_on_target:FOR:FULL_MATCH:ALL:ALL_PRIOR",
+           "E:TEAM_B:shots_on_target:FOR:FULL_MATCH:ALL:RECENT_5",
+           "E:TEAM_B:goals:FOR:FULL_MATCH:ALL:ALL_PRIOR",
+           "E:TEAM_B:goals:FOR:FULL_MATCH:ALL:RECENT_5"
+          ],
+          "expected_relationship_to_test": "Team B's goals FOR is suppressed even when shots_on_target FOR is elevated, indicating a conversion inefficiency that persists across different shot-quality regimes and is not explained by either shots or shots_on_target alone.",
+          "mechanism_id_local": "M2",
+          "mechanism_statement": "Team B's shots and shots_on_target have both risen markedly in recent matches while its long-run goals-for rate is low, suggesting a persistent conversion inefficiency that is jointly captured only by examining shots, shots_on_target, and goals together \u2014 not any single observable.",
+          "observable_variables": [
+           "shots",
+           "shots_on_target",
+           "goals"
+          ],
+          "provider_requirements": [
+           "shots",
+           "shots_on_target",
+           "goals"
+          ],
+          "self_overlap_with": [
+           "M1"
+          ],
+          "why_not_baseline_equivalent": "Requires jointly conditioning on two distinct observables (shots_on_target and shots) to isolate conversion rate as a third dimension \u2014 not reducible to one observable with one band."
+         },
+         {
+          "conditioning_logic": "Measure the joint relationship between Team B's fouls FOR (which generate free-kicks and pressure situations) and Team A's corner_kicks FOR across historical match pairs where both Team B foul rate is above its long-run mean AND Team A corner rate is above its long-run mean simultaneously, versus matches where only one condition holds.",
+          "data_resolution_required": "match",
+          "evidence_refs": [
+           "E:TEAM_B:fouls:FOR:FULL_MATCH:ALL:ALL_PRIOR",
+           "E:TEAM_B:fouls:FOR:FULL_MATCH:ALL:RECENT_5",
+           "E:TEAM_A:corner_kicks:FOR:FULL_MATCH:ALL:ALL_PRIOR",
+           "E:TEAM_A:corner_kicks:FOR:FULL_MATCH:ALL:RECENT_5",
+           "E:TEAM_A:corner_kicks:FOR:FULL_MATCH:HOME:ALL_PRIOR"
+          ],
+          "expected_relationship_to_test": "Total corner_kicks FOR Team A rises more when Team B's fouls FOR is simultaneously elevated than when either condition holds alone, indicating a super-additive joint effect on set-piece volume.",
+          "mechanism_id_local": "M3",
+          "mechanism_statement": "Team B's foul rate has surged in recent matches while its corners-against rate has remained stable, but Team A's corner-generation rate has also surged recently \u2014 the joint interaction of Team B's high foul rate and Team A's elevated corner production may compound set-piece volume beyond what either observable predicts alone.",
+          "observable_variables": [
+           "fouls",
+           "corner_kicks"
+          ],
+          "provider_requirements": [
+           "fouls",
+           "corner_kicks"
+          ],
+          "self_overlap_with": [],
+          "why_not_baseline_equivalent": "This is a genuine two-observable joint conditioning across two different teams' metrics (Team B fouls \u00d7 Team A corners), not a single observable split by one opponent band. The engine covers each observable against an opponent descriptor band, but not the interaction of two distinct observables from opposite sides."
+         },
+         {
+          "conditioning_logic": "For each team separately, compute the ratio of goals FOR in the second half versus first half across historical matches. Then test whether, in matches where Team A's second-half goal rate is above its own long-run first-half rate AND Team B's second-half goal rate is below its own long-run first-half rate simultaneously, the second half produces disproportionately more total goals than the first half.",
+          "data_resolution_required": "half",
+          "evidence_refs": [
+           "E:TEAM_A:goals:FOR:FIRST_HALF:ALL:ALL_PRIOR",
+           "E:TEAM_A:goals:FOR:SECOND_HALF:ALL:ALL_PRIOR",
+           "E:TEAM_B:goals:FOR:FIRST_HALF:ALL:ALL_PRIOR",
+           "E:TEAM_B:goals:FOR:SECOND_HALF:ALL:ALL_PRIOR",
+           "E:TEAM_A:goals:AGAINST:FIRST_HALF:ALL:ALL_PRIOR",
+           "E:TEAM_A:goals:AGAINST:SECOND_HALF:ALL:ALL_PRIOR",
+           "E:TEAM_B:goals:AGAINST:FIRST_HALF:ALL:ALL_PRIOR",
+           "E:TEAM_B:goals:AGAINST:SECOND_HALF:ALL:ALL_PRIOR"
+          ],
+          "expected_relationship_to_test": "Total goals in the second half are elevated relative to the first half when Team A's structural second-half scoring uplift and Team B's structural second-half scoring suppression are both present \u2014 an asymmetric cross-team half-level interaction not visible in full-match totals.",
+          "mechanism_id_local": "M4",
+          "mechanism_statement": "Team A's second-half goal rate substantially exceeds its first-half goal rate, while Team B's second-half goal rate is lower than its first-half rate \u2014 this asymmetric within-match goal-timing profile across the two sides jointly conditions the half-level goal distribution in a way not captured by full-match averages.",
+          "observable_variables": [
+           "goals"
+          ],
+          "provider_requirements": [
+           "goals"
+          ],
+          "self_overlap_with": [],
+          "why_not_baseline_equivalent": "This requires half-level resolution AND a cross-team asymmetric comparison of two different teams' within-match goal-timing profiles simultaneously. It is not a single observable split by venue or opponent band; it is a joint two-team, two-period conditioning."
+         },
+         {
+          "conditioning_logic": "Across historical matches, condition on the joint state where Team A possession FOR exceeds a threshold (above its own long-run mean) AND Team B fouls FOR exceeds a threshold (above its own long-run mean), and measure the resulting corner_kicks differential (Team A FOR minus Team B FOR) versus matches where only one or neither condition holds.",
+          "data_resolution_required": "match",
+          "evidence_refs": [
+           "E:TEAM_A:possession:FOR:FULL_MATCH:ALL:ALL_PRIOR",
+           "E:TEAM_A:possession:FOR:FULL_MATCH:ALL:RECENT_5",
+           "E:TEAM_B:possession:FOR:FULL_MATCH:ALL:ALL_PRIOR",
+           "E:TEAM_B:possession:FOR:FULL_MATCH:ALL:RECENT_5",
+           "E:TEAM_B:fouls:FOR:FULL_MATCH:ALL:ALL_PRIOR",
+           "E:TEAM_B:fouls:FOR:FULL_MATCH:ALL:RECENT_5",
+           "E:TEAM_A:corner_kicks:FOR:FULL_MATCH:ALL:ALL_PRIOR",
+           "E:TEAM_B:corner_kicks:FOR:FULL_MATCH:ALL:ALL_PRIOR"
+          ],
+          "expected_relationship_to_test": "The corner_kicks differential in favour of Team A is amplified when Team A's possession dominance and Team B's elevated foul rate co-occur, compared to when either condition holds in isolation \u2014 a non-additive joint effect across three observables.",
+          "mechanism_id_local": "M5",
+          "mechanism_statement": "Team A's possession dominance is structurally high (both long-run and recent), while Team B structurally operates with low possession \u2014 the joint interaction of Team A's high possession and Team B's elevated foul rate (recent surge) may jointly suppress Team B's corner generation while amplifying Team A's, creating an asymmetric corner differential that is not captured by either possession or fouls alone.",
+          "observable_variables": [
+           "possession",
+           "fouls",
+           "corner_kicks"
+          ],
+          "provider_requirements": [
+           "possession",
+           "fouls",
+           "corner_kicks"
+          ],
+          "self_overlap_with": [
+           "M3"
+          ],
+          "why_not_baseline_equivalent": "This involves three distinct observables (possession, fouls, corner_kicks) with a joint two-dimensional conditioning (possession threshold \u00d7 foul-rate threshold), which is structurally richer than any single-observable split by one band. The asymmetric cross-team framing (Team A possession \u00d7 Team B fouls \u2192 corner differential) is not covered by the engine's existing two-way splits."
+         }
+        ]
+       },
+       "name": "emit_item6_mechanisms",
+       "toolUseId": "tooluse_pCOUuvOYJ5PPCBkWtpQ5yo",
+       "type": "tool_use"
+      }
+     }
+    ],
+    "role": "assistant"
+   }
+  },
+  "stopReason": "tool_use",
+  "usage": {
+   "cacheReadInputTokens": 0,
+   "cacheWriteInputTokens": 0,
+   "inputTokens": 12051,
+   "outputTokens": 2864,
+   "totalTokens": 14915
+  }
+ },
+ "request_sha256": "4f8c09e7bd5c8a8a624cd1e3c368a085767a34bce73e6f59f8b9772742288cd6",
+ "resolved_model_id": null,
+ "runner_version": "item6_stage1_runner_v2",
+ "usage": {
+  "cacheReadInputTokens": 0,
+  "cacheWriteInputTokens": 0,
+  "inputTokens": 12051,
+  "outputTokens": 2864,
+  "totalTokens": 14915
+ }
+}

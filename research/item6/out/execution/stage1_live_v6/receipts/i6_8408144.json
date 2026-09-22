@@ -1,0 +1,204 @@
+{
+ "count_input_sha256": "f439ad6202f5c04bf4ae57ba90cabd38d13da6f89de6ce0d46c5ae70d1fcefd1",
+ "fixture_id": "i6_8408144",
+ "provider_counted_input_tokens": 12072,
+ "raw_response": {
+  "ResponseMetadata": {
+   "HTTPHeaders": {
+    "connection": "keep-alive",
+    "content-length": "11200",
+    "content-type": "application/json",
+    "date": "Tue, 22 Sep 2026 16:33:52 GMT",
+    "x-amzn-requestid": "3c23e045-2dbd-4c9a-9448-c2f7ac1d21de"
+   },
+   "HTTPStatusCode": 200,
+   "MaxAttemptsReached": true,
+   "RequestId": "3c23e045-2dbd-4c9a-9448-c2f7ac1d21de",
+   "RetryAttempts": 0
+  },
+  "_item6_live_transport": {
+   "authentic_provider_response": true,
+   "aws_request_id": "3c23e045-2dbd-4c9a-9448-c2f7ac1d21de",
+   "converse_model_id": "us.anthropic.claude-sonnet-4-6",
+   "count_model_id": "anthropic.claude-sonnet-4-6",
+   "envelope_sha256": "9419c54e582a397542ad744bac428d79f0b44b3ec3fa95222b52f13a46d36b8f",
+   "http_status": 200,
+   "provider": "aws_bedrock",
+   "transport_version": "item6_bedrock_transport_v1"
+  },
+  "metrics": {
+   "latencyMs": 42349
+  },
+  "output": {
+   "message": {
+    "content": [
+     {
+      "toolUse": {
+       "input": {
+        "fixture_id": "i6_8408144",
+        "mechanisms": [
+         {
+          "conditioning_logic": "Condition on matches where the possession-holding team (Team A profile: ~63% possession) faces a team that concedes high shot volumes (Team B profile: ~15.5 shots against per match). Measure whether the joint state of high possession by one side AND high shots-against by the other side is associated with a divergence between total shots and shots-on-target conversion rate, compared to either variable alone.",
+          "data_resolution_required": "match",
+          "evidence_refs": [
+           "E:TEAM_A:possession:FOR:FULL_MATCH:ALL:ALL_PRIOR",
+           "E:TEAM_A:possession:FOR:FULL_MATCH:ALL:RECENT_5",
+           "E:TEAM_B:shots:AGAINST:FULL_MATCH:ALL:ALL_PRIOR",
+           "E:TEAM_B:shots:AGAINST:FULL_MATCH:ALL:RECENT_5",
+           "E:TEAM_A:shots_on_target:FOR:FULL_MATCH:ALL:ALL_PRIOR",
+           "E:TEAM_A:shots:FOR:FULL_MATCH:ALL:ALL_PRIOR",
+           "E:TEAM_B:shots_on_target:AGAINST:FULL_MATCH:ALL:ALL_PRIOR"
+          ],
+          "expected_relationship_to_test": "As possession concentration by one side rises alongside the opponent's shots-conceded rate, the ratio of shots-on-target to total shots for the high-possession team is suppressed relative to what each variable alone would predict \u2014 i.e., volume rises but accuracy saturates or declines.",
+          "mechanism_id_local": "M1",
+          "mechanism_statement": "When Team A (high-possession side) faces Team B (low-possession side), the joint relationship between Team A's possession dominance and Team B's elevated shots-against rate suggests that Team B's shot volume allowed rises disproportionately when the opponent controls possession at the level Team A consistently achieves \u2014 i.e., the combination of one team's possession share and the opponent's shots-conceded rate jointly predicts a suppressed-conversion environment rather than a simple additive one.",
+          "observable_variables": [
+           "possession",
+           "shots",
+           "shots_on_target"
+          ],
+          "provider_requirements": [
+           "possession",
+           "shots",
+           "shots_on_target"
+          ],
+          "self_overlap_with": [
+           "M2"
+          ],
+          "why_not_baseline_equivalent": "This is not a single-observable mirror or a single-band split. It requires jointly conditioning on two distinct observables from two different sides simultaneously (Team A possession FOR vs Team B shots AGAINST) and examining a derived ratio (shots-on-target / shots), which is a non-linear relationship not captured by any single-observable comparison."
+         },
+         {
+          "conditioning_logic": "Condition on away matches for Team B (shots FOR away = 9.7) intersected with matches against opponents whose shots-against rate is below competition average (Team A allows 10.8 vs competition mean 13.4). Measure whether the combination of Team B playing away AND facing a low-shots-conceding opponent produces a shots-for total that is lower than either condition alone would predict.",
+          "data_resolution_required": "match",
+          "evidence_refs": [
+           "E:TEAM_B:shots:FOR:FULL_MATCH:AWAY:ALL_PRIOR",
+           "E:TEAM_B:shots:FOR:FULL_MATCH:HOME:ALL_PRIOR",
+           "E:TEAM_A:shots:AGAINST:FULL_MATCH:ALL:ALL_PRIOR",
+           "E:TEAM_A:shots:AGAINST:FULL_MATCH:ALL:RECENT_5",
+           "E:COMPETITION_CONTEXT:shots:NEUTRAL:FULL_MATCH:ALL:ALL_PRIOR",
+           "E:TEAM_B:shots_on_target:FOR:FULL_MATCH:AWAY:ALL_PRIOR"
+          ],
+          "expected_relationship_to_test": "Team B's shot output when playing away against a low-shots-conceding opponent is suppressed beyond what the away venue effect or the opponent's defensive profile alone would predict \u2014 a compounding, non-additive suppression.",
+          "mechanism_id_local": "M2",
+          "mechanism_statement": "Team B's shots-for volume shows a strong home/away asymmetry (14.6 home vs 9.7 away), while Team A concedes relatively few shots (10.8 against, all venues). The joint interaction between Team B's venue-conditioned shot output and Team A's shots-conceded rate \u2014 both dimensions simultaneously \u2014 determines whether Team B's away shot suppression is further compounded or partially offset by Team A's defensive shot-allowing profile.",
+          "observable_variables": [
+           "shots",
+           "shots_on_target"
+          ],
+          "provider_requirements": [
+           "shots",
+           "shots_on_target"
+          ],
+          "self_overlap_with": [
+           "M1"
+          ],
+          "why_not_baseline_equivalent": "This requires two distinct opponent-descriptor dimensions simultaneously: venue (away) AND opponent's shots-conceded band. The engine covers venue alone or one opponent-descriptor band alone, but not their joint interaction on a cross-team asymmetric observable."
+         },
+         {
+          "conditioning_logic": "Split by half. Condition on the joint state: Team A's second-half corner production (FOR, 2H) against Team B's second-half corners-conceded rate (AGAINST, 2H = 3.75). Compare this joint second-half interaction to the first-half equivalent (Team A 1H FOR = 2.23, Team B 1H AGAINST = 2.45) to test whether the second half produces a disproportionate corner surplus.",
+          "data_resolution_required": "half",
+          "evidence_refs": [
+           "E:TEAM_A:corner_kicks:FOR:FIRST_HALF:ALL:ALL_PRIOR",
+           "E:TEAM_A:corner_kicks:FOR:SECOND_HALF:ALL:ALL_PRIOR",
+           "E:TEAM_B:corner_kicks:AGAINST:FIRST_HALF:ALL:ALL_PRIOR",
+           "E:TEAM_B:corner_kicks:AGAINST:SECOND_HALF:ALL:ALL_PRIOR",
+           "E:TEAM_A:corner_kicks:AGAINST:FIRST_HALF:ALL:ALL_PRIOR",
+           "E:TEAM_A:corner_kicks:AGAINST:SECOND_HALF:ALL:ALL_PRIOR"
+          ],
+          "expected_relationship_to_test": "The joint second-half corner rate (Team A FOR 2H \u00d7 Team B AGAINST 2H) rises relative to the first-half joint rate, and this rise exceeds what either team's individual half-split alone would predict \u2014 indicating a compounding within-match temporal effect.",
+          "mechanism_id_local": "M3",
+          "mechanism_statement": "Team A's corner-kick production is split nearly evenly between first and second halves (2.23 vs 2.73), while Team B concedes corners at a markedly higher rate in the second half than the first (3.75 vs 2.45). The within-match temporal interaction between Team A's half-level corner production and Team B's half-level corner-conceding rate \u2014 both measured at half resolution \u2014 jointly determines whether second-half corner volume is elevated beyond what full-match averages suggest.",
+          "observable_variables": [
+           "corner_kicks"
+          ],
+          "provider_requirements": [
+           "corner_kicks"
+          ],
+          "self_overlap_with": [],
+          "why_not_baseline_equivalent": "This is a within-match state (half-level) dependence requiring half-resolution data for both teams simultaneously, and it conditions on a joint cross-team observable at half level \u2014 not reducible to a single observable's recent vs long-run level or a single coarse band."
+         },
+         {
+          "conditioning_logic": "Condition on matches where one team's fouls-FOR recent trend diverges downward from its season mean while the opponent's fouls-FOR recent trend is stable or rising. Measure whether the asymmetric foul-rate divergence (Team A declining, Team B stable/rising) is associated with a shift in the cards distribution \u2014 specifically whether yellow cards and second-half cards skew toward the higher-fouling side beyond what each team's individual foul rate alone predicts.",
+          "data_resolution_required": "match",
+          "evidence_refs": [
+           "E:TEAM_A:fouls:FOR:FULL_MATCH:ALL:ALL_PRIOR",
+           "E:TEAM_A:fouls:FOR:FULL_MATCH:ALL:RECENT_5",
+           "E:TEAM_B:fouls:FOR:FULL_MATCH:ALL:ALL_PRIOR",
+           "E:TEAM_B:fouls:FOR:FULL_MATCH:ALL:RECENT_5",
+           "E:TEAM_A:yellow_cards:FOR:FULL_MATCH:ALL:ALL_PRIOR",
+           "E:TEAM_B:yellow_cards:FOR:FULL_MATCH:ALL:ALL_PRIOR",
+           "E:TEAM_A:cards_2h:FOR:SECOND_HALF:ALL:ALL_PRIOR",
+           "E:TEAM_B:cards_2h:FOR:SECOND_HALF:ALL:ALL_PRIOR"
+          ],
+          "expected_relationship_to_test": "When one team's recent foul rate declines while the opponent's remains elevated, the cards burden skews asymmetrically toward the higher-fouling team, and this skew is larger than what either team's individual foul-to-card ratio alone would predict.",
+          "mechanism_id_local": "M4",
+          "mechanism_statement": "Team A's fouls committed have declined in recent matches (9.4 recent vs 11.7 season average) while Team B's fouls committed have remained elevated and stable (12.8 recent vs 12.3 season). The asymmetric divergence between one team's recent foul-rate trajectory and the other team's stable foul-rate \u2014 measured as a cross-team directional divergence rather than each team's own recent-vs-season split \u2014 jointly determines the total foul environment and the resulting cards exposure.",
+          "observable_variables": [
+           "fouls",
+           "yellow_cards",
+           "cards_2h"
+          ],
+          "provider_requirements": [
+           "fouls",
+           "yellow_cards",
+           "cards_2h"
+          ],
+          "self_overlap_with": [],
+          "why_not_baseline_equivalent": "This involves a joint cross-team asymmetric relationship between two distinct observables (fouls and cards) across two sides simultaneously, conditioned on the directional divergence between recent and season-level trends for each team \u2014 not a single observable's recent vs long-run comparison for one team."
+         },
+         {
+          "conditioning_logic": "Split by half. Condition jointly on Team A's half-level goals-FOR split (1H higher than 2H) and Team B's half-level goals-AGAINST split (2H higher than 1H). Measure whether the cross-team half-level interaction produces a non-uniform within-match goal distribution \u2014 specifically whether the first half and second half goal rates for this matchup diverge from what the full-match averages and each team's individual half-split alone would predict.",
+          "data_resolution_required": "half",
+          "evidence_refs": [
+           "E:TEAM_A:goals:FOR:FIRST_HALF:ALL:ALL_PRIOR",
+           "E:TEAM_A:goals:FOR:SECOND_HALF:ALL:ALL_PRIOR",
+           "E:TEAM_B:goals:AGAINST:FIRST_HALF:ALL:ALL_PRIOR",
+           "E:TEAM_B:goals:AGAINST:SECOND_HALF:ALL:ALL_PRIOR",
+           "E:TEAM_A:goals:AGAINST:FIRST_HALF:ALL:ALL_PRIOR",
+           "E:TEAM_A:goals:AGAINST:SECOND_HALF:ALL:ALL_PRIOR",
+           "E:TEAM_B:goals:FOR:FIRST_HALF:ALL:ALL_PRIOR",
+           "E:TEAM_B:goals:FOR:SECOND_HALF:ALL:ALL_PRIOR"
+          ],
+          "expected_relationship_to_test": "The joint half-level interaction between Team A's front-loaded scoring profile and Team B's back-loaded conceding profile produces a within-match goal distribution that is more uniform across halves than either team's individual half-split suggests \u2014 i.e., the two asymmetries partially offset each other, and this offset is detectable only when both half-splits are conditioned on simultaneously.",
+          "mechanism_id_local": "M5",
+          "mechanism_statement": "Team A scores more goals in the first half than the second (0.83 vs 0.70 FOR), while Team B concedes more in the second half than the first (0.95 vs 0.60 AGAINST). The cross-team half-level goal-scoring asymmetry \u2014 Team A front-loaded, Team B defensively back-loaded \u2014 creates a joint within-match state where the half in which goals are most likely differs between the two teams' profiles, and this divergence is not captured by full-match goal averages alone.",
+          "observable_variables": [
+           "goals"
+          ],
+          "provider_requirements": [
+           "goals"
+          ],
+          "self_overlap_with": [],
+          "why_not_baseline_equivalent": "This requires simultaneously conditioning on half-level splits for two distinct teams on the same observable (goals), examining the cross-team interaction of their respective half-level asymmetries \u2014 not a single team's half-split in isolation, which is already covered."
+         }
+        ]
+       },
+       "name": "emit_item6_mechanisms",
+       "toolUseId": "tooluse_rDBqY9NJjvxCKaiQnNJfqT",
+       "type": "tool_use"
+      }
+     }
+    ],
+    "role": "assistant"
+   }
+  },
+  "stopReason": "tool_use",
+  "usage": {
+   "cacheReadInputTokens": 0,
+   "cacheWriteInputTokens": 0,
+   "inputTokens": 12055,
+   "outputTokens": 3325,
+   "totalTokens": 15380
+  }
+ },
+ "request_sha256": "77f7aee7e5fe776323c56699daef750ff8d1a31b7810c463cc13552fee9229d6",
+ "resolved_model_id": null,
+ "runner_version": "item6_stage1_runner_v2",
+ "usage": {
+  "cacheReadInputTokens": 0,
+  "cacheWriteInputTokens": 0,
+  "inputTokens": 12055,
+  "outputTokens": 3325,
+  "totalTokens": 15380
+ }
+}

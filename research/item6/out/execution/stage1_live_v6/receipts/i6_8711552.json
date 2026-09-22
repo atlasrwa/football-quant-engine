@@ -1,0 +1,224 @@
+{
+ "count_input_sha256": "c803c8d8c34014e55501c6edfc9cd53579a059de734af9582306b3ef5f07018e",
+ "fixture_id": "i6_8711552",
+ "provider_counted_input_tokens": 12066,
+ "raw_response": {
+  "ResponseMetadata": {
+   "HTTPHeaders": {
+    "connection": "keep-alive",
+    "content-length": "11069",
+    "content-type": "application/json",
+    "date": "Tue, 22 Sep 2026 23:35:48 GMT",
+    "x-amzn-requestid": "08f38d64-3c04-439b-9691-490c1d91c679"
+   },
+   "HTTPStatusCode": 200,
+   "MaxAttemptsReached": true,
+   "RequestId": "08f38d64-3c04-439b-9691-490c1d91c679",
+   "RetryAttempts": 0
+  },
+  "_item6_live_transport": {
+   "authentic_provider_response": true,
+   "aws_request_id": "08f38d64-3c04-439b-9691-490c1d91c679",
+   "converse_model_id": "us.anthropic.claude-sonnet-4-6",
+   "count_model_id": "anthropic.claude-sonnet-4-6",
+   "envelope_sha256": "1bc3e0448413917a2dda97465736ba52ba8c0335138016421064eceec38c8feb",
+   "http_status": 200,
+   "provider": "aws_bedrock",
+   "transport_version": "item6_bedrock_transport_v1"
+  },
+  "metrics": {
+   "latencyMs": 36223
+  },
+  "output": {
+   "message": {
+    "content": [
+     {
+      "toolUse": {
+       "input": {
+        "fixture_id": "i6_8711552",
+        "mechanisms": [
+         {
+          "conditioning_logic": "Condition on Team B being a low-shots-conceded opponent (season mean shots-against well below competition context mean). Within that condition, examine whether Team A's shots-to-shots-on-target ratio and shots-on-target-to-goals ratio jointly differ from their unconditional season averages.",
+          "data_resolution_required": "match",
+          "evidence_refs": [
+           "E:TEAM_A:shots:FOR:FULL_MATCH:ALL:ALL_PRIOR",
+           "E:TEAM_A:shots:FOR:FULL_MATCH:ALL:RECENT_5",
+           "E:TEAM_A:shots_on_target:FOR:FULL_MATCH:ALL:ALL_PRIOR",
+           "E:TEAM_A:shots_on_target:FOR:FULL_MATCH:ALL:RECENT_5",
+           "E:TEAM_A:goals:FOR:FULL_MATCH:ALL:ALL_PRIOR",
+           "E:TEAM_A:goals:FOR:FULL_MATCH:ALL:RECENT_5",
+           "E:TEAM_B:shots:AGAINST:FULL_MATCH:ALL:ALL_PRIOR",
+           "E:TEAM_B:shots_on_target:AGAINST:FULL_MATCH:ALL:ALL_PRIOR",
+           "E:COMPETITION_CONTEXT:shots:NEUTRAL:FULL_MATCH:ALL:ALL_PRIOR",
+           "E:COMPETITION_CONTEXT:shots_on_target:NEUTRAL:FULL_MATCH:ALL:ALL_PRIOR"
+          ],
+          "expected_relationship_to_test": "Team A's shots-on-target rate and goals-per-shot-on-target are suppressed when facing a low-shots-conceding opponent, even as raw shot volume remains elevated \u2014 i.e., volume does not linearly predict on-target or goal output against such opponents.",
+          "mechanism_id_local": "M1",
+          "mechanism_statement": "Team A's shot volume is high but its conversion to goals has declined in recent matches, while Team B concedes very few shots against. The joint relationship between Team A's shots-for and its shots-on-target-for, conditioned on Team B's shots-against suppression level, tests whether high shot volume translates to on-target output when facing a low-shots-conceding opponent.",
+          "observable_variables": [
+           "shots",
+           "shots_on_target",
+           "goals"
+          ],
+          "provider_requirements": [
+           "shots",
+           "shots_on_target",
+           "goals"
+          ],
+          "self_overlap_with": [
+           "M2"
+          ],
+          "why_not_baseline_equivalent": "This requires a joint three-variable relationship (shots, shots_on_target, goals) conditioned simultaneously on the opponent's shots-against level. It is not reducible to any single observable mirrored against its opponent-allowed counterpart, nor to a single observable with one coarse band."
+         },
+         {
+          "conditioning_logic": "Condition jointly on both teams having above-competition-average shots-for. Within this two-sided high-volume condition, examine whether shots-on-target and goals outcomes for each side differ from single-team baselines \u2014 specifically testing whether the interaction of two high-volume attacking teams compresses or amplifies on-target rates.",
+          "data_resolution_required": "match",
+          "evidence_refs": [
+           "E:TEAM_A:shots:FOR:FULL_MATCH:ALL:ALL_PRIOR",
+           "E:TEAM_A:shots_on_target:FOR:FULL_MATCH:ALL:ALL_PRIOR",
+           "E:TEAM_A:goals:FOR:FULL_MATCH:ALL:ALL_PRIOR",
+           "E:TEAM_B:shots:FOR:FULL_MATCH:ALL:ALL_PRIOR",
+           "E:TEAM_B:shots_on_target:FOR:FULL_MATCH:ALL:ALL_PRIOR",
+           "E:TEAM_B:goals:FOR:FULL_MATCH:ALL:ALL_PRIOR",
+           "E:COMPETITION_CONTEXT:shots:NEUTRAL:FULL_MATCH:ALL:ALL_PRIOR",
+           "E:COMPETITION_CONTEXT:shots_on_target:NEUTRAL:FULL_MATCH:ALL:ALL_PRIOR",
+           "E:COMPETITION_CONTEXT:goals:NEUTRAL:FULL_MATCH:ALL:ALL_PRIOR"
+          ],
+          "expected_relationship_to_test": "When both teams produce above-average shot volumes, the shots-on-target rate per shot is suppressed relative to single-team baselines, reflecting defensive pressure from both sides; goals outcomes do not scale linearly with combined shot volume.",
+          "mechanism_id_local": "M2",
+          "mechanism_statement": "Team B produces a high shots volume relative to the competition context but concedes very few shots. The asymmetric relationship between Team B's shots-for and Team A's shots-against (both relative to competition baseline) tests whether a dominant-possession, high-shot-volume attacker facing a high-shot-volume opponent produces a different shots-on-target and goals outcome than when facing a low-shot-volume opponent.",
+          "observable_variables": [
+           "shots",
+           "shots_on_target",
+           "possession",
+           "goals"
+          ],
+          "provider_requirements": [
+           "shots",
+           "shots_on_target",
+           "goals"
+          ],
+          "self_overlap_with": [
+           "M1"
+          ],
+          "why_not_baseline_equivalent": "This involves a joint two-team, two-observable interaction (both teams' shots-for simultaneously above baseline) conditioned on a second observable (shots-on-target), which cannot be reduced to a single observable mirror or a single coarse band."
+         },
+         {
+          "conditioning_logic": "Condition on the within-match half split for both teams simultaneously: Team A's goals-against first-half vs second-half, and Team B's goals-for first-half vs second-half. Test whether the joint half-level distribution (both teams' tendencies combined) differs from what either team's individual half split would predict in isolation.",
+          "data_resolution_required": "half",
+          "evidence_refs": [
+           "E:TEAM_A:goals:AGAINST:FIRST_HALF:ALL:ALL_PRIOR",
+           "E:TEAM_A:goals:AGAINST:SECOND_HALF:ALL:ALL_PRIOR",
+           "E:TEAM_B:goals:FOR:FIRST_HALF:ALL:ALL_PRIOR",
+           "E:TEAM_B:goals:FOR:SECOND_HALF:ALL:ALL_PRIOR",
+           "E:COMPETITION_CONTEXT:goals:NEUTRAL:FULL_MATCH:ALL:ALL_PRIOR"
+          ],
+          "expected_relationship_to_test": "The second half is disproportionately goal-rich relative to the first half in this matchup, beyond what either team's individual half-split tendency would predict alone \u2014 i.e., the two half-level tendencies reinforce each other.",
+          "mechanism_id_local": "M3",
+          "mechanism_statement": "Team A concedes a high volume of goals in the first half relative to the second half, while Team B scores more in the second half than the first. The joint within-match half-level goal distribution for both teams tests whether the combination of Team A's first-half defensive vulnerability and Team B's second-half attacking tendency produces a distinctive half-level goals pattern in this matchup.",
+          "observable_variables": [
+           "goals"
+          ],
+          "provider_requirements": [
+           "goals"
+          ],
+          "self_overlap_with": [
+           "M4"
+          ],
+          "why_not_baseline_equivalent": "This requires simultaneously conditioning on two distinct within-match half-level splits for two different teams across an asymmetric observable (goals-against for Team A, goals-for for Team B), which is not reducible to a single observable's half split or a single team's half-level trend."
+         },
+         {
+          "conditioning_logic": "Condition on the within-match half split for both teams simultaneously: Team A's corners-for first-half vs second-half, and Team B's corners-for first-half vs second-half. Test whether the combined half-level corner distribution differs from what each team's individual half split predicts in isolation.",
+          "data_resolution_required": "half",
+          "evidence_refs": [
+           "E:TEAM_A:corner_kicks:FOR:FIRST_HALF:ALL:ALL_PRIOR",
+           "E:TEAM_A:corner_kicks:FOR:SECOND_HALF:ALL:ALL_PRIOR",
+           "E:TEAM_B:corner_kicks:FOR:FIRST_HALF:ALL:ALL_PRIOR",
+           "E:TEAM_B:corner_kicks:FOR:SECOND_HALF:ALL:ALL_PRIOR",
+           "E:TEAM_A:corner_kicks:AGAINST:FIRST_HALF:ALL:ALL_PRIOR",
+           "E:TEAM_A:corner_kicks:AGAINST:SECOND_HALF:ALL:ALL_PRIOR",
+           "E:TEAM_B:corner_kicks:AGAINST:FIRST_HALF:ALL:ALL_PRIOR",
+           "E:TEAM_B:corner_kicks:AGAINST:SECOND_HALF:ALL:ALL_PRIOR"
+          ],
+          "expected_relationship_to_test": "Corner production shifts across halves in opposing directions for the two teams \u2014 Team A dominates corners in the first half while Team B's corner share rises in the second half \u2014 producing a non-uniform intra-match corner timing pattern that is not captured by full-match corner totals alone.",
+          "mechanism_id_local": "M4",
+          "mechanism_statement": "Team A generates substantially more corners in the first half than the second half, while Team B generates more corners in the second half than the first. The joint within-match half-level corner distribution tests whether the two teams' opposing half-level corner tendencies produce a distinctive intra-match corner timing pattern \u2014 specifically whether the first half is corner-dominated by Team A and the second half by Team B.",
+          "observable_variables": [
+           "corner_kicks"
+          ],
+          "provider_requirements": [
+           "corner_kicks"
+          ],
+          "self_overlap_with": [
+           "M3"
+          ],
+          "why_not_baseline_equivalent": "This requires jointly conditioning on two teams' within-match half-level splits for the same observable (corners), examining the interaction of opposing half-level tendencies. This is not reducible to a single observable's half split or a single team's half-level trend."
+         },
+         {
+          "conditioning_logic": "Condition jointly on both teams having above-competition-average possession (indicating a contested possession match). Within this condition, examine whether fouls-for and yellow-cards-for are elevated or suppressed relative to each team's unconditional averages, and whether second-half cards (cards_2h) are disproportionately elevated relative to full-match yellow cards.",
+          "data_resolution_required": "half",
+          "evidence_refs": [
+           "E:TEAM_A:possession:FOR:FULL_MATCH:ALL:ALL_PRIOR",
+           "E:TEAM_A:possession:FOR:FULL_MATCH:ALL:RECENT_5",
+           "E:TEAM_B:possession:FOR:FULL_MATCH:ALL:ALL_PRIOR",
+           "E:TEAM_B:possession:FOR:FULL_MATCH:ALL:RECENT_5",
+           "E:TEAM_A:fouls:FOR:FULL_MATCH:ALL:ALL_PRIOR",
+           "E:TEAM_B:fouls:FOR:FULL_MATCH:ALL:ALL_PRIOR",
+           "E:TEAM_A:yellow_cards:FOR:FULL_MATCH:ALL:ALL_PRIOR",
+           "E:TEAM_B:yellow_cards:FOR:FULL_MATCH:ALL:ALL_PRIOR",
+           "E:TEAM_A:cards_2h:FOR:SECOND_HALF:ALL:ALL_PRIOR",
+           "E:TEAM_B:cards_2h:FOR:SECOND_HALF:ALL:ALL_PRIOR",
+           "E:COMPETITION_CONTEXT:possession:NEUTRAL:FULL_MATCH:ALL:ALL_PRIOR",
+           "E:COMPETITION_CONTEXT:fouls:NEUTRAL:FULL_MATCH:ALL:ALL_PRIOR",
+           "E:COMPETITION_CONTEXT:yellow_cards:NEUTRAL:FULL_MATCH:ALL:ALL_PRIOR",
+           "E:COMPETITION_CONTEXT:cards_2h:NEUTRAL:SECOND_HALF:ALL:ALL_PRIOR"
+          ],
+          "expected_relationship_to_test": "In contested high-possession matchups, fouls and second-half cards rise relative to each team's unconditional averages, and the second-half card share of total cards is elevated \u2014 reflecting increased contest intensity as both teams press for possession control in the closing stages.",
+          "mechanism_id_local": "M5",
+          "mechanism_statement": "Team A's possession is substantially above competition average while Team B also holds above-average possession. The joint relationship between both teams' possession levels and their respective foul rates tests whether high-possession matchups (where both teams compete for ball control) produce a different fouls-per-match and cards-in-second-half pattern than matchups where possession is more asymmetric.",
+          "observable_variables": [
+           "possession",
+           "fouls",
+           "yellow_cards",
+           "cards_2h"
+          ],
+          "provider_requirements": [
+           "possession",
+           "fouls",
+           "yellow_cards",
+           "cards_2h"
+          ],
+          "self_overlap_with": [],
+          "why_not_baseline_equivalent": "This requires a joint four-variable relationship (possession, fouls, yellow_cards, cards_2h) conditioned on both teams simultaneously exceeding a possession threshold, and further examines the within-match temporal distribution (second-half cards vs full-match cards). This is not reducible to any single observable mirror or single-band conditioning."
+         }
+        ]
+       },
+       "name": "emit_item6_mechanisms",
+       "toolUseId": "tooluse_qj4iaXF14riPiI9c4ewwvi",
+       "type": "tool_use"
+      }
+     }
+    ],
+    "role": "assistant"
+   }
+  },
+  "stopReason": "tool_use",
+  "usage": {
+   "cacheReadInputTokens": 0,
+   "cacheWriteInputTokens": 0,
+   "inputTokens": 12049,
+   "outputTokens": 3389,
+   "totalTokens": 15438
+  }
+ },
+ "request_sha256": "af64a6569a5223794c4d1b92d046a1b2203bbc88081b3ad28c784231f93c0113",
+ "resolved_model_id": null,
+ "runner_version": "item6_stage1_runner_v2",
+ "usage": {
+  "cacheReadInputTokens": 0,
+  "cacheWriteInputTokens": 0,
+  "inputTokens": 12049,
+  "outputTokens": 3389,
+  "totalTokens": 15438
+ }
+}

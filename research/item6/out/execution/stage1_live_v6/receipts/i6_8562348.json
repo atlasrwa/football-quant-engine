@@ -1,0 +1,237 @@
+{
+ "count_input_sha256": "c7ef92bd92b80bd7fade4e66d2ce793d4f9580896560e43177bb2aaccebe2305",
+ "fixture_id": "i6_8562348",
+ "provider_counted_input_tokens": 12067,
+ "raw_response": {
+  "ResponseMetadata": {
+   "HTTPHeaders": {
+    "connection": "keep-alive",
+    "content-length": "11553",
+    "content-type": "application/json",
+    "date": "Tue, 22 Sep 2026 23:04:55 GMT",
+    "x-amzn-requestid": "6c051575-5818-41ec-a0f8-26d1f9618da8"
+   },
+   "HTTPStatusCode": 200,
+   "MaxAttemptsReached": true,
+   "RequestId": "6c051575-5818-41ec-a0f8-26d1f9618da8",
+   "RetryAttempts": 0
+  },
+  "_item6_live_transport": {
+   "authentic_provider_response": true,
+   "aws_request_id": "6c051575-5818-41ec-a0f8-26d1f9618da8",
+   "converse_model_id": "us.anthropic.claude-sonnet-4-6",
+   "count_model_id": "anthropic.claude-sonnet-4-6",
+   "envelope_sha256": "4407a9399e834ef622e060f045bc660ea660ad48dad0727bdf7a81945ecec2c9",
+   "http_status": 200,
+   "provider": "aws_bedrock",
+   "transport_version": "item6_bedrock_transport_v1"
+  },
+  "metrics": {
+   "latencyMs": 39340
+  },
+  "output": {
+   "message": {
+    "content": [
+     {
+      "toolUse": {
+       "input": {
+        "fixture_id": "i6_8562348",
+        "mechanisms": [
+         {
+          "conditioning_logic": "Condition on the joint state where one team's recent shots FOR (RECENT_5) substantially exceeds its all-prior average AND the opponent's shots AGAINST (ALL_PRIOR) substantially exceeds competition context, then examine whether the corner-kick FOR rate and shots-on-target FOR rate move together or diverge relative to the goals FOR rate.",
+          "data_resolution_required": "match",
+          "evidence_refs": [
+           "E:TEAM_A:shots:FOR:FULL_MATCH:ALL:ALL_PRIOR",
+           "E:TEAM_A:shots:FOR:FULL_MATCH:ALL:RECENT_5",
+           "E:TEAM_A:shots_on_target:FOR:FULL_MATCH:ALL:ALL_PRIOR",
+           "E:TEAM_A:shots_on_target:FOR:FULL_MATCH:ALL:RECENT_5",
+           "E:TEAM_A:corner_kicks:FOR:FULL_MATCH:ALL:ALL_PRIOR",
+           "E:TEAM_A:corner_kicks:FOR:FULL_MATCH:ALL:RECENT_5",
+           "E:TEAM_A:goals:FOR:FULL_MATCH:ALL:ALL_PRIOR",
+           "E:TEAM_A:goals:FOR:FULL_MATCH:ALL:RECENT_5",
+           "E:TEAM_B:shots:AGAINST:FULL_MATCH:ALL:ALL_PRIOR",
+           "E:COMPETITION_CONTEXT:shots:NEUTRAL:FULL_MATCH:ALL:ALL_PRIOR"
+          ],
+          "expected_relationship_to_test": "When a team's recent shot volume surges above its own baseline AND the opponent structurally allows many shots, corner-kick generation rises with shot volume but goals FOR rises less than proportionally, indicating a saturation or decoupling between shot volume and conversion in this joint condition.",
+          "mechanism_id_local": "M1",
+          "mechanism_statement": "Team A's shot volume is jointly elevated in recent form (shots FOR rising sharply) while Team B concedes shots at a level well above competition context, but Team B's shots-on-target allowed has not risen proportionally in recent form \u2014 suggesting a divergence between raw shot volume and shot quality allowed that conditions how corner-kick generation relates to actual goal threat.",
+          "observable_variables": [
+           "shots",
+           "shots_on_target",
+           "corner_kicks",
+           "goals"
+          ],
+          "provider_requirements": [
+           "shots",
+           "shots_on_target",
+           "corner_kicks",
+           "goals"
+          ],
+          "self_overlap_with": [
+           "M2"
+          ],
+          "why_not_baseline_equivalent": "This requires jointly conditioning on two distinct observables (shots and shots-on-target) across two teams simultaneously, then relating that joint state to a third observable (corner kicks) and a fourth (goals). It cannot be reduced to any single observable against one opponent-descriptor band."
+         },
+         {
+          "conditioning_logic": "Jointly condition on each team's possession FOR (ALL_PRIOR and RECENT_5) and their shots-on-target-to-shots ratio (derived from FOR observables), then examine the corner-kick FOR differential and goals FOR differential across matches where possession dominance and shot-quality ratio diverge between the two sides.",
+          "data_resolution_required": "match",
+          "evidence_refs": [
+           "E:TEAM_A:possession:FOR:FULL_MATCH:ALL:ALL_PRIOR",
+           "E:TEAM_A:possession:FOR:FULL_MATCH:ALL:RECENT_5",
+           "E:TEAM_A:shots:FOR:FULL_MATCH:ALL:ALL_PRIOR",
+           "E:TEAM_A:shots_on_target:FOR:FULL_MATCH:ALL:ALL_PRIOR",
+           "E:TEAM_A:corner_kicks:FOR:FULL_MATCH:ALL:ALL_PRIOR",
+           "E:TEAM_A:goals:FOR:FULL_MATCH:ALL:ALL_PRIOR",
+           "E:TEAM_B:possession:FOR:FULL_MATCH:ALL:ALL_PRIOR",
+           "E:TEAM_B:shots:FOR:FULL_MATCH:ALL:ALL_PRIOR",
+           "E:TEAM_B:shots_on_target:FOR:FULL_MATCH:ALL:ALL_PRIOR",
+           "E:TEAM_B:corner_kicks:FOR:FULL_MATCH:ALL:ALL_PRIOR"
+          ],
+          "expected_relationship_to_test": "When a team holds higher possession but its shots-on-target-to-shots ratio is lower than the opponent's, its corner-kick generation rises relative to goals scored \u2014 the relationship between possession dominance and goal output is suppressed when shot quality is low.",
+          "mechanism_id_local": "M2",
+          "mechanism_statement": "The ratio of shots-on-target FOR to total shots FOR (conversion to on-target) differs asymmetrically between Team A and Team B, and this asymmetry interacts with each team's possession level to predict corner-kick differential \u2014 teams with higher possession but lower shot-quality ratios generate more corners without proportionally more goals.",
+          "observable_variables": [
+           "shots",
+           "shots_on_target",
+           "possession",
+           "corner_kicks",
+           "goals"
+          ],
+          "provider_requirements": [
+           "shots",
+           "shots_on_target",
+           "possession",
+           "corner_kicks",
+           "goals"
+          ],
+          "self_overlap_with": [
+           "M1"
+          ],
+          "why_not_baseline_equivalent": "Requires a joint relationship among three distinct observables (possession, shots, shots-on-target) for both teams simultaneously, forming a ratio and interacting it with a second observable dimension. Not reducible to any single observable with one conditioning band."
+         },
+         {
+          "conditioning_logic": "Condition on the joint state where one team's fouls FOR RECENT_5 diverges downward from its ALL_PRIOR baseline while the opponent's fouls FOR RECENT_5 diverges upward from its ALL_PRIOR baseline. Within this asymmetric regime, measure whether cards_2h FOR and AGAINST are elevated relative to competition context.",
+          "data_resolution_required": "half",
+          "evidence_refs": [
+           "E:TEAM_A:fouls:FOR:FULL_MATCH:ALL:ALL_PRIOR",
+           "E:TEAM_A:fouls:FOR:FULL_MATCH:ALL:RECENT_5",
+           "E:TEAM_B:fouls:FOR:FULL_MATCH:ALL:ALL_PRIOR",
+           "E:TEAM_B:fouls:FOR:FULL_MATCH:ALL:RECENT_5",
+           "E:TEAM_A:cards_2h:FOR:SECOND_HALF:ALL:ALL_PRIOR",
+           "E:TEAM_A:cards_2h:AGAINST:SECOND_HALF:ALL:ALL_PRIOR",
+           "E:TEAM_B:cards_2h:FOR:SECOND_HALF:ALL:ALL_PRIOR",
+           "E:TEAM_B:cards_2h:AGAINST:SECOND_HALF:ALL:ALL_PRIOR",
+           "E:COMPETITION_CONTEXT:cards_2h:NEUTRAL:SECOND_HALF:ALL:ALL_PRIOR",
+           "E:COMPETITION_CONTEXT:fouls:NEUTRAL:FULL_MATCH:ALL:ALL_PRIOR"
+          ],
+          "expected_relationship_to_test": "When the two teams' recent foul trajectories diverge in opposite directions (one falling, one rising), second-half card volume rises above what either team's individual foul baseline predicts \u2014 the asymmetric divergence amplifies disciplinary outcomes in the second half.",
+          "mechanism_id_local": "M3",
+          "mechanism_statement": "Team A's foul rate FOR has dropped sharply in recent form relative to its all-prior baseline, while Team B's foul rate FOR has risen in recent form \u2014 this asymmetric recent-vs-baseline divergence in fouls across the two teams jointly conditions the second-half card (cards_2h) volume, beyond what either team's foul rate alone would predict.",
+          "observable_variables": [
+           "fouls",
+           "cards_2h",
+           "yellow_cards"
+          ],
+          "provider_requirements": [
+           "fouls",
+           "cards_2h",
+           "yellow_cards"
+          ],
+          "self_overlap_with": [
+           "M4"
+          ],
+          "why_not_baseline_equivalent": "This is a joint, asymmetric relationship across two distinct observables (fouls and cards_2h) for both teams simultaneously, conditioning on the direction of recent-vs-baseline divergence for each team independently and then combining them. It is not reducible to one observable with one band."
+         },
+         {
+          "conditioning_logic": "Use first-half and second-half corner-kick FOR averages for each team alongside first-half and second-half goals AGAINST averages to identify whether the team that concentrates corners in the second half also concedes more goals in the second half, and whether this joint half-level pattern predicts total corner volume above competition context.",
+          "data_resolution_required": "half",
+          "evidence_refs": [
+           "E:TEAM_A:corner_kicks:FOR:FIRST_HALF:ALL:ALL_PRIOR",
+           "E:TEAM_A:corner_kicks:FOR:SECOND_HALF:ALL:ALL_PRIOR",
+           "E:TEAM_A:corner_kicks:AGAINST:FIRST_HALF:ALL:ALL_PRIOR",
+           "E:TEAM_A:corner_kicks:AGAINST:SECOND_HALF:ALL:ALL_PRIOR",
+           "E:TEAM_B:corner_kicks:FOR:FIRST_HALF:ALL:ALL_PRIOR",
+           "E:TEAM_B:corner_kicks:FOR:SECOND_HALF:ALL:ALL_PRIOR",
+           "E:TEAM_A:goals:FOR:FIRST_HALF:ALL:ALL_PRIOR",
+           "E:TEAM_A:goals:FOR:SECOND_HALF:ALL:ALL_PRIOR",
+           "E:TEAM_B:goals:AGAINST:FIRST_HALF:ALL:ALL_PRIOR",
+           "E:TEAM_B:goals:AGAINST:SECOND_HALF:ALL:ALL_PRIOR"
+          ],
+          "expected_relationship_to_test": "When a team's second-half corner share is structurally higher than its first-half share AND the opponent concedes more goals in the second half than the first half, total match corner volume rises above competition context \u2014 the half-level concentration of attacking pressure compounds with defensive vulnerability timing.",
+          "mechanism_id_local": "M4",
+          "mechanism_statement": "The within-match half-level split of corner kicks (first-half vs second-half) differs structurally between Team A and Team B: Team A generates a higher share of corners in the second half relative to the first half, while Team B's corner distribution across halves is more balanced. This half-level asymmetry in corner timing interacts with each team's goals-against first-half vs second-half split to condition total match corner volume.",
+          "observable_variables": [
+           "corner_kicks",
+           "goals"
+          ],
+          "provider_requirements": [
+           "corner_kicks",
+           "goals"
+          ],
+          "self_overlap_with": [
+           "M3"
+          ],
+          "why_not_baseline_equivalent": "This requires a within-match half-level split (first-half vs second-half) for two distinct observables (corners and goals) across both teams simultaneously. It is not a single observable with one band; it is a joint half-resolution relationship across two observables and two teams."
+         },
+         {
+          "conditioning_logic": "Condition on the joint state where Team B holds higher possession FOR than Team A (both all-prior and recent) but also concedes more goals AGAINST than Team A. Within this joint condition, examine whether offsides AGAINST (opponent offsides caught) are elevated for the high-possession but high-conceding team, indicating a high defensive line that is both a source of possession and a vulnerability.",
+          "data_resolution_required": "match",
+          "evidence_refs": [
+           "E:TEAM_B:possession:FOR:FULL_MATCH:ALL:ALL_PRIOR",
+           "E:TEAM_B:possession:FOR:FULL_MATCH:ALL:RECENT_5",
+           "E:TEAM_A:possession:FOR:FULL_MATCH:ALL:ALL_PRIOR",
+           "E:TEAM_A:possession:FOR:FULL_MATCH:ALL:RECENT_5",
+           "E:TEAM_B:goals:AGAINST:FULL_MATCH:ALL:ALL_PRIOR",
+           "E:TEAM_B:goals:AGAINST:FULL_MATCH:ALL:RECENT_5",
+           "E:TEAM_A:goals:AGAINST:FULL_MATCH:ALL:ALL_PRIOR",
+           "E:TEAM_B:offsides:AGAINST:FULL_MATCH:ALL:ALL_PRIOR",
+           "E:TEAM_A:offsides:AGAINST:FULL_MATCH:ALL:ALL_PRIOR",
+           "E:COMPETITION_CONTEXT:offsides:NEUTRAL:FULL_MATCH:ALL:ALL_PRIOR"
+          ],
+          "expected_relationship_to_test": "When a team holds higher possession than its opponent but concedes goals at a higher rate, its offsides AGAINST (trapping opponents offside) rises above competition context \u2014 the high defensive line that enables possession also creates more offside traps but does not fully suppress goals conceded, and this joint pattern is detectable across matches.",
+          "mechanism_id_local": "M5",
+          "mechanism_statement": "Team B's possession FOR is structurally above competition context and above Team A's possession FOR, yet Team B's goals AGAINST (both all-prior and recent) are substantially higher than Team A's goals AGAINST \u2014 indicating that possession dominance does not suppress goals conceded for Team B. Jointly conditioning on possession differential and goals-against differential across both teams reveals whether high-possession teams that still concede heavily also generate elevated offside counts (as a proxy for high defensive lines being exploited).",
+          "observable_variables": [
+           "possession",
+           "goals",
+           "offsides"
+          ],
+          "provider_requirements": [
+           "possession",
+           "goals",
+           "offsides"
+          ],
+          "self_overlap_with": [],
+          "why_not_baseline_equivalent": "This is a joint relationship among three distinct observables (possession, goals, offsides) across both teams, conditioning on two opponent-descriptor dimensions simultaneously (possession differential and goals-against differential). It cannot be reduced to any single observable with one band."
+         }
+        ]
+       },
+       "name": "emit_item6_mechanisms",
+       "toolUseId": "tooluse_mWjxgB6Id4t4lA5VvWrowA",
+       "type": "tool_use"
+      }
+     }
+    ],
+    "role": "assistant"
+   }
+  },
+  "stopReason": "tool_use",
+  "usage": {
+   "cacheReadInputTokens": 0,
+   "cacheWriteInputTokens": 0,
+   "inputTokens": 12050,
+   "outputTokens": 3562,
+   "totalTokens": 15612
+  }
+ },
+ "request_sha256": "469cb19eb369cd89aa3163a5dbb8c19d3ff91735bc0df0ca6e2cbb8b1ffd5184",
+ "resolved_model_id": null,
+ "runner_version": "item6_stage1_runner_v2",
+ "usage": {
+  "cacheReadInputTokens": 0,
+  "cacheWriteInputTokens": 0,
+  "inputTokens": 12050,
+  "outputTokens": 3562,
+  "totalTokens": 15612
+ }
+}

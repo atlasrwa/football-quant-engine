@@ -1,0 +1,233 @@
+{
+ "count_input_sha256": "397a04e89c12970bb79d54a26d3dd088d6aa9fb3c6c19b73b086f79ec49eeafe",
+ "fixture_id": "i6_8548570",
+ "provider_counted_input_tokens": 12069,
+ "raw_response": {
+  "ResponseMetadata": {
+   "HTTPHeaders": {
+    "connection": "keep-alive",
+    "content-length": "12206",
+    "content-type": "application/json",
+    "date": "Tue, 22 Sep 2026 17:02:51 GMT",
+    "x-amzn-requestid": "60076617-661c-4fe3-a9c1-0c06665ae4cc"
+   },
+   "HTTPStatusCode": 200,
+   "MaxAttemptsReached": true,
+   "RequestId": "60076617-661c-4fe3-a9c1-0c06665ae4cc",
+   "RetryAttempts": 0
+  },
+  "_item6_live_transport": {
+   "authentic_provider_response": true,
+   "aws_request_id": "60076617-661c-4fe3-a9c1-0c06665ae4cc",
+   "converse_model_id": "us.anthropic.claude-sonnet-4-6",
+   "count_model_id": "anthropic.claude-sonnet-4-6",
+   "envelope_sha256": "ec233963a2ec59b12e741aabd3f4ad5a95a5f902d104268923310e2b8bad1b10",
+   "http_status": 200,
+   "provider": "aws_bedrock",
+   "transport_version": "item6_bedrock_transport_v1"
+  },
+  "metrics": {
+   "latencyMs": 44903
+  },
+  "output": {
+   "message": {
+    "content": [
+     {
+      "toolUse": {
+       "input": {
+        "fixture_id": "i6_8548570",
+        "mechanisms": [
+         {
+          "conditioning_logic": "Jointly condition on both teams' shots FOR and shots_on_target FOR (all-prior and recent-5 windows) alongside each team's goals FOR rate, to measure whether the cross-team ratio of on-target accuracy (shots_on_target / shots) for the attacking side versus the defensive side's shots_on_target conceded rate produces a joint signal distinct from either observable alone.",
+          "data_resolution_required": "match",
+          "evidence_refs": [
+           "E:TEAM_A:shots:FOR:FULL_MATCH:ALL:ALL_PRIOR",
+           "E:TEAM_A:shots:FOR:FULL_MATCH:ALL:RECENT_5",
+           "E:TEAM_A:shots_on_target:FOR:FULL_MATCH:ALL:ALL_PRIOR",
+           "E:TEAM_A:shots_on_target:FOR:FULL_MATCH:ALL:RECENT_5",
+           "E:TEAM_A:goals:FOR:FULL_MATCH:ALL:ALL_PRIOR",
+           "E:TEAM_B:shots:FOR:FULL_MATCH:ALL:ALL_PRIOR",
+           "E:TEAM_B:shots:FOR:FULL_MATCH:ALL:RECENT_5",
+           "E:TEAM_B:shots_on_target:FOR:FULL_MATCH:ALL:ALL_PRIOR",
+           "E:TEAM_B:shots_on_target:FOR:FULL_MATCH:ALL:RECENT_5",
+           "E:TEAM_B:goals:FOR:FULL_MATCH:ALL:ALL_PRIOR",
+           "E:TEAM_A:shots_on_target:AGAINST:FULL_MATCH:ALL:ALL_PRIOR",
+           "E:TEAM_B:shots_on_target:AGAINST:FULL_MATCH:ALL:ALL_PRIOR",
+           "E:COMPETITION_CONTEXT:goals:NEUTRAL:FULL_MATCH:ALL:ALL_PRIOR"
+          ],
+          "expected_relationship_to_test": "Total goals rise when both teams simultaneously show high shots_on_target-to-shots ratios FOR; total goals are suppressed when one or both teams show a low on-target ratio despite high shot volume, with the suppression stronger when the defending team also concedes few shots_on_target.",
+          "mechanism_id_local": "M1",
+          "mechanism_statement": "Team B's shot-to-goal conversion efficiency (goals FOR relative to shots FOR) interacts with Team A's shots-on-target conceded rate: when one side generates high shot volume but the opponent suppresses on-target shots, the joint ratio of shots-on-target FOR versus shots FOR across both sides jointly predicts whether total goals rise or are suppressed relative to the competition baseline.",
+          "observable_variables": [
+           "shots",
+           "shots_on_target",
+           "goals"
+          ],
+          "provider_requirements": [
+           "shots",
+           "shots_on_target",
+           "goals"
+          ],
+          "self_overlap_with": [
+           "M2"
+          ],
+          "why_not_baseline_equivalent": "This requires a joint relationship across three distinct observables (shots, shots_on_target, goals) for both teams simultaneously. It cannot be reduced to a single observable mirror or a single observable with one coarse band \u2014 it is a cross-team, cross-observable ratio interaction."
+         },
+         {
+          "conditioning_logic": "Condition on the cross-team possession differential (Team B all-prior minus recent-5 vs Team A all-prior minus recent-5) and jointly measure whether the team gaining recent possession also gains corners and shots proportionally, or whether those observables lag the possession shift.",
+          "data_resolution_required": "match",
+          "evidence_refs": [
+           "E:TEAM_A:possession:FOR:FULL_MATCH:ALL:ALL_PRIOR",
+           "E:TEAM_A:possession:FOR:FULL_MATCH:ALL:RECENT_5",
+           "E:TEAM_B:possession:FOR:FULL_MATCH:ALL:ALL_PRIOR",
+           "E:TEAM_B:possession:FOR:FULL_MATCH:ALL:RECENT_5",
+           "E:TEAM_A:corner_kicks:FOR:FULL_MATCH:ALL:ALL_PRIOR",
+           "E:TEAM_A:corner_kicks:FOR:FULL_MATCH:ALL:RECENT_5",
+           "E:TEAM_B:corner_kicks:FOR:FULL_MATCH:ALL:ALL_PRIOR",
+           "E:TEAM_B:corner_kicks:FOR:FULL_MATCH:ALL:RECENT_5",
+           "E:TEAM_A:shots:FOR:FULL_MATCH:ALL:ALL_PRIOR",
+           "E:TEAM_A:shots:FOR:FULL_MATCH:ALL:RECENT_5",
+           "E:TEAM_B:shots:FOR:FULL_MATCH:ALL:ALL_PRIOR",
+           "E:TEAM_B:shots:FOR:FULL_MATCH:ALL:RECENT_5"
+          ],
+          "expected_relationship_to_test": "When a team's recent possession rises relative to its own long-run baseline while the opponent's falls, that team's corners FOR and shots FOR rise in tandem; the relationship is asymmetric \u2014 the possession-losing team's corners and shots fall more than the possession-gaining team's rise.",
+          "mechanism_id_local": "M2",
+          "mechanism_statement": "Team B's possession profile has diverged sharply between its all-prior average (55.4% FOR) and its recent-5 average (46.6% FOR), while Team A's possession has moved in the opposite direction (48.5% all-prior vs 50.6% recent-5). The joint possession regime shift \u2014 where one team's recent possession drops while the opponent's rises \u2014 interacts with each team's corner-kick and shots production to determine whether the attacking output of the possession-gaining team rises proportionally or whether corners and shots remain anchored to the longer-run possession baseline.",
+          "observable_variables": [
+           "possession",
+           "corner_kicks",
+           "shots"
+          ],
+          "provider_requirements": [
+           "possession",
+           "corner_kicks",
+           "shots"
+          ],
+          "self_overlap_with": [
+           "M1",
+           "M3"
+          ],
+          "why_not_baseline_equivalent": "This involves a joint relationship across three distinct observables (possession, corners, shots) and requires comparing two distinct time windows (all-prior vs recent-5) for both teams simultaneously, creating a cross-team, cross-window, cross-observable interaction not reducible to any single-observable mirror or single-band split."
+         },
+         {
+          "conditioning_logic": "Condition on each team's first-half versus second-half corner FOR and AGAINST averages jointly, measuring whether the cross-team half-level corner differential (Team A's second-half corner surplus vs Team B's flat half-distribution) predicts a back-loaded total corner distribution in the match.",
+          "data_resolution_required": "half",
+          "evidence_refs": [
+           "E:TEAM_A:corner_kicks:FOR:FIRST_HALF:ALL:ALL_PRIOR",
+           "E:TEAM_A:corner_kicks:FOR:SECOND_HALF:ALL:ALL_PRIOR",
+           "E:TEAM_A:corner_kicks:AGAINST:FIRST_HALF:ALL:ALL_PRIOR",
+           "E:TEAM_A:corner_kicks:AGAINST:SECOND_HALF:ALL:ALL_PRIOR",
+           "E:TEAM_B:corner_kicks:FOR:FIRST_HALF:ALL:ALL_PRIOR",
+           "E:TEAM_B:corner_kicks:FOR:SECOND_HALF:ALL:ALL_PRIOR",
+           "E:TEAM_B:corner_kicks:AGAINST:FIRST_HALF:ALL:ALL_PRIOR",
+           "E:TEAM_B:corner_kicks:AGAINST:SECOND_HALF:ALL:ALL_PRIOR",
+           "E:COMPETITION_CONTEXT:corner_kicks:NEUTRAL:FULL_MATCH:ALL:ALL_PRIOR"
+          ],
+          "expected_relationship_to_test": "When one team shows a pronounced second-half corner surplus relative to its first-half rate and the opponent shows a flat half-distribution, total corners in the second half rise relative to the first half at a rate exceeding what either team's individual half-split would predict in isolation.",
+          "mechanism_id_local": "M3",
+          "mechanism_statement": "Team A's corner-kick production splits asymmetrically across halves (2.36 first half vs 2.57 second half FOR all-prior), while Team B's corner production is nearly equal across halves (2.24 first half vs 2.33 second half FOR all-prior). The within-match half-level corner distribution for each team, when considered jointly, tests whether the team with a stronger second-half corner tendency (Team A) compounds against the opponent's relatively flat half-distribution, producing a non-linear total-corners profile across the two halves of the match.",
+          "observable_variables": [
+           "corner_kicks"
+          ],
+          "provider_requirements": [
+           "corner_kicks"
+          ],
+          "self_overlap_with": [
+           "M2"
+          ],
+          "why_not_baseline_equivalent": "This is a within-match half-level split applied jointly across both teams' corner FOR and AGAINST profiles simultaneously. It requires half-resolution data and a cross-team joint conditioning, not reducible to a single observable with one coarse band."
+         },
+         {
+          "conditioning_logic": "Jointly condition on Team A's home fouls FOR and Team B's away fouls FOR, alongside Team A's home yellow cards FOR and Team B's away yellow cards FOR, to measure whether the cross-team venue-specific foul-to-card conversion ratio differs from the all-venue baseline for both teams simultaneously.",
+          "data_resolution_required": "match",
+          "evidence_refs": [
+           "E:TEAM_A:fouls:FOR:FULL_MATCH:HOME:ALL_PRIOR",
+           "E:TEAM_A:fouls:FOR:FULL_MATCH:AWAY:ALL_PRIOR",
+           "E:TEAM_A:fouls:FOR:FULL_MATCH:ALL:ALL_PRIOR",
+           "E:TEAM_B:fouls:FOR:FULL_MATCH:HOME:ALL_PRIOR",
+           "E:TEAM_B:fouls:FOR:FULL_MATCH:AWAY:ALL_PRIOR",
+           "E:TEAM_B:fouls:FOR:FULL_MATCH:ALL:ALL_PRIOR",
+           "E:TEAM_A:yellow_cards:FOR:FULL_MATCH:HOME:ALL_PRIOR",
+           "E:TEAM_A:yellow_cards:FOR:FULL_MATCH:AWAY:ALL_PRIOR",
+           "E:TEAM_B:yellow_cards:FOR:FULL_MATCH:HOME:ALL_PRIOR",
+           "E:TEAM_B:yellow_cards:FOR:FULL_MATCH:AWAY:ALL_PRIOR",
+           "E:COMPETITION_CONTEXT:fouls:NEUTRAL:FULL_MATCH:ALL:ALL_PRIOR",
+           "E:COMPETITION_CONTEXT:yellow_cards:NEUTRAL:FULL_MATCH:ALL:ALL_PRIOR"
+          ],
+          "expected_relationship_to_test": "When the home team's foul rate is suppressed at home relative to its away rate, and the away team's foul rate is venue-neutral, the joint foul environment is lower than the all-venue average for both teams combined; yellow cards are suppressed in tandem, but the away team's card rate relative to its foul rate rises asymmetrically compared to the home team's.",
+          "mechanism_id_local": "M4",
+          "mechanism_statement": "Team A's fouls committed are notably higher away (13.32) than at home (11.85), while Team B's fouls are nearly venue-neutral (11.74 away, 11.50 home). In this fixture Team A is home and Team B is away. The joint interaction of Team A's home foul suppression with Team B's venue-neutral foul rate \u2014 alongside each team's yellow-card rates by venue \u2014 tests whether the combined foul environment in this specific venue configuration produces a card total that diverges from what either team's all-venue foul or card average would predict.",
+          "observable_variables": [
+           "fouls",
+           "yellow_cards"
+          ],
+          "provider_requirements": [
+           "fouls",
+           "yellow_cards"
+          ],
+          "self_overlap_with": [
+           "M5"
+          ],
+          "why_not_baseline_equivalent": "This requires jointly conditioning on two distinct observables (fouls and yellow cards) across two different venue-specific splits for two different teams simultaneously, creating an asymmetric cross-team, cross-observable, cross-venue interaction not reducible to a single observable mirror or single-band split."
+         },
+         {
+          "conditioning_logic": "Jointly condition on each team's cards_2h FOR (second-half cards) and each team's goals FOR split by half (first-half vs second-half), measuring whether the team with a stronger second-half goal-scoring tendency also accumulates more second-half cards, and whether this relationship is asymmetric across the two teams.",
+          "data_resolution_required": "half",
+          "evidence_refs": [
+           "E:TEAM_A:cards_2h:FOR:SECOND_HALF:ALL:ALL_PRIOR",
+           "E:TEAM_A:cards_2h:AGAINST:SECOND_HALF:ALL:ALL_PRIOR",
+           "E:TEAM_B:cards_2h:FOR:SECOND_HALF:ALL:ALL_PRIOR",
+           "E:TEAM_B:cards_2h:AGAINST:SECOND_HALF:ALL:ALL_PRIOR",
+           "E:TEAM_A:goals:FOR:FIRST_HALF:ALL:ALL_PRIOR",
+           "E:TEAM_A:goals:FOR:SECOND_HALF:ALL:ALL_PRIOR",
+           "E:TEAM_B:goals:FOR:FIRST_HALF:ALL:ALL_PRIOR",
+           "E:TEAM_B:goals:FOR:SECOND_HALF:ALL:ALL_PRIOR",
+           "E:COMPETITION_CONTEXT:cards_2h:NEUTRAL:SECOND_HALF:ALL:ALL_PRIOR"
+          ],
+          "expected_relationship_to_test": "The team with a higher second-half goal-scoring rate relative to its first-half rate accumulates more second-half cards; when both teams show second-half goal surpluses, total second-half cards rise above the competition baseline, with the effect stronger for the team whose second-half goal surplus is larger.",
+          "mechanism_id_local": "M5",
+          "mechanism_statement": "Team B's second-half cards (cards_2h FOR: 1.43) are notably higher than Team A's (cards_2h FOR: 1.13), while Team A's second-half cards conceded (1.27) are close to Team B's (1.28). The asymmetry between the two teams' second-half card accumulation rates \u2014 when jointly conditioned on each team's goals FOR split by half (Team B scores more in the first half: 0.71 vs 0.79 second half; Team A scores more in the second half: 0.56 first vs 0.85 second) \u2014 tests whether the team that tends to score more in the second half also accumulates more second-half cards as a function of match state pressure.",
+          "observable_variables": [
+           "cards_2h",
+           "goals"
+          ],
+          "provider_requirements": [
+           "cards_2h",
+           "goals"
+          ],
+          "self_overlap_with": [
+           "M4"
+          ],
+          "why_not_baseline_equivalent": "This requires a joint relationship across two distinct observables (cards_2h and goals) split by half for both teams simultaneously, with an asymmetric cross-team comparison. It requires half-resolution data and cannot be reduced to a single observable mirror or single-band split."
+         }
+        ]
+       },
+       "name": "emit_item6_mechanisms",
+       "toolUseId": "tooluse_CWCvy9cbFRPFeBw4cFn5FB",
+       "type": "tool_use"
+      }
+     }
+    ],
+    "role": "assistant"
+   }
+  },
+  "stopReason": "tool_use",
+  "usage": {
+   "cacheReadInputTokens": 0,
+   "cacheWriteInputTokens": 0,
+   "inputTokens": 12052,
+   "outputTokens": 3902,
+   "totalTokens": 15954
+  }
+ },
+ "request_sha256": "bbc9814484d3f33d1bd74f32178c6e6429659e03cd3b136112ae97c4c4683350",
+ "resolved_model_id": null,
+ "runner_version": "item6_stage1_runner_v2",
+ "usage": {
+  "cacheReadInputTokens": 0,
+  "cacheWriteInputTokens": 0,
+  "inputTokens": 12052,
+  "outputTokens": 3902,
+  "totalTokens": 15954
+ }
+}

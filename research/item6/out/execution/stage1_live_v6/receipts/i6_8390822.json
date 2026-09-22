@@ -1,0 +1,206 @@
+{
+ "count_input_sha256": "ff85400b53de774a1b7fb771bbb1278230cc220925769166c800127e0406783f",
+ "fixture_id": "i6_8390822",
+ "provider_counted_input_tokens": 12064,
+ "raw_response": {
+  "ResponseMetadata": {
+   "HTTPHeaders": {
+    "connection": "keep-alive",
+    "content-length": "10878",
+    "content-type": "application/json",
+    "date": "Tue, 22 Sep 2026 16:53:51 GMT",
+    "x-amzn-requestid": "8991fa2e-dcfe-4c35-8d98-f6c959d13114"
+   },
+   "HTTPStatusCode": 200,
+   "MaxAttemptsReached": true,
+   "RequestId": "8991fa2e-dcfe-4c35-8d98-f6c959d13114",
+   "RetryAttempts": 0
+  },
+  "_item6_live_transport": {
+   "authentic_provider_response": true,
+   "aws_request_id": "8991fa2e-dcfe-4c35-8d98-f6c959d13114",
+   "converse_model_id": "us.anthropic.claude-sonnet-4-6",
+   "count_model_id": "anthropic.claude-sonnet-4-6",
+   "envelope_sha256": "a0d47d937a2400dcd788b0a0a0d300ef0efd8e4ac0561a707c27d5b263eca44f",
+   "http_status": 200,
+   "provider": "aws_bedrock",
+   "transport_version": "item6_bedrock_transport_v1"
+  },
+  "metrics": {
+   "latencyMs": 39374
+  },
+  "output": {
+   "message": {
+    "content": [
+     {
+      "toolUse": {
+       "input": {
+        "fixture_id": "i6_8390822",
+        "mechanisms": [
+         {
+          "conditioning_logic": "Compute Team A's shots-FOR to goals-FOR ratio (all-prior) and Team B's shots-AGAINST to goals-AGAINST ratio (all-prior). Condition on both ratios simultaneously \u2014 not either alone \u2014 to identify matchups where high shot volume is jointly paired with low conversion on both sides.",
+          "data_resolution_required": "match",
+          "evidence_refs": [
+           "E:TEAM_A:shots:FOR:FULL_MATCH:ALL:ALL_PRIOR",
+           "E:TEAM_A:shots_on_target:FOR:FULL_MATCH:ALL:ALL_PRIOR",
+           "E:TEAM_A:goals:FOR:FULL_MATCH:ALL:ALL_PRIOR",
+           "E:TEAM_B:shots:AGAINST:FULL_MATCH:ALL:ALL_PRIOR",
+           "E:TEAM_B:shots_on_target:AGAINST:FULL_MATCH:ALL:ALL_PRIOR",
+           "E:TEAM_B:goals:AGAINST:FULL_MATCH:ALL:ALL_PRIOR",
+           "E:COMPETITION_CONTEXT:goals:NEUTRAL:FULL_MATCH:ALL:ALL_PRIOR",
+           "E:COMPETITION_CONTEXT:shots:NEUTRAL:FULL_MATCH:ALL:ALL_PRIOR"
+          ],
+          "expected_relationship_to_test": "When both teams' shot-to-goal ratios are elevated (many shots per goal), total goals in the match are suppressed relative to the competition context mean, even when shot counts are at or above average.",
+          "mechanism_id_local": "M1",
+          "mechanism_statement": "Team A's shot-volume-to-goals conversion efficiency (shots FOR vs goals FOR) jointly interacts with Team B's defensive shot-suppression profile (shots AGAINST vs goals AGAINST) to determine whether high shot counts in this matchup translate into goals or remain sterile. Specifically, when a team generates many shots but converts at a low rate AND faces a defence that allows many shots but few goals, the joint shot-volume/conversion structure predicts suppressed scoring relative to what either team's goals average alone would suggest.",
+          "observable_variables": [
+           "shots",
+           "shots_on_target",
+           "goals"
+          ],
+          "provider_requirements": [
+           "shots",
+           "shots_on_target",
+           "goals"
+          ],
+          "self_overlap_with": [
+           "M2"
+          ],
+          "why_not_baseline_equivalent": "This requires a joint relationship between two distinct observables (shots and goals) for each side simultaneously, and crosses Team A's offensive ratio with Team B's defensive ratio. It cannot be reduced to a single observable with one conditioning band."
+         },
+         {
+          "conditioning_logic": "Jointly condition on Team A's shots-on-target FOR relative to competition context AND Team B's shots-on-target AGAINST relative to competition context. When Team A's on-target rate is low but Team B allows many on-target shots, measure whether corner kick volume rises (as attacks break down into corners rather than goals).",
+          "data_resolution_required": "match",
+          "evidence_refs": [
+           "E:TEAM_A:shots_on_target:FOR:FULL_MATCH:ALL:ALL_PRIOR",
+           "E:TEAM_A:corner_kicks:FOR:FULL_MATCH:ALL:ALL_PRIOR",
+           "E:TEAM_B:shots_on_target:AGAINST:FULL_MATCH:ALL:ALL_PRIOR",
+           "E:COMPETITION_CONTEXT:shots_on_target:NEUTRAL:FULL_MATCH:ALL:ALL_PRIOR",
+           "E:COMPETITION_CONTEXT:corner_kicks:NEUTRAL:FULL_MATCH:ALL:ALL_PRIOR"
+          ],
+          "expected_relationship_to_test": "When Team A's shots-on-target FOR is below competition average but Team B's shots-on-target AGAINST is above competition average, corner kick volume for Team A rises relative to its own baseline, reflecting pressure without penetration.",
+          "mechanism_id_local": "M2",
+          "mechanism_statement": "Team A's shots-on-target FOR (offensive quality) combined with Team B's shots-on-target AGAINST (defensive quality) form an asymmetric cross-team quality signal. When Team A's on-target production is below its own shots average (low conversion quality) while Team B concedes above-average shots-on-target, the asymmetry between offensive quality and defensive permissiveness creates a distinct corner/set-piece pressure dynamic that differs from what either metric alone captures.",
+          "observable_variables": [
+           "shots_on_target",
+           "corner_kicks"
+          ],
+          "provider_requirements": [
+           "shots_on_target",
+           "corner_kicks"
+          ],
+          "self_overlap_with": [
+           "M1"
+          ],
+          "why_not_baseline_equivalent": "This is a joint two-observable, two-team asymmetric relationship (shots-on-target FOR for one team crossed with shots-on-target AGAINST for the other, then linked to a third observable, corners). It cannot be reduced to a single observable or a single conditioning band."
+         },
+         {
+          "conditioning_logic": "Split goals into first-half and second-half periods for both Team A (FOR) and Team B (AGAINST). Condition on the joint pattern: Team A's goals skew to the second half AND Team B concedes more in the second half. Test whether the combined match produces a back-loaded goal distribution relative to competition context.",
+          "data_resolution_required": "half",
+          "evidence_refs": [
+           "E:TEAM_A:goals:FOR:FIRST_HALF:ALL:ALL_PRIOR",
+           "E:TEAM_A:goals:FOR:SECOND_HALF:ALL:ALL_PRIOR",
+           "E:TEAM_B:goals:AGAINST:FIRST_HALF:ALL:ALL_PRIOR",
+           "E:TEAM_B:goals:AGAINST:SECOND_HALF:ALL:ALL_PRIOR",
+           "E:COMPETITION_CONTEXT:goals:NEUTRAL:FULL_MATCH:ALL:ALL_PRIOR"
+          ],
+          "expected_relationship_to_test": "When both the attacking team's goal-scoring and the defending team's goal-conceding are disproportionately concentrated in the second half, the share of total match goals occurring in the second half rises above the competition context baseline.",
+          "mechanism_id_local": "M3",
+          "mechanism_statement": "The within-match temporal distribution of goals (first-half vs second-half split) for each team jointly determines whether the match's total goal timing profile is front-loaded or back-loaded. Team A scores a disproportionately large share of its goals in the second half (0.407 1H vs 0.767 2H FOR), while Team B concedes more in the second half (0.698 1H vs 1.023 2H AGAINST). This joint first-half/second-half goal-timing asymmetry across both teams is a within-match state mechanism not reducible to full-match goal averages.",
+          "observable_variables": [
+           "goals"
+          ],
+          "provider_requirements": [
+           "goals"
+          ],
+          "self_overlap_with": [
+           "M4"
+          ],
+          "why_not_baseline_equivalent": "This uses a within-match half-level split (first half vs second half) jointly across two teams and two perspectives (Team A FOR, Team B AGAINST), which is structurally richer than a single observable with one coarse band. The half-level resolution is required and supported by the evidence."
+         },
+         {
+          "conditioning_logic": "Jointly condition on: (1) the ratio of second-half to first-half corner kicks FOR for both teams, and (2) Team A's possession deficit relative to competition context. When both teams' corner production is back-loaded AND the home team is possession-deficient, test whether second-half corner totals exceed first-half corner totals by more than the competition baseline half-split would predict.",
+          "data_resolution_required": "half",
+          "evidence_refs": [
+           "E:TEAM_A:corner_kicks:FOR:FIRST_HALF:ALL:ALL_PRIOR",
+           "E:TEAM_A:corner_kicks:FOR:SECOND_HALF:ALL:ALL_PRIOR",
+           "E:TEAM_B:corner_kicks:FOR:FIRST_HALF:ALL:ALL_PRIOR",
+           "E:TEAM_B:corner_kicks:FOR:SECOND_HALF:ALL:ALL_PRIOR",
+           "E:TEAM_A:possession:FOR:FULL_MATCH:ALL:ALL_PRIOR",
+           "E:COMPETITION_CONTEXT:possession:NEUTRAL:FULL_MATCH:ALL:ALL_PRIOR",
+           "E:COMPETITION_CONTEXT:corner_kicks:NEUTRAL:FULL_MATCH:ALL:ALL_PRIOR"
+          ],
+          "expected_relationship_to_test": "When both teams show a second-half corner skew and the home team is below-average in possession, the second-half corner total rises above what the first-half corner total and competition context half-split would predict.",
+          "mechanism_id_local": "M4",
+          "mechanism_statement": "The within-match half-level corner kick distribution (first-half vs second-half) for both teams jointly interacts with possession patterns to reveal whether corner pressure is concentrated in a particular half. Team A generates more corners in the second half (1.747 1H vs 2.494 2H FOR) while Team B also generates more corners in the second half (2.273 1H vs 2.390 2H FOR). When combined with Team A's below-average possession (48.1% vs 50% context), the joint half-split corner and possession structure suggests a specific second-half pressure dynamic.",
+          "observable_variables": [
+           "corner_kicks",
+           "possession"
+          ],
+          "provider_requirements": [
+           "corner_kicks",
+           "possession"
+          ],
+          "self_overlap_with": [
+           "M3"
+          ],
+          "why_not_baseline_equivalent": "This jointly combines a within-match half-level split (first vs second half corners) with a second distinct observable (possession) across both teams. It requires two observables and half-level resolution simultaneously, which is not reducible to any single-observable or single-band covered mechanism."
+         },
+         {
+          "conditioning_logic": "Compute the recent-5 vs all-prior delta for fouls FOR for both Team A and Team B. When both teams show a concurrent downward regime shift in fouls (recent below all-prior), jointly condition on this dual-team foul-reduction signal and test whether yellow card totals are suppressed relative to competition context and each team's own all-prior yellow card average.",
+          "data_resolution_required": "match",
+          "evidence_refs": [
+           "E:TEAM_A:fouls:FOR:FULL_MATCH:ALL:ALL_PRIOR",
+           "E:TEAM_A:fouls:FOR:FULL_MATCH:ALL:RECENT_5",
+           "E:TEAM_B:fouls:FOR:FULL_MATCH:ALL:ALL_PRIOR",
+           "E:TEAM_B:fouls:FOR:FULL_MATCH:ALL:RECENT_5",
+           "E:TEAM_A:yellow_cards:FOR:FULL_MATCH:ALL:ALL_PRIOR",
+           "E:TEAM_B:yellow_cards:FOR:FULL_MATCH:ALL:ALL_PRIOR",
+           "E:COMPETITION_CONTEXT:fouls:NEUTRAL:FULL_MATCH:ALL:ALL_PRIOR",
+           "E:COMPETITION_CONTEXT:yellow_cards:NEUTRAL:FULL_MATCH:ALL:ALL_PRIOR"
+          ],
+          "expected_relationship_to_test": "When both teams simultaneously exhibit a recent downward shift in foul production relative to their own all-prior averages, yellow card totals in the match are suppressed relative to competition context and the teams' own all-prior yellow card baselines.",
+          "mechanism_id_local": "M5",
+          "mechanism_statement": "Team B's recent-window (last 5) foul rate has dropped sharply relative to its all-prior average (8.8 vs 11.36 FOR), while Team A's recent foul rate has also declined (10.4 vs 11.98 FOR). This joint recent-vs-all-prior regime shift in foul production for both teams simultaneously \u2014 a sequencing/regime structure \u2014 interacts with yellow card accumulation patterns to determine whether the card rate in this match is suppressed relative to the competition context. The joint regime shift across both teams is not captured by either team's foul trend in isolation.",
+          "observable_variables": [
+           "fouls",
+           "yellow_cards"
+          ],
+          "provider_requirements": [
+           "fouls",
+           "yellow_cards"
+          ],
+          "self_overlap_with": [],
+          "why_not_baseline_equivalent": "This is a joint two-team sequencing/regime mechanism: it requires the concurrent recent-vs-all-prior shift in fouls for both teams simultaneously, then links that joint regime signal to a second distinct observable (yellow cards). Neither team's foul trend alone, nor yellow cards alone, captures this joint cross-team regime structure."
+         }
+        ]
+       },
+       "name": "emit_item6_mechanisms",
+       "toolUseId": "tooluse_VMljKraebhXH98ujWJMSlO",
+       "type": "tool_use"
+      }
+     }
+    ],
+    "role": "assistant"
+   }
+  },
+  "stopReason": "tool_use",
+  "usage": {
+   "cacheReadInputTokens": 0,
+   "cacheWriteInputTokens": 0,
+   "inputTokens": 12047,
+   "outputTokens": 3188,
+   "totalTokens": 15235
+  }
+ },
+ "request_sha256": "961d2d6979100681cb472c56638c93638f385de4836292a2e542d8fc3b8d89c5",
+ "resolved_model_id": null,
+ "runner_version": "item6_stage1_runner_v2",
+ "usage": {
+  "cacheReadInputTokens": 0,
+  "cacheWriteInputTokens": 0,
+  "inputTokens": 12047,
+  "outputTokens": 3188,
+  "totalTokens": 15235
+ }
+}

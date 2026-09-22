@@ -1,0 +1,206 @@
+{
+ "count_input_sha256": "2e8ca8d84a5dae42dd5c0dc71aacf29db5cd5e3daff799fcc77cc846049af5a6",
+ "fixture_id": "i6_8420252",
+ "provider_counted_input_tokens": 12067,
+ "raw_response": {
+  "ResponseMetadata": {
+   "HTTPHeaders": {
+    "connection": "keep-alive",
+    "content-length": "10912",
+    "content-type": "application/json",
+    "date": "Tue, 22 Sep 2026 16:59:34 GMT",
+    "x-amzn-requestid": "63583b1b-8fa4-4c3f-af8c-28ab6ef332c9"
+   },
+   "HTTPStatusCode": 200,
+   "MaxAttemptsReached": true,
+   "RequestId": "63583b1b-8fa4-4c3f-af8c-28ab6ef332c9",
+   "RetryAttempts": 0
+  },
+  "_item6_live_transport": {
+   "authentic_provider_response": true,
+   "aws_request_id": "63583b1b-8fa4-4c3f-af8c-28ab6ef332c9",
+   "converse_model_id": "us.anthropic.claude-sonnet-4-6",
+   "count_model_id": "anthropic.claude-sonnet-4-6",
+   "envelope_sha256": "f9984a4f7e1c410a1bbbf09f6983a602aa349d06d7ae00035335a77ae36d4dda",
+   "http_status": 200,
+   "provider": "aws_bedrock",
+   "transport_version": "item6_bedrock_transport_v1"
+  },
+  "metrics": {
+   "latencyMs": 39925
+  },
+  "output": {
+   "message": {
+    "content": [
+     {
+      "toolUse": {
+       "input": {
+        "fixture_id": "i6_8420252",
+        "mechanisms": [
+         {
+          "conditioning_logic": "Jointly examine Team B's FOR perspective across ALL_PRIOR and RECENT_5 windows: compute the shots-to-shots_on_target ratio and the shots_on_target-to-goals ratio in each window to determine whether the recent goal decline is a shot-quality problem or a finishing problem.",
+          "data_resolution_required": "match",
+          "evidence_refs": [
+           "E:TEAM_B:shots:FOR:FULL_MATCH:ALL:ALL_PRIOR",
+           "E:TEAM_B:shots:FOR:FULL_MATCH:ALL:RECENT_5",
+           "E:TEAM_B:shots_on_target:FOR:FULL_MATCH:ALL:ALL_PRIOR",
+           "E:TEAM_B:shots_on_target:FOR:FULL_MATCH:ALL:RECENT_5",
+           "E:TEAM_B:goals:FOR:FULL_MATCH:ALL:ALL_PRIOR",
+           "E:TEAM_B:goals:FOR:FULL_MATCH:ALL:RECENT_5"
+          ],
+          "expected_relationship_to_test": "When shots_on_target FOR declines proportionally more than shots FOR in the recent window relative to the season baseline, goals FOR should decline in tandem (shot-quality-driven drought); when shots_on_target holds but goals fall, the drought is finishing-driven and may be more transient.",
+          "mechanism_id_local": "M1",
+          "mechanism_statement": "Team B's shot-volume-to-goals conversion efficiency diverges sharply between its season-long history and its recent 5-match window: shots FOR have declined recently while goals FOR have also declined, but the ratio of shots_on_target FOR to goals FOR across the two windows reveals whether Team B's recent goal drought is driven by a deterioration in shot quality (shots_on_target declining faster than shots) or by a conversion failure at constant shot quality. This joint relationship between shots, shots_on_target, and goals across two time windows is structurally richer than any single observable comparison.",
+          "observable_variables": [
+           "shots",
+           "shots_on_target",
+           "goals"
+          ],
+          "provider_requirements": [
+           "shots",
+           "shots_on_target",
+           "goals"
+          ],
+          "self_overlap_with": [
+           "M2"
+          ],
+          "why_not_baseline_equivalent": "This requires a joint three-observable relationship (shots \u00d7 shots_on_target \u00d7 goals) evaluated across two time windows simultaneously. No single observable with one conditioning band captures the interaction between shot quality and finishing efficiency, nor the cross-window comparison of their ratio."
+         },
+         {
+          "conditioning_logic": "For Team A FOR perspective, compare the shots_on_target-to-goals ratio in RECENT_5 versus ALL_PRIOR. Test whether the ratio of goals per shot_on_target is stable, rising, or falling as shot_on_target volume increases.",
+          "data_resolution_required": "match",
+          "evidence_refs": [
+           "E:TEAM_A:shots_on_target:FOR:FULL_MATCH:ALL:ALL_PRIOR",
+           "E:TEAM_A:shots_on_target:FOR:FULL_MATCH:ALL:RECENT_5",
+           "E:TEAM_A:goals:FOR:FULL_MATCH:ALL:ALL_PRIOR",
+           "E:TEAM_A:goals:FOR:FULL_MATCH:ALL:RECENT_5"
+          ],
+          "expected_relationship_to_test": "When shots_on_target FOR rises substantially above the season baseline, the goals-per-shot-on-target ratio may saturate or compress, meaning goals do not rise proportionally with shot-on-target volume.",
+          "mechanism_id_local": "M2",
+          "mechanism_statement": "Team A's recent surge in shots_on_target FOR (7.6 in RECENT_5 vs 5.117 season average) is not matched by a proportional surge in goals FOR (2.8 vs 1.909), suggesting a divergence between shot-on-target volume and conversion rate. Jointly measuring shots_on_target FOR against goals FOR across the two windows tests whether high shot-on-target volume translates to goals at a stable rate or whether conversion efficiency is suppressed when shot-on-target volume is elevated.",
+          "observable_variables": [
+           "shots_on_target",
+           "goals"
+          ],
+          "provider_requirements": [
+           "shots_on_target",
+           "goals"
+          ],
+          "self_overlap_with": [
+           "M1"
+          ],
+          "why_not_baseline_equivalent": "This is a joint two-observable (shots_on_target \u00d7 goals) cross-window ratio test, not a single observable compared against a band. The saturation/non-linearity of conversion rate as volume rises is not captured by any single-observable baseline comparison."
+         },
+         {
+          "conditioning_logic": "Jointly examine Team B's possession FOR, corner_kicks FOR, and shots FOR across ALL_PRIOR and RECENT_5 windows. Test whether the ratio of attacking outputs (corners, shots) per unit of possession is stable or declining as possession compresses toward 50%.",
+          "data_resolution_required": "match",
+          "evidence_refs": [
+           "E:TEAM_B:possession:FOR:FULL_MATCH:ALL:ALL_PRIOR",
+           "E:TEAM_B:possession:FOR:FULL_MATCH:ALL:RECENT_5",
+           "E:TEAM_B:corner_kicks:FOR:FULL_MATCH:ALL:ALL_PRIOR",
+           "E:TEAM_B:corner_kicks:FOR:FULL_MATCH:ALL:RECENT_5",
+           "E:TEAM_B:shots:FOR:FULL_MATCH:ALL:ALL_PRIOR",
+           "E:TEAM_B:shots:FOR:FULL_MATCH:ALL:RECENT_5",
+           "E:TEAM_A:possession:FOR:FULL_MATCH:ALL:ALL_PRIOR",
+           "E:TEAM_A:possession:FOR:FULL_MATCH:ALL:RECENT_5"
+          ],
+          "expected_relationship_to_test": "When Team B's possession advantage over the opponent compresses toward parity, corner_kicks FOR and shots FOR should decline at a rate greater than the possession decline alone would predict, indicating a non-linear relationship between possession margin and attacking output.",
+          "mechanism_id_local": "M3",
+          "mechanism_statement": "Team B holds structurally higher possession (55.9% season average, 51.8% recent) than Team A (50.8% season, 50.6% recent), yet Team B's corner_kicks FOR (6.0 season, 5.2 recent) and shots FOR (15.1 season, 13.2 recent) are both declining in the recent window. This tests whether possession dominance translates into attacking output (corners, shots) at a stable rate, or whether possession advantage decouples from attacking output when possession levels compress toward parity.",
+          "observable_variables": [
+           "possession",
+           "corner_kicks",
+           "shots"
+          ],
+          "provider_requirements": [
+           "possession",
+           "corner_kicks",
+           "shots"
+          ],
+          "self_overlap_with": [],
+          "why_not_baseline_equivalent": "This is a joint three-observable relationship (possession \u00d7 corner_kicks \u00d7 shots) tested across two time windows. It is not reducible to any single observable with one conditioning band, and it tests a non-linear (decoupling) relationship rather than a simple level comparison."
+         },
+         {
+          "conditioning_logic": "Jointly condition on both teams' cards_2h FOR and AGAINST in the SECOND_HALF. The mechanism fires when Team A's cards_2h AGAINST exceeds its cards_2h FOR AND Team B's cards_2h FOR exceeds its cards_2h AGAINST \u2014 i.e., both asymmetries point in the same direction (Team A receives more cards, Team B earns more cards). Also cross-reference with fouls FOR/AGAINST to test whether the card asymmetry is foul-driven.",
+          "data_resolution_required": "half",
+          "evidence_refs": [
+           "E:TEAM_A:cards_2h:FOR:SECOND_HALF:ALL:ALL_PRIOR",
+           "E:TEAM_A:cards_2h:AGAINST:SECOND_HALF:ALL:ALL_PRIOR",
+           "E:TEAM_B:cards_2h:FOR:SECOND_HALF:ALL:ALL_PRIOR",
+           "E:TEAM_B:cards_2h:AGAINST:SECOND_HALF:ALL:ALL_PRIOR",
+           "E:TEAM_A:fouls:FOR:FULL_MATCH:ALL:ALL_PRIOR",
+           "E:TEAM_A:fouls:AGAINST:FULL_MATCH:ALL:ALL_PRIOR",
+           "E:TEAM_B:fouls:FOR:FULL_MATCH:ALL:ALL_PRIOR",
+           "E:TEAM_B:fouls:AGAINST:FULL_MATCH:ALL:ALL_PRIOR",
+           "E:COMPETITION_CONTEXT:cards_2h:NEUTRAL:SECOND_HALF:ALL:ALL_PRIOR"
+          ],
+          "expected_relationship_to_test": "When Team A's second-half card-conceded rate exceeds its card-earned rate AND Team B's second-half card-earned rate exceeds its card-conceded rate, the total second-half cards in the match should rise above the competition baseline, driven by an asymmetric disciplinary dynamic.",
+          "mechanism_id_local": "M4",
+          "mechanism_statement": "The asymmetry between Team A's second-half cards conceded (1.195 per match) versus Team A's second-half cards earned (0.909) and Team B's second-half cards earned (1.247) versus Team B's second-half cards conceded (1.039) creates a joint cross-team second-half card asymmetry. Specifically, Team A concedes more second-half cards than it earns, while Team B earns more second-half cards than it concedes. Testing whether this asymmetric pattern \u2014 one team systematically receiving more second-half discipline than it imposes, while the opponent does the reverse \u2014 is associated with a directional second-half foul/card dynamic in the match.",
+          "observable_variables": [
+           "cards_2h",
+           "fouls"
+          ],
+          "provider_requirements": [
+           "cards_2h",
+           "fouls"
+          ],
+          "self_overlap_with": [],
+          "why_not_baseline_equivalent": "This requires a joint cross-team asymmetric comparison of two different perspectives (FOR vs AGAINST) of the same observable (cards_2h) for both teams simultaneously, combined with a second observable (fouls) to test the mechanism. It is not reducible to a single observable with one band."
+         },
+         {
+          "conditioning_logic": "Jointly condition on both teams' goals split by half (FIRST_HALF vs SECOND_HALF), comparing Team A goals FOR by half against Team B goals AGAINST by half. The mechanism tests whether the half in which Team A is most productive offensively (H2) coincides with the half in which Team B is most vulnerable defensively (H2 for goals against).",
+          "data_resolution_required": "half",
+          "evidence_refs": [
+           "E:TEAM_A:goals:FOR:FIRST_HALF:ALL:ALL_PRIOR",
+           "E:TEAM_A:goals:FOR:SECOND_HALF:ALL:ALL_PRIOR",
+           "E:TEAM_B:goals:AGAINST:FIRST_HALF:ALL:ALL_PRIOR",
+           "E:TEAM_B:goals:AGAINST:SECOND_HALF:ALL:ALL_PRIOR",
+           "E:TEAM_A:goals:AGAINST:FIRST_HALF:ALL:ALL_PRIOR",
+           "E:TEAM_A:goals:AGAINST:SECOND_HALF:ALL:ALL_PRIOR",
+           "E:TEAM_B:goals:FOR:FIRST_HALF:ALL:ALL_PRIOR",
+           "E:TEAM_B:goals:FOR:SECOND_HALF:ALL:ALL_PRIOR"
+          ],
+          "expected_relationship_to_test": "When Team A's goals FOR are more concentrated in the second half AND Team B's goals AGAINST are also more concentrated in the second half, second-half goal production in the match should rise above what a simple full-match average would predict, reflecting a complementary timing alignment.",
+          "mechanism_id_local": "M5",
+          "mechanism_statement": "Team B's goals AGAINST are heavily concentrated in the first half (0.753 per match in H1 vs 0.896 in H2 season-wide), while Team A's goals FOR are more evenly distributed (0.831 H1 vs 1.078 H2). This creates an asymmetric half-level goal-timing profile: Team A scores more in the second half while Team B concedes more in the first half. Jointly testing Team A's goals FOR by half against Team B's goals AGAINST by half reveals whether the half-timing profiles are complementary (Team A's second-half scoring strength aligns with Team B's second-half defensive vulnerability) or misaligned.",
+          "observable_variables": [
+           "goals"
+          ],
+          "provider_requirements": [
+           "goals"
+          ],
+          "self_overlap_with": [],
+          "why_not_baseline_equivalent": "This is a joint cross-team, cross-perspective, within-match half-level comparison of the same observable (goals) for two different teams. It requires simultaneously conditioning on half-period AND the asymmetric FOR/AGAINST perspectives of both teams, which is not reducible to a single observable with one conditioning band."
+         }
+        ]
+       },
+       "name": "emit_item6_mechanisms",
+       "toolUseId": "tooluse_9g4Oqw3SAQVcTIIdYASOTt",
+       "type": "tool_use"
+      }
+     }
+    ],
+    "role": "assistant"
+   }
+  },
+  "stopReason": "tool_use",
+  "usage": {
+   "cacheReadInputTokens": 0,
+   "cacheWriteInputTokens": 0,
+   "inputTokens": 12050,
+   "outputTokens": 3327,
+   "totalTokens": 15377
+  }
+ },
+ "request_sha256": "34c87c9df7d4cc78c42ec4b7621d380d6edeba8d9ac84b18e1d104a52eade220",
+ "resolved_model_id": null,
+ "runner_version": "item6_stage1_runner_v2",
+ "usage": {
+  "cacheReadInputTokens": 0,
+  "cacheWriteInputTokens": 0,
+  "inputTokens": 12050,
+  "outputTokens": 3327,
+  "totalTokens": 15377
+ }
+}
