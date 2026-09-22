@@ -1,4 +1,4 @@
-"""ITEM 6 Stage-1 authentic LIVE execution driver (`item6_stage1_live_driver_v1`).
+"""ITEM 6 Stage-1 authentic LIVE execution driver (`item6_stage1_live_driver_v3`).
 
 Closes blocker B1's second half: a committed entrypoint that runs the ALREADY-FROZEN Item 6
 Stage-1 experiment against the authentic live Bedrock transport. It wires the real transport
@@ -6,7 +6,20 @@ Stage-1 experiment against the authentic live Bedrock transport. It wires the re
 NOT reimplement the runner, the spend guard, the CountTokens gate, the attempt-marker
 discipline, the one-treatment rule or the receipt logic; those are frozen and reused.
 
+EXACT EXECUTION HEAD IS EXTERNAL (v3). The manifest never self-declares the runtime HEAD:
+an artifact committed at a given commit cannot non-circularly name that commit, and V5's
+`execution_head_expected` consequently named the PARENT commit (the one WITHOUT the evidence
+apparatus). V6+ manifests bind `apparatus_provenance_commit` (historical fact) and declare
+`exact_execution_head_source = EXTERNAL_HUMAN_AUTHORIZATION`; the authorizing human supplies
+`authorized_execution_head` at call time and this driver verifies it equals the actual git
+HEAD BEFORE any CountTokens or Converse call. A recorded apparatus commit can never
+substitute for that authorization.
+
 FAIL-CLOSED STARTUP PREFLIGHT (refuses to begin, at zero spend, on ANY of):
+  * authorized execution HEAD missing, malformed, or != actual git HEAD;
+  * manifest still carrying a self-referential `execution_head_expected` field, or not
+    declaring `exact_execution_head_source = EXTERNAL_HUMAN_AUTHORIZATION`;
+  * any manifest artifact failing scheme-aware hash verification (unknown scheme included);
   * SDK bedrock-runtime lacks Converse or CountTokens;
   * AWS credentials unresolved / region unresolved;
   * model/profile mismatch vs the frozen manifest;
@@ -38,6 +51,7 @@ from dataclasses import dataclass
 from typing import Any, Dict, Optional
 
 from src.research.item6.execution import execution_status as ES
+from src.research.item6.execution import provenance as PROV
 from src.research.item6.execution import request_builder as RB
 from src.research.item6.evidence.frozen_packet_provider import (
     FrozenPacketError, FrozenPacketProvider)
@@ -47,7 +61,7 @@ from src.research.item6.execution.live_transport import (
 from src.research.item6.execution.runner import (RunnerConfig, RunnerRefused,
                                                  Stage1Runner, verify_frozen_identities)
 
-LIVE_DRIVER_VERSION = "item6_stage1_live_driver_v2"
+LIVE_DRIVER_VERSION = "item6_stage1_live_driver_v3"
 ROOT = "/home/ubuntu"
 
 LIVE_TRANSPORT_SRC = "src/research/item6/execution/live_transport.py"
@@ -90,17 +104,65 @@ class LivePreflightReport:
     champion_ok: bool
     scientific_ok: bool
     human_ceiling_ok: bool
+    execution_head_policy_ok: bool = False
+    authorized_head_ok: bool = False
+    actual_git_head: Optional[str] = None
+    apparatus_provenance_commit: Optional[str] = None
+    artifact_hash_index_ok: Optional[bool] = None
 
     def to_dict(self) -> Dict[str, Any]:
         return self.__dict__
 
 
 def preflight(manifest_path: str, *, authorized_ceiling_usd: Optional[float],
+              authorized_execution_head: Optional[str] = None,
               root: str = ROOT, region: str = AWS_REGION) -> LivePreflightReport:
     """Fail-closed startup preflight. Returns a report; raises LiveDriverRefused if not ok.
-    Makes no paid call. (Credential resolution and service-model capability are offline.)"""
+    Makes no paid call. (Credential resolution and service-model capability are offline.)
+
+    `authorized_execution_head` is the EXTERNALLY supplied commit sha the authorizing human
+    bound when releasing spend. It defaults to None so that omitting it REFUSES the run
+    (fail closed) rather than raising a TypeError; it is never defaulted to a manifest field.
+    """
     problems: list = []
     manifest = json.load(open(f"{root}/{manifest_path}"))
+
+    # 0a. execution-head POLICY: the manifest may bind the historical apparatus commit but
+    #     must not self-declare the runtime HEAD. Runs before every other check so a policy
+    #     violation is refused at zero spend, long before CountTokens.
+    execution_head_policy_ok = True
+    apparatus_commit = None
+    try:
+        apparatus_commit, _ = PROV.assert_execution_head_policy(manifest)
+    except PROV.ProvenanceError as e:
+        execution_head_policy_ok = False
+        problems.append(f"execution-head policy: {e}")
+
+    # 0b. the EXACT execution head must come from external human authorization and match the
+    #     actual git HEAD. An apparatus provenance commit never substitutes for it.
+    actual_head = PROV.resolve_git_head(root)
+    authorized_head_ok = True
+    try:
+        PROV.require_authorized_execution_head(authorized_execution_head, root=root,
+                                               actual_head=actual_head)
+    except PROV.AuthorizedHeadError as e:
+        authorized_head_ok = False
+        problems.append(f"authorized execution head: {e}")
+
+    # 0c. scheme-aware artifact verification (V6+ manifests carry an artifact_hash_index;
+    #     an unknown hash scheme or any digest mismatch fails closed).
+    artifact_index_ok = None
+    if "artifact_hash_index" in manifest:
+        try:
+            report = PROV.verify_manifest_artifacts(manifest, root=root)
+            artifact_index_ok = bool(report["ok"])
+            if not artifact_index_ok:
+                detail = "; ".join(report["problems"][:5]) or (
+                    f"{report['n_unknown_hash_schemes']} unknown hash scheme(s)")
+                problems.append(f"artifact hash index: {detail}")
+        except PROV.ProvenanceError as e:
+            artifact_index_ok = False
+            problems.append(f"artifact hash index: {e}")
 
     # 1. SDK capability (from constructed client service model; offline).
     cap = sdk_capability_report(region=region)
@@ -192,19 +254,28 @@ def preflight(manifest_path: str, *, authorized_ceiling_usd: Optional[float],
         manifest_self_hash_ok=manifest_self_ok, transport_hash_ok=transport_hash_ok,
         driver_hash_ok=driver_hash_ok, price_table_ok=price_table_ok,
         champion_ok=champion_ok, scientific_ok=scientific_ok,
-        human_ceiling_ok=human_ceiling_ok)
+        human_ceiling_ok=human_ceiling_ok,
+        execution_head_policy_ok=execution_head_policy_ok,
+        authorized_head_ok=authorized_head_ok,
+        actual_git_head=actual_head,
+        apparatus_provenance_commit=apparatus_commit,
+        artifact_hash_index_ok=artifact_index_ok)
     if problems:
         raise LiveDriverRefused("; ".join(problems))
     return report
 
 
 def build_live_runner(manifest_path: str, *, authorized_ceiling_usd: float,
+                      authorized_execution_head: Optional[str],
                       out_dir: str, root: str = ROOT,
                       region: str = AWS_REGION) -> Stage1Runner:
     """Run the fail-closed preflight, then construct a Stage1Runner wired to the AUTHENTIC
     live Bedrock transport. No stand-in path is reachable here. Constructs the transport
-    (offline) but transmits nothing until `run_live` iterates fixtures."""
+    (offline) but transmits nothing until `run_live` iterates fixtures. The externally
+    authorized execution HEAD is verified inside the preflight, before the transport (and
+    therefore before CountTokens) exists."""
     preflight(manifest_path, authorized_ceiling_usd=authorized_ceiling_usd,
+              authorized_execution_head=authorized_execution_head,
               root=root, region=region)
     manifest = json.load(open(f"{root}/{manifest_path}"))
     transport = BedrockStage1Transport.from_frozen_config(region=region)
@@ -246,7 +317,8 @@ def _load_frozen_packet_provider(manifest: Dict[str, Any], root: str,
     return provider
 
 
-def run_live(manifest_path: str, *, authorized_ceiling_usd: float, out_dir: str,
+def run_live(manifest_path: str, *, authorized_ceiling_usd: float,
+             authorized_execution_head: Optional[str], out_dir: str,
              root: str = ROOT, region: str = AWS_REGION,
              data_root: Optional[str] = None) -> Dict[str, Any]:
     """Execute the frozen Stage-1 run LIVE with the FROZEN POPULATED evidence packet per
@@ -256,6 +328,7 @@ def run_live(manifest_path: str, *, authorized_ceiling_usd: float, out_dir: str,
     the attempt marker) and transmits at most one authentic Converse treatment under the
     frozen runner's caps. Returns a reconciliation summary."""
     runner = build_live_runner(manifest_path, authorized_ceiling_usd=authorized_ceiling_usd,
+                               authorized_execution_head=authorized_execution_head,
                                out_dir=out_dir, root=root, region=region)
     transport = runner._item6_live_transport
     manifest = json.load(open(f"{root}/{manifest_path}"))
@@ -272,6 +345,8 @@ def run_live(manifest_path: str, *, authorized_ceiling_usd: float, out_dir: str,
         results.append(res.to_dict())
     return {
         "live_driver_version": LIVE_DRIVER_VERSION,
+        "authorized_execution_head": authorized_execution_head,
+        "apparatus_provenance_commit": manifest.get("apparatus_provenance_commit"),
         "n_fixtures": len(cohort["fixtures"]),
         "results": results,
         "spend_ledger": runner.guard.to_dict(),
@@ -292,4 +367,8 @@ def version_stamp() -> Dict[str, Any]:
         "requires_frozen_populated_evidence_packet": True,
         "live_empty_evidence_packet_allowed": False,
         "live_packet_hash_enforced": True,
+        "requires_external_authorized_execution_head": True,
+        "exact_execution_head_source": PROV.EXACT_EXECUTION_HEAD_SOURCE,
+        "self_referential_execution_head_accepted": False,
+        "scheme_aware_artifact_verification": True,
     }
