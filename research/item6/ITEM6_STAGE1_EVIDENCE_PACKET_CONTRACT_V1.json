@@ -1,0 +1,163 @@
+{
+ "contract_version": "item6_stage1_evidence_packet_contract_v1",
+ "purpose": "Frozen input contract for the deterministic point-in-time (PIT) evidence packet that populates each Item 6 Stage-1 fixture request. Closes the empty-skeleton defect: the frozen mechanism prompt tells the model it receives a pre-target evidence packet and requires evidence_refs + observables drawn from that packet; this contract defines exactly what that packet contains and how it is built, deterministically and PIT-safely, with zero paid inference and zero future information.",
+ "amendment": "ITEM6_STAGE1_EVIDENCE_INPUT_MATERIALIZATION",
+ "amendment_scope": "SCIENTIFIC_MODEL_VISIBLE_INPUT_ADDED_NO_PROMPT_SCHEMA_GATE_COHORT_CHANGE",
+ "provider_policy": {
+  "provider": "footystats",
+  "corpus_path_glob": "data/discovery/corpus/league-matches_*.json",
+  "corpus_key": "footystats numeric match id (record.id) == cohort.source_fixture_id",
+  "single_provider_only": true,
+  "no_cross_provider_merge": true,
+  "cross_provider_merge_forbidden_reason": "The Item 6 cohort is keyed on FootyStats numeric ids; FootyStats and TheStatsAPI share no join key in this project and identically-named provider fields (e.g. xg, total_shots) are treated as NON-equivalent (capability.DO_NOT_MERGE). The packet therefore uses ONE provider (FootyStats) end to end.",
+  "excluded_metrics": [
+   {"metric": "npxg", "reason": "TheStatsAPI-only np_expected_goals; excluded upstream (baseline_coverage: 'np_xg excluded upstream, stays excluded'); structurally absent from FootyStats corpus. Never surfaced."},
+   {"metric": "xg", "reason": "Not in item6 provider_vocab.PROVIDER_METRICS; FootyStats/TheStatsAPI xg are non-equivalent (DO_NOT_MERGE, corr 0.55). Never surfaced as an observable."}
+  ]
+ },
+ "information_cutoff_semantics": {
+  "packet_information_cutoff_unix_equals": "target_fixture_kickoff_unix (frozen cohort.kickoff_unix)",
+  "strict_rule": "Every underlying observation contributing to the packet MUST have occurred STRICTLY BEFORE the target kickoff (prior_match.date_unix < target.kickoff_unix). Same-kickoff and later matches are excluded.",
+  "forbidden_inputs": [
+   "the target match's own statistics or result",
+   "any fixture with kickoff_unix >= target kickoff",
+   "post-kickoff observations of any kind",
+   "future or announced lineups / injuries / suspensions for the target",
+   "closing lines, opening lines, or any market/odds data",
+   "any future price or settlement"
+  ]
+ },
+ "allowed_metric_vocabulary": {
+  "note": "Canonical metric ids are exactly the subset of item6 provider_vocab.PROVIDER_METRICS that has a genuine FootyStats source. TheStatsAPI-only vocab metrics (big_chances, accurate_crosses, touches_in_penalty_area, ball_recoveries, tackles, interceptions, blocks, clearances, passes, pass_accuracy) are ABSENT from FootyStats and are OMITTED (never fabricated). Formation/lineup is OMITTED (not populated in the discovery corpus, 0/5000 sampled).",
+  "metrics": [
+   {"canonical": "shots", "footystats_field_base": "shots", "resolution": "match"},
+   {"canonical": "shots_on_target", "footystats_field_base": "shotsOnTarget", "resolution": "match"},
+   {"canonical": "corner_kicks", "footystats_field_base": "corners", "resolution": "match_and_half", "half_fields": ["fh_corners", "2h_corners"]},
+   {"canonical": "possession", "footystats_field_base": "possession", "resolution": "match"},
+   {"canonical": "fouls", "footystats_field_base": "fouls", "resolution": "match"},
+   {"canonical": "yellow_cards", "footystats_field_base": "yellow_cards", "resolution": "match"},
+   {"canonical": "red_cards", "footystats_field_base": "red_cards", "resolution": "match"},
+   {"canonical": "offsides", "footystats_field_base": "offsides", "resolution": "match"},
+   {"canonical": "goals", "footystats_field_base": "__goals__", "resolution": "match_and_half", "half_fields": ["ht_goals", "2h_goals"]},
+   {"canonical": "cards_2h", "footystats_field_base": "2h_cards", "resolution": "half"}
+  ],
+  "perspective_policy": "Each match-resolution metric is exposed for BOTH perspectives where meaningful: FOR (the team's own production) and AGAINST (what the team's opponents produced against it). goals is also exposed as goals AGAINST (== goals_conceded). This lets the model reason about attack vs concession across DIFFERENT metrics (cross-metric asymmetry), not just same-metric mirrors.",
+  "vocabulary_is_derived_not_declared": true,
+  "vocabulary_omits_metric_if_team_side_has_zero_populated_prior_observations": true
+ },
+ "allowed_periods": ["FULL_MATCH", "FIRST_HALF", "SECOND_HALF"],
+ "period_policy": "FIRST_HALF / SECOND_HALF aggregates are emitted ONLY for metrics with genuine FootyStats half fields (corner_kicks via fh/2h_corners, goals via ht/2h goals, cards_2h via 2h_cards). All other metrics are FULL_MATCH only. No half aggregate is fabricated for a match-only metric.",
+ "allowed_venue_scopes": ["ALL", "HOME", "AWAY"],
+ "venue_scope_policy": "ALL is always computed. HOME/AWAY splits are computed from the team's recorded historical venue in each prior match (record.homeID/awayID). The target fixture's own venue (home team vs away team) is exposed only as neutralized fixture identity, never as an outcome.",
+ "allowed_windows": ["ALL_PRIOR", "RECENT_5"],
+ "window_policy": "ALL_PRIOR = every strictly-prior completed match of the team (unbounded lookback within corpus). RECENT_5 = the 5 most recent strictly-prior completed matches. Windows W10 etc. are intentionally not emitted to bound packet size; ALL_PRIOR + RECENT_5 suffice to expose recent-vs-long-run context that the baseline already covers univariately and that the model may combine cross-metrically.",
+ "context_scopes": ["TEAM_A", "TEAM_B", "COMPETITION_ENVIRONMENT"],
+ "evidence_item_schema": {
+  "encoding": "COMPACT_MAP",
+  "encoding_description": "Evidence is emitted as a JSON object `evidence` mapping each unique evidence_ref (string key) to a compact tuple [value, sample_n, reliability_code]. Field names are hoisted to the packet-level `legend`; the evidence_ref itself encodes team_role/metric/perspective/period/venue_scope/window. This is an information-preserving representation (no value, sample_n, reliability, or ref is dropped) chosen to keep the full Converse request within the 32768-byte ceiling. A parallel `evidence_order` array lists refs in the frozen value-neutral order.",
+  "tuple_positions": ["value", "sample_n", "reliability_code"],
+  "reliability_code_map": {"0": "THIN (sample_n<5)", "1": "MODERATE (5<=sample_n<12)", "2": "AMPLE (sample_n>=12)"},
+  "decoded_fields_per_evidence_ref": [
+   "evidence_ref",
+   "team_role",
+   "metric",
+   "perspective",
+   "period",
+   "venue_scope",
+   "window",
+   "value",
+   "sample_n",
+   "reliability"
+  ],
+  "packet_level_provenance_fields": [
+   "provider",
+   "provider_normalization_version",
+   "information_cutoff_unix",
+   "per_team n_source_matches",
+   "per_team min/max source kickoff window",
+   "competition_id (competition context)"
+  ],
+  "field_semantics": {
+   "evidence_ref": "Stable unique deterministic id. Format E:<team_role>:<metric>:<perspective>:<period>:<venue_scope>:<window>. Resolves to exactly one evidence tuple. Deterministically decodable via resolve_evidence_ref.",
+   "team_role": "TEAM_A (target home team) | TEAM_B (target away team) | COMPETITION_CONTEXT",
+   "metric": "canonical metric id from allowed_metric_vocabulary",
+   "perspective": "FOR | AGAINST | NEUTRAL (NEUTRAL only for competition-environment reference means)",
+   "period": "FULL_MATCH | FIRST_HALF | SECOND_HALF",
+   "venue_scope": "ALL | HOME | AWAY",
+   "value": "deterministic mean of the metric over the window's strictly-prior matches (float, 3 decimals). Descriptive historical average only; never a probability/effect/odds.",
+   "sample_n": "integer count of strictly-prior matches with a populated observation contributing to value",
+   "reliability_code": "0/1/2 categorical support label derived ONLY from sample_n; no numeric reliability score, no shrinkage weight exposed",
+   "provider": "footystats (packet-level)",
+   "information_cutoff_unix": "== target kickoff_unix (packet-level and per-provenance)"
+  },
+  "value_is_descriptive_history_only": true,
+  "no_candidate_id_field": true,
+  "no_salience_or_rank_field": true,
+  "no_oos_or_market_or_p_model_field": true,
+  "no_llm_similarity_field": true
+ },
+ "scope_grid_policy": {
+  "rule": "FROZEN_STRUCTURAL_COMPACT_GRID",
+  "description": "Per (metric, period, perspective), a frozen value-independent (venue_scope, window) grid is emitted (chosen structurally, never from any outcome): FULL_MATCH+FOR => {ALLxALL_PRIOR, HOMExALL_PRIOR, AWAYxALL_PRIOR, ALLxRECENT_5}; FULL_MATCH+AGAINST => {ALLxALL_PRIOR, ALLxRECENT_5}; FIRST_HALF/SECOND_HALF (incl. cards_2h) => {ALLxALL_PRIOR} for both FOR and AGAINST. This preserves both-team, attack+defense, venue, recency, and half/state coverage across all metric families while bounding packet bytes."
+ },
+ "reliability_policy": {
+  "expose_sample_n": true,
+  "expose_categorical_reliability": true,
+  "reliability_bands": {"THIN": "sample_n < 5", "MODERATE": "5 <= sample_n < 12", "AMPLE": "sample_n >= 12"},
+  "no_numeric_reliability_or_shrinkage_weight_in_packet": true,
+  "rationale": "The model must see whether a visible average rests on 2 vs 30 observations, but Item 6 does not ask the model to compute feasibility, so no numeric reliability/shrinkage weight is exposed (that stays with the deterministic engine)."
+ },
+ "provenance_requirements": {
+  "packet_provider": "footystats",
+  "provider_normalization_version": "item6_evidence_footystats_pit_v1",
+  "bind_information_cutoff": true,
+  "bind_provider": true,
+  "bind_n_source_matches_per_team": true,
+  "per_observation_match_ids_enumerated_in_packet": false,
+  "per_observation_match_ids_enumerated_reason": "Enumerating every source match id per statistic would explode packet bytes; instead each team's packet binds its total n_source_matches and the min/max source kickoff window, and the whole packet is content-hashed. Full per-observation provenance is deterministically reproducible from the frozen corpus + materializer + cutoff."
+ },
+ "ordering_policy": {
+  "rule": "ANTI_SALIENCE_NEUTRAL_CANONICAL",
+  "description": "Evidence items are ordered by a frozen value-independent key: (team_role order [TEAM_A, TEAM_B, COMPETITION_CONTEXT], then canonical metric id ascending alphabetical from a frozen metric registry, then perspective [FOR, AGAINST, NEUTRAL], then period [FULL_MATCH, FIRST_HALF, SECOND_HALF], then venue_scope [ALL, HOME, AWAY], then window [ALL_PRIOR, RECENT_5]). Ordering NEVER depends on the value, sample_n, variance, or any salience/importance. No metric family (e.g. corners or shots) is privileged by position; alphabetical-by-canonical-id is deliberately value-neutral.",
+  "metric_registry_order": ["cards_2h", "corner_kicks", "fouls", "goals", "offsides", "possession", "red_cards", "shots", "shots_on_target", "yellow_cards"],
+  "metric_registry_order_note": "Frozen ascending alphabetical by canonical metric id (matches packet_materializer.METRIC_REGISTRY exactly: cards_2h < corner_kicks < ...). This is the ONLY ordering authority; the mechanism prompt's mention order does not influence packet order."
+ },
+ "missing_value_policy": {
+  "rule": "OMIT_NOT_ZERO",
+  "description": "A metric observation that is NULL or the FootyStats sentinel -1 is treated as MISSING and excluded from the aggregate (NULL != ZERO). If a (metric, perspective, period, venue_scope, window) cell has zero populated prior observations, that evidence item is OMITTED entirely (it is never emitted with a fabricated 0 value and never listed in the observable vocabulary for that team if the team has no populated observations of the metric in any scope).",
+  "null_sentinels": [null, -1]
+ },
+ "observable_vocabulary_exposure": {
+  "rule": "The packet exposes, per fixture, an observable_vocabulary list = the sorted set of canonical metrics for which at least one non-empty evidence item was emitted (i.e. actually measurable for this fixture's teams from pre-target FootyStats data). A metric is listed IFF it is genuinely present; the schema knowing a metric name is NOT sufficient.",
+  "vocabulary_provider_safe": true
+ },
+ "max_packet_size": {
+  "max_request_utf8_bytes": 32768,
+  "note": "The full canonical Converse request (system prompt + fixture identity + this packet + tool schema + inferenceConfig) MUST be <= 32768 UTF-8 bytes, enforced by request_builder.within_byte_budget. The materializer emits a bounded number of evidence items (see cap) and rounds values to 3 decimals to keep bytes bounded. If any full request exceeds the ceiling, a frozen compression policy is applied (see compression_policy)."
+ },
+ "compression_policy": {
+  "required_by_default": false,
+  "required_in_this_freeze": false,
+  "required_in_this_freeze_reason": "With the frozen COMPACT_MAP encoding and compact scope grid, all 120 fully-materialized Converse requests are <= 32768 bytes (observed max ~28.2 KB). No compression is applied.",
+  "policy_artifact": "research/item6/ITEM6_PACKET_COMPRESSION_POLICY_V1.json",
+  "note": "A frozen information-preserving compression policy exists as a separate contingency artifact and would be applied ONLY if a fully-materialized request exceeded the byte ceiling. It never uses future outcomes and never systematically privileges one metric family."
+ },
+ "evidence_ref_format": {
+  "pattern": "E:<TEAM_A|TEAM_B|COMPETITION_CONTEXT>:<metric>:<FOR|AGAINST|NEUTRAL>:<FULL_MATCH|FIRST_HALF|SECOND_HALF>:<ALL|HOME|AWAY>:<ALL_PRIOR|RECENT_5>",
+  "uniqueness": "Each evidence_ref binds to exactly one evidence item. Duplicate refs are a materialization failure (fail closed).",
+  "stability": "Deterministic and stable under replay from the frozen corpus + cutoff."
+ },
+ "determinism_requirements": {
+  "no_llm_call": true,
+  "pure_function_of": ["frozen fixture identity", "frozen cohort kickoff (cutoff)", "frozen FootyStats corpus content", "frozen materializer source"],
+  "canonical_json": "sort_keys=true, separators=(',',':'), ensure_ascii=false, allow_nan=false; values rounded to 3 decimals before hashing",
+  "packet_hash": "sha256 over canonical JSON of the packet body (excluding the packet's own self-hash field)"
+ },
+ "reads_no_outcome_of_target": true,
+ "reads_no_future_fixture": true,
+ "reads_no_market": true,
+ "reads_no_llm_output": true,
+ "reads_no_oos_history": true,
+ "does_not_enumerate_candidates": true,
+ "does_not_expose_salience_or_rank": true
+}

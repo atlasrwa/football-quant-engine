@@ -231,7 +231,20 @@ class Stage1Runner:
                     fixture_packet: Optional[Dict] = None) -> FixtureResult:
         fx = fixture["fixture_id"]
 
-        # 0. idempotent resume: already handled?
+        # 0a. LIVE empty-evidence-packet firewall. In LIVE mode (a real bedrock transport is
+        #     bound) the fixture MUST carry a non-empty populated evidence packet; an empty or
+        #     missing packet is refused BEFORE any token count and BEFORE the attempt marker.
+        #     This makes evidence_packet={} impossible on the paid path (the empty-skeleton
+        #     scientific defect can never be transmitted live).
+        if getattr(self, "_item6_live_transport", None) is not None:
+            if not isinstance(fixture_packet, dict) or not fixture_packet.get("evidence") \
+                    or int(fixture_packet.get("n_evidence_items", 0)) <= 0:
+                raise RunnerRefused(
+                    f"{fx}: LIVE mode requires a non-empty frozen evidence packet; "
+                    "empty/missing packet refused before CountTokens (LIVE_EMPTY_EVIDENCE_"
+                    "PACKET_ALLOWED=false).")
+
+        # 0b. idempotent resume: already handled?
         resumed = self._resume_status(fx)
         if resumed is not None:
             return FixtureResult(fx, resumed, request_sha256="",

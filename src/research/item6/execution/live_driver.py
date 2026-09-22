@@ -39,13 +39,15 @@ from typing import Any, Dict, Optional
 
 from src.research.item6.execution import execution_status as ES
 from src.research.item6.execution import request_builder as RB
+from src.research.item6.evidence.frozen_packet_provider import (
+    FrozenPacketError, FrozenPacketProvider)
 from src.research.item6.execution.live_transport import (
     AWS_REGION, MODEL_ID, MODEL_PROFILE_ID, MODEL_PROVIDER, BedrockStage1Transport,
     LiveTransportRefused, TransportMode, sdk_capability_report)
 from src.research.item6.execution.runner import (RunnerConfig, RunnerRefused,
                                                  Stage1Runner, verify_frozen_identities)
 
-LIVE_DRIVER_VERSION = "item6_stage1_live_driver_v1"
+LIVE_DRIVER_VERSION = "item6_stage1_live_driver_v2"
 ROOT = "/home/ubuntu"
 
 LIVE_TRANSPORT_SRC = "src/research/item6/execution/live_transport.py"
@@ -222,23 +224,51 @@ def build_live_runner(manifest_path: str, *, authorized_ceiling_usd: float,
     return runner
 
 
+def _load_frozen_packet_provider(manifest: Dict[str, Any], root: str,
+                                 data_root: str) -> "FrozenPacketProvider":
+    """Load + integrity-check the frozen evidence packet + materialized request sets bound by
+    the run manifest. Fail closed on any set-hash mismatch. (V5 manifests bind these; older
+    manifests without them cannot drive the populated LIVE path.)"""
+    ev = manifest.get("evidence_input")
+    if not ev:
+        raise LiveDriverRefused(
+            "run manifest does not bind an evidence_input block; a populated LIVE run "
+            "requires a V5+ manifest that freezes the evidence packet + materialized request "
+            "sets (empty-skeleton path is not authorized).")
+    provider = FrozenPacketProvider.from_frozen(
+        code_root=root, data_root=data_root,
+        request_set_rel=ev["materialized_request_set_path"],
+        packet_set_rel=ev["evidence_packet_set_path"])
+    if provider.materialized_request_set_sha256 != ev["materialized_request_set_sha256"]:
+        raise LiveDriverRefused("materialized request set sha mismatch vs manifest")
+    if provider.evidence_packet_set_sha256 != ev["evidence_packet_set_sha256"]:
+        raise LiveDriverRefused("evidence packet set sha mismatch vs manifest")
+    return provider
+
+
 def run_live(manifest_path: str, *, authorized_ceiling_usd: float, out_dir: str,
-             root: str = ROOT, region: str = AWS_REGION) -> Dict[str, Any]:
-    """Execute the frozen Stage-1 run LIVE. NOT invoked by the readiness amendment or any
-    test; requires an explicit human call with an authorized ceiling. Iterates the frozen
-    cohort, transmitting at most one authentic Converse treatment per fixture under the
-    frozen runner's caps. Returns a reconciliation summary. (Left here as the committed
-    entrypoint; the readiness amendment does not call it.)"""
+             root: str = ROOT, region: str = AWS_REGION,
+             data_root: Optional[str] = None) -> Dict[str, Any]:
+    """Execute the frozen Stage-1 run LIVE with the FROZEN POPULATED evidence packet per
+    fixture. NOT invoked by this amendment or any test; requires an explicit human call with
+    an authorized ceiling. For each frozen cohort fixture it loads+verifies the frozen
+    evidence packet (empty/missing/hash-mismatch => fail closed BEFORE CountTokens and BEFORE
+    the attempt marker) and transmits at most one authentic Converse treatment under the
+    frozen runner's caps. Returns a reconciliation summary."""
     runner = build_live_runner(manifest_path, authorized_ceiling_usd=authorized_ceiling_usd,
                                out_dir=out_dir, root=root, region=region)
     transport = runner._item6_live_transport
     manifest = json.load(open(f"{root}/{manifest_path}"))
+    data_root = data_root or root
+    provider = _load_frozen_packet_provider(manifest, root=root, data_root=data_root)
     cohort = json.load(open(f"{root}/{manifest['scientific_artifact_paths']['cohort_manifest']}"))
     results = []
     for fx in cohort["fixtures"]:
         if not runner.guard.call_cap_ok():
             break
-        res = runner.run_fixture(fx, transport.converse)
+        # FAIL CLOSED before any paid work: obtain the verified frozen populated packet.
+        packet = provider.get_verified_packet(fx)   # raises FrozenPacketError on any problem
+        res = runner.run_fixture(fx, transport.converse, fixture_packet=packet)
         results.append(res.to_dict())
     return {
         "live_driver_version": LIVE_DRIVER_VERSION,
@@ -247,6 +277,7 @@ def run_live(manifest_path: str, *, authorized_ceiling_usd: float, out_dir: str,
         "spend_ledger": runner.guard.to_dict(),
         "count_tokens_counters": runner.count_counters.to_dict(),
         "transport": transport.version_stamp(),
+        "frozen_packet_provider": provider.version_stamp(),
     }
 
 
@@ -258,4 +289,7 @@ def version_stamp() -> Dict[str, Any]:
         "requires_explicit_runtime_ceiling": True,
         "embeds_authorized_true": False,
         "fail_closed_preflight": True,
+        "requires_frozen_populated_evidence_packet": True,
+        "live_empty_evidence_packet_allowed": False,
+        "live_packet_hash_enforced": True,
     }

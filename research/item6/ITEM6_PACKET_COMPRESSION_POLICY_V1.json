@@ -1,0 +1,31 @@
+{
+ "policy_version": "item6_packet_compression_policy_v1",
+ "purpose": "Frozen, information-preserving contingency policy applied ONLY if a fully-materialized Item 6 Stage-1 Converse request would exceed MAX_REQUEST_UTF8_BYTES (32768). It defines a deterministic, value-neutral order in which evidence scopes are dropped, never using any future outcome and never systematically privileging one metric family.",
+ "applied_in_current_freeze": false,
+ "applied_in_current_freeze_reason": "All 120 fully-materialized requests are <= 32768 bytes (observed max ~28.2 KB) under the frozen COMPACT_MAP encoding and compact scope grid; no compression was applied. This artifact is retained as a bound-preserving contingency only.",
+ "max_request_utf8_bytes": 32768,
+ "determinism": "Given a packet exceeding the ceiling, the policy deterministically removes evidence items in the frozen tier order below until the full request fits, recomputing the packet hash after removal. No value, sample_n, or reliability is altered; only whole scopes are dropped, lowest-information-density tiers first.",
+ "removal_tiers_in_order": [
+  {"tier": 1, "drop": "RECENT_5 window items for the AGAINST perspective (recent concession form)", "rationale": "recent-form on the concession side is the most redundant with ALL_PRIOR concession + recent FOR form"},
+  {"tier": 2, "drop": "HOME/AWAY venue split items for FULL_MATCH FOR (keep ALL venue)", "rationale": "venue splits are secondary to the ALL-venue level; drop both HOME and AWAY together to avoid privileging a venue"},
+  {"tier": 3, "drop": "FIRST_HALF items (keep SECOND_HALF and FULL_MATCH)", "rationale": "retain one half-state view (second half) plus full match; drop first-half symmetrically across ALL metrics that have it"},
+  {"tier": 4, "drop": "RECENT_5 window items for the FOR perspective (keep ALL_PRIOR)", "rationale": "form context is secondary to long-run level; dropped last among windowed items, symmetric across metrics"}
+ ],
+ "invariants_preserved_at_every_tier": [
+  "both TEAM_A and TEAM_B remain represented",
+  "both FOR (attack) and AGAINST (defense) full-match ALL-venue ALL_PRIOR items remain for every metric present",
+  "every metric family present remains represented (no metric family is fully removed before another)",
+  "sample_n and reliability remain attached to every surviving item",
+  "competition-environment context remains",
+  "ordering remains value-independent canonical",
+  "no future outcome, market, candidate id, or salience is ever consulted or added"
+ ],
+ "never_does": [
+  "truncate ad hoc / mid-item",
+  "use future outcomes or OOS results to decide survivors",
+  "systematically privilege corners, shots, or any single metric",
+  "drop one team entirely",
+  "remove all defensive (AGAINST) context"
+ ],
+ "hash_after_compression": "packet_sha256 is recomputed over the compressed packet body; the materialized request set binds the post-compression packet hash."
+}
