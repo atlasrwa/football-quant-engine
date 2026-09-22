@@ -22,8 +22,14 @@ api = [
     "uvicorn==0.27.1",
 ]
 bedrock = [
-    "boto3==1.34.69",
-    "botocore==1.34.69",
+    # Pinned to a build whose bedrock-runtime service model exposes BOTH the
+    # Converse and CountTokens operations required by the Item 6 Stage-1 live
+    # transport. boto3/botocore 1.34.69 predate CountTokens (and 1.34.46 predates
+    # Converse), which is what forced the earlier zero-spend execution stop. The
+    # capability is asserted programmatically from the constructed client's service
+    # model at driver preflight, not from these version strings alone.
+    "boto3==1.43.93",
+    "botocore==1.43.93",
 ]
 
 [build-system]
