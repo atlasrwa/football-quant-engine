@@ -16,20 +16,24 @@ FROZEN WINDOW POLICY
   RETRAIN_FREQUENCY        Once per fold (refit from scratch on that fold's training block).
   MIN_TRAINING_HISTORY     The first MIN_TRAIN_FRAC of the MATCH SEQUENCE is never tested on.
 
-MIN_TRAIN_FRAC = 0.20 IS CHOSEN BY A PRE-DECLARED RULE, NOT BY TASTE
---------------------------------------------------------------------
+HOW MIN_TRAIN_FRAC = 0.20 WAS CHOSEN (stated precisely, because the order matters)
+---------------------------------------------------------------------------------
+Honest sequence: a candidate grid was SWEPT FIRST on data-density grounds, and the selection
+criterion below was fixed AFTER observing the resulting fold sizes and ISO-week counts but
+BEFORE any outcome access. The sweep measured ONLY match counts, ISO-week counts and calendar
+dates -- no label, no metric, no model. It is therefore not outcome peeking, but it is also not
+a criterion that predated the measurement, and it should not be described as one.
 The primary endpoint's precision is governed by the NUMBER OF ISO-WEEK BOOTSTRAP BLOCKS, so a
 larger test span is scientifically valuable. But the training block must still support M1's
 larger design matrix (174 columns), or the augmented arm is starved and the comparison is biased
-toward the null. The frozen rule is therefore:
+toward the null. The criterion, now frozen:
 
-    pick the SMALLEST min_train_frac whose MINIMUM per-fold training size is at least
-    20x the M1 feature-universe size (174 x 20 = 3480 matches).
+    maximise the number of ISO-week bootstrap blocks SUBJECT TO the minimum per-fold training
+    size being at least 20x the M1 feature-universe size (~174 columns x 20 = 3480 matches).
 
 Measured on this corpus (chronology only, no outcome read): 0.15 -> 2925 (fails), 0.20 -> 3904
 (passes, 95 blocks), 0.25 -> 4881 (passes but only 88 blocks). 0.20 is the smallest passing
-value and is frozen. The rule, the candidate grid and the selected value are all fixed before
-any outcome is observed; the sweep measured only fold sizes, week counts and dates.
+value that satisfies the training-size floor, and is frozen. Nothing downstream may change it.
   CALIBRATION_WINDOW       Inner training folds only (never the test block).
 
 ELIGIBILITY IS OUTCOME-BLIND

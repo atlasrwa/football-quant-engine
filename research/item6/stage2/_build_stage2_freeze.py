@@ -253,7 +253,13 @@ protocol = {
     "temporal_resolution_source": "period field of the mechanism's cited evidence refs (NOT the "
                                   "LLM's self-declared temporal_resolution_requirement)",
     "target_selection_rule": {
-        "rule": "Declared before any outcome access: the PRIMARY target is the market family "
+        "rule_provenance":
+            "The relevance counts below were COMPUTED FIRST, then the criterion was written. "
+            "Both happened before any outcome access -- the counts are a property of the "
+            "feasible family set and the target metric definitions, not of any result. The "
+            "strongest evidence that the criterion is not gamed is its outcome: it selected "
+            "GOALS, while Stage-1 mechanism density was highest for CORNERS.",
+        "rule": "The PRIMARY target is the market family "
                 "with the largest number of FEASIBLE canonical metric instantiations, because a "
                 "target the surviving families cannot speak to yields a null by construction "
                 "and answers nothing. Tie-break: base rate closest to 0.50 (maximum information "
@@ -263,9 +269,9 @@ protocol = {
         "tie_break_applied": "goals and btts tie on metric relevance; goals O/U 2.5 base rate "
                              "0.556 is closer to 0.50 than btts 0.569",
         "not_selected_because_of_stage1_density":
-            "The rule selected the GOALS family. Stage-1 mechanism density was highest for "
-            "corners, which the rule did NOT select -- so target choice was not driven by where "
-            "the LLM happened to generate most.",
+            "The criterion selected the GOALS family. Stage-1 mechanism density was highest for "
+            "corners, which it did NOT select -- so target choice was not driven by where the "
+            "LLM happened to generate most.",
         "secondary_targets": SECONDARY_TARGETS},
     "arms": {"M0": "deterministic baseline feature universe (champion stat-mixer pool, "
                    "unweakened)",
@@ -338,7 +344,25 @@ audit = {
         "Stage-2 outcomes, and no Stage-2 fold, arm or prediction was scored to obtain them. "
         "They were used only to anchor the minimum practical improvement and the target "
         "tie-break, both of which are frozen before execution.",
-    "label_function_invoked": False,
+    "mix_outcome_never_called": True,
+    "outcome_label_function_scope_note":
+        "`mix.outcome()` -- the only label-producing function in the pipeline -- was never "
+        "called anywhere in the Stage-2 build. Verified by inspection of this build script and "
+        "the stage2 package; a test additionally asserts the feature generator contains no "
+        "reference to it.",
+    "fold_manifest_inputs":
+        "date_unix, home_name, away_name, competition_id and feature-sufficiency match COUNTS "
+        "only. Sufficiency comes from mix.history_provenance(), which was read and verified to "
+        "compute only season keys, completed-match counts and window-population flags -- it "
+        "touches no score or outcome field.",
+    "scope_caveat":
+        "Corpus match dicts physically contain outcome fields (homeGoalCount, totalGoalCount, "
+        "team_a_corners, ...) because they are whole provider records. The claim made here is "
+        "that no such field was READ or EVALUATED for any target, not that the dicts were "
+        "stripped of them. Feature construction reads only the metric fields named in "
+        "feature_generator.FULL_FIELDS / HALF_FIELDS, of which team_a_corners and homeGoalCount "
+        "are legitimately among them AS PRIOR-MATCH FEATURE INPUTS for completed matches "
+        "strictly before kickoff -- never as a label for the fixture being predicted.",
     "fold_manifest_built_without_label_availability": True,
 }
 rec("ITEM6_STAGE2_OUTCOME_BLINDNESS_AUDIT_V1.json", audit)
