@@ -1,0 +1,2126 @@
+{
+ "audits": [
+  {
+   "COMPILABLE": true,
+   "CONFOUNDERS": {
+    "handled": [
+     "competition (z-scoring)",
+     "venue (home only)",
+     "opponent strength (diagnostic + adjusted secondary)",
+     "season (reported per group)"
+    ],
+    "unhandled": [
+     "Girona regime change",
+     "score state (no half data)",
+     "lineups/injuries (not available)"
+    ]
+   },
+   "INPUT_METRICS": [
+    "corners",
+    "possession",
+    "shots",
+    "shots_inside_box",
+    "shots_on_target",
+    "touches_in_box"
+   ],
+   "MECHANISM_ID": "DP1_BOX_PRESSURE_MATCHUP",
+   "MIN_SUPPORT": {
+    "MIN_SIMILAR_MATCHES": {
+     "constant": "MIN_SIMILAR_MATCHES",
+     "value": 10
+    },
+    "MIN_SUBJECT_MATCHES": {
+     "constant": "MIN_SUBJECT_MATCHES",
+     "value": 30
+    },
+    "on_failure": "INSUFFICIENT_SUPPORT"
+   },
+   "NUMERIC_LLM_INPUT_USED": false,
+   "OPEN_ISSUES": [
+    "'shots' is used because the hypothesis names it in prose ('distribution of corners, shots and shots on target') although it is absent from its variables list",
+    "DP1 and DP6 share the population and 2 of 4 profile dimensions; their neighbour sets will overlap"
+   ],
+   "PIT_SAFE": true,
+   "PRIMARY_OUTPUT": "mean(pressure_composite | neighbours) - mean(pressure_composite | comparison)",
+   "PRIMARY_POPULATION": "subject team's HOME matches strictly before the target kickoff (all competitions, competition-standardized)",
+   "PROVIDER_SAFE": true,
+   "SIMILARITY_DIMENSIONS": [
+    "possession.AGAINST",
+    "touches_in_box.AGAINST",
+    "shots_inside_box.AGAINST",
+    "corners.AGAINST"
+   ],
+   "SIMILARITY_REQUIRED": true
+  },
+  {
+   "COMPILABLE": true,
+   "CONFOUNDERS": {
+    "handled": [
+     "competition (z-scoring)",
+     "venue (home only)"
+    ],
+    "unhandled": [
+     "opponent possession/defensive strength in the primary (conditioned only in the secondary)",
+     "recent-vs-long-run regime",
+     "Girona regime change"
+    ]
+   },
+   "INPUT_METRICS": [
+    "accurate_crosses",
+    "corners",
+    "touches_in_box"
+   ],
+   "MECHANISM_ID": "DP2_WIDE_CENTRAL_INTERACTION",
+   "MIN_SUPPORT": {
+    "min_obs_per_parameter": {
+     "constant": "MIN_OBS_PER_PARAMETER",
+     "value": 10
+    }
+   },
+   "NUMERIC_LLM_INPUT_USED": false,
+   "OPEN_ISSUES": [
+    "provider semantics: accurate_crosses may count corner deliveries and touches_in_box set-piece touches (possible mechanical/reverse link)"
+   ],
+   "PIT_SAFE": true,
+   "PRIMARY_OUTPUT": "coefficient of x1*x2 in z(corners) ~ 1 + x1 + x2 + x1*x2 over all eligible Girona home matches",
+   "PRIMARY_POPULATION": "Girona HOME matches strictly before the target kickoff",
+   "PROVIDER_SAFE": true,
+   "SIMILARITY_DIMENSIONS": [
+    "accurate_crosses.AGAINST",
+    "touches_in_box.AGAINST"
+   ],
+   "SIMILARITY_REQUIRED": false
+  },
+  {
+   "COMPILABLE": true,
+   "CONFOUNDERS": {
+    "handled": [
+     "competition (z-scoring)",
+     "venue (away only)",
+     "opponent profile (secondary)"
+    ],
+    "unhandled": [
+     "score state (a trailing team concedes possession; no half data)",
+     "opponent strength (diagnostic only)",
+     "season"
+    ]
+   },
+   "INPUT_METRICS": [
+    "accurate_long_balls",
+    "corners",
+    "final_third_entries",
+    "possession",
+    "shots"
+   ],
+   "MECHANISM_ID": "DP3_ALBACETE_DIRECT_PROGRESSION",
+   "MIN_SUPPORT": {
+    "MIN_SIMILAR_MATCHES": {
+     "constant": "MIN_SIMILAR_MATCHES",
+     "value": 10
+    },
+    "MIN_SUBJECT_MATCHES": {
+     "constant": "MIN_SUBJECT_MATCHES",
+     "value": 30
+    },
+    "on_failure": "INSUFFICIENT_SUPPORT"
+   },
+   "NUMERIC_LLM_INPUT_USED": false,
+   "OPEN_ISSUES": [],
+   "PIT_SAFE": true,
+   "PRIMARY_OUTPUT": "Spearman rho(direct_progression_index, output_composite) over low-possession away matches",
+   "PRIMARY_POPULATION": "Albacete AWAY matches strictly before the target kickoff in which its own possession z < 0 (below its competition's median; the median is the scaling centre, not an LLM number)",
+   "PROVIDER_SAFE": true,
+   "SIMILARITY_DIMENSIONS": [
+    "possession.AGAINST",
+    "final_third_entries.AGAINST",
+    "shots.AGAINST",
+    "corners.AGAINST"
+   ],
+   "SIMILARITY_REQUIRED": false
+  },
+  {
+   "COMPILABLE": true,
+   "CONFOUNDERS": {
+    "handled": [
+     "competition and venue (z within competition x venue)",
+     "circularity (reference matches excluded)"
+    ],
+    "unhandled": [
+     "competition change inside the recent windows (regime)",
+     "opponent strength (diagnostic)",
+     "small RECENT_5"
+    ]
+   },
+   "INPUT_METRICS": [
+    "accurate_crosses",
+    "corners",
+    "final_third_entries",
+    "possession",
+    "shots",
+    "touches_in_box"
+   ],
+   "MECHANISM_ID": "DP4_GIRONA_CURRENT_TERRITORIAL_REGIME",
+   "MIN_SUPPORT": {
+    "MIN_SIMILAR_MATCHES": {
+     "constant": "MIN_SIMILAR_MATCHES",
+     "value": 10
+    },
+    "MIN_SUBJECT_MATCHES": {
+     "constant": "MIN_SUBJECT_MATCHES",
+     "value": 30
+    },
+    "on_failure": "INSUFFICIENT_SUPPORT"
+   },
+   "NUMERIC_LLM_INPUT_USED": false,
+   "OPEN_ISSUES": [
+    "'shots' is used because the hypothesis names it in prose ('corner/shot behavior') although it is absent from its variables list",
+    "recent windows straddle LaLiga -> LaLiga 2; reference matches are excluded from the comparison pool"
+   ],
+   "PIT_SAFE": true,
+   "PRIMARY_OUTPUT": "mean(resid | k nearest to S) - mean(resid | k nearest to R10 among the rest)",
+   "PRIMARY_POPULATION": "Girona HOME matches strictly before the target kickoff, EXCLUDING every match used to define the recent-5 or recent-10 reference states (no circularity)",
+   "PROVIDER_SAFE": true,
+   "SIMILARITY_DIMENSIONS": [
+    "possession.FOR",
+    "final_third_entries.FOR",
+    "touches_in_box.FOR",
+    "accurate_crosses.FOR"
+   ],
+   "SIMILARITY_REQUIRED": true
+  },
+  {
+   "COMPILABLE": true,
+   "CONFOUNDERS": {
+    "handled": [
+     "venue (away only)",
+     "opponent concession (profile subtraction)",
+     "competition (z; Albacete stays in LaLiga 2)"
+    ],
+    "unhandled": [
+     "season boundary: the recent away block spans the summer break",
+     "opponent strength (diagnostic)"
+    ]
+   },
+   "INPUT_METRICS": [
+    "corners",
+    "final_third_entries",
+    "possession",
+    "touches_in_box"
+   ],
+   "MECHANISM_ID": "DP5_ALBACETE_RECENT_TERRITORIAL_EXPANSION",
+   "MIN_SUPPORT": {
+    "min_long_run": {
+     "constant": "MIN_LONG_RUN_MATCHES",
+     "value": 20
+    }
+   },
+   "NUMERIC_LLM_INPUT_USED": false,
+   "OPEN_ISSUES": [
+    "primary is descriptive (no valid exchangeable null); excluded from BH; recent away block spans the summer break"
+   ],
+   "PIT_SAFE": true,
+   "PRIMARY_OUTPUT": "composite (shrunk recent-block minus long-run adjusted territorial state)",
+   "PRIMARY_POPULATION": "Albacete AWAY matches strictly before the target kickoff",
+   "PROVIDER_SAFE": true,
+   "SIMILARITY_DIMENSIONS": [
+    "possession.AGAINST",
+    "final_third_entries.AGAINST",
+    "touches_in_box.AGAINST"
+   ],
+   "SIMILARITY_REQUIRED": false
+  },
+  {
+   "COMPILABLE": true,
+   "CONFOUNDERS": {
+    "handled": [
+     "competition (z)",
+     "venue (home only)",
+     "opponent strength (diagnostic + adjusted secondary)"
+    ],
+    "unhandled": [
+     "possession (not a frozen DP6 dimension)",
+     "score state",
+     "Girona regime change"
+    ]
+   },
+   "INPUT_METRICS": [
+    "big_chances",
+    "clearances",
+    "corners",
+    "shots",
+    "shots_inside_box",
+    "shots_on_target",
+    "touches_in_box"
+   ],
+   "MECHANISM_ID": "DP6_PRESSURE_RESOLUTION_CLEARANCE_PROFILE",
+   "MIN_SUPPORT": {
+    "MIN_SIMILAR_MATCHES": {
+     "constant": "MIN_SIMILAR_MATCHES",
+     "value": 10
+    },
+    "MIN_SUBJECT_MATCHES": {
+     "constant": "MIN_SUBJECT_MATCHES",
+     "value": 30
+    },
+    "on_failure": "INSUFFICIENT_SUPPORT"
+   },
+   "NUMERIC_LLM_INPUT_USED": false,
+   "OPEN_ISSUES": [
+    "DP1 and DP6 share the population and 2 of 4 profile dimensions; their neighbour sets will overlap"
+   ],
+   "PIT_SAFE": true,
+   "PRIMARY_OUTPUT": "mean(resolution_contrast | neighbours) - mean(resolution_contrast | comparison)",
+   "PRIMARY_POPULATION": "Girona HOME matches strictly before the target kickoff",
+   "PROVIDER_SAFE": true,
+   "SIMILARITY_DIMENSIONS": [
+    "clearances.FOR",
+    "touches_in_box.AGAINST",
+    "shots.AGAINST",
+    "shots_inside_box.AGAINST"
+   ],
+   "SIMILARITY_REQUIRED": true
+  }
+ ],
+ "bh_family": [
+  "DP1_BOX_PRESSURE_MATCHUP",
+  "DP2_WIDE_CENTRAL_INTERACTION",
+  "DP3_ALBACETE_DIRECT_PROGRESSION",
+  "DP4_GIRONA_CURRENT_TERRITORIAL_REGIME",
+  "DP6_PRESSURE_RESOLUTION_CLEARANCE_PROFILE"
+ ],
+ "bh_q": {
+  "constant": "BH_Q",
+  "value": 0.1
+ },
+ "competition_policy": {
+  "detail": "every observation is z-scored within its own competition using strictly prior data, so LaLiga and LaLiga 2 values are compared as 'relative to that league'; no raw pooling across competitions",
+  "limitation": "this corrects league-level scale, NOT a team's own regime change on promotion/relegation",
+  "policy": "B_COMPETITION_STANDARDIZED"
+ },
+ "historical_effects_computed": false,
+ "model_fit": false,
+ "outcomes_read": false,
+ "p_model_produced": false,
+ "protocol_constants": {
+  "BH_Q": {
+   "rationale": "Benjamini-Hochberg across the inferential primaries (exploratory pilot).",
+   "value": 0.1
+  },
+  "DISTANCE_ROUND_DECIMALS": {
+   "rationale": "Distances are rounded to 12 decimals before ordering so floating-point noise cannot reorder ties; ties then break by (kickoff, match_id).",
+   "value": 12
+  },
+  "IQR_TO_SD": {
+   "rationale": "Fallback when MAD is 0: IQR/1.349 estimates the SD under normality.",
+   "value": 1.349
+  },
+  "MAD_TO_SD": {
+   "rationale": "Consistency constant making MAD estimate the SD under normality.",
+   "value": 1.4826
+  },
+  "MIN_LONG_RUN_MATCHES": {
+   "rationale": "DP5 long-run reference needs >= 20 away matches before the recent block (four disjoint blocks).",
+   "value": 20
+  },
+  "MIN_METRIC_COVERAGE": {
+   "rationale": "A required metric must be non-null in >= 80% of the candidate subject matches, else the metric is unsupported (fail closed).",
+   "value": 0.8
+  },
+  "MIN_OBS_PER_PARAMETER": {
+   "rationale": "Regression support rule: >= 10 observations per estimated parameter (standard events-per-variable guidance).",
+   "value": 10
+  },
+  "MIN_PROFILE_DIMENSION_COVERAGE": {
+   "rationale": "All profile dimensions required; a distance over a subset of dimensions is a different profile.",
+   "value": 1.0
+  },
+  "MIN_PROFILE_MATCHES_PER_DIM": {
+   "rationale": "At least half the profile window must be non-null for a dimension; a mean of fewer than 5 matches is dominated by one or two games.",
+   "value": 5
+  },
+  "MIN_REFERENCE_OBS": {
+   "rationale": "Robust median/MAD of a competition distribution needs about 100 matches (200 team-match values) before it is stable.",
+   "value": 200
+  },
+  "MIN_SIMILAR_MATCHES": {
+   "rationale": "Neighbour and comparison groups each need >= 10 matches so that no one or two matches dominate a group mean.",
+   "value": 10
+  },
+  "MIN_STRENGTH_MATCHES": {
+   "rationale": "Strength needs >= 5 of those matches, else it is missing (never a gate on eligibility).",
+   "value": 5
+  },
+  "MIN_SUBJECT_MATCHES": {
+   "rationale": "Tercile split of 30 gives >= 10 neighbours and >= 20 others; also the minimum for a rank correlation with SE near 0.19.",
+   "value": 30
+  },
+  "NEIGHBOR_FRACTION": {
+   "rationale": "Nearest tercile of eligible subject matches; the same domain-neutral tercile grid used elsewhere in the engine, not tuned.",
+   "value": 0.3333333333333333
+  },
+  "N_RESAMPLES": {
+   "rationale": "Permutation resamples for every primary null.",
+   "value": 10000
+  },
+  "PROFILE_WINDOW_MATCHES": {
+   "rationale": "Last 10 venue-matched prior matches: the packet's own RECENT_10 horizon, and a length that does not depend on how far back the corpus happens to start (ALL_PRIOR does).",
+   "value": 10
+  },
+  "RECENT_BLOCK_MATCHES": {
+   "rationale": "DP5 recent block = last 5 away matches (the packet's RECENT_5 horizon applied away-only).",
+   "value": 5
+  },
+  "RNG_SEED": {
+   "rationale": "numpy.random.default_rng(0), fresh per measurement.",
+   "value": 0
+  },
+  "SHRINKAGE_KAPPA": {
+   "rationale": "Credibility weight n/(n+kappa) with kappa = the recent window length: a full recent window gets equal weight with its reference, the minimal-assumption choice.",
+   "value": 5
+  },
+  "STRENGTH_WINDOW_MATCHES": {
+   "rationale": "Opponent strength = mean goal difference over its last 10 same-competition matches.",
+   "value": 10
+  }
+ },
+ "protocol_version": "direct_hypothesis_measurement_v1",
+ "similarity_method": {
+  "algorithm": "robust_standardized_euclidean_rms",
+  "distance": "sqrt(mean_j (profile_j - query_j)^2) over the listed dimensions",
+  "llm_similarity_score": false,
+  "neighbor_policy": {
+   "fraction": {
+    "constant": "NEIGHBOR_FRACTION",
+    "value": 0.3333333333333333
+   },
+   "min": {
+    "constant": "MIN_SIMILAR_MATCHES",
+    "value": 10
+   },
+   "round_decimals": {
+    "constant": "DISTANCE_ROUND_DECIMALS",
+    "value": 12
+   },
+   "rule": "nearest max(MIN_SIMILAR_MATCHES, ceil(n * NEIGHBOR_FRACTION)) eligible subject matches; the rest form the comparison group",
+   "tie_break": "(distance rounded to DISTANCE_ROUND_DECIMALS, kickoff, match_id)"
+  },
+  "profile_window": {
+   "constant": "PROFILE_WINDOW_MATCHES",
+   "value": 10
+  }
+ },
+ "source_hypotheses_path": "research/dual_provider_llm/out/direct_pilot/CHATGPT_HYPOTHESES_V1.json",
+ "source_hypotheses_sha256": "989557336d24ebfecc69a8087c281f16576a1bd6f4b493161dd169a9647a605b",
+ "source_packet_sha256": "ea3fb8353801e2b414c056585173e5204539f3e3555cf5cd7dec2a2eba91556c",
+ "specs": [
+  {
+   "comparison_groups": [
+    "neighbours (nearest tercile to the query profile)",
+    "comparison (remaining eligible home matches)"
+   ],
+   "competition_condition": {
+    "detail": "every observation is z-scored within its own competition using strictly prior data, so LaLiga and LaLiga 2 values are compared as 'relative to that league'; no raw pooling across competitions",
+    "limitation": "this corrects league-level scale, NOT a team's own regime change on promotion/relegation",
+    "policy": "B_COMPETITION_STANDARDIZED"
+   },
+   "confounders": {
+    "handled": [
+     "competition (z-scoring)",
+     "venue (home only)",
+     "opponent strength (diagnostic + adjusted secondary)",
+     "season (reported per group)"
+    ],
+    "unhandled": [
+     "Girona regime change",
+     "score state (no half data)",
+     "lineups/injuries (not available)"
+    ]
+   },
+   "control_metrics": [
+    {
+     "metric": "goals",
+     "use": "opponent strength control only (prior matches' goal difference); never an output"
+    }
+   ],
+   "derived_metrics": [
+    "pressure_composite = mean z(corners, shots, shots_on_target) FOR"
+   ],
+   "design": "NEIGHBOR_GROUP_DIFFERENCE",
+   "determinism_notes": "pure functions of the frozen cache snapshot and constants; sorted iteration; seeded permutations; no wall-clock values",
+   "evidence_ref_window_note": "frozen refs cite ALL_PRIOR.AWAY/HOME; profiles use the last 10 venue-matched matches for both the query point and every historical profile, because ALL_PRIOR length depends on the corpus start date",
+   "failure_conditions": [
+    "INSUFFICIENT_SUPPORT",
+    "NO_QUERY_PROFILE",
+    "UNSUPPORTED_METRIC"
+   ],
+   "frozen_evidence_refs": [
+    "tsa.HOME_TEAM.touches_in_box.FOR.ALL_PRIOR.HOME",
+    "tsa.HOME_TEAM.shots_inside_box.FOR.ALL_PRIOR.HOME",
+    "tsa.HOME_TEAM.corners.FOR.ALL_PRIOR.HOME",
+    "tsa.HOME_TEAM.shots_on_target.FOR.ALL_PRIOR.HOME",
+    "tsa.AWAY_TEAM.possession.AGAINST.ALL_PRIOR.AWAY",
+    "tsa.AWAY_TEAM.touches_in_box.AGAINST.ALL_PRIOR.AWAY",
+    "tsa.AWAY_TEAM.shots_inside_box.AGAINST.ALL_PRIOR.AWAY",
+    "tsa.AWAY_TEAM.corners.AGAINST.ALL_PRIOR.AWAY"
+   ],
+   "historical_cutoff_policy": {
+    "global": "only matches with kickoff strictly before the target fixture kickoff (packet cutoff_unix) exist in the measurement history; the target match and anything later are never loaded",
+    "per_subject_match": "every covariate for a historical subject match (opponent profile, scaling reference, strength) uses only matches strictly before that match's kickoff",
+    "query_point": "the target-fixture query profile/state is built with the identical rule at the target kickoff"
+   },
+   "hypothesis_variables": [
+    "touches_in_box",
+    "shots_inside_box",
+    "corners",
+    "shots_on_target",
+    "possession"
+   ],
+   "input_metrics": [
+    "possession",
+    "touches_in_box",
+    "shots_inside_box",
+    "corners",
+    "shots",
+    "shots_on_target"
+   ],
+   "interpretation_limits": [
+    "Girona's history is predominantly LaLiga while the query opponent and target are LaLiga 2; competition z-scoring fixes league scale but the measurement still describes LaLiga-era Girona queried with a LaLiga 2 opponent.",
+    "describes Girona's historical home output vs profile-similar visitors; not a forecast of the target"
+   ],
+   "llm_confounders_verbatim": [
+    "competition",
+    "venue",
+    "opponent baseline strength",
+    "season/tactical regime",
+    "sample support"
+   ],
+   "llm_measurement_plan_verbatim_non_authoritative": "Construct a pre-fixture away-defensive similarity profile using possession conceded, touches in box conceded, inside-box shots conceded and corners conceded. Deterministically identify historical Girona home matches against similar profiles, then compare Girona's pressure-output vector (corners, shots, shots on target) with its other home matches using training-only similarity parameters and appropriate shrinkage.",
+   "llm_similarity_dimensions_verbatim": [
+    "opponent possession share against Albacete away",
+    "touches in box conceded away",
+    "inside-box shots conceded away",
+    "corners conceded away"
+   ],
+   "long_run_policy": "all prior home matches in cache",
+   "mechanism_id": "DP1_BOX_PRESSURE_MATCHUP",
+   "metrics_named_in_prose_only": [
+    {
+     "metric": "shots",
+     "quote": "distribution of corners, shots and shots on target"
+    }
+   ],
+   "minimum_sample_requirements": {
+    "MIN_SIMILAR_MATCHES": {
+     "constant": "MIN_SIMILAR_MATCHES",
+     "value": 10
+    },
+    "MIN_SUBJECT_MATCHES": {
+     "constant": "MIN_SUBJECT_MATCHES",
+     "value": 30
+    },
+    "on_failure": "INSUFFICIENT_SUPPORT"
+   },
+   "missingness_policy": {
+    "metric_coverage": {
+     "else": "UNSUPPORTED_METRIC (fail closed)",
+     "min": {
+      "constant": "MIN_METRIC_COVERAGE",
+      "value": 0.8
+     }
+    },
+    "null_is_zero": false,
+    "observation": "a null provider cell is excluded, never imputed",
+    "profile": {
+     "min_dimension_coverage": {
+      "constant": "MIN_PROFILE_DIMENSION_COVERAGE",
+      "value": 1.0
+     },
+     "rule": "all dimensions required, else the subject match is ineligible"
+    },
+    "profile_dimension": {
+     "min_non_null": {
+      "constant": "MIN_PROFILE_MATCHES_PER_DIM",
+      "value": 5
+     },
+     "of_window": {
+      "constant": "PROFILE_WINDOW_MATCHES",
+      "value": 10
+     }
+    },
+    "subject_output": "a subject match with any null output metric is ineligible"
+   },
+   "numeric_llm_input_used": false,
+   "numeric_tokens_in_hypothesis_prose": [],
+   "numeric_tokens_used_as_parameters": [],
+   "opponent_population_definition": "the away opponent in each subject match; profile from its own prior AWAY matches",
+   "opponent_strength_control": {
+    "definition": "opponent mean goal difference over its last STRENGTH_WINDOW_MATCHES same-competition matches strictly before the subject match",
+    "gates_eligibility": false,
+    "min": {
+     "constant": "MIN_STRENGTH_MATCHES",
+     "value": 5
+    },
+    "use": "balance diagnostic (neighbour vs comparison) and strength-adjusted secondary on rows where it is available; missing strength is reported, not imputed",
+    "window": {
+     "constant": "STRENGTH_WINDOW_MATCHES",
+     "value": 10
+    }
+   },
+   "outputs": {
+    "combine": "mean_of_z",
+    "metrics": [
+     [
+      "corners",
+      "FOR"
+     ],
+     [
+      "shots",
+      "FOR"
+     ],
+     [
+      "shots_on_target",
+      "FOR"
+     ]
+    ]
+   },
+   "point_in_time_requirements": {
+    "global": "only matches with kickoff strictly before the target fixture kickoff (packet cutoff_unix) exist in the measurement history; the target match and anything later are never loaded",
+    "per_subject_match": "every covariate for a historical subject match (opponent profile, scaling reference, strength) uses only matches strictly before that match's kickoff",
+    "query_point": "the target-fixture query profile/state is built with the identical rule at the target kickoff"
+   },
+   "population_definition": "subject team's HOME matches strictly before the target kickoff (all competitions, competition-standardized)",
+   "primary_measurement": {
+    "in_bh_family": true,
+    "null": "group_label_permutation",
+    "resamples": {
+     "constant": "N_RESAMPLES",
+     "value": 10000
+    },
+    "seed": {
+     "constant": "RNG_SEED",
+     "value": 0
+    },
+    "statistic": "mean(pressure_composite | neighbours) - mean(pressure_composite | comparison)"
+   },
+   "provider": "thestatsapi",
+   "query_point": {
+    "profile": "same last-10 rule at the target kickoff",
+    "team": "target away team (Albacete)",
+    "venue": "AWAY"
+   },
+   "recent_window_policy": "not used",
+   "relationship_type": "OPPONENT_PROFILE_SIMILARITY",
+   "scaling_policy": {
+    "center": "median of the metric's team-match FOR values in the observation's competition, over matches strictly before the query time",
+    "conceded_values": "an AGAINST value is scaled against the same metric's distribution (it is the producing side's FOR value)",
+    "method": "competition_relative_robust_z",
+    "min_reference_obs": {
+     "constant": "MIN_REFERENCE_OBS",
+     "value": 200
+    },
+    "scale": {
+     "iqr_fallback": {
+      "constant": "IQR_TO_SD",
+      "value": 1.349
+     },
+     "mad_to_sd": {
+      "constant": "MAD_TO_SD",
+      "value": 1.4826
+     }
+    },
+    "unscaleable": "observation treated as missing"
+   },
+   "scientific_question": "Against away opponents whose defensive profile resembles Albacete's combination of opponent possession, box-touch concession, inside-box-shot concession and corner concession, does Girona's home attacking pressure produce a different distribution of corners, shots and shots on target than against other away defensive profiles?",
+   "secondary_measurements": [
+    "per-channel differences (corners, shots, shots_on_target)",
+    "strength-adjusted difference (OLS composite ~ neighbour + strength, rows with strength)"
+   ],
+   "similarity_algorithm": {
+    "algorithm": "robust_standardized_euclidean_rms",
+    "distance": "sqrt(mean_j (profile_j - query_j)^2) over the listed dimensions",
+    "llm_similarity_score": false,
+    "neighbor_policy": {
+     "fraction": {
+      "constant": "NEIGHBOR_FRACTION",
+      "value": 0.3333333333333333
+     },
+     "min": {
+      "constant": "MIN_SIMILAR_MATCHES",
+      "value": 10
+     },
+     "round_decimals": {
+      "constant": "DISTANCE_ROUND_DECIMALS",
+      "value": 12
+     },
+     "rule": "nearest max(MIN_SIMILAR_MATCHES, ceil(n * NEIGHBOR_FRACTION)) eligible subject matches; the rest form the comparison group",
+     "tie_break": "(distance rounded to DISTANCE_ROUND_DECIMALS, kickoff, match_id)"
+    },
+    "profile_window": {
+     "constant": "PROFILE_WINDOW_MATCHES",
+     "value": 10
+    }
+   },
+   "similarity_dimensions": [
+    [
+     "possession",
+     "AGAINST"
+    ],
+    [
+     "touches_in_box",
+     "AGAINST"
+    ],
+    [
+     "shots_inside_box",
+     "AGAINST"
+    ],
+    [
+     "corners",
+     "AGAINST"
+    ]
+   ],
+   "state_dimensions": [],
+   "subject_team_definition": {
+    "role": "HOME_TEAM",
+    "team": "target home team (Girona FC)"
+   },
+   "support_policy": {
+    "MIN_SIMILAR_MATCHES": {
+     "constant": "MIN_SIMILAR_MATCHES",
+     "value": 10
+    },
+    "MIN_SUBJECT_MATCHES": {
+     "constant": "MIN_SUBJECT_MATCHES",
+     "value": 30
+    },
+    "on_failure": "INSUFFICIENT_SUPPORT"
+   },
+   "venue_condition": {
+    "opponent_profile_venue": "AWAY",
+    "subject_venue": "HOME"
+   }
+  },
+  {
+   "comparison_groups": [
+    "continuous interaction; no groups in the primary"
+   ],
+   "competition_condition": {
+    "detail": "every observation is z-scored within its own competition using strictly prior data, so LaLiga and LaLiga 2 values are compared as 'relative to that league'; no raw pooling across competitions",
+    "limitation": "this corrects league-level scale, NOT a team's own regime change on promotion/relegation",
+    "policy": "B_COMPETITION_STANDARDIZED"
+   },
+   "confounders": {
+    "handled": [
+     "competition (z-scoring)",
+     "venue (home only)"
+    ],
+    "unhandled": [
+     "opponent possession/defensive strength in the primary (conditioned only in the secondary)",
+     "recent-vs-long-run regime",
+     "Girona regime change"
+    ]
+   },
+   "control_metrics": [
+    {
+     "metric": "goals",
+     "use": "opponent strength control only (prior matches' goal difference); never an output"
+    }
+   ],
+   "derived_metrics": [
+    "x1 = z(accurate_crosses FOR)",
+    "x2 = z(touches_in_box FOR)",
+    "x1*x2 continuous standardized product (no threshold)"
+   ],
+   "design": "INTERACTION_REGRESSION",
+   "determinism_notes": "pure functions of the frozen cache snapshot and constants; sorted iteration; seeded permutations; no wall-clock values",
+   "failure_conditions": [
+    "INSUFFICIENT_SUPPORT",
+    "UNSUPPORTED_METRIC"
+   ],
+   "frozen_evidence_refs": [
+    "tsa.HOME_TEAM.accurate_crosses.FOR.ALL_PRIOR.HOME",
+    "tsa.HOME_TEAM.touches_in_box.FOR.ALL_PRIOR.HOME",
+    "tsa.HOME_TEAM.corners.FOR.ALL_PRIOR.HOME",
+    "tsa.AWAY_TEAM.accurate_crosses.AGAINST.ALL_PRIOR.AWAY",
+    "tsa.AWAY_TEAM.touches_in_box.AGAINST.ALL_PRIOR.AWAY",
+    "tsa.AWAY_TEAM.corners.AGAINST.ALL_PRIOR.AWAY"
+   ],
+   "historical_cutoff_policy": {
+    "global": "only matches with kickoff strictly before the target fixture kickoff (packet cutoff_unix) exist in the measurement history; the target match and anything later are never loaded",
+    "per_subject_match": "every covariate for a historical subject match (opponent profile, scaling reference, strength) uses only matches strictly before that match's kickoff",
+    "query_point": "the target-fixture query profile/state is built with the identical rule at the target kickoff"
+   },
+   "hypothesis_variables": [
+    "accurate_crosses",
+    "touches_in_box",
+    "corners"
+   ],
+   "input_metrics": [
+    "accurate_crosses",
+    "touches_in_box",
+    "corners"
+   ],
+   "interpretation_limits": [
+    "Girona's history is predominantly LaLiga while the query opponent and target are LaLiga 2; competition z-scoring fixes league scale but the measurement still describes LaLiga-era Girona queried with a LaLiga 2 opponent.",
+    "Covariates and outputs are observed in the same match: this is a historical association, not a pre-match predictor and not causal.",
+    "provider semantics: accurate_crosses may include corner deliveries and touches_in_box may include set-piece touches, so part of the association may be mechanical or reversed"
+   ],
+   "llm_confounders_verbatim": [
+    "competition",
+    "venue",
+    "opponent possession",
+    "opponent defensive strength",
+    "recent-vs-long-run regime"
+   ],
+   "llm_measurement_plan_verbatim_non_authoritative": "Represent crossing and box penetration as continuous training-fold variables and test their interaction for Girona home corner output. Separately condition on opponents whose away concession profile is jointly similar on accurate crosses and box touches. Do not use an LLM-written threshold.",
+   "llm_similarity_dimensions_verbatim": [
+    "accurate crosses conceded away",
+    "touches in box conceded away"
+   ],
+   "long_run_policy": "all prior home matches",
+   "mechanism_id": "DP2_WIDE_CENTRAL_INTERACTION",
+   "metrics_named_in_prose_only": [],
+   "minimum_sample_requirements": {
+    "min_obs_per_parameter": {
+     "constant": "MIN_OBS_PER_PARAMETER",
+     "value": 10
+    }
+   },
+   "missingness_policy": {
+    "metric_coverage": {
+     "else": "UNSUPPORTED_METRIC (fail closed)",
+     "min": {
+      "constant": "MIN_METRIC_COVERAGE",
+      "value": 0.8
+     }
+    },
+    "null_is_zero": false,
+    "observation": "a null provider cell is excluded, never imputed",
+    "profile": {
+     "min_dimension_coverage": {
+      "constant": "MIN_PROFILE_DIMENSION_COVERAGE",
+      "value": 1.0
+     },
+     "rule": "all dimensions required, else the subject match is ineligible"
+    },
+    "profile_dimension": {
+     "min_non_null": {
+      "constant": "MIN_PROFILE_MATCHES_PER_DIM",
+      "value": 5
+     },
+     "of_window": {
+      "constant": "PROFILE_WINDOW_MATCHES",
+      "value": 10
+     }
+    },
+    "subject_output": "a subject match with any null output metric is ineligible"
+   },
+   "multivariate": true,
+   "numeric_llm_input_used": false,
+   "numeric_tokens_in_hypothesis_prose": [],
+   "numeric_tokens_used_as_parameters": [],
+   "opponent_population_definition": "away opponents; secondary conditioning on their prior AWAY concession of crosses and box touches",
+   "opponent_strength_control": {
+    "definition": "opponent mean goal difference over its last STRENGTH_WINDOW_MATCHES same-competition matches strictly before the subject match",
+    "gates_eligibility": false,
+    "min": {
+     "constant": "MIN_STRENGTH_MATCHES",
+     "value": 5
+    },
+    "use": "balance diagnostic (neighbour vs comparison) and strength-adjusted secondary on rows where it is available; missing strength is reported, not imputed",
+    "window": {
+     "constant": "STRENGTH_WINDOW_MATCHES",
+     "value": 10
+    }
+   },
+   "outputs": {
+    "combine": "z",
+    "metrics": [
+     [
+      "corners",
+      "FOR"
+     ]
+    ]
+   },
+   "point_in_time_requirements": {
+    "global": "only matches with kickoff strictly before the target fixture kickoff (packet cutoff_unix) exist in the measurement history; the target match and anything later are never loaded",
+    "per_subject_match": "every covariate for a historical subject match (opponent profile, scaling reference, strength) uses only matches strictly before that match's kickoff",
+    "query_point": "the target-fixture query profile/state is built with the identical rule at the target kickoff"
+   },
+   "population_definition": "Girona HOME matches strictly before the target kickoff",
+   "primary_measurement": {
+    "in_bh_family": true,
+    "null": "freedman_lane_residual_permutation",
+    "parameters": [
+     "intercept",
+     "x1",
+     "x2",
+     "x1*x2"
+    ],
+    "resamples": {
+     "constant": "N_RESAMPLES",
+     "value": 10000
+    },
+    "seed": {
+     "constant": "RNG_SEED",
+     "value": 0
+    },
+    "statistic": "coefficient of x1*x2 in z(corners) ~ 1 + x1 + x2 + x1*x2 over all eligible Girona home matches"
+   },
+   "provider": "thestatsapi",
+   "query_point": {
+    "profile": "last-10 rule",
+    "team": "Albacete",
+    "venue": "AWAY"
+   },
+   "recent_window_policy": "not used",
+   "relationship_type": "MULTIMETRIC_INTERACTION",
+   "scaling_policy": {
+    "center": "median of the metric's team-match FOR values in the observation's competition, over matches strictly before the query time",
+    "conceded_values": "an AGAINST value is scaled against the same metric's distribution (it is the producing side's FOR value)",
+    "method": "competition_relative_robust_z",
+    "min_reference_obs": {
+     "constant": "MIN_REFERENCE_OBS",
+     "value": 200
+    },
+    "scale": {
+     "iqr_fallback": {
+      "constant": "IQR_TO_SD",
+      "value": 1.349
+     },
+     "mad_to_sd": {
+      "constant": "MAD_TO_SD",
+      "value": 1.4826
+     }
+    },
+    "unscaleable": "observation treated as missing"
+   },
+   "scientific_question": "Is Girona's home corner production associated with the joint presence of accurate crossing and box penetration, especially against away defenses that concede both accurate crosses and box touches as Albacete does?",
+   "secondary_measurements": [
+    "same model within the neighbour tercile of opponents near Albacete's away concession profile (only if it meets the regression support rule)",
+    "main-effect coefficients reported alongside"
+   ],
+   "similarity_algorithm": {
+    "algorithm": "robust_standardized_euclidean_rms",
+    "distance": "sqrt(mean_j (profile_j - query_j)^2) over the listed dimensions",
+    "llm_similarity_score": false,
+    "neighbor_policy": {
+     "fraction": {
+      "constant": "NEIGHBOR_FRACTION",
+      "value": 0.3333333333333333
+     },
+     "min": {
+      "constant": "MIN_SIMILAR_MATCHES",
+      "value": 10
+     },
+     "round_decimals": {
+      "constant": "DISTANCE_ROUND_DECIMALS",
+      "value": 12
+     },
+     "rule": "nearest max(MIN_SIMILAR_MATCHES, ceil(n * NEIGHBOR_FRACTION)) eligible subject matches; the rest form the comparison group",
+     "tie_break": "(distance rounded to DISTANCE_ROUND_DECIMALS, kickoff, match_id)"
+    },
+    "profile_window": {
+     "constant": "PROFILE_WINDOW_MATCHES",
+     "value": 10
+    }
+   },
+   "similarity_dimensions": [
+    [
+     "accurate_crosses",
+     "AGAINST"
+    ],
+    [
+     "touches_in_box",
+     "AGAINST"
+    ]
+   ],
+   "state_dimensions": [],
+   "subject_team_definition": {
+    "role": "HOME_TEAM",
+    "team": "Girona FC"
+   },
+   "support_policy": {
+    "on_failure": "INSUFFICIENT_SUPPORT",
+    "regression": {
+     "min_obs_per_parameter": {
+      "constant": "MIN_OBS_PER_PARAMETER",
+      "value": 10
+     },
+     "parameters": [
+      "intercept",
+      "x1",
+      "x2",
+      "x1*x2"
+     ]
+    }
+   },
+   "venue_condition": {
+    "opponent_profile_venue": "AWAY",
+    "subject_venue": "HOME"
+   }
+  },
+  {
+   "comparison_groups": [
+    "continuous association; no groups in the primary"
+   ],
+   "competition_condition": {
+    "detail": "every observation is z-scored within its own competition using strictly prior data, so LaLiga and LaLiga 2 values are compared as 'relative to that league'; no raw pooling across competitions",
+    "limitation": "this corrects league-level scale, NOT a team's own regime change on promotion/relegation",
+    "policy": "B_COMPETITION_STANDARDIZED"
+   },
+   "confounders": {
+    "handled": [
+     "competition (z-scoring)",
+     "venue (away only)",
+     "opponent profile (secondary)"
+    ],
+    "unhandled": [
+     "score state (a trailing team concedes possession; no half data)",
+     "opponent strength (diagnostic only)",
+     "season"
+    ]
+   },
+   "control_metrics": [
+    {
+     "metric": "goals",
+     "use": "opponent strength control only (prior matches' goal difference); never an output"
+    }
+   ],
+   "derived_metrics": [
+    "direct_progression_index = mean z(accurate_long_balls, final_third_entries) FOR (observational label only; no tactical intent inferred)",
+    "output_composite = mean z(shots, corners) FOR"
+   ],
+   "design": "CONDITIONAL_RANK_ASSOCIATION",
+   "determinism_notes": "pure functions of the frozen cache snapshot and constants; sorted iteration; seeded permutations; no wall-clock values",
+   "failure_conditions": [
+    "INSUFFICIENT_SUPPORT",
+    "UNSUPPORTED_METRIC"
+   ],
+   "frozen_evidence_refs": [
+    "tsa.AWAY_TEAM.possession.FOR.ALL_PRIOR.AWAY",
+    "tsa.AWAY_TEAM.accurate_long_balls.FOR.ALL_PRIOR.AWAY",
+    "tsa.AWAY_TEAM.final_third_entries.FOR.ALL_PRIOR.AWAY",
+    "tsa.AWAY_TEAM.shots.FOR.ALL_PRIOR.AWAY",
+    "tsa.AWAY_TEAM.corners.FOR.ALL_PRIOR.AWAY",
+    "tsa.HOME_TEAM.possession.AGAINST.ALL_PRIOR.HOME",
+    "tsa.HOME_TEAM.final_third_entries.AGAINST.ALL_PRIOR.HOME",
+    "tsa.HOME_TEAM.shots.AGAINST.ALL_PRIOR.HOME",
+    "tsa.HOME_TEAM.corners.AGAINST.ALL_PRIOR.HOME"
+   ],
+   "historical_cutoff_policy": {
+    "global": "only matches with kickoff strictly before the target fixture kickoff (packet cutoff_unix) exist in the measurement history; the target match and anything later are never loaded",
+    "per_subject_match": "every covariate for a historical subject match (opponent profile, scaling reference, strength) uses only matches strictly before that match's kickoff",
+    "query_point": "the target-fixture query profile/state is built with the identical rule at the target kickoff"
+   },
+   "hypothesis_variables": [
+    "possession",
+    "accurate_long_balls",
+    "final_third_entries",
+    "shots",
+    "corners"
+   ],
+   "input_metrics": [
+    "possession",
+    "accurate_long_balls",
+    "final_third_entries",
+    "shots",
+    "corners"
+   ],
+   "interpretation_limits": [
+    "Covariates and outputs are observed in the same match: this is a historical association, not a pre-match predictor and not causal.",
+    "final_third_entries mechanically feed shots, so part of the association is definitional"
+   ],
+   "llm_confounders_verbatim": [
+    "competition",
+    "away venue",
+    "opponent strength",
+    "score-state effects not observable at finer resolution",
+    "season"
+   ],
+   "llm_measurement_plan_verbatim_non_authoritative": "Define a training-only direct-progression representation from possession, accurate long balls and final-third entries. Measure Albacete's away shots and corners across historical matches as that representation varies, then condition on home-opponent defensive profiles similar to Girona's pre-fixture profile.",
+   "llm_similarity_dimensions_verbatim": [
+    "home-opponent possession allowed",
+    "final-third entries allowed",
+    "shots allowed",
+    "corners allowed"
+   ],
+   "long_run_policy": "all prior away matches",
+   "mechanism_id": "DP3_ALBACETE_DIRECT_PROGRESSION",
+   "metrics_named_in_prose_only": [],
+   "minimum_sample_requirements": {
+    "MIN_SIMILAR_MATCHES": {
+     "constant": "MIN_SIMILAR_MATCHES",
+     "value": 10
+    },
+    "MIN_SUBJECT_MATCHES": {
+     "constant": "MIN_SUBJECT_MATCHES",
+     "value": 30
+    },
+    "on_failure": "INSUFFICIENT_SUPPORT"
+   },
+   "missingness_policy": {
+    "metric_coverage": {
+     "else": "UNSUPPORTED_METRIC (fail closed)",
+     "min": {
+      "constant": "MIN_METRIC_COVERAGE",
+      "value": 0.8
+     }
+    },
+    "null_is_zero": false,
+    "observation": "a null provider cell is excluded, never imputed",
+    "profile": {
+     "min_dimension_coverage": {
+      "constant": "MIN_PROFILE_DIMENSION_COVERAGE",
+      "value": 1.0
+     },
+     "rule": "all dimensions required, else the subject match is ineligible"
+    },
+    "profile_dimension": {
+     "min_non_null": {
+      "constant": "MIN_PROFILE_MATCHES_PER_DIM",
+      "value": 5
+     },
+     "of_window": {
+      "constant": "PROFILE_WINDOW_MATCHES",
+      "value": 10
+     }
+    },
+    "subject_output": "a subject match with any null output metric is ineligible"
+   },
+   "numeric_llm_input_used": false,
+   "numeric_tokens_in_hypothesis_prose": [],
+   "numeric_tokens_used_as_parameters": [],
+   "opponent_population_definition": "home opponents; secondary conditioning on their prior HOME defensive profile",
+   "opponent_strength_control": {
+    "definition": "opponent mean goal difference over its last STRENGTH_WINDOW_MATCHES same-competition matches strictly before the subject match",
+    "gates_eligibility": false,
+    "min": {
+     "constant": "MIN_STRENGTH_MATCHES",
+     "value": 5
+    },
+    "use": "balance diagnostic (neighbour vs comparison) and strength-adjusted secondary on rows where it is available; missing strength is reported, not imputed",
+    "window": {
+     "constant": "STRENGTH_WINDOW_MATCHES",
+     "value": 10
+    }
+   },
+   "outputs": {
+    "combine": "mean_of_z",
+    "metrics": [
+     [
+      "shots",
+      "FOR"
+     ],
+     [
+      "corners",
+      "FOR"
+     ]
+    ]
+   },
+   "point_in_time_requirements": {
+    "global": "only matches with kickoff strictly before the target fixture kickoff (packet cutoff_unix) exist in the measurement history; the target match and anything later are never loaded",
+    "per_subject_match": "every covariate for a historical subject match (opponent profile, scaling reference, strength) uses only matches strictly before that match's kickoff",
+    "query_point": "the target-fixture query profile/state is built with the identical rule at the target kickoff"
+   },
+   "population_definition": "Albacete AWAY matches strictly before the target kickoff in which its own possession z < 0 (below its competition's median; the median is the scaling centre, not an LLM number)",
+   "primary_measurement": {
+    "in_bh_family": true,
+    "null": "outcome_permutation",
+    "resamples": {
+     "constant": "N_RESAMPLES",
+     "value": 10000
+    },
+    "seed": {
+     "constant": "RNG_SEED",
+     "value": 0
+    },
+    "statistic": "Spearman rho(direct_progression_index, output_composite) over low-possession away matches"
+   },
+   "provider": "thestatsapi",
+   "query_point": {
+    "profile": "last-10 rule",
+    "team": "Girona FC",
+    "venue": "HOME"
+   },
+   "recent_window_policy": "not used",
+   "relationship_type": "ASYMMETRIC_MATCHUP",
+   "scaling_policy": {
+    "center": "median of the metric's team-match FOR values in the observation's competition, over matches strictly before the query time",
+    "conceded_values": "an AGAINST value is scaled against the same metric's distribution (it is the producing side's FOR value)",
+    "method": "competition_relative_robust_z",
+    "min_reference_obs": {
+     "constant": "MIN_REFERENCE_OBS",
+     "value": 200
+    },
+    "scale": {
+     "iqr_fallback": {
+      "constant": "IQR_TO_SD",
+      "value": 1.349
+     },
+     "mad_to_sd": {
+      "constant": "MAD_TO_SD",
+      "value": 1.4826
+     }
+    },
+    "unscaleable": "observation treated as missing"
+   },
+   "scientific_question": "When Albacete plays away with relatively low possession, does a direct-progression pattern combining accurate long balls and final-third entries preserve its shot and corner output against home opponents with defensive profiles similar to Girona's?",
+   "secondary_measurements": [
+    "same within the neighbour tercile of home opponents near Girona's home defensive profile (if supported)",
+    "per-output rho (shots, corners)"
+   ],
+   "similarity_algorithm": {
+    "algorithm": "robust_standardized_euclidean_rms",
+    "distance": "sqrt(mean_j (profile_j - query_j)^2) over the listed dimensions",
+    "llm_similarity_score": false,
+    "neighbor_policy": {
+     "fraction": {
+      "constant": "NEIGHBOR_FRACTION",
+      "value": 0.3333333333333333
+     },
+     "min": {
+      "constant": "MIN_SIMILAR_MATCHES",
+      "value": 10
+     },
+     "round_decimals": {
+      "constant": "DISTANCE_ROUND_DECIMALS",
+      "value": 12
+     },
+     "rule": "nearest max(MIN_SIMILAR_MATCHES, ceil(n * NEIGHBOR_FRACTION)) eligible subject matches; the rest form the comparison group",
+     "tie_break": "(distance rounded to DISTANCE_ROUND_DECIMALS, kickoff, match_id)"
+    },
+    "profile_window": {
+     "constant": "PROFILE_WINDOW_MATCHES",
+     "value": 10
+    }
+   },
+   "similarity_dimensions": [
+    [
+     "possession",
+     "AGAINST"
+    ],
+    [
+     "final_third_entries",
+     "AGAINST"
+    ],
+    [
+     "shots",
+     "AGAINST"
+    ],
+    [
+     "corners",
+     "AGAINST"
+    ]
+   ],
+   "state_dimensions": [],
+   "subject_team_definition": {
+    "role": "AWAY_TEAM",
+    "team": "Albacete Balompié"
+   },
+   "support_policy": {
+    "MIN_SIMILAR_MATCHES": {
+     "constant": "MIN_SIMILAR_MATCHES",
+     "value": 10
+    },
+    "MIN_SUBJECT_MATCHES": {
+     "constant": "MIN_SUBJECT_MATCHES",
+     "value": 30
+    },
+    "on_failure": "INSUFFICIENT_SUPPORT"
+   },
+   "venue_condition": {
+    "opponent_profile_venue": "HOME",
+    "subject_venue": "AWAY"
+   }
+  },
+  {
+   "comparison_groups": [
+    "nearest to shrunk recent state S",
+    "nearest to R10 (disjoint)"
+   ],
+   "competition_condition": {
+    "detail": "every observation is z-scored within its own competition using strictly prior data, so LaLiga and LaLiga 2 values are compared as 'relative to that league'; no raw pooling across competitions",
+    "limitation": "this corrects league-level scale, NOT a team's own regime change on promotion/relegation",
+    "policy": "B_COMPETITION_STANDARDIZED"
+   },
+   "confounders": {
+    "handled": [
+     "competition and venue (z within competition x venue)",
+     "circularity (reference matches excluded)"
+    ],
+    "unhandled": [
+     "competition change inside the recent windows (regime)",
+     "opponent strength (diagnostic)",
+     "small RECENT_5"
+    ]
+   },
+   "control_metrics": [
+    {
+     "metric": "goals",
+     "use": "opponent strength control only (prior matches' goal difference); never an output"
+    }
+   ],
+   "derived_metrics": [
+    "state_i = z(each state dim) within competition x venue at the subject kickoff",
+    "R5 = mean state over Girona's last RECENT_BLOCK_MATCHES all-venue matches before the target; R10 = mean over the last PROFILE_WINDOW_MATCHES",
+    "S = R10 + n5/(n5 + SHRINKAGE_KAPPA) x (R5 - R10)  (recent state shrunk to R10)",
+    "territory_i = mean(state_i); output_i = mean z(corners, shots) FOR",
+    "resid_i = output_i - OLS fit of output on territory over the eligible pool"
+   ],
+   "design": "STATE_RESIDUAL_GROUP_DIFFERENCE",
+   "determinism_notes": "pure functions of the frozen cache snapshot and constants; sorted iteration; seeded permutations; no wall-clock values",
+   "failure_conditions": [
+    "INSUFFICIENT_SUPPORT",
+    "NO_QUERY_PROFILE"
+   ],
+   "frozen_evidence_refs": [
+    "tsa.HOME_TEAM.possession.FOR.RECENT_5.ALL",
+    "tsa.HOME_TEAM.final_third_entries.FOR.RECENT_5.ALL",
+    "tsa.HOME_TEAM.touches_in_box.FOR.RECENT_5.ALL",
+    "tsa.HOME_TEAM.accurate_crosses.FOR.RECENT_5.ALL",
+    "tsa.HOME_TEAM.corners.FOR.RECENT_5.ALL",
+    "tsa.HOME_TEAM.possession.FOR.RECENT_10.ALL",
+    "tsa.HOME_TEAM.final_third_entries.FOR.RECENT_10.ALL",
+    "tsa.HOME_TEAM.touches_in_box.FOR.RECENT_10.ALL",
+    "tsa.HOME_TEAM.accurate_crosses.FOR.RECENT_10.ALL",
+    "tsa.HOME_TEAM.corners.FOR.RECENT_10.ALL"
+   ],
+   "historical_cutoff_policy": {
+    "global": "only matches with kickoff strictly before the target fixture kickoff (packet cutoff_unix) exist in the measurement history; the target match and anything later are never loaded",
+    "per_subject_match": "every covariate for a historical subject match (opponent profile, scaling reference, strength) uses only matches strictly before that match's kickoff",
+    "query_point": "the target-fixture query profile/state is built with the identical rule at the target kickoff"
+   },
+   "hypothesis_variables": [
+    "possession",
+    "final_third_entries",
+    "touches_in_box",
+    "accurate_crosses",
+    "corners"
+   ],
+   "input_metrics": [
+    "possession",
+    "final_third_entries",
+    "touches_in_box",
+    "accurate_crosses",
+    "corners",
+    "shots"
+   ],
+   "interpretation_limits": [
+    "Girona's history is predominantly LaLiga while the query opponent and target are LaLiga 2; competition z-scoring fixes league scale but the measurement still describes LaLiga-era Girona queried with a LaLiga 2 opponent.",
+    "Covariates and outputs are observed in the same match: this is a historical association, not a pre-match predictor and not causal.",
+    "R5/R10 are all-venue states compared with home matches; competition x venue z-scoring is the mitigation"
+   ],
+   "llm_confounders_verbatim": [
+    "competition change between LaLiga and LaLiga 2",
+    "venue",
+    "opponent strength",
+    "small RECENT_5 support",
+    "season/tactical regime"
+   ],
+   "llm_measurement_plan_verbatim_non_authoritative": "Construct a continuous territorial-state representation using possession, final-third entries, touches in box and accurate crosses. Within competition- and venue-matched historical data, estimate Girona's corner/shot behavior across similar states using shrinkage rather than treating RECENT_5 as truth.",
+   "llm_similarity_dimensions_verbatim": [
+    "possession",
+    "final-third entries",
+    "touches in box",
+    "accurate crosses"
+   ],
+   "long_run_policy": {
+    "reference": {
+     "constant": "PROFILE_WINDOW_MATCHES",
+     "value": 10
+    }
+   },
+   "mechanism_id": "DP4_GIRONA_CURRENT_TERRITORIAL_REGIME",
+   "metrics_named_in_prose_only": [
+    {
+     "metric": "shots",
+     "quote": "corner/shot behavior"
+    }
+   ],
+   "minimum_sample_requirements": {
+    "MIN_SIMILAR_MATCHES": {
+     "constant": "MIN_SIMILAR_MATCHES",
+     "value": 10
+    },
+    "MIN_SUBJECT_MATCHES": {
+     "constant": "MIN_SUBJECT_MATCHES",
+     "value": 30
+    },
+    "on_failure": "INSUFFICIENT_SUPPORT"
+   },
+   "missingness_policy": {
+    "metric_coverage": {
+     "else": "UNSUPPORTED_METRIC (fail closed)",
+     "min": {
+      "constant": "MIN_METRIC_COVERAGE",
+      "value": 0.8
+     }
+    },
+    "null_is_zero": false,
+    "observation": "a null provider cell is excluded, never imputed",
+    "profile": {
+     "min_dimension_coverage": {
+      "constant": "MIN_PROFILE_DIMENSION_COVERAGE",
+      "value": 1.0
+     },
+     "rule": "all dimensions required, else the subject match is ineligible"
+    },
+    "profile_dimension": {
+     "min_non_null": {
+      "constant": "MIN_PROFILE_MATCHES_PER_DIM",
+      "value": 5
+     },
+     "of_window": {
+      "constant": "PROFILE_WINDOW_MATCHES",
+      "value": 10
+     }
+    },
+    "subject_output": "a subject match with any null output metric is ineligible"
+   },
+   "numeric_llm_input_used": false,
+   "numeric_tokens_in_hypothesis_prose": [
+    "10",
+    "2"
+   ],
+   "numeric_tokens_used_as_parameters": [],
+   "opponent_population_definition": "not profiled (strength diagnostic only)",
+   "opponent_strength_control": {
+    "definition": "opponent mean goal difference over its last STRENGTH_WINDOW_MATCHES same-competition matches strictly before the subject match",
+    "gates_eligibility": false,
+    "min": {
+     "constant": "MIN_STRENGTH_MATCHES",
+     "value": 5
+    },
+    "use": "balance diagnostic (neighbour vs comparison) and strength-adjusted secondary on rows where it is available; missing strength is reported, not imputed",
+    "window": {
+     "constant": "STRENGTH_WINDOW_MATCHES",
+     "value": 10
+    }
+   },
+   "outputs": {
+    "combine": "mean_of_z",
+    "metrics": [
+     [
+      "corners",
+      "FOR"
+     ],
+     [
+      "shots",
+      "FOR"
+     ]
+    ]
+   },
+   "point_in_time_requirements": {
+    "global": "only matches with kickoff strictly before the target fixture kickoff (packet cutoff_unix) exist in the measurement history; the target match and anything later are never loaded",
+    "per_subject_match": "every covariate for a historical subject match (opponent profile, scaling reference, strength) uses only matches strictly before that match's kickoff",
+    "query_point": "the target-fixture query profile/state is built with the identical rule at the target kickoff"
+   },
+   "population_definition": "Girona HOME matches strictly before the target kickoff, EXCLUDING every match used to define the recent-5 or recent-10 reference states (no circularity)",
+   "primary_measurement": {
+    "in_bh_family": true,
+    "k": "neighbor_count(n_eligible)",
+    "meaning": "does the territory->output relationship differ in matches resembling the recent state vs the broader recent-10 state",
+    "null": "group_label_permutation",
+    "resamples": {
+     "constant": "N_RESAMPLES",
+     "value": 10000
+    },
+    "seed": {
+     "constant": "RNG_SEED",
+     "value": 0
+    },
+    "statistic": "mean(resid | k nearest to S) - mean(resid | k nearest to R10 among the rest)"
+   },
+   "provider": "thestatsapi",
+   "recent_window_policy": {
+    "recent": {
+     "constant": "RECENT_BLOCK_MATCHES",
+     "value": 5
+    },
+    "recent_5_is_not_ground_truth": true,
+    "shrinkage_kappa": {
+     "constant": "SHRINKAGE_KAPPA",
+     "value": 5
+    }
+   },
+   "relationship_type": "RECENT_VS_LONG_RUN",
+   "scaling_policy": {
+    "center": "median of the metric's team-match FOR values in the observation's competition, over matches strictly before the query time",
+    "conceded_values": "an AGAINST value is scaled against the same metric's distribution (it is the producing side's FOR value)",
+    "method": "competition_relative_robust_z",
+    "min_reference_obs": {
+     "constant": "MIN_REFERENCE_OBS",
+     "value": 200
+    },
+    "scale": {
+     "iqr_fallback": {
+      "constant": "IQR_TO_SD",
+      "value": 1.349
+     },
+     "mad_to_sd": {
+      "constant": "MAD_TO_SD",
+      "value": 1.4826
+     }
+    },
+    "unscaleable": "observation treated as missing"
+   },
+   "scientific_question": "Within comparable competition and venue contexts, is Girona's relationship between territorial control and attacking output different in matches resembling its recent low-possession/low-final-third/low-box-touch state than in matches resembling its broader recent-10 profile?",
+   "secondary_measurements": [
+    "raw output difference between the two groups (descriptive)",
+    "all-venue version with competition x venue standardization"
+   ],
+   "similarity_algorithm": {
+    "algorithm": "robust_standardized_euclidean_rms",
+    "distance": "sqrt(mean_j (profile_j - query_j)^2) over the listed dimensions",
+    "llm_similarity_score": false,
+    "neighbor_policy": {
+     "fraction": {
+      "constant": "NEIGHBOR_FRACTION",
+      "value": 0.3333333333333333
+     },
+     "min": {
+      "constant": "MIN_SIMILAR_MATCHES",
+      "value": 10
+     },
+     "round_decimals": {
+      "constant": "DISTANCE_ROUND_DECIMALS",
+      "value": 12
+     },
+     "rule": "nearest max(MIN_SIMILAR_MATCHES, ceil(n * NEIGHBOR_FRACTION)) eligible subject matches; the rest form the comparison group",
+     "tie_break": "(distance rounded to DISTANCE_ROUND_DECIMALS, kickoff, match_id)"
+    },
+    "profile_window": {
+     "constant": "PROFILE_WINDOW_MATCHES",
+     "value": 10
+    }
+   },
+   "similarity_dimensions": [
+    [
+     "possession",
+     "FOR"
+    ],
+    [
+     "final_third_entries",
+     "FOR"
+    ],
+    [
+     "touches_in_box",
+     "FOR"
+    ],
+    [
+     "accurate_crosses",
+     "FOR"
+    ]
+   ],
+   "state_dimensions": [
+    [
+     "possession",
+     "FOR"
+    ],
+    [
+     "final_third_entries",
+     "FOR"
+    ],
+    [
+     "touches_in_box",
+     "FOR"
+    ],
+    [
+     "accurate_crosses",
+     "FOR"
+    ]
+   ],
+   "subject_team_definition": {
+    "role": "HOME_TEAM",
+    "team": "Girona FC"
+   },
+   "support_policy": {
+    "MIN_SIMILAR_MATCHES": {
+     "constant": "MIN_SIMILAR_MATCHES",
+     "value": 10
+    },
+    "MIN_SUBJECT_MATCHES": {
+     "constant": "MIN_SUBJECT_MATCHES",
+     "value": 30
+    },
+    "on_failure": "INSUFFICIENT_SUPPORT"
+   },
+   "venue_condition": {
+    "state_standardization": "competition x venue",
+    "subject_venue": "HOME"
+   }
+  },
+  {
+   "comparison_groups": [
+    "recent away block",
+    "long-run away state"
+   ],
+   "competition_condition": {
+    "detail": "every observation is z-scored within its own competition using strictly prior data, so LaLiga and LaLiga 2 values are compared as 'relative to that league'; no raw pooling across competitions",
+    "limitation": "this corrects league-level scale, NOT a team's own regime change on promotion/relegation",
+    "policy": "B_COMPETITION_STANDARDIZED"
+   },
+   "confounders": {
+    "handled": [
+     "venue (away only)",
+     "opponent concession (profile subtraction)",
+     "competition (z; Albacete stays in LaLiga 2)"
+    ],
+    "unhandled": [
+     "season boundary: the recent away block spans the summer break",
+     "opponent strength (diagnostic)"
+    ]
+   },
+   "control_metrics": [
+    {
+     "metric": "goals",
+     "use": "opponent strength control only (prior matches' goal difference); never an output"
+    }
+   ],
+   "derived_metrics": [
+    "adjusted_i[d] = z(Albacete d FOR in match i) - opponent's prior HOME profile of d AGAINST, for d in the three similarity dims; corners unadjusted (not a frozen similarity dimension)",
+    "recent block = last RECENT_BLOCK_MATCHES away matches; long run = away matches before it",
+    "S5 = long_run + n/(n + SHRINKAGE_KAPPA) x (recent - long_run)",
+    "composite = mean over state dims of (S5 - long_run)",
+    "state distance = RMS(S5 - long_run)"
+   ],
+   "design": "RECENT_BLOCK_DESCRIPTIVE",
+   "determinism_notes": "pure functions of the frozen cache snapshot and constants; sorted iteration; seeded permutations; no wall-clock values",
+   "failure_conditions": [
+    "INSUFFICIENT_SUPPORT"
+   ],
+   "frozen_evidence_refs": [
+    "tsa.AWAY_TEAM.possession.FOR.RECENT_5.ALL",
+    "tsa.AWAY_TEAM.final_third_entries.FOR.RECENT_5.ALL",
+    "tsa.AWAY_TEAM.touches_in_box.FOR.RECENT_5.ALL",
+    "tsa.AWAY_TEAM.corners.FOR.RECENT_5.ALL",
+    "tsa.AWAY_TEAM.possession.FOR.ALL_PRIOR.AWAY",
+    "tsa.AWAY_TEAM.final_third_entries.FOR.ALL_PRIOR.AWAY",
+    "tsa.AWAY_TEAM.touches_in_box.FOR.ALL_PRIOR.AWAY",
+    "tsa.AWAY_TEAM.corners.FOR.ALL_PRIOR.AWAY"
+   ],
+   "historical_cutoff_policy": {
+    "global": "only matches with kickoff strictly before the target fixture kickoff (packet cutoff_unix) exist in the measurement history; the target match and anything later are never loaded",
+    "per_subject_match": "every covariate for a historical subject match (opponent profile, scaling reference, strength) uses only matches strictly before that match's kickoff",
+    "query_point": "the target-fixture query profile/state is built with the identical rule at the target kickoff"
+   },
+   "hypothesis_variables": [
+    "possession",
+    "final_third_entries",
+    "touches_in_box",
+    "corners"
+   ],
+   "input_metrics": [
+    "possession",
+    "final_third_entries",
+    "touches_in_box",
+    "corners"
+   ],
+   "interpretation_limits": [
+    "descriptive only; excluded from the BH family",
+    "a 5-match block is small; shrinkage is the mitigation"
+   ],
+   "llm_confounders_verbatim": [
+    "venue mix in RECENT_5",
+    "opponent strength",
+    "competition",
+    "small recent sample",
+    "season"
+   ],
+   "llm_measurement_plan_verbatim_non_authoritative": "Measure Albacete's away-only territorial vector historically and compare recent matches with prior away states using decay/shrinkage. Test whether any apparent regime persists after matching on opponent possession/defensive profile and competition; do not use the RECENT_5 difference as a feature directly.",
+   "llm_similarity_dimensions_verbatim": [
+    "opponent possession profile",
+    "opponent final-third concession",
+    "opponent box-touch concession"
+   ],
+   "long_run_policy": {
+    "min_long_run": {
+     "constant": "MIN_LONG_RUN_MATCHES",
+     "value": 20
+    }
+   },
+   "mechanism_id": "DP5_ALBACETE_RECENT_TERRITORIAL_EXPANSION",
+   "metrics_named_in_prose_only": [],
+   "minimum_sample_requirements": {
+    "min_long_run": {
+     "constant": "MIN_LONG_RUN_MATCHES",
+     "value": 20
+    }
+   },
+   "missingness_policy": {
+    "metric_coverage": {
+     "else": "UNSUPPORTED_METRIC (fail closed)",
+     "min": {
+      "constant": "MIN_METRIC_COVERAGE",
+      "value": 0.8
+     }
+    },
+    "null_is_zero": false,
+    "observation": "a null provider cell is excluded, never imputed",
+    "profile": {
+     "min_dimension_coverage": {
+      "constant": "MIN_PROFILE_DIMENSION_COVERAGE",
+      "value": 1.0
+     },
+     "rule": "all dimensions required, else the subject match is ineligible"
+    },
+    "profile_dimension": {
+     "min_non_null": {
+      "constant": "MIN_PROFILE_MATCHES_PER_DIM",
+      "value": 5
+     },
+     "of_window": {
+      "constant": "PROFILE_WINDOW_MATCHES",
+      "value": 10
+     }
+    },
+    "subject_output": "a subject match with any null output metric is ineligible"
+   },
+   "numeric_llm_input_used": false,
+   "numeric_tokens_in_hypothesis_prose": [],
+   "numeric_tokens_used_as_parameters": [],
+   "opponent_population_definition": "home opponents; adjustment profile from their prior HOME matches (what they concede at home)",
+   "opponent_strength_control": {
+    "definition": "opponent mean goal difference over its last STRENGTH_WINDOW_MATCHES same-competition matches strictly before the subject match",
+    "gates_eligibility": false,
+    "min": {
+     "constant": "MIN_STRENGTH_MATCHES",
+     "value": 5
+    },
+    "use": "balance diagnostic (neighbour vs comparison) and strength-adjusted secondary on rows where it is available; missing strength is reported, not imputed",
+    "window": {
+     "constant": "STRENGTH_WINDOW_MATCHES",
+     "value": 10
+    }
+   },
+   "outputs": {
+    "combine": "part of the state vector",
+    "metrics": [
+     [
+      "corners",
+      "FOR"
+     ]
+    ]
+   },
+   "point_in_time_requirements": {
+    "global": "only matches with kickoff strictly before the target fixture kickoff (packet cutoff_unix) exist in the measurement history; the target match and anything later are never loaded",
+    "per_subject_match": "every covariate for a historical subject match (opponent profile, scaling reference, strength) uses only matches strictly before that match's kickoff",
+    "query_point": "the target-fixture query profile/state is built with the identical rule at the target kickoff"
+   },
+   "population_definition": "Albacete AWAY matches strictly before the target kickoff",
+   "primary_measurement": {
+    "in_bh_family": false,
+    "inferential": false,
+    "reference": "percentile among DISJOINT historical RECENT_BLOCK_MATCHES-match away blocks tiled backwards from the recent block (none overlapping it)",
+    "statistic": "composite (shrunk recent-block minus long-run adjusted territorial state)",
+    "why": "blocks of one team's sequence are not exchangeable; the percentile is descriptive, not a p-value"
+   },
+   "provider": "thestatsapi",
+   "recent_window_policy": {
+    "recent": {
+     "constant": "RECENT_BLOCK_MATCHES",
+     "value": 5
+    },
+    "shrinkage_kappa": {
+     "constant": "SHRINKAGE_KAPPA",
+     "value": 5
+    }
+   },
+   "relationship_type": "RECENT_VS_LONG_RUN",
+   "scaling_policy": {
+    "center": "median of the metric's team-match FOR values in the observation's competition, over matches strictly before the query time",
+    "conceded_values": "an AGAINST value is scaled against the same metric's distribution (it is the producing side's FOR value)",
+    "method": "competition_relative_robust_z",
+    "min_reference_obs": {
+     "constant": "MIN_REFERENCE_OBS",
+     "value": 200
+    },
+    "scale": {
+     "iqr_fallback": {
+      "constant": "IQR_TO_SD",
+      "value": 1.349
+     },
+     "mad_to_sd": {
+      "constant": "MAD_TO_SD",
+      "value": 1.4826
+     }
+    },
+    "unscaleable": "observation treated as missing"
+   },
+   "scientific_question": "After conditioning on venue and opponent profile, does Albacete's recent combination of possession, final-third entries, box touches and corners represent a persistent attacking regime or mainly a home/fixture-mix effect relative to its longer-run away behavior?",
+   "secondary_measurements": [
+    "venue-mix decomposition: packet RECENT_5 (all venues) vs away-only recent block",
+    "per-dimension differences",
+    "state distance"
+   ],
+   "similarity_algorithm": {
+    "note": "opponent adjustment by profile subtraction, no neighbour selection",
+    "profile_window": {
+     "constant": "PROFILE_WINDOW_MATCHES",
+     "value": 10
+    }
+   },
+   "similarity_dimensions": [
+    [
+     "possession",
+     "AGAINST"
+    ],
+    [
+     "final_third_entries",
+     "AGAINST"
+    ],
+    [
+     "touches_in_box",
+     "AGAINST"
+    ]
+   ],
+   "state_dimensions": [
+    [
+     "possession",
+     "FOR"
+    ],
+    [
+     "final_third_entries",
+     "FOR"
+    ],
+    [
+     "touches_in_box",
+     "FOR"
+    ],
+    [
+     "corners",
+     "FOR"
+    ]
+   ],
+   "subject_team_definition": {
+    "role": "AWAY_TEAM",
+    "team": "Albacete Balompié"
+   },
+   "support_policy": {
+    "min_long_run": {
+     "constant": "MIN_LONG_RUN_MATCHES",
+     "value": 20
+    },
+    "on_failure": "INSUFFICIENT_SUPPORT",
+    "recent": {
+     "constant": "RECENT_BLOCK_MATCHES",
+     "value": 5
+    }
+   },
+   "venue_condition": {
+    "opponent_profile_venue": "HOME",
+    "state_standardization": "competition x venue",
+    "subject_venue": "AWAY"
+   }
+  },
+  {
+   "comparison_groups": [
+    "neighbours",
+    "comparison"
+   ],
+   "competition_condition": {
+    "detail": "every observation is z-scored within its own competition using strictly prior data, so LaLiga and LaLiga 2 values are compared as 'relative to that league'; no raw pooling across competitions",
+    "limitation": "this corrects league-level scale, NOT a team's own regime change on promotion/relegation",
+    "policy": "B_COMPETITION_STANDARDIZED"
+   },
+   "confounders": {
+    "handled": [
+     "competition (z)",
+     "venue (home only)",
+     "opponent strength (diagnostic + adjusted secondary)"
+    ],
+    "unhandled": [
+     "possession (not a frozen DP6 dimension)",
+     "score state",
+     "Girona regime change"
+    ]
+   },
+   "control_metrics": [
+    {
+     "metric": "goals",
+     "use": "opponent strength control only (prior matches' goal difference); never an output"
+    }
+   ],
+   "derived_metrics": [
+    "resolution_contrast = z(corners) - mean z(shots_on_target, big_chances) FOR (continuous; no bins)"
+   ],
+   "design": "NEIGHBOR_GROUP_DIFFERENCE",
+   "determinism_notes": "pure functions of the frozen cache snapshot and constants; sorted iteration; seeded permutations; no wall-clock values",
+   "failure_conditions": [
+    "INSUFFICIENT_SUPPORT",
+    "NO_QUERY_PROFILE",
+    "UNSUPPORTED_METRIC"
+   ],
+   "frozen_evidence_refs": [
+    "tsa.AWAY_TEAM.clearances.FOR.ALL_PRIOR.AWAY",
+    "tsa.AWAY_TEAM.touches_in_box.AGAINST.ALL_PRIOR.AWAY",
+    "tsa.AWAY_TEAM.shots.AGAINST.ALL_PRIOR.AWAY",
+    "tsa.AWAY_TEAM.shots_inside_box.AGAINST.ALL_PRIOR.AWAY",
+    "tsa.HOME_TEAM.corners.FOR.ALL_PRIOR.HOME",
+    "tsa.HOME_TEAM.shots_on_target.FOR.ALL_PRIOR.HOME",
+    "tsa.HOME_TEAM.big_chances.FOR.ALL_PRIOR.HOME",
+    "tsa.HOME_TEAM.touches_in_box.FOR.ALL_PRIOR.HOME"
+   ],
+   "historical_cutoff_policy": {
+    "global": "only matches with kickoff strictly before the target fixture kickoff (packet cutoff_unix) exist in the measurement history; the target match and anything later are never loaded",
+    "per_subject_match": "every covariate for a historical subject match (opponent profile, scaling reference, strength) uses only matches strictly before that match's kickoff",
+    "query_point": "the target-fixture query profile/state is built with the identical rule at the target kickoff"
+   },
+   "hypothesis_variables": [
+    "clearances",
+    "touches_in_box",
+    "shots",
+    "shots_inside_box",
+    "corners",
+    "shots_on_target",
+    "big_chances"
+   ],
+   "input_metrics": [
+    "clearances",
+    "touches_in_box",
+    "shots",
+    "shots_inside_box",
+    "corners",
+    "shots_on_target",
+    "big_chances"
+   ],
+   "interpretation_limits": [
+    "Girona's history is predominantly LaLiga while the query opponent and target are LaLiga 2; competition z-scoring fixes league scale but the measurement still describes LaLiga-era Girona queried with a LaLiga 2 opponent.",
+    "shots_on_target and big_chances are not disjoint events; the contrast compares standardized channel levels, not shares",
+    "blocked_shots deliberately unused (provider semantics unresolved)"
+   ],
+   "llm_confounders_verbatim": [
+    "opponent strength",
+    "competition",
+    "venue",
+    "possession",
+    "score-state effects unavailable below match resolution"
+   ],
+   "llm_measurement_plan_verbatim_non_authoritative": "Build an away-defensive pressure-absorption profile from clearances plus box/shot concessions. In historical Girona home matches against similar profiles, compare the composition of attacking output across corners, shots on target and big chances. Use deterministic continuous features or training-only bins; do not force one outcome channel.",
+   "llm_similarity_dimensions_verbatim": [
+    "defensive clearances",
+    "touches in box conceded",
+    "shots conceded",
+    "inside-box shots conceded"
+   ],
+   "long_run_policy": "all prior home matches",
+   "mechanism_id": "DP6_PRESSURE_RESOLUTION_CLEARANCE_PROFILE",
+   "metrics_named_in_prose_only": [],
+   "minimum_sample_requirements": {
+    "MIN_SIMILAR_MATCHES": {
+     "constant": "MIN_SIMILAR_MATCHES",
+     "value": 10
+    },
+    "MIN_SUBJECT_MATCHES": {
+     "constant": "MIN_SUBJECT_MATCHES",
+     "value": 30
+    },
+    "on_failure": "INSUFFICIENT_SUPPORT"
+   },
+   "missingness_policy": {
+    "metric_coverage": {
+     "else": "UNSUPPORTED_METRIC (fail closed)",
+     "min": {
+      "constant": "MIN_METRIC_COVERAGE",
+      "value": 0.8
+     }
+    },
+    "null_is_zero": false,
+    "observation": "a null provider cell is excluded, never imputed",
+    "profile": {
+     "min_dimension_coverage": {
+      "constant": "MIN_PROFILE_DIMENSION_COVERAGE",
+      "value": 1.0
+     },
+     "rule": "all dimensions required, else the subject match is ineligible"
+    },
+    "profile_dimension": {
+     "min_non_null": {
+      "constant": "MIN_PROFILE_MATCHES_PER_DIM",
+      "value": 5
+     },
+     "of_window": {
+      "constant": "PROFILE_WINDOW_MATCHES",
+      "value": 10
+     }
+    },
+    "subject_output": "a subject match with any null output metric is ineligible"
+   },
+   "multivariate": true,
+   "numeric_llm_input_used": false,
+   "numeric_tokens_in_hypothesis_prose": [],
+   "numeric_tokens_used_as_parameters": [],
+   "opponent_population_definition": "away opponents; pressure-absorption profile from their prior AWAY matches",
+   "opponent_strength_control": {
+    "definition": "opponent mean goal difference over its last STRENGTH_WINDOW_MATCHES same-competition matches strictly before the subject match",
+    "gates_eligibility": false,
+    "min": {
+     "constant": "MIN_STRENGTH_MATCHES",
+     "value": 5
+    },
+    "use": "balance diagnostic (neighbour vs comparison) and strength-adjusted secondary on rows where it is available; missing strength is reported, not imputed",
+    "window": {
+     "constant": "STRENGTH_WINDOW_MATCHES",
+     "value": 10
+    }
+   },
+   "outputs": {
+    "combine": "contrast",
+    "contrast": {
+     "minus_mean_of": [
+      [
+       "shots_on_target",
+       "FOR"
+      ],
+      [
+       "big_chances",
+       "FOR"
+      ]
+     ],
+     "plus": [
+      [
+       "corners",
+       "FOR"
+      ]
+     ]
+    },
+    "metrics": [
+     [
+      "corners",
+      "FOR"
+     ],
+     [
+      "shots_on_target",
+      "FOR"
+     ],
+     [
+      "big_chances",
+      "FOR"
+     ]
+    ]
+   },
+   "point_in_time_requirements": {
+    "global": "only matches with kickoff strictly before the target fixture kickoff (packet cutoff_unix) exist in the measurement history; the target match and anything later are never loaded",
+    "per_subject_match": "every covariate for a historical subject match (opponent profile, scaling reference, strength) uses only matches strictly before that match's kickoff",
+    "query_point": "the target-fixture query profile/state is built with the identical rule at the target kickoff"
+   },
+   "population_definition": "Girona HOME matches strictly before the target kickoff",
+   "primary_measurement": {
+    "in_bh_family": true,
+    "null": "group_label_permutation",
+    "resamples": {
+     "constant": "N_RESAMPLES",
+     "value": 10000
+    },
+    "seed": {
+     "constant": "RNG_SEED",
+     "value": 0
+    },
+    "statistic": "mean(resolution_contrast | neighbours) - mean(resolution_contrast | comparison)"
+   },
+   "provider": "thestatsapi",
+   "query_point": {
+    "profile": "last-10 rule",
+    "team": "Albacete",
+    "venue": "AWAY"
+   },
+   "recent_window_policy": "not used",
+   "relationship_type": "MULTIMETRIC_INTERACTION",
+   "scaling_policy": {
+    "center": "median of the metric's team-match FOR values in the observation's competition, over matches strictly before the query time",
+    "conceded_values": "an AGAINST value is scaled against the same metric's distribution (it is the producing side's FOR value)",
+    "method": "competition_relative_robust_z",
+    "min_reference_obs": {
+     "constant": "MIN_REFERENCE_OBS",
+     "value": 200
+    },
+    "scale": {
+     "iqr_fallback": {
+      "constant": "IQR_TO_SD",
+      "value": 1.349
+     },
+     "mad_to_sd": {
+      "constant": "MAD_TO_SD",
+      "value": 1.4826
+     }
+    },
+    "unscaleable": "observation treated as missing"
+   },
+   "scientific_question": "Against away defenses that absorb pressure through frequent clearances while conceding box entries and shots, does Girona's home pressure resolve more often into corners versus shots on target or big chances?",
+   "secondary_measurements": [
+    "per-channel differences",
+    "strength-adjusted difference"
+   ],
+   "similarity_algorithm": {
+    "algorithm": "robust_standardized_euclidean_rms",
+    "distance": "sqrt(mean_j (profile_j - query_j)^2) over the listed dimensions",
+    "llm_similarity_score": false,
+    "neighbor_policy": {
+     "fraction": {
+      "constant": "NEIGHBOR_FRACTION",
+      "value": 0.3333333333333333
+     },
+     "min": {
+      "constant": "MIN_SIMILAR_MATCHES",
+      "value": 10
+     },
+     "round_decimals": {
+      "constant": "DISTANCE_ROUND_DECIMALS",
+      "value": 12
+     },
+     "rule": "nearest max(MIN_SIMILAR_MATCHES, ceil(n * NEIGHBOR_FRACTION)) eligible subject matches; the rest form the comparison group",
+     "tie_break": "(distance rounded to DISTANCE_ROUND_DECIMALS, kickoff, match_id)"
+    },
+    "profile_window": {
+     "constant": "PROFILE_WINDOW_MATCHES",
+     "value": 10
+    }
+   },
+   "similarity_dimensions": [
+    [
+     "clearances",
+     "FOR"
+    ],
+    [
+     "touches_in_box",
+     "AGAINST"
+    ],
+    [
+     "shots",
+     "AGAINST"
+    ],
+    [
+     "shots_inside_box",
+     "AGAINST"
+    ]
+   ],
+   "state_dimensions": [],
+   "subject_team_definition": {
+    "role": "HOME_TEAM",
+    "team": "Girona FC"
+   },
+   "support_policy": {
+    "MIN_SIMILAR_MATCHES": {
+     "constant": "MIN_SIMILAR_MATCHES",
+     "value": 10
+    },
+    "MIN_SUBJECT_MATCHES": {
+     "constant": "MIN_SUBJECT_MATCHES",
+     "value": 30
+    },
+    "on_failure": "INSUFFICIENT_SUPPORT"
+   },
+   "venue_condition": {
+    "opponent_profile_venue": "AWAY",
+    "subject_venue": "HOME"
+   }
+  }
+ ],
+ "target_context": {
+  "away_team_id": "tm_89845",
+  "cutoff_unix": 1790361000,
+  "fixture_id": "thestatsapi:mt_022075291",
+  "home_team_id": "tm_029137",
+  "target_outcome_read": false
+ }
+}
