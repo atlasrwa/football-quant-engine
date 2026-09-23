@@ -1,0 +1,83 @@
+{
+ "ablations": [
+  "M1_ALL",
+  "M1_THRESHOLD_ONLY",
+  "M1_MULTIMETRIC_ONLY",
+  "M1_HALF_STATE_ONLY",
+  "M1_PROFILE_ONLY"
+ ],
+ "artifact_sha256": "dc6177c57ffe1562dade248e9aa6ed372b5f8f861e66a33a958a2f3c3a321f73",
+ "bootstrap_resamples": 10000,
+ "bootstrap_seed": 0,
+ "decision_rule": {
+  "clauses": [
+   {
+    "id": "S2P1",
+    "meaning": "M1 achieves lower mean OOS log loss than M0",
+    "requirement": "DELTA_LOGLOSS > 0"
+   },
+   {
+    "id": "S2P2",
+    "meaning": "the no-effect value is excluded under clustered uncertainty",
+    "requirement": "lower bound of the 95% paired block-bootstrap CI on DELTA_LOGLOSS > 0"
+   },
+   {
+    "id": "S2P3",
+    "meaning": "the improvement is not numerically trivial",
+    "requirement": "DELTA_LOGLOSS >= 0.001"
+   },
+   {
+    "id": "S2P4",
+    "meaning": "calibration does not materially deteriorate",
+    "requirement": "ECE_M1 <= ECE_M0 + 0.005"
+   }
+  ],
+  "combination": "CONJUNCTIVE_ALL_CLAUSES_REQUIRED",
+  "fail_is_a_valid_scientific_result": true,
+  "primary_metric": "OOS_MEAN_LOGLOSS_DELTA_M0_MINUS_M1",
+  "primary_target_only": true,
+  "secondary_targets_reported_with": "benjamini_hochberg_fdr_across_secondary_targets",
+  "sign_convention": "positive_means_M1_better",
+  "subjective_override_permitted": false
+ },
+ "dependence_handling": "paired_cluster_block_bootstrap_over_iso_match_weeks",
+ "evaluation_version": "item6_stage2_evaluation_v1",
+ "failure_modes": [
+  "DELTA_LOGLOSS <= 0: the LLM-derived universe adds no information or hurts",
+  "DELTA_LOGLOSS > 0 but the block-bootstrap CI includes 0: indistinguishable from noise once temporal and repeated-team dependence is respected",
+  "DELTA_LOGLOSS > 0 and CI excludes 0 but below the minimum practical improvement: detectable but trivial",
+  "calibration deterioration beyond the allowance: sharpness bought at the cost of probability quality",
+  "grouped shrinkage drives every LLM family to zero coefficient: the features carry no independent signal beyond the baseline"
+ ],
+ "family_level_multiplicity": "benjamini_hochberg_fdr",
+ "hit_rate_used_as_primary": false,
+ "inference_method": "paired_cluster_block_bootstrap_over_iso_match_weeks",
+ "market_edge_in_primary_endpoint": false,
+ "max_ece_deterioration": 0.005,
+ "minimum_practical_improvement": 0.001,
+ "primary_metric": "OOS_MEAN_LOGLOSS_DELTA_M0_MINUS_M1",
+ "primary_target": {
+  "line": 2.5,
+  "market": "goals"
+ },
+ "reads_outcomes": false,
+ "secondary_metrics": [
+  "OOS_MEAN_BRIER_DELTA_M0_MINUS_M1",
+  "EXPECTED_CALIBRATION_ERROR_M0",
+  "EXPECTED_CALIBRATION_ERROR_M1",
+  "RESIDUAL_DEVIANCE_DELTA",
+  "SELECTED_FEATURE_STABILITY_ACROSS_FOLDS"
+ ],
+ "secondary_targets": [
+  {
+   "line": 9.5,
+   "market": "corners"
+  },
+  {
+   "line": 3.5,
+   "market": "cards"
+  }
+ ],
+ "sign_convention": "positive_means_M1_better",
+ "statistical_unit": "one_out_of_sample_fixture_prediction"
+}

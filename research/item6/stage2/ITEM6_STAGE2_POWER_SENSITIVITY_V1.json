@@ -1,0 +1,92 @@
+{
+ "analysis_kind": "SENSITIVITY_NOT_CLASSICAL_POWER",
+ "artifact_sha256": "e1adab49e04e20217bdd4d7b6bc9c41c37755b8c8a5b04f0daa9c709b9caa3cd",
+ "assumed_paired_sd_range": [
+  0.005,
+  0.01,
+  0.02,
+  0.05,
+  0.1,
+  0.2
+ ],
+ "ci_level": 0.95,
+ "effective_n_used_for_mde": "n_blocks (conservative: assumes perfect within-week correlation)",
+ "feature_coverage_sensitivity": {
+  "median_llm_feature_coverage": 0.799667,
+  "n_columns_below_coverage_screen": 2,
+  "note": "Columns below the inherited >=0.60 training-period coverage screen are dropped inside each training fold, identically to how M0 columns are screened. Lower coverage reduces M1's effective information and biases the comparison TOWARD the null, never toward a false positive."
+ },
+ "max_paired_sd_detectable_at_minimum_practical_improvement": 0.004973,
+ "minimum_practical_improvement": 0.001,
+ "n_bootstrap_blocks_iso_weeks": 95,
+ "n_folds": 5,
+ "n_oos_predictions_planned": 13012,
+ "power_version": "item6_stage2_power_v1",
+ "precision_of_paired_difference": [
+  {
+   "assumed_paired_sd": 0.005,
+   "half_width_95ci": 0.001005
+  },
+  {
+   "assumed_paired_sd": 0.01,
+   "half_width_95ci": 0.002011
+  },
+  {
+   "assumed_paired_sd": 0.02,
+   "half_width_95ci": 0.004022
+  },
+  {
+   "assumed_paired_sd": 0.05,
+   "half_width_95ci": 0.010054
+  },
+  {
+   "assumed_paired_sd": 0.1,
+   "half_width_95ci": 0.020109
+  },
+  {
+   "assumed_paired_sd": 0.2,
+   "half_width_95ci": 0.040218
+  }
+ ],
+ "reads_outcomes": false,
+ "sensitivity_table": [
+  {
+   "assumed_paired_sd": 0.005,
+   "detectable_at_minimum_practical_improvement": false,
+   "minimum_detectable_delta_logloss": 0.001005,
+   "n_blocks_required_for_minimum_practical_improvement": 97
+  },
+  {
+   "assumed_paired_sd": 0.01,
+   "detectable_at_minimum_practical_improvement": false,
+   "minimum_detectable_delta_logloss": 0.002011,
+   "n_blocks_required_for_minimum_practical_improvement": 385
+  },
+  {
+   "assumed_paired_sd": 0.02,
+   "detectable_at_minimum_practical_improvement": false,
+   "minimum_detectable_delta_logloss": 0.004022,
+   "n_blocks_required_for_minimum_practical_improvement": 1537
+  },
+  {
+   "assumed_paired_sd": 0.05,
+   "detectable_at_minimum_practical_improvement": false,
+   "minimum_detectable_delta_logloss": 0.010054,
+   "n_blocks_required_for_minimum_practical_improvement": 9604
+  },
+  {
+   "assumed_paired_sd": 0.1,
+   "detectable_at_minimum_practical_improvement": false,
+   "minimum_detectable_delta_logloss": 0.020109,
+   "n_blocks_required_for_minimum_practical_improvement": 38415
+  },
+  {
+   "assumed_paired_sd": 0.2,
+   "detectable_at_minimum_practical_improvement": false,
+   "minimum_detectable_delta_logloss": 0.040218,
+   "n_blocks_required_for_minimum_practical_improvement": 153659
+  }
+ ],
+ "sensitivity_verdict": "The design detects the minimum practical improvement ONLY IF the per-fixture paired log-loss SD is at or below the figure above. If the realised paired SD exceeds it, a true effect of exactly the minimum practical size would not be separable from noise, and a FAIL must be read as INCONCLUSIVE AT THAT EFFECT SIZE rather than as evidence of no effect. The realised paired SD will be reported alongside the result so this distinction is auditable after the fact.",
+ "why_not_classical_power": "The SD of the paired per-fixture log-loss difference is unknowable without fitting and scoring both arms against outcomes, which Stage-2 design must not do. A single power number would require fabricating that SD or peeking at outcomes."
+}
