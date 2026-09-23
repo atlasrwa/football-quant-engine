@@ -1,0 +1,82 @@
+{
+  "contract_version": "dual_provider_llm_packet_v1",
+  "purpose": "Exploratory direct-LLM hypothesis generation only; no prediction and no outcome evaluation.",
+  "fixture": {
+    "fixture_id": "string",
+    "kickoff_unix": "integer",
+    "competition": "string",
+    "home_team": "string",
+    "away_team": "string",
+    "target_outcome_included": false
+  },
+  "hard_exclusions": [
+    "target_match_result",
+    "target_match_post_match_stats",
+    "closing_line",
+    "settlement",
+    "future_market_price",
+    "p_model",
+    "future_lineup_or_injury_information"
+  ],
+  "evidence_item_required_fields": [
+    "evidence_ref",
+    "provider",
+    "canonical_concept",
+    "provider_field",
+    "team_role",
+    "perspective",
+    "period",
+    "window",
+    "venue_scope",
+    "value",
+    "sample_n",
+    "cutoff_unix"
+  ],
+  "evidence_item_optional_fields": [
+    "coverage",
+    "provider_semantics",
+    "normalization_version",
+    "source_payload_hash",
+    "observed_at_max",
+    "reliability_label"
+  ],
+  "allowed_providers": [
+    "footystats",
+    "thestatsapi"
+  ],
+  "periods": [
+    "FULL_MATCH",
+    "FIRST_HALF",
+    "SECOND_HALF"
+  ],
+  "perspectives": [
+    "FOR",
+    "AGAINST",
+    "NEUTRAL"
+  ],
+  "windows": [
+    "ALL_PRIOR",
+    "RECENT_5",
+    "RECENT_10",
+    "RAW_RECENT_MATCH"
+  ],
+  "raw_recent_match_rows": {
+    "allowed": true,
+    "rule": "Every row must be for a completed match strictly before target kickoff and every field remains provider-labelled.",
+    "suggested_max_rows_per_team_per_provider": 12
+  },
+  "cross_provider_policy": {
+    "automatic_equivalence": false,
+    "automatic_blending": false,
+    "provider_label_required": true,
+    "validated_reconciliation_only": true
+  },
+  "llm_variable_rule": "A hypothesis may reference a variable only when at least one cited evidence_ref for that variable is present in the packet.",
+  "llm_numeric_firewall": {
+    "probabilities_forbidden": true,
+    "effect_sizes_forbidden": true,
+    "odds_ev_stakes_forbidden": true,
+    "hand_written_thresholds_forbidden": true,
+    "similarity_scores_forbidden": true
+  }
+}
