@@ -1,0 +1,89 @@
+{
+ "arms": {
+  "primary": [
+   "M0",
+   "M1_ALL",
+   "M1_THRESHOLD_ONLY",
+   "M1_MULTIMETRIC_ONLY",
+   "M1_HALF_STATE_ONLY",
+   "M1_PROFILE_ONLY"
+  ],
+  "secondary": [
+   "M0",
+   "M1_ALL"
+  ]
+ },
+ "artifact_sha256": "ee8cac4609b2ee2a9e4027d64937f6b7bfbe0253baa5d36b9508db9c02116711",
+ "binding_version": "item6_stage2_execution_binding_v1",
+ "corpus": {
+  "corpus_dir": "/home/ubuntu/data/discovery/corpus",
+  "digest_sha256": "2bb6cf981b3eaa230684b6bad6636f388cd23bc13b810b67c91a00bae2546ce7",
+  "n_files": 154
+ },
+ "design_head": "f3b7d3322e2a208f2739ca4790b023cba4cd73bc",
+ "executor_decisions": {
+  "arms_per_target": "primary goals_2.5: M0, M1_ALL and the 4 single-family ablations. Secondary targets: M0 and M1_ALL only.",
+  "bh": "standard Benjamini-Hochberg step-up adjusted q-values, capped at 1; pass iff q <= 0.10.",
+  "bootstrap_draw": "rng = numpy.random.default_rng(0) created afresh for each comparison; one call rng.integers(0, n_blocks, size=(10000, n_blocks)); blocks sorted by ISO-week label.",
+  "calibration_oof": "for each of the 4 inner TimeSeriesSplit splits of the training rows, clone the pipeline with the selected params, fit on the inner train split, predict the inner validation split; isotonic is fit on the pooled pairs. A split with single-class inner training labels makes the fold unfit (calibration inability).",
+  "convergence_warnings": "a ConvergenceWarning still yields a fitted model: counted and reported, not a fold failure. Only an exception or single-class labels make a fold unfit.",
+  "coverage_screen": "per fold and target, a column is kept iff its non-missing rate over that fold's training rows >= 0.60; applied identically to M0 and LLM-derived columns; fewer than 3 kept M0 columns = unfit fold (champion rule).",
+  "feature_history": "every feature (M0 and LLM-derived) for every fixture, training or test, is computed from ALL completed corpus matches with date_unix < that fixture's kickoff, via the frozen roll()/generate_features() PIT rule. A test fixture late in a test block therefore uses matches completed earlier in the same block, as the frozen generator's pit_rule requires. Only thresholds, standardisation, similarity banding, coverage screen, model and calibrator are frozen at the fold's train cutoff.",
+  "final_model": "GridSearchCV(refit=True).best_estimator_, i.e. the (imputer->scaler->model) pipeline refit on all training rows with the selected (C, l1_ratio). GridSearchCV error_score='raise'; n_jobs=1 inside each job.",
+  "m0_pool_per_target": "mix.feat_names(market) for each target's market: goals 72, corners 96, cards 48; M1_ALL = that pool + the same 108 LLM-derived columns.",
+  "one_sided_p": "fraction of bootstrap replicate deltas <= 0.",
+  "power_reading": "realised SE = sd(ddof=1) of the bootstrap replicates; the 80%-power effect size is max(1.96*SE, MPI) + 0.8416*SE; a FAIL whose 80%-power effect size exceeds MPI is labelled FAIL_AT_FROZEN_GATE_WITH_LIMITED_POWER_AT_0.0010. The gate is unchanged by it.",
+  "scored_set_per_comparison": "for each comparison (M0 vs one arm, same target), fixtures with a finite final probability from BOTH arms in folds fit by BOTH arms.",
+  "single_run": "all arms, targets and folds are fit in ONE predict invocation; no partial rerun, no second seed.",
+  "test_rows": "the frozen fold manifest's TEST rows for that fold whose label is resolvable; mapped to corpus matches by fixture_key (verified 1:1).",
+  "threshold_and_similarity_fit_rows": "all completed corpus matches with date_unix < train_end_unix (target-independent), both team slots, including the 2H_SHARE statistics, exactly the build script's pattern; the build's 2500/5000-row samples were for its coverage estimate only.",
+  "training_rows": "champion rule: all completed corpus matches with date_unix < the fold's train_end_unix whose target label is resolvable by mix.outcome(); ordered by (date_unix, fixture_key) because TimeSeriesSplit depends on row order."
+ },
+ "executor_path": "src/research/item6/stage2/executor.py",
+ "executor_sha256": "d90904129cf80684006f230b069ac72ea5798915effae6e7ed55849b98c505dd",
+ "executor_version": "item6_stage2_executor_v1",
+ "frozen": {
+  "artifact_canonical_sha256": {
+   "ITEM6_STAGE2_AUGMENTED_MODEL_SPEC_V1.json": "0627bceb8d8ae65cffd6d67a941125413d914cd8503c5799fccf43c0d3b9e583",
+   "ITEM6_STAGE2_BASELINE_MODEL_SPEC_V1.json": "93bd3ffe1e4f07877b92e1e90ca59e96fdd10f1ffc637b530b312b424a8d5339",
+   "ITEM6_STAGE2_CANONICAL_FAMILY_REGISTRY_V1.json": "e09a059d7fdcc3e33ec4c81a7c7dc9b79c17a3216e7e18001ef0a02f7218daf1",
+   "ITEM6_STAGE2_EVALUATION_PROTOCOL_V1.json": "25c6f0fb46577129216c39713f8095615995933861bc28aa5803a00f1a1888a7",
+   "ITEM6_STAGE2_FEASIBILITY_FUNNEL_V1.json": "dcb7350c02850c917885dfff348ec49ad7c0a70efe2cf9f806686e3f2953fbe3",
+   "ITEM6_STAGE2_FEATURE_SPEC_V1.json": "6f7cbfca36e986df301e82cfe02fb9c7e74473a7a767f7fa9f8bc4111d8e12f6",
+   "ITEM6_STAGE2_FOLD_MANIFEST_V1.json": "5d5740fbb30109b780263d20fba0c0ff8ab7a00a4bb8b072f9b7ed6940bca2f5",
+   "ITEM6_STAGE2_GRAMMAR_EXTENSIONS_V1.json": "567170e986540d984fb0cdf5aa14d0a428f01d4b880424ca30e2fcc55a9650a7",
+   "ITEM6_STAGE2_MULTIPLICITY_POLICY_V1.json": "02e3d5274087ea625dbc8b25c9aafd92fe3733c448c21b8afc11bc91e077715a",
+   "ITEM6_STAGE2_OUTCOME_BLINDNESS_AUDIT_V1.json": "ea981d32816d7e0231597f24fb68b4ff5eed7fc31c9bc48f69cecfb6677d9998",
+   "ITEM6_STAGE2_POWER_SENSITIVITY_V1.json": "45cb6d1d958ad5030aca1612631a442429f3bb474f895d3a23f973a283cc79d0",
+   "ITEM6_STAGE2_PROVIDER_MEASURABILITY_V1.json": "688b5bd4a5b8d243fbdce3e3df48d9f12bb443cfd0cda5767bf4a413e7d0e0a1",
+   "ITEM6_STAGE2_RUN_MANIFEST_V1.json": "a5668e197f7da636e46044be0f51df907501f0a715ad7d676a78ffadf12a81f2",
+   "ITEM6_STAGE2_SIMILARITY_POLICY_V1.json": "0d169d944bc1d7e6f28b6246eb56c1b80ec23b0b4cca525d9a9b91bdf270d429",
+   "ITEM6_STAGE2_THRESHOLD_POLICY_V1.json": "28924ccc06b31ee79bb6539007bfd79442c0141e4dd595b95a6892b2d303ee87"
+  },
+  "champion_sha256": "0b8f5ff3dc4ddf15363d17989330b6f010197265ce8d2ee892cdc7ca410c00c9",
+  "fold_manifest_canonical_sha256": "5d5740fbb30109b780263d20fba0c0ff8ab7a00a4bb8b072f9b7ed6940bca2f5",
+  "fold_manifest_row_sha256": "9fc0f2b5c58210d27d57948c17538c6ff3489771473c9d2c369c29b5429141c3",
+  "protocol_canonical_sha256": "77384b9b5f3374123dcd01a710c6c09f93a9b1d019a8817c16869e39d58f584f",
+  "run_manifest_canonical_sha256": "a5668e197f7da636e46044be0f51df907501f0a715ad7d676a78ffadf12a81f2",
+  "stage1_registry_sha256": "037281432c8969345d6103636076c903668da0105acbddb908590d76f4f12d70"
+ },
+ "llm_calls": 0,
+ "model_fits_before_binding": 0,
+ "outcomes_read_to_build_binding": false,
+ "targets": {
+  "primary": [
+   "goals",
+   2.5
+  ],
+  "secondary": [
+   [
+    "corners",
+    9.5
+   ],
+   [
+    "cards",
+    3.5
+   ]
+  ]
+ }
+}
