@@ -1,0 +1,126 @@
+{
+ "baseline_already_captures": {
+  "BOOKINGS": [
+   "each team's yellow-card, foul, tackle and duel rates (for and against)",
+   "possession/territory",
+   "venue",
+   "strength",
+   "competition"
+  ],
+  "CORNERS": [
+   "each team's corners won/conceded rates",
+   "crossing, box access, shot and clearance rates",
+   "possession",
+   "venue",
+   "strength",
+   "competition"
+  ],
+  "GOALS": [
+   "each team's goals scored/conceded rates",
+   "shot volume and quality rates (SoT, inside-box, big chances)",
+   "box access and territory (touches in box, final-third entries, possession)",
+   "venue",
+   "strength",
+   "competition"
+  ],
+  "TEAM_TOTALS": [
+   "the team's own FOR rates and the opponent's AGAINST rates for goals and corners",
+   "supporting attack/defence rates",
+   "venue",
+   "strength",
+   "competition"
+  ]
+ },
+ "baseline_semantic_coverage_version": "target_aware_policies_v1",
+ "contains_no_coefficients": true,
+ "contains_no_oos_results": true,
+ "contains_no_performance": true,
+ "m0_definition": {
+  "controls": [
+   "team strength: mean goal difference over the last 10 same-competition matches (both teams)",
+   "competition indicator"
+  ],
+  "family_half_metrics": {
+   "BOOKINGS": [
+    "yellow_cards"
+   ],
+   "CORNERS": [
+    "corners"
+   ],
+   "GOALS": [
+    "shots"
+   ],
+   "TEAM_TOTALS": [
+    "corners"
+   ]
+  },
+  "family_metrics": {
+   "BOOKINGS": [
+    "yellow_cards",
+    "fouls",
+    "tackles",
+    "tackles_won_pct",
+    "ground_duel_pct",
+    "aerial_duel_pct",
+    "fouled_in_final_third",
+    "possession",
+    "interceptions"
+   ],
+   "CORNERS": [
+    "corners",
+    "accurate_crosses",
+    "touches_in_box",
+    "final_third_entries",
+    "shots",
+    "shots_inside_box",
+    "clearances",
+    "possession"
+   ],
+   "GOALS": [
+    "goals",
+    "shots",
+    "shots_on_target",
+    "shots_inside_box",
+    "shots_outside_box",
+    "big_chances",
+    "touches_in_box",
+    "final_third_entries",
+    "possession",
+    "saves"
+   ],
+   "TEAM_TOTALS": [
+    "goals",
+    "corners",
+    "shots",
+    "shots_on_target",
+    "shots_inside_box",
+    "big_chances",
+    "touches_in_box",
+    "accurate_crosses",
+    "final_third_entries",
+    "clearances",
+    "possession"
+   ]
+  },
+  "features": "for BOTH teams and EVERY metric in the target family's context list: rolling FOR mean and AGAINST mean over W5, W10, current-season-to-date and venue-specific current-season-to-date (home team at home, away team away), strictly before kickoff, current-season only, NULL != ZERO",
+  "half_level_features": "for BOTH teams and every metric in the family's half-level context: FIRST_HALF and SECOND_HALF rolling FOR/AGAINST means over the same windows (so half-level data never reaches M1 alone)",
+  "model_class": "elastic_net_logistic_regression (one model per target)",
+  "same_data_as_m1": "M0 sees exactly the TheStatsAPI metrics that the LLM sees, so an M1 gain cannot come from richer raw data alone",
+  "windows": [
+   "W5",
+   "W10",
+   "SEASON_TO_DATE",
+   "VENUE_SEASON_TO_DATE"
+  ]
+ },
+ "simple_interaction_grammar": {
+  "definition": "any pairwise product, ratio, sum or difference of two M0 rolling-mean features; a deterministic enumerator would generate these, so a hypothesis that reduces to one is classified SIMPLE_INTERACTION",
+  "linear_combinations_of_m0_features": "BASELINE_EQUIVALENT (a linear model already spans them)"
+ },
+ "what_the_llm_should_look_for": [
+  "opponent-profile dependence (behaviour against opponents similar to this one)",
+  "multi-dimensional attack x defence matchups (three or more interacting dimensions)",
+  "state recurrence / recent-regime deviation from long-run behaviour",
+  "conditional relationships the rolling means cannot express"
+ ]
+}

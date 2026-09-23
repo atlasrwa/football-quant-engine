@@ -1,0 +1,132 @@
+{
+ "field_rules": {
+  "abstain_reason": "null when proposing; a reason string when abstaining",
+  "evidence_refs": "every ref must exist in the request's evidence_ref_index",
+  "feature_template": {
+   "MULTI_DIMENSION_MATCHUP": "components in consecutive pairs (side X FOR, other side AGAINST) of the same metric; >= 2 pairs",
+   "combine": {
+    "MULTI_DIMENSION_MATCHUP": [
+     "MEAN_PRODUCT"
+    ],
+    "OPPONENT_SIMILARITY_CONDITIONAL": [
+     "SIMILARITY_CONDITIONAL"
+    ],
+    "PAIRWISE_COMBINATION": [
+     "DIFFERENCE",
+     "PRODUCT",
+     "RATIO",
+     "SUM"
+    ],
+    "ROLLING_PROFILE": [
+     "IDENTITY"
+    ],
+    "STATE_DEVIATION": [
+     "RECENT_MINUS_LONG_RUN"
+    ]
+   },
+   "components": {
+    "metric": "one of the slice's metrics_in_slice",
+    "period": [
+     "FULL_MATCH",
+     "FIRST_HALF",
+     "SECOND_HALF"
+    ],
+    "perspective": [
+     "FOR",
+     "AGAINST"
+    ],
+    "side": [
+     "HOME",
+     "AWAY"
+    ],
+    "window": [
+     "W5",
+     "W10",
+     "SEASON_TO_DATE",
+     "VENUE_SEASON_TO_DATE"
+    ]
+   },
+   "similarity (OPPONENT_SIMILARITY_CONDITIONAL only)": {
+    "profile_dimensions": "2-5 x {metric, perspective}; style only, never goals/strength",
+    "profile_side": "the OTHER side",
+    "subject_metric": "metric",
+    "subject_perspective": [
+     "FOR",
+     "AGAINST"
+    ],
+    "subject_side": [
+     "HOME",
+     "AWAY"
+    ]
+   },
+   "state (STATE_DEVIATION only)": {
+    "dimensions": "2-5 x {metric, perspective}",
+    "side": [
+     "HOME",
+     "AWAY"
+    ]
+   },
+   "template_type": [
+    "ROLLING_PROFILE",
+    "PAIRWISE_COMBINATION",
+    "MULTI_DIMENSION_MATCHUP",
+    "OPPONENT_SIMILARITY_CONDITIONAL",
+    "STATE_DEVIATION"
+   ]
+  },
+  "future_target_label": "the settlement rule of that target, copied from the request",
+  "pre_match_feature_inputs": "list of component descriptions; every window is one of ['W5', 'W10', 'SEASON_TO_DATE', 'VENUE_SEASON_TO_DATE'] (all strictly before kickoff)",
+  "same_match_information_required": "must be false",
+  "target": "exactly one target_id from the request's target list"
+ },
+ "forbidden_content": [
+  "numbers used as thresholds or weights",
+  "probabilities",
+  "betting direction (OVER/UNDER as a pick)",
+  "odds",
+  "stakes"
+ ],
+ "forbidden_keys_anywhere": [
+  "confidence",
+  "direction",
+  "edge",
+  "ev",
+  "expected_effect_size",
+  "fair_odds",
+  "feature_weight",
+  "kelly",
+  "odds",
+  "p_model",
+  "pick",
+  "prediction",
+  "probability",
+  "stake"
+ ],
+ "hypothesis_required_fields": [
+  "hypothesis_id",
+  "target",
+  "market_family",
+  "fixture_context_observation",
+  "predictive_mechanism",
+  "future_target_label",
+  "evidence_refs",
+  "pre_match_feature_inputs",
+  "feature_template",
+  "opponent_profile_dimensions",
+  "why_baseline_may_miss_it",
+  "panel_generalization_rule",
+  "deterministic_test_request",
+  "confounders",
+  "provider_constraints",
+  "required_resolution",
+  "same_match_information_required",
+  "abstain_reason"
+ ],
+ "response": {
+  "abstentions": "array of {target, abstain_reason}",
+  "family": "string",
+  "fixture_id": "string",
+  "hypotheses": "array (0..2 per target in this family slice)"
+ },
+ "schema_version": "target_aware_output_schema_v1"
+}
