@@ -1,0 +1,133 @@
+{
+  "fixture_id": "thestatsapi:mt_200175799",
+  "family": "CORNERS",
+  "hypotheses": [
+    {
+      "hypothesis_id": "mt_200175799_TC_HOME_SIM",
+      "target": "TOTAL_CORNERS_OVER_9_5",
+      "market_family": "CORNERS",
+      "fixture_context_observation": "The packet shows a meaningful combination of shots, touches_in_box, shots_inside_box around the home side's corners context, motivating a style-conditioned feature.",
+      "predictive_mechanism": "Historical corners output may vary when the subject faces opponents whose pre-match style resembles the current opponent across shots, touches_in_box, shots_inside_box.",
+      "future_target_label": "OVER_x iff (home + away of corner_kicks, FULL_MATCH) > x ; x is a half-line (no push)",
+      "evidence_refs": [
+        "tsa.HOME_TEAM.corners.FOR.RECENT_5.ALL",
+        "tsa.HOME_TEAM.corners.FOR.ALL_PRIOR.HOME",
+        "tsa.AWAY_TEAM.shots.AGAINST.ALL_PRIOR.AWAY",
+        "tsa.AWAY_TEAM.touches_in_box.AGAINST.ALL_PRIOR.AWAY",
+        "tsa.AWAY_TEAM.shots_inside_box.AGAINST.ALL_PRIOR.AWAY"
+      ],
+      "pre_match_feature_inputs": [
+        "HOME corners historical output before kickoff",
+        "AWAY opponent profile using shots, touches_in_box, shots_inside_box before kickoff"
+      ],
+      "feature_template": {
+        "template_type": "OPPONENT_SIMILARITY_CONDITIONAL",
+        "combine": "SIMILARITY_CONDITIONAL",
+        "components": [],
+        "similarity": {
+          "subject_side": "HOME",
+          "subject_metric": "corners",
+          "subject_perspective": "FOR",
+          "profile_side": "AWAY",
+          "profile_dimensions": [
+            {
+              "metric": "shots",
+              "perspective": "AGAINST"
+            },
+            {
+              "metric": "touches_in_box",
+              "perspective": "AGAINST"
+            },
+            {
+              "metric": "shots_inside_box",
+              "perspective": "AGAINST"
+            }
+          ]
+        }
+      },
+      "opponent_profile_dimensions": [
+        "shots.AGAINST",
+        "touches_in_box.AGAINST",
+        "shots_inside_box.AGAINST"
+      ],
+      "why_baseline_may_miss_it": "M0 contains the component means separately but not the subject's target behavior conditional on a multidimensional opponent style resembling this opponent.",
+      "panel_generalization_rule": "For each historical fixture, construct the opponent style from strictly prior matches, identify the subject's prior style-similar opponents, and derive the shrunk conditional target-statistic deviation.",
+      "deterministic_test_request": "Instantiate on the frozen panel and assess only as an added M1 feature in the frozen walk-forward comparison.",
+      "confounders": [
+        "competition",
+        "venue",
+        "strength separated from style",
+        "season/regime",
+        "profile support"
+      ],
+      "provider_constraints": "TheStatsAPI only; missing data is not zero-imputed; no cross-provider substitution.",
+      "required_resolution": "MATCH",
+      "same_match_information_required": false,
+      "abstain_reason": null
+    },
+    {
+      "hypothesis_id": "mt_200175799_TC_AWAY_SIM",
+      "target": "TOTAL_CORNERS_OVER_9_5",
+      "market_family": "CORNERS",
+      "fixture_context_observation": "The packet shows a meaningful combination of shots, touches_in_box, shots_inside_box around the away side's corners context, motivating a style-conditioned feature.",
+      "predictive_mechanism": "Historical corners output may vary when the subject faces opponents whose pre-match style resembles the current opponent across shots, touches_in_box, shots_inside_box.",
+      "future_target_label": "OVER_x iff (home + away of corner_kicks, FULL_MATCH) > x ; x is a half-line (no push)",
+      "evidence_refs": [
+        "tsa.AWAY_TEAM.corners.FOR.RECENT_5.ALL",
+        "tsa.AWAY_TEAM.corners.FOR.ALL_PRIOR.AWAY",
+        "tsa.HOME_TEAM.shots.AGAINST.ALL_PRIOR.HOME",
+        "tsa.HOME_TEAM.touches_in_box.AGAINST.ALL_PRIOR.HOME",
+        "tsa.HOME_TEAM.shots_inside_box.AGAINST.ALL_PRIOR.HOME"
+      ],
+      "pre_match_feature_inputs": [
+        "AWAY corners historical output before kickoff",
+        "HOME opponent profile using shots, touches_in_box, shots_inside_box before kickoff"
+      ],
+      "feature_template": {
+        "template_type": "OPPONENT_SIMILARITY_CONDITIONAL",
+        "combine": "SIMILARITY_CONDITIONAL",
+        "components": [],
+        "similarity": {
+          "subject_side": "AWAY",
+          "subject_metric": "corners",
+          "subject_perspective": "FOR",
+          "profile_side": "HOME",
+          "profile_dimensions": [
+            {
+              "metric": "shots",
+              "perspective": "AGAINST"
+            },
+            {
+              "metric": "touches_in_box",
+              "perspective": "AGAINST"
+            },
+            {
+              "metric": "shots_inside_box",
+              "perspective": "AGAINST"
+            }
+          ]
+        }
+      },
+      "opponent_profile_dimensions": [
+        "shots.AGAINST",
+        "touches_in_box.AGAINST",
+        "shots_inside_box.AGAINST"
+      ],
+      "why_baseline_may_miss_it": "M0 contains the component means separately but not the subject's target behavior conditional on a multidimensional opponent style resembling this opponent.",
+      "panel_generalization_rule": "For each historical fixture, construct the opponent style from strictly prior matches, identify the subject's prior style-similar opponents, and derive the shrunk conditional target-statistic deviation.",
+      "deterministic_test_request": "Instantiate on the frozen panel and assess only as an added M1 feature in the frozen walk-forward comparison.",
+      "confounders": [
+        "competition",
+        "venue",
+        "strength separated from style",
+        "season/regime",
+        "profile support"
+      ],
+      "provider_constraints": "TheStatsAPI only; missing data is not zero-imputed; no cross-provider substitution.",
+      "required_resolution": "MATCH",
+      "same_match_information_required": false,
+      "abstain_reason": null
+    }
+  ],
+  "abstentions": []
+}

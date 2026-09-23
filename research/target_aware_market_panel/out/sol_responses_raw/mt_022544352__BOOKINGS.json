@@ -1,0 +1,133 @@
+{
+  "fixture_id": "thestatsapi:mt_022544352",
+  "family": "BOOKINGS",
+  "hypotheses": [
+    {
+      "hypothesis_id": "mt_022544352_YC_HOME_SIM",
+      "target": "TOTAL_YELLOW_CARDS_OVER_3_5",
+      "market_family": "BOOKINGS",
+      "fixture_context_observation": "The packet motivates conditioning home yellow_cards on the opponent's pre-match fouled_in_final_third, interceptions, fouls profile rather than relying only on marginal rolling means.",
+      "predictive_mechanism": "Historical yellow_cards output may vary when the subject faces opponents whose multidimensional style resembles the current opponent across fouled_in_final_third, interceptions, fouls.",
+      "future_target_label": "OVER_x iff (home + away of yellow_cards, FULL_MATCH) > x ; x is a half-line (no push)",
+      "evidence_refs": [
+        "tsa.HOME_TEAM.yellow_cards.FOR.RECENT_5.ALL",
+        "tsa.HOME_TEAM.yellow_cards.FOR.ALL_PRIOR.HOME",
+        "tsa.AWAY_TEAM.fouled_in_final_third.FOR.ALL_PRIOR.AWAY",
+        "tsa.AWAY_TEAM.interceptions.FOR.ALL_PRIOR.AWAY",
+        "tsa.AWAY_TEAM.fouls.FOR.ALL_PRIOR.AWAY"
+      ],
+      "pre_match_feature_inputs": [
+        "HOME yellow_cards historical output before kickoff",
+        "AWAY opponent style profile from fouled_in_final_third, interceptions, fouls before kickoff"
+      ],
+      "feature_template": {
+        "template_type": "OPPONENT_SIMILARITY_CONDITIONAL",
+        "combine": "SIMILARITY_CONDITIONAL",
+        "components": [],
+        "similarity": {
+          "subject_side": "HOME",
+          "subject_metric": "yellow_cards",
+          "subject_perspective": "FOR",
+          "profile_side": "AWAY",
+          "profile_dimensions": [
+            {
+              "metric": "fouled_in_final_third",
+              "perspective": "FOR"
+            },
+            {
+              "metric": "interceptions",
+              "perspective": "FOR"
+            },
+            {
+              "metric": "fouls",
+              "perspective": "FOR"
+            }
+          ]
+        }
+      },
+      "opponent_profile_dimensions": [
+        "fouled_in_final_third.FOR",
+        "interceptions.FOR",
+        "fouls.FOR"
+      ],
+      "why_baseline_may_miss_it": "M0 contains the component rolling means separately but not the subject's historical target behavior conditional on a multidimensional opponent style resembling the current opponent.",
+      "panel_generalization_rule": "For every historical fixture, build the opponent style profile using only matches before that kickoff, find the subject's prior matches against style-similar opponents, and derive the shrunk conditional target-statistic deviation.",
+      "deterministic_test_request": "Instantiate this template across the frozen PIT-safe panel and evaluate only as an added M1 feature against the identical M0 baseline under the frozen walk-forward protocol.",
+      "confounders": [
+        "competition",
+        "venue",
+        "team strength kept separate from style",
+        "season/regime",
+        "profile support"
+      ],
+      "provider_constraints": "TheStatsAPI only; NULL remains missing; provider field semantics are not blended with another source.",
+      "required_resolution": "MATCH",
+      "same_match_information_required": false,
+      "abstain_reason": null
+    },
+    {
+      "hypothesis_id": "mt_022544352_YC_AWAY_SIM",
+      "target": "TOTAL_YELLOW_CARDS_OVER_3_5",
+      "market_family": "BOOKINGS",
+      "fixture_context_observation": "The packet motivates conditioning away yellow_cards on the opponent's pre-match fouled_in_final_third, interceptions, fouls profile rather than relying only on marginal rolling means.",
+      "predictive_mechanism": "Historical yellow_cards output may vary when the subject faces opponents whose multidimensional style resembles the current opponent across fouled_in_final_third, interceptions, fouls.",
+      "future_target_label": "OVER_x iff (home + away of yellow_cards, FULL_MATCH) > x ; x is a half-line (no push)",
+      "evidence_refs": [
+        "tsa.AWAY_TEAM.yellow_cards.FOR.RECENT_5.ALL",
+        "tsa.AWAY_TEAM.yellow_cards.FOR.ALL_PRIOR.AWAY",
+        "tsa.HOME_TEAM.fouled_in_final_third.FOR.ALL_PRIOR.HOME",
+        "tsa.HOME_TEAM.interceptions.FOR.ALL_PRIOR.HOME",
+        "tsa.HOME_TEAM.fouls.FOR.ALL_PRIOR.HOME"
+      ],
+      "pre_match_feature_inputs": [
+        "AWAY yellow_cards historical output before kickoff",
+        "HOME opponent style profile from fouled_in_final_third, interceptions, fouls before kickoff"
+      ],
+      "feature_template": {
+        "template_type": "OPPONENT_SIMILARITY_CONDITIONAL",
+        "combine": "SIMILARITY_CONDITIONAL",
+        "components": [],
+        "similarity": {
+          "subject_side": "AWAY",
+          "subject_metric": "yellow_cards",
+          "subject_perspective": "FOR",
+          "profile_side": "HOME",
+          "profile_dimensions": [
+            {
+              "metric": "fouled_in_final_third",
+              "perspective": "FOR"
+            },
+            {
+              "metric": "interceptions",
+              "perspective": "FOR"
+            },
+            {
+              "metric": "fouls",
+              "perspective": "FOR"
+            }
+          ]
+        }
+      },
+      "opponent_profile_dimensions": [
+        "fouled_in_final_third.FOR",
+        "interceptions.FOR",
+        "fouls.FOR"
+      ],
+      "why_baseline_may_miss_it": "M0 contains the component rolling means separately but not the subject's historical target behavior conditional on a multidimensional opponent style resembling the current opponent.",
+      "panel_generalization_rule": "For every historical fixture, build the opponent style profile using only matches before that kickoff, find the subject's prior matches against style-similar opponents, and derive the shrunk conditional target-statistic deviation.",
+      "deterministic_test_request": "Instantiate this template across the frozen PIT-safe panel and evaluate only as an added M1 feature against the identical M0 baseline under the frozen walk-forward protocol.",
+      "confounders": [
+        "competition",
+        "venue",
+        "team strength kept separate from style",
+        "season/regime",
+        "profile support"
+      ],
+      "provider_constraints": "TheStatsAPI only; NULL remains missing; provider field semantics are not blended with another source.",
+      "required_resolution": "MATCH",
+      "same_match_information_required": false,
+      "abstain_reason": null
+    }
+  ],
+  "abstentions": []
+}

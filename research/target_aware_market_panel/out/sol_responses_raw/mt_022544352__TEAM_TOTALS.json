@@ -1,0 +1,259 @@
+{
+  "fixture_id": "thestatsapi:mt_022544352",
+  "family": "TEAM_TOTALS",
+  "hypotheses": [
+    {
+      "hypothesis_id": "mt_022544352_HG_SIM",
+      "target": "HOME_GOALS_OVER_1_5",
+      "market_family": "TEAM_TOTALS",
+      "fixture_context_observation": "The packet motivates conditioning home goals on the opponent's pre-match shots_on_target, big_chances, final_third_entries profile rather than relying only on marginal rolling means.",
+      "predictive_mechanism": "Historical goals output may vary when the subject faces opponents whose multidimensional style resembles the current opponent across shots_on_target, big_chances, final_third_entries.",
+      "future_target_label": "OVER_x iff (home of goals, FULL_MATCH) > x ; x is a half-line (no push)",
+      "evidence_refs": [
+        "tsa.HOME_TEAM.goals.FOR.RECENT_5.ALL",
+        "tsa.HOME_TEAM.goals.FOR.ALL_PRIOR.HOME",
+        "tsa.AWAY_TEAM.shots_on_target.AGAINST.ALL_PRIOR.AWAY",
+        "tsa.AWAY_TEAM.big_chances.AGAINST.ALL_PRIOR.AWAY",
+        "tsa.AWAY_TEAM.final_third_entries.AGAINST.ALL_PRIOR.AWAY"
+      ],
+      "pre_match_feature_inputs": [
+        "HOME goals historical output before kickoff",
+        "AWAY opponent style profile from shots_on_target, big_chances, final_third_entries before kickoff"
+      ],
+      "feature_template": {
+        "template_type": "OPPONENT_SIMILARITY_CONDITIONAL",
+        "combine": "SIMILARITY_CONDITIONAL",
+        "components": [],
+        "similarity": {
+          "subject_side": "HOME",
+          "subject_metric": "goals",
+          "subject_perspective": "FOR",
+          "profile_side": "AWAY",
+          "profile_dimensions": [
+            {
+              "metric": "shots_on_target",
+              "perspective": "AGAINST"
+            },
+            {
+              "metric": "big_chances",
+              "perspective": "AGAINST"
+            },
+            {
+              "metric": "final_third_entries",
+              "perspective": "AGAINST"
+            }
+          ]
+        }
+      },
+      "opponent_profile_dimensions": [
+        "shots_on_target.AGAINST",
+        "big_chances.AGAINST",
+        "final_third_entries.AGAINST"
+      ],
+      "why_baseline_may_miss_it": "M0 contains the component rolling means separately but not the subject's historical target behavior conditional on a multidimensional opponent style resembling the current opponent.",
+      "panel_generalization_rule": "For every historical fixture, build the opponent style profile using only matches before that kickoff, find the subject's prior matches against style-similar opponents, and derive the shrunk conditional target-statistic deviation.",
+      "deterministic_test_request": "Instantiate this template across the frozen PIT-safe panel and evaluate only as an added M1 feature against the identical M0 baseline under the frozen walk-forward protocol.",
+      "confounders": [
+        "competition",
+        "venue",
+        "team strength kept separate from style",
+        "season/regime",
+        "profile support"
+      ],
+      "provider_constraints": "TheStatsAPI only; NULL remains missing; provider field semantics are not blended with another source.",
+      "required_resolution": "MATCH",
+      "same_match_information_required": false,
+      "abstain_reason": null
+    },
+    {
+      "hypothesis_id": "mt_022544352_AG_SIM",
+      "target": "AWAY_GOALS_OVER_1_5",
+      "market_family": "TEAM_TOTALS",
+      "fixture_context_observation": "The packet motivates conditioning away goals on the opponent's pre-match shots_on_target, big_chances, final_third_entries profile rather than relying only on marginal rolling means.",
+      "predictive_mechanism": "Historical goals output may vary when the subject faces opponents whose multidimensional style resembles the current opponent across shots_on_target, big_chances, final_third_entries.",
+      "future_target_label": "OVER_x iff (away of goals, FULL_MATCH) > x ; x is a half-line (no push)",
+      "evidence_refs": [
+        "tsa.AWAY_TEAM.goals.FOR.RECENT_5.ALL",
+        "tsa.AWAY_TEAM.goals.FOR.ALL_PRIOR.AWAY",
+        "tsa.HOME_TEAM.shots_on_target.AGAINST.ALL_PRIOR.HOME",
+        "tsa.HOME_TEAM.big_chances.AGAINST.ALL_PRIOR.HOME",
+        "tsa.HOME_TEAM.final_third_entries.AGAINST.ALL_PRIOR.HOME"
+      ],
+      "pre_match_feature_inputs": [
+        "AWAY goals historical output before kickoff",
+        "HOME opponent style profile from shots_on_target, big_chances, final_third_entries before kickoff"
+      ],
+      "feature_template": {
+        "template_type": "OPPONENT_SIMILARITY_CONDITIONAL",
+        "combine": "SIMILARITY_CONDITIONAL",
+        "components": [],
+        "similarity": {
+          "subject_side": "AWAY",
+          "subject_metric": "goals",
+          "subject_perspective": "FOR",
+          "profile_side": "HOME",
+          "profile_dimensions": [
+            {
+              "metric": "shots_on_target",
+              "perspective": "AGAINST"
+            },
+            {
+              "metric": "big_chances",
+              "perspective": "AGAINST"
+            },
+            {
+              "metric": "final_third_entries",
+              "perspective": "AGAINST"
+            }
+          ]
+        }
+      },
+      "opponent_profile_dimensions": [
+        "shots_on_target.AGAINST",
+        "big_chances.AGAINST",
+        "final_third_entries.AGAINST"
+      ],
+      "why_baseline_may_miss_it": "M0 contains the component rolling means separately but not the subject's historical target behavior conditional on a multidimensional opponent style resembling the current opponent.",
+      "panel_generalization_rule": "For every historical fixture, build the opponent style profile using only matches before that kickoff, find the subject's prior matches against style-similar opponents, and derive the shrunk conditional target-statistic deviation.",
+      "deterministic_test_request": "Instantiate this template across the frozen PIT-safe panel and evaluate only as an added M1 feature against the identical M0 baseline under the frozen walk-forward protocol.",
+      "confounders": [
+        "competition",
+        "venue",
+        "team strength kept separate from style",
+        "season/regime",
+        "profile support"
+      ],
+      "provider_constraints": "TheStatsAPI only; NULL remains missing; provider field semantics are not blended with another source.",
+      "required_resolution": "MATCH",
+      "same_match_information_required": false,
+      "abstain_reason": null
+    },
+    {
+      "hypothesis_id": "mt_022544352_HC_SIM",
+      "target": "HOME_CORNERS_OVER_4_5",
+      "market_family": "TEAM_TOTALS",
+      "fixture_context_observation": "The packet motivates conditioning home corners on the opponent's pre-match final_third_entries, touches_in_box, accurate_crosses profile rather than relying only on marginal rolling means.",
+      "predictive_mechanism": "Historical corners output may vary when the subject faces opponents whose multidimensional style resembles the current opponent across final_third_entries, touches_in_box, accurate_crosses.",
+      "future_target_label": "OVER_x iff (home of corner_kicks, FULL_MATCH) > x ; x is a half-line (no push)",
+      "evidence_refs": [
+        "tsa.HOME_TEAM.corners.FOR.RECENT_5.ALL",
+        "tsa.HOME_TEAM.corners.FOR.ALL_PRIOR.HOME",
+        "tsa.AWAY_TEAM.final_third_entries.AGAINST.ALL_PRIOR.AWAY",
+        "tsa.AWAY_TEAM.touches_in_box.AGAINST.ALL_PRIOR.AWAY",
+        "tsa.AWAY_TEAM.accurate_crosses.AGAINST.ALL_PRIOR.AWAY"
+      ],
+      "pre_match_feature_inputs": [
+        "HOME corners historical output before kickoff",
+        "AWAY opponent style profile from final_third_entries, touches_in_box, accurate_crosses before kickoff"
+      ],
+      "feature_template": {
+        "template_type": "OPPONENT_SIMILARITY_CONDITIONAL",
+        "combine": "SIMILARITY_CONDITIONAL",
+        "components": [],
+        "similarity": {
+          "subject_side": "HOME",
+          "subject_metric": "corners",
+          "subject_perspective": "FOR",
+          "profile_side": "AWAY",
+          "profile_dimensions": [
+            {
+              "metric": "final_third_entries",
+              "perspective": "AGAINST"
+            },
+            {
+              "metric": "touches_in_box",
+              "perspective": "AGAINST"
+            },
+            {
+              "metric": "accurate_crosses",
+              "perspective": "AGAINST"
+            }
+          ]
+        }
+      },
+      "opponent_profile_dimensions": [
+        "final_third_entries.AGAINST",
+        "touches_in_box.AGAINST",
+        "accurate_crosses.AGAINST"
+      ],
+      "why_baseline_may_miss_it": "M0 contains the component rolling means separately but not the subject's historical target behavior conditional on a multidimensional opponent style resembling the current opponent.",
+      "panel_generalization_rule": "For every historical fixture, build the opponent style profile using only matches before that kickoff, find the subject's prior matches against style-similar opponents, and derive the shrunk conditional target-statistic deviation.",
+      "deterministic_test_request": "Instantiate this template across the frozen PIT-safe panel and evaluate only as an added M1 feature against the identical M0 baseline under the frozen walk-forward protocol.",
+      "confounders": [
+        "competition",
+        "venue",
+        "team strength kept separate from style",
+        "season/regime",
+        "profile support"
+      ],
+      "provider_constraints": "TheStatsAPI only; NULL remains missing; provider field semantics are not blended with another source.",
+      "required_resolution": "MATCH",
+      "same_match_information_required": false,
+      "abstain_reason": null
+    },
+    {
+      "hypothesis_id": "mt_022544352_AC_SIM",
+      "target": "AWAY_CORNERS_OVER_4_5",
+      "market_family": "TEAM_TOTALS",
+      "fixture_context_observation": "The packet motivates conditioning away corners on the opponent's pre-match final_third_entries, touches_in_box, accurate_crosses profile rather than relying only on marginal rolling means.",
+      "predictive_mechanism": "Historical corners output may vary when the subject faces opponents whose multidimensional style resembles the current opponent across final_third_entries, touches_in_box, accurate_crosses.",
+      "future_target_label": "OVER_x iff (away of corner_kicks, FULL_MATCH) > x ; x is a half-line (no push)",
+      "evidence_refs": [
+        "tsa.AWAY_TEAM.corners.FOR.RECENT_5.ALL",
+        "tsa.AWAY_TEAM.corners.FOR.ALL_PRIOR.AWAY",
+        "tsa.HOME_TEAM.final_third_entries.AGAINST.ALL_PRIOR.HOME",
+        "tsa.HOME_TEAM.touches_in_box.AGAINST.ALL_PRIOR.HOME",
+        "tsa.HOME_TEAM.accurate_crosses.AGAINST.ALL_PRIOR.HOME"
+      ],
+      "pre_match_feature_inputs": [
+        "AWAY corners historical output before kickoff",
+        "HOME opponent style profile from final_third_entries, touches_in_box, accurate_crosses before kickoff"
+      ],
+      "feature_template": {
+        "template_type": "OPPONENT_SIMILARITY_CONDITIONAL",
+        "combine": "SIMILARITY_CONDITIONAL",
+        "components": [],
+        "similarity": {
+          "subject_side": "AWAY",
+          "subject_metric": "corners",
+          "subject_perspective": "FOR",
+          "profile_side": "HOME",
+          "profile_dimensions": [
+            {
+              "metric": "final_third_entries",
+              "perspective": "AGAINST"
+            },
+            {
+              "metric": "touches_in_box",
+              "perspective": "AGAINST"
+            },
+            {
+              "metric": "accurate_crosses",
+              "perspective": "AGAINST"
+            }
+          ]
+        }
+      },
+      "opponent_profile_dimensions": [
+        "final_third_entries.AGAINST",
+        "touches_in_box.AGAINST",
+        "accurate_crosses.AGAINST"
+      ],
+      "why_baseline_may_miss_it": "M0 contains the component rolling means separately but not the subject's historical target behavior conditional on a multidimensional opponent style resembling the current opponent.",
+      "panel_generalization_rule": "For every historical fixture, build the opponent style profile using only matches before that kickoff, find the subject's prior matches against style-similar opponents, and derive the shrunk conditional target-statistic deviation.",
+      "deterministic_test_request": "Instantiate this template across the frozen PIT-safe panel and evaluate only as an added M1 feature against the identical M0 baseline under the frozen walk-forward protocol.",
+      "confounders": [
+        "competition",
+        "venue",
+        "team strength kept separate from style",
+        "season/regime",
+        "profile support"
+      ],
+      "provider_constraints": "TheStatsAPI only; NULL remains missing; provider field semantics are not blended with another source.",
+      "required_resolution": "MATCH",
+      "same_match_information_required": false,
+      "abstain_reason": null
+    }
+  ],
+  "abstentions": []
+}

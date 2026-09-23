@@ -1,0 +1,268 @@
+{
+  "fixture_id": "thestatsapi:mt_022544352",
+  "family": "GOALS",
+  "hypotheses": [
+    {
+      "hypothesis_id": "mt_022544352_GOALS_RECIPROCAL_CHANCE_MATCHUP",
+      "target": "TOTAL_GOALS_OVER_2_5",
+      "market_family": "GOALS",
+      "fixture_context_observation": "The packet shows meaningful recent movement and reciprocal attack-versus-defence contrast across shots_on_target, big_chances, final_third_entries, motivating a joint chance-creation matchup rather than another marginal goal-rate feature.",
+      "predictive_mechanism": "Future total-goal behavior may depend on whether both attacks' recent chance-production channels align with the opposing defenses' recent concession channels across several dimensions simultaneously.",
+      "future_target_label": "OVER_x iff (home + away of goals, FULL_MATCH) > x ; x is a half-line (no push)",
+      "evidence_refs": [
+        "tsa.HOME_TEAM.shots_on_target.FOR.RECENT_5.ALL",
+        "tsa.AWAY_TEAM.shots_on_target.AGAINST.RECENT_10.ALL",
+        "tsa.AWAY_TEAM.shots_on_target.FOR.RECENT_5.ALL",
+        "tsa.HOME_TEAM.shots_on_target.AGAINST.RECENT_10.ALL",
+        "tsa.HOME_TEAM.big_chances.FOR.RECENT_5.ALL",
+        "tsa.AWAY_TEAM.big_chances.AGAINST.RECENT_10.ALL",
+        "tsa.AWAY_TEAM.big_chances.FOR.RECENT_5.ALL",
+        "tsa.HOME_TEAM.big_chances.AGAINST.RECENT_10.ALL",
+        "tsa.HOME_TEAM.final_third_entries.FOR.RECENT_5.ALL",
+        "tsa.AWAY_TEAM.final_third_entries.AGAINST.RECENT_10.ALL",
+        "tsa.AWAY_TEAM.final_third_entries.FOR.RECENT_5.ALL",
+        "tsa.HOME_TEAM.final_third_entries.AGAINST.RECENT_10.ALL"
+      ],
+      "pre_match_feature_inputs": [
+        "HOME shots_on_target FOR W5 with AWAY shots_on_target AGAINST W10",
+        "AWAY shots_on_target FOR W5 with HOME shots_on_target AGAINST W10",
+        "HOME big_chances FOR W5 with AWAY big_chances AGAINST W10",
+        "AWAY big_chances FOR W5 with HOME big_chances AGAINST W10",
+        "HOME final_third_entries FOR W5 with AWAY final_third_entries AGAINST W10",
+        "AWAY final_third_entries FOR W5 with HOME final_third_entries AGAINST W10"
+      ],
+      "feature_template": {
+        "template_type": "MULTI_DIMENSION_MATCHUP",
+        "combine": "MEAN_PRODUCT",
+        "components": [
+          {
+            "side": "HOME",
+            "metric": "shots_on_target",
+            "perspective": "FOR",
+            "window": "W5",
+            "period": "FULL_MATCH"
+          },
+          {
+            "side": "AWAY",
+            "metric": "shots_on_target",
+            "perspective": "AGAINST",
+            "window": "W10",
+            "period": "FULL_MATCH"
+          },
+          {
+            "side": "AWAY",
+            "metric": "shots_on_target",
+            "perspective": "FOR",
+            "window": "W5",
+            "period": "FULL_MATCH"
+          },
+          {
+            "side": "HOME",
+            "metric": "shots_on_target",
+            "perspective": "AGAINST",
+            "window": "W10",
+            "period": "FULL_MATCH"
+          },
+          {
+            "side": "HOME",
+            "metric": "big_chances",
+            "perspective": "FOR",
+            "window": "W5",
+            "period": "FULL_MATCH"
+          },
+          {
+            "side": "AWAY",
+            "metric": "big_chances",
+            "perspective": "AGAINST",
+            "window": "W10",
+            "period": "FULL_MATCH"
+          },
+          {
+            "side": "AWAY",
+            "metric": "big_chances",
+            "perspective": "FOR",
+            "window": "W5",
+            "period": "FULL_MATCH"
+          },
+          {
+            "side": "HOME",
+            "metric": "big_chances",
+            "perspective": "AGAINST",
+            "window": "W10",
+            "period": "FULL_MATCH"
+          },
+          {
+            "side": "HOME",
+            "metric": "final_third_entries",
+            "perspective": "FOR",
+            "window": "W5",
+            "period": "FULL_MATCH"
+          },
+          {
+            "side": "AWAY",
+            "metric": "final_third_entries",
+            "perspective": "AGAINST",
+            "window": "W10",
+            "period": "FULL_MATCH"
+          },
+          {
+            "side": "AWAY",
+            "metric": "final_third_entries",
+            "perspective": "FOR",
+            "window": "W5",
+            "period": "FULL_MATCH"
+          },
+          {
+            "side": "HOME",
+            "metric": "final_third_entries",
+            "perspective": "AGAINST",
+            "window": "W10",
+            "period": "FULL_MATCH"
+          }
+        ]
+      },
+      "opponent_profile_dimensions": [],
+      "why_baseline_may_miss_it": "M0 contains every rolling mean separately; a linear baseline does not encode the reciprocal multi-channel attack-by-defence interaction across both teams.",
+      "panel_generalization_rule": "At each historical kickoff, compute the same W5 attack and W10 opposing-concession components from prior matches only and average their standardized pair products.",
+      "deterministic_test_request": "Add the generic matchup column to M1 and test incremental walk-forward log loss, Brier and calibration under the frozen panel protocol.",
+      "confounders": [
+        "competition",
+        "venue",
+        "separate team-strength covariate",
+        "season/regime",
+        "metric coverage"
+      ],
+      "provider_constraints": "TheStatsAPI only; no same-match statistics and no unsupported xG fields.",
+      "required_resolution": "MATCH",
+      "same_match_information_required": false,
+      "abstain_reason": null
+    },
+    {
+      "hypothesis_id": "mt_022544352_BTTS_HOME_SIM",
+      "target": "BTTS",
+      "market_family": "GOALS",
+      "fixture_context_observation": "The packet motivates conditioning home goals on the opponent's pre-match shots_on_target, big_chances, final_third_entries profile rather than relying only on marginal rolling means.",
+      "predictive_mechanism": "Historical goals output may vary when the subject faces opponents whose multidimensional style resembles the current opponent across shots_on_target, big_chances, final_third_entries.",
+      "future_target_label": "home goals >= 1 AND away goals >= 1 (FULL_MATCH)",
+      "evidence_refs": [
+        "tsa.HOME_TEAM.goals.FOR.RECENT_5.ALL",
+        "tsa.HOME_TEAM.goals.FOR.ALL_PRIOR.HOME",
+        "tsa.AWAY_TEAM.shots_on_target.AGAINST.ALL_PRIOR.AWAY",
+        "tsa.AWAY_TEAM.big_chances.AGAINST.ALL_PRIOR.AWAY",
+        "tsa.AWAY_TEAM.final_third_entries.AGAINST.ALL_PRIOR.AWAY"
+      ],
+      "pre_match_feature_inputs": [
+        "HOME goals historical output before kickoff",
+        "AWAY opponent style profile from shots_on_target, big_chances, final_third_entries before kickoff"
+      ],
+      "feature_template": {
+        "template_type": "OPPONENT_SIMILARITY_CONDITIONAL",
+        "combine": "SIMILARITY_CONDITIONAL",
+        "components": [],
+        "similarity": {
+          "subject_side": "HOME",
+          "subject_metric": "goals",
+          "subject_perspective": "FOR",
+          "profile_side": "AWAY",
+          "profile_dimensions": [
+            {
+              "metric": "shots_on_target",
+              "perspective": "AGAINST"
+            },
+            {
+              "metric": "big_chances",
+              "perspective": "AGAINST"
+            },
+            {
+              "metric": "final_third_entries",
+              "perspective": "AGAINST"
+            }
+          ]
+        }
+      },
+      "opponent_profile_dimensions": [
+        "shots_on_target.AGAINST",
+        "big_chances.AGAINST",
+        "final_third_entries.AGAINST"
+      ],
+      "why_baseline_may_miss_it": "M0 contains the component rolling means separately but not the subject's historical target behavior conditional on a multidimensional opponent style resembling the current opponent.",
+      "panel_generalization_rule": "For every historical fixture, build the opponent style profile using only matches before that kickoff, find the subject's prior matches against style-similar opponents, and derive the shrunk conditional target-statistic deviation.",
+      "deterministic_test_request": "Instantiate this template across the frozen PIT-safe panel and evaluate only as an added M1 feature against the identical M0 baseline under the frozen walk-forward protocol.",
+      "confounders": [
+        "competition",
+        "venue",
+        "team strength kept separate from style",
+        "season/regime",
+        "profile support"
+      ],
+      "provider_constraints": "TheStatsAPI only; NULL remains missing; provider field semantics are not blended with another source.",
+      "required_resolution": "MATCH",
+      "same_match_information_required": false,
+      "abstain_reason": null
+    },
+    {
+      "hypothesis_id": "mt_022544352_BTTS_AWAY_SIM",
+      "target": "BTTS",
+      "market_family": "GOALS",
+      "fixture_context_observation": "The packet motivates conditioning away goals on the opponent's pre-match shots_on_target, big_chances, final_third_entries profile rather than relying only on marginal rolling means.",
+      "predictive_mechanism": "Historical goals output may vary when the subject faces opponents whose multidimensional style resembles the current opponent across shots_on_target, big_chances, final_third_entries.",
+      "future_target_label": "home goals >= 1 AND away goals >= 1 (FULL_MATCH)",
+      "evidence_refs": [
+        "tsa.AWAY_TEAM.goals.FOR.RECENT_5.ALL",
+        "tsa.AWAY_TEAM.goals.FOR.ALL_PRIOR.AWAY",
+        "tsa.HOME_TEAM.shots_on_target.AGAINST.ALL_PRIOR.HOME",
+        "tsa.HOME_TEAM.big_chances.AGAINST.ALL_PRIOR.HOME",
+        "tsa.HOME_TEAM.final_third_entries.AGAINST.ALL_PRIOR.HOME"
+      ],
+      "pre_match_feature_inputs": [
+        "AWAY goals historical output before kickoff",
+        "HOME opponent style profile from shots_on_target, big_chances, final_third_entries before kickoff"
+      ],
+      "feature_template": {
+        "template_type": "OPPONENT_SIMILARITY_CONDITIONAL",
+        "combine": "SIMILARITY_CONDITIONAL",
+        "components": [],
+        "similarity": {
+          "subject_side": "AWAY",
+          "subject_metric": "goals",
+          "subject_perspective": "FOR",
+          "profile_side": "HOME",
+          "profile_dimensions": [
+            {
+              "metric": "shots_on_target",
+              "perspective": "AGAINST"
+            },
+            {
+              "metric": "big_chances",
+              "perspective": "AGAINST"
+            },
+            {
+              "metric": "final_third_entries",
+              "perspective": "AGAINST"
+            }
+          ]
+        }
+      },
+      "opponent_profile_dimensions": [
+        "shots_on_target.AGAINST",
+        "big_chances.AGAINST",
+        "final_third_entries.AGAINST"
+      ],
+      "why_baseline_may_miss_it": "M0 contains the component rolling means separately but not the subject's historical target behavior conditional on a multidimensional opponent style resembling the current opponent.",
+      "panel_generalization_rule": "For every historical fixture, build the opponent style profile using only matches before that kickoff, find the subject's prior matches against style-similar opponents, and derive the shrunk conditional target-statistic deviation.",
+      "deterministic_test_request": "Instantiate this template across the frozen PIT-safe panel and evaluate only as an added M1 feature against the identical M0 baseline under the frozen walk-forward protocol.",
+      "confounders": [
+        "competition",
+        "venue",
+        "team strength kept separate from style",
+        "season/regime",
+        "profile support"
+      ],
+      "provider_constraints": "TheStatsAPI only; NULL remains missing; provider field semantics are not blended with another source.",
+      "required_resolution": "MATCH",
+      "same_match_information_required": false,
+      "abstain_reason": null
+    }
+  ],
+  "abstentions": []
+}

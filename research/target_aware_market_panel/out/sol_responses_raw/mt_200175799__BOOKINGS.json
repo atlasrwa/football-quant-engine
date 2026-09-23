@@ -1,0 +1,133 @@
+{
+  "fixture_id": "thestatsapi:mt_200175799",
+  "family": "BOOKINGS",
+  "hypotheses": [
+    {
+      "hypothesis_id": "mt_200175799_YC_HOME_SIM",
+      "target": "TOTAL_YELLOW_CARDS_OVER_3_5",
+      "market_family": "BOOKINGS",
+      "fixture_context_observation": "The packet shows a meaningful combination of fouled_in_final_third, interceptions, aerial_duel_pct around the home side's yellow_cards context, motivating a style-conditioned feature.",
+      "predictive_mechanism": "Historical yellow_cards output may vary when the subject faces opponents whose pre-match style resembles the current opponent across fouled_in_final_third, interceptions, aerial_duel_pct.",
+      "future_target_label": "OVER_x iff (home + away of yellow_cards, FULL_MATCH) > x ; x is a half-line (no push)",
+      "evidence_refs": [
+        "tsa.HOME_TEAM.yellow_cards.FOR.RECENT_5.ALL",
+        "tsa.HOME_TEAM.yellow_cards.FOR.ALL_PRIOR.HOME",
+        "tsa.AWAY_TEAM.fouled_in_final_third.FOR.ALL_PRIOR.AWAY",
+        "tsa.AWAY_TEAM.interceptions.FOR.ALL_PRIOR.AWAY",
+        "tsa.AWAY_TEAM.aerial_duel_pct.FOR.ALL_PRIOR.AWAY"
+      ],
+      "pre_match_feature_inputs": [
+        "HOME yellow_cards historical output before kickoff",
+        "AWAY opponent profile using fouled_in_final_third, interceptions, aerial_duel_pct before kickoff"
+      ],
+      "feature_template": {
+        "template_type": "OPPONENT_SIMILARITY_CONDITIONAL",
+        "combine": "SIMILARITY_CONDITIONAL",
+        "components": [],
+        "similarity": {
+          "subject_side": "HOME",
+          "subject_metric": "yellow_cards",
+          "subject_perspective": "FOR",
+          "profile_side": "AWAY",
+          "profile_dimensions": [
+            {
+              "metric": "fouled_in_final_third",
+              "perspective": "FOR"
+            },
+            {
+              "metric": "interceptions",
+              "perspective": "FOR"
+            },
+            {
+              "metric": "aerial_duel_pct",
+              "perspective": "FOR"
+            }
+          ]
+        }
+      },
+      "opponent_profile_dimensions": [
+        "fouled_in_final_third.FOR",
+        "interceptions.FOR",
+        "aerial_duel_pct.FOR"
+      ],
+      "why_baseline_may_miss_it": "M0 contains the component means separately but not the subject's target behavior conditional on a multidimensional opponent style resembling this opponent.",
+      "panel_generalization_rule": "For each historical fixture, construct the opponent style from strictly prior matches, identify the subject's prior style-similar opponents, and derive the shrunk conditional target-statistic deviation.",
+      "deterministic_test_request": "Instantiate on the frozen panel and assess only as an added M1 feature in the frozen walk-forward comparison.",
+      "confounders": [
+        "competition",
+        "venue",
+        "strength separated from style",
+        "season/regime",
+        "profile support"
+      ],
+      "provider_constraints": "TheStatsAPI only; missing data is not zero-imputed; no cross-provider substitution.",
+      "required_resolution": "MATCH",
+      "same_match_information_required": false,
+      "abstain_reason": null
+    },
+    {
+      "hypothesis_id": "mt_200175799_YC_AWAY_SIM",
+      "target": "TOTAL_YELLOW_CARDS_OVER_3_5",
+      "market_family": "BOOKINGS",
+      "fixture_context_observation": "The packet shows a meaningful combination of fouled_in_final_third, interceptions, aerial_duel_pct around the away side's yellow_cards context, motivating a style-conditioned feature.",
+      "predictive_mechanism": "Historical yellow_cards output may vary when the subject faces opponents whose pre-match style resembles the current opponent across fouled_in_final_third, interceptions, aerial_duel_pct.",
+      "future_target_label": "OVER_x iff (home + away of yellow_cards, FULL_MATCH) > x ; x is a half-line (no push)",
+      "evidence_refs": [
+        "tsa.AWAY_TEAM.yellow_cards.FOR.RECENT_5.ALL",
+        "tsa.AWAY_TEAM.yellow_cards.FOR.ALL_PRIOR.AWAY",
+        "tsa.HOME_TEAM.fouled_in_final_third.FOR.ALL_PRIOR.HOME",
+        "tsa.HOME_TEAM.interceptions.FOR.ALL_PRIOR.HOME",
+        "tsa.HOME_TEAM.aerial_duel_pct.FOR.ALL_PRIOR.HOME"
+      ],
+      "pre_match_feature_inputs": [
+        "AWAY yellow_cards historical output before kickoff",
+        "HOME opponent profile using fouled_in_final_third, interceptions, aerial_duel_pct before kickoff"
+      ],
+      "feature_template": {
+        "template_type": "OPPONENT_SIMILARITY_CONDITIONAL",
+        "combine": "SIMILARITY_CONDITIONAL",
+        "components": [],
+        "similarity": {
+          "subject_side": "AWAY",
+          "subject_metric": "yellow_cards",
+          "subject_perspective": "FOR",
+          "profile_side": "HOME",
+          "profile_dimensions": [
+            {
+              "metric": "fouled_in_final_third",
+              "perspective": "FOR"
+            },
+            {
+              "metric": "interceptions",
+              "perspective": "FOR"
+            },
+            {
+              "metric": "aerial_duel_pct",
+              "perspective": "FOR"
+            }
+          ]
+        }
+      },
+      "opponent_profile_dimensions": [
+        "fouled_in_final_third.FOR",
+        "interceptions.FOR",
+        "aerial_duel_pct.FOR"
+      ],
+      "why_baseline_may_miss_it": "M0 contains the component means separately but not the subject's target behavior conditional on a multidimensional opponent style resembling this opponent.",
+      "panel_generalization_rule": "For each historical fixture, construct the opponent style from strictly prior matches, identify the subject's prior style-similar opponents, and derive the shrunk conditional target-statistic deviation.",
+      "deterministic_test_request": "Instantiate on the frozen panel and assess only as an added M1 feature in the frozen walk-forward comparison.",
+      "confounders": [
+        "competition",
+        "venue",
+        "strength separated from style",
+        "season/regime",
+        "profile support"
+      ],
+      "provider_constraints": "TheStatsAPI only; missing data is not zero-imputed; no cross-provider substitution.",
+      "required_resolution": "MATCH",
+      "same_match_information_required": false,
+      "abstain_reason": null
+    }
+  ],
+  "abstentions": []
+}
