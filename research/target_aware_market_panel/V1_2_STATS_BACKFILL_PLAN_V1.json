@@ -1,0 +1,53 @@
+{
+ "artifact_version": "target_aware_v1_2_stats_backfill_plan_v1",
+ "auth": "Bearer header; key never serialized",
+ "champion_changed": false,
+ "endpoint_template": "/football/matches/{match_id}/stats",
+ "fixture_id_definition": "sorted union of seasons[*].fixture_ids in frozen fixture discovery",
+ "forbidden_calls": [
+  "odds",
+  "lineups",
+  "injuries",
+  "player-stats",
+  "shotmap"
+ ],
+ "market_results_read": false,
+ "model_fit": false,
+ "n_exact_fixture_ids": 4994,
+ "next_gate": "COMPLETE_AND_FREEZE_RAW_STATS_BACKFILL_THEN_BUILD_PREHISTORY_MANIFEST",
+ "oos_executed": false,
+ "provider": "TheStatsAPI",
+ "request_policy": {
+  "attempt_ledger_required": true,
+  "concurrency": 1,
+  "first_pass_max_provider_calls": 4994,
+  "hidden_client_retries": 0,
+  "http_404_semantics": "freeze as provider-missing stats; do not retry",
+  "http_timeout_seconds": 30.0,
+  "max_process_attempts_per_unresolved_id": 2,
+  "minimum_interval_seconds": 1.0,
+  "transport_resume_rule": "successful/404 ids with immutable raw files are never re-requested; an id with no terminal raw file may be attempted on a later process restart",
+  "valid_terminal_statuses": [
+   200,
+   404
+  ]
+ },
+ "source_fixture_discovery_path": "research/target_aware_market_panel/V1_2_BACKFILL_FIXTURE_DISCOVERY_V1.json",
+ "source_fixture_discovery_sha256": "219d95d9a4c14a2bef4aaa8fa5b25ff9b2b52698343fd469b2967b8e0a94a4ac",
+ "storage": {
+  "append_only_attempt_ledger": "/home/ubuntu/data/thestatsapi/v1_2_prehistory/stats_v1_attempts.jsonl",
+  "one_wrapper_per_fixture": true,
+  "raw_file_sha256_required": true,
+  "raw_namespace": "/home/ubuntu/data/thestatsapi/v1_2_prehistory/stats_v1",
+  "wrapper_fields": [
+   "provider",
+   "match_id",
+   "endpoint",
+   "retrieved_at_unix",
+   "retrieved_at_utc",
+   "http_status",
+   "payload"
+  ]
+ },
+ "target_outcomes_read": false
+}
