@@ -113,7 +113,7 @@ The run writes exactly:
 
 - `SOL_PANEL_SUPPORT_DIAGNOSTICS_V1.json`
 - `SOL_PANEL_SUPPORT_AUDIT_V1.md`
-- `SOL_PANEL_SUPPORT_FREEZE_MANIEST_V1.json`
+- `SOL_PANEL_SUPPORT_FREEZE_MANIFEST_V1.json`
 
 Commit those generated files unchanged immediately after the run and before any OOS/model execution.
 

@@ -50,3 +50,20 @@ def test_similarity_summary_keeps_strength_gap_secondary():
     s = S.summarize_similarity_details(ds)
     assert s["n_supported_rows"] == 2 and s["n_rows_with_strength_gap"] == 2
     assert np.isfinite(s["neighbor_minus_all_opponent_strength"]["mean"])
+
+
+def test_support_runner_gates_frozen_response_manifest():
+    from pathlib import Path
+    src = Path("research/target_aware_market_panel/run_support_diagnostics.py").read_text()
+    assert 'RESPONSE_MANIFEST = OUT / "SOL_RESPONSE_MANIFEST_V1.json"' in src
+    assert 'fsha(RESPONSE_MANIFEST) != SOURCE_RESPONSE_MANIFEST_SHA256' in src
+    assert 'RESPONSE_MANIFEST_HASH_MISMATCH' in src
+
+
+def test_support_protocol_manifest_name_matches_runner():
+    from pathlib import Path
+    protocol = Path("research/target_aware_market_panel/SOL_PANEL_SUPPORT_PROTOCOL_V1.md").read_text()
+    runner = Path("research/target_aware_market_panel/run_support_diagnostics.py").read_text()
+    assert "SOL_PANEL_SUPPORT_FREEZE_MANIFEST_V1.json" in protocol
+    assert "SOL_PANEL_SUPPORT_FREEZE_MANIEST_V1.json" not in protocol
+    assert '"SOL_PANEL_SUPPORT_FREEZE_MANIFEST_V1.json"' in runner
