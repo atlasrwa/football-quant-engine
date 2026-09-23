@@ -184,7 +184,9 @@ def test_09_normalization_fit_uses_training_fold_only():
 
 def test_10_calibration_fit_uses_training_or_validation_only():
     m0, m1 = MS.m0_spec(["f"]), MS.m1_spec(["f"], ["i6_x"])
-    assert m0["calibration"] == m1["calibration"] == "isotonic_fit_on_training_fold_only"
+    assert m0["calibration"] == m1["calibration"] == (
+        "isotonic_fit_on_inner_timeseries_oof_predictions_of_training_block")
+    assert "in_sample" not in m0["calibration"] and "test" not in m0["calibration"]
     assert FD.CALIBRATION_WINDOW == "INNER_TRAINING_FOLDS_ONLY"
 
 
@@ -327,15 +329,18 @@ def test_21_identical_preprocessing_policy(arms):
 
 def test_22_identical_regularization_selection_machinery(arms):
     m0, m1 = arms
-    for k in ("model_class", "c_grid", "l1_ratio_grid", "inner_cv_splits", "inner_cv_kind",
+    for k in ("model_class", "penalty_structure", "estimator", "selection_rule", "c_grid",
+              "l1_ratio_grid", "inner_cv_splits", "inner_cv_kind",
               "uses_frozen_champion_hyperparameters"):
         assert m0[k] == m1[k]
     assert m0["uses_frozen_champion_hyperparameters"] is False
+    assert "grouped_shrinkage_groups" not in m0 and "grouped_shrinkage_groups" not in m1
 
 
 def test_23_identical_calibration_machinery(arms):
     m0, m1 = arms
     assert m0["calibration"] == m1["calibration"]
+    assert m0["probability_clip"] == m1["probability_clip"] == [0.01, 0.99]
 
 
 def test_24_only_difference_is_llm_derived_feature_availability(arms):
@@ -362,7 +367,50 @@ def test_multiplicity_policy_controls_search_space():
     assert mp["primary_claim"] == "M1_universe_vs_M0_universe"
     assert mp["feature_selected_using_oos_information"] is False
     assert mp["hyperparameters_tuned_on_test_folds"] is False
-    assert "grouped_shrinkage_over_structural_families" in mp["controls"]
+    assert "elastic_net_uniform_per_coefficient_penalty_both_arms" in mp["controls"]
+    assert mp["grouped_shrinkage_used"] is False
+    assert mp["structural_groups_role"] == "secondary_ablation_definition_only"
+
+
+def test_parity_check_catches_any_non_feature_knob_difference(arms):
+    m0, m1 = arms
+    for key, val in (("calibration", "platt"), ("probability_clip", [0.0, 1.0]),
+                     ("estimator", {**m1["estimator"], "max_iter": 100}),
+                     ("some_future_knob", "x")):
+        bad = dict(m1); bad[key] = val
+        p = MS.parity_assertions(m0, bad)
+        assert p["only_difference_is_llm_feature_availability"] is False, key
+        assert key in p["differing_shared_knobs"], key
+
+
+def test_evaluation_execution_pins_leave_no_executor_choice():
+    vs = EV.version_stamp()
+    pins = vs["execution_pins"]
+    for k in ("scored_set", "pooling", "probability_scored", "bootstrap", "ci_type", "ece",
+              "brier_delta", "residual_deviance_delta", "selected_feature_stability",
+              "ablation_construction", "family_level_test", "secondary_target_test",
+              "fold_training_failure"):
+        assert pins.get(k), k
+    assert vs["ece_n_bins"] == 10 and vs["bootstrap_ci_type"] == "percentile"
+    assert "intersection" in pins["scored_set"]
+    assert not any("grouped shrinkage" in f for f in EV.failure_modes())
+
+
+def test_power_sensitivity_brackets_both_dependence_bounds():
+    from src.research.item6.stage2 import power as PW
+    ps = PW.build_power_sensitivity(n_oos_predictions=13012, n_blocks=95, n_folds=5,
+                                    median_feature_coverage=0.8,
+                                    n_columns_below_coverage_screen=0)
+    b = ps["max_paired_sd_with_ci_half_width_at_or_below_mpi"]
+    assert b["conservative_bound"] < b["independent_bound"]
+    for row in ps["sensitivity_table"]:
+        c, i = row["conservative_bound_n_blocks"], row["independent_bound_n_fixtures"]
+        assert c["standard_error"] >= i["standard_error"]
+        # The conjunctive rule caps power at a true effect equal to MPI at one half.
+        assert c["power_at_true_delta_equal_mpi"] <= 0.5 + 1e-9
+        assert i["power_at_true_delta_equal_mpi"] <= 0.5 + 1e-9
+        assert c["true_delta_for_80pct_power"] > EV.MINIMUM_PRACTICAL_LOGLOSS_IMPROVEMENT
+    assert ps["reads_outcomes"] is False
 
 
 def test_stage2_can_fail_cleanly():

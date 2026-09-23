@@ -1,15 +1,25 @@
 {
  "arm": "M0",
- "artifact_sha256": "317ee41d596b532e4fc5f5b2b9577ceab1ab14e84c565050398244c4c60c2496",
+ "artifact_sha256": "93bd3ffe1e4f07877b92e1e90ca59e96fdd10f1ffc637b530b312b424a8d5339",
  "c_grid": [
   0.003,
   0.01,
   0.03,
   0.1
  ],
- "calibration": "isotonic_fit_on_training_fold_only",
+ "calibration": "isotonic_fit_on_inner_timeseries_oof_predictions_of_training_block",
  "coverage_screen_min_nonmissing_rate": 0.6,
  "coverage_screen_scope": "outer_training_period_only",
+ "estimator": {
+  "class_weight": null,
+  "fit_intercept": true,
+  "max_iter": 4000,
+  "penalty": "elasticnet",
+  "random_state": 0,
+  "sklearn_class": "LogisticRegression",
+  "solver": "saga",
+  "tol": 0.0001
+ },
  "feature_source": "champion_stat_mixer_pool_unweakened",
  "feature_universe": [
   "h_shots_for_5",
@@ -85,7 +95,6 @@
   "a_possession_against_10",
   "a_possession_against_std"
  ],
- "grouped_shrinkage_groups": [],
  "imputation": "median_fit_inside_tuning_fold",
  "inner_cv_kind": "TimeSeriesSplit_expanding_chronological",
  "inner_cv_splits": 4,
@@ -97,7 +106,13 @@
  "llm_derived_features_available": false,
  "model_class": "elastic_net_logistic_regression",
  "n_features": 72,
+ "penalty_structure": "elastic_net_uniform_per_coefficient_no_group_terms",
+ "probability_clip": [
+  0.01,
+  0.99
+ ],
  "role": "deterministic_baseline_feature_universe",
  "scaling": "standardize_fit_inside_tuning_fold",
+ "selection_rule": "GridSearchCV_best_mean_inner_neg_log_loss_refit_true_ties_to_first_grid_point",
  "uses_frozen_champion_hyperparameters": false
 }

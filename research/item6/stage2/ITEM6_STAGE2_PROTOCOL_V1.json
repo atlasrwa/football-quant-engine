@@ -4,15 +4,15 @@
   "M1": "M0 + the frozen Stage-2-feasible LLM-derived feature universe",
   "only_difference": "availability of the LLM-discovered feature families"
  },
- "artifact_sha256": "c0beade502a9f4f3c4671750e554b8f9d0b5179e452c5d16f94f7f09d7393d33",
+ "artifact_sha256": "77384b9b5f3374123dcd01a710c6c09f93a9b1d019a8817c16869e39d58f584f",
  "artifacts": {
   "ITEM6_STAGE2_AUGMENTED_MODEL_SPEC_V1.json": {
    "path": "/home/ubuntu/research/item6/stage2/ITEM6_STAGE2_AUGMENTED_MODEL_SPEC_V1.json",
-   "sha256": "a56a3c3367272de3f315cbf3247aa110a924040b51a3f2325102646d7ad5112e"
+   "sha256": "0627bceb8d8ae65cffd6d67a941125413d914cd8503c5799fccf43c0d3b9e583"
   },
   "ITEM6_STAGE2_BASELINE_MODEL_SPEC_V1.json": {
    "path": "/home/ubuntu/research/item6/stage2/ITEM6_STAGE2_BASELINE_MODEL_SPEC_V1.json",
-   "sha256": "317ee41d596b532e4fc5f5b2b9577ceab1ab14e84c565050398244c4c60c2496"
+   "sha256": "93bd3ffe1e4f07877b92e1e90ca59e96fdd10f1ffc637b530b312b424a8d5339"
   },
   "ITEM6_STAGE2_CANONICAL_FAMILY_REGISTRY_V1.json": {
    "path": "/home/ubuntu/research/item6/stage2/ITEM6_STAGE2_CANONICAL_FAMILY_REGISTRY_V1.json",
@@ -20,7 +20,7 @@
   },
   "ITEM6_STAGE2_EVALUATION_PROTOCOL_V1.json": {
    "path": "/home/ubuntu/research/item6/stage2/ITEM6_STAGE2_EVALUATION_PROTOCOL_V1.json",
-   "sha256": "dc6177c57ffe1562dade248e9aa6ed372b5f8f861e66a33a958a2f3c3a321f73"
+   "sha256": "25c6f0fb46577129216c39713f8095615995933861bc28aa5803a00f1a1888a7"
   },
   "ITEM6_STAGE2_FEASIBILITY_FUNNEL_V1.json": {
    "path": "/home/ubuntu/research/item6/stage2/ITEM6_STAGE2_FEASIBILITY_FUNNEL_V1.json",
@@ -40,11 +40,11 @@
   },
   "ITEM6_STAGE2_MULTIPLICITY_POLICY_V1.json": {
    "path": "/home/ubuntu/research/item6/stage2/ITEM6_STAGE2_MULTIPLICITY_POLICY_V1.json",
-   "sha256": "7990d0b8e676299bbe51de5e70b498432f378208c817a043068069efa6efaa39"
+   "sha256": "02e3d5274087ea625dbc8b25c9aafd92fe3733c448c21b8afc11bc91e077715a"
   },
   "ITEM6_STAGE2_POWER_SENSITIVITY_V1.json": {
    "path": "/home/ubuntu/research/item6/stage2/ITEM6_STAGE2_POWER_SENSITIVITY_V1.json",
-   "sha256": "e1adab49e04e20217bdd4d7b6bc9c41c37755b8c8a5b04f0daa9c709b9caa3cd"
+   "sha256": "45cb6d1d958ad5030aca1612631a442429f3bb474f895d3a23f973a283cc79d0"
   },
   "ITEM6_STAGE2_PROVIDER_MEASURABILITY_V1.json": {
    "path": "/home/ubuntu/research/item6/stage2/ITEM6_STAGE2_PROVIDER_MEASURABILITY_V1.json",
@@ -59,6 +59,31 @@
    "sha256": "28924ccc06b31ee79bb6539007bfd79442c0141e4dd595b95a6892b2d303ee87"
   }
  },
+ "design_amendments": [
+  {
+   "amendment_id": "S2-DESIGN-A1",
+   "changes": [
+    "model_specs v1->v2: removed 'grouped shrinkage over structural families' (declared with no group penalty or solver; an executor free parameter and the one declared machinery difference between arms). Pinned estimator (saga, max_iter 4000, tol 1e-4, random_state 0), selection rule, calibration data source (isotonic on inner TimeSeriesSplit OOF predictions, not in-sample), and a [0.01, 0.99] output clip, all inherited from the champion fitter where one existed. Parity check now fails on ANY non-feature key that differs between arms.",
+    "evaluation v1->v2: pinned scored-set intersection rule, pooling, bootstrap procedure, percentile CI, ECE binning (champion's 10 equal-width bins), secondary metric definitions, ablation construction, family-level and secondary-target tests, fold-failure handling. Decision rule thresholds UNCHANGED.",
+    "power v1->v2: bracketed precision between a conservative (block-count) and an independent (fixture-count) bound; v1 stated the worst case as the verdict. Added 80%-power effect sizes under the conjunctive rule and its <=50% ceiling at MPI.",
+    "outcome-blindness audit: narrowed the champion-metadata claim (full-corpus champion overlaps the OOS window) with the reason it cannot bias the paired endpoint."
+   ],
+   "decision_rule_changed": false,
+   "minimum_practical_improvement_changed": false,
+   "outcomes_inspected_before_amendment": false,
+   "timing": "after the v1 freeze, before any Stage-2 execution, fit or outcome access",
+   "unchanged_byte_identical": [
+    "ITEM6_STAGE2_FEASIBILITY_FUNNEL_V1.json",
+    "ITEM6_STAGE2_CANONICAL_FAMILY_REGISTRY_V1.json",
+    "ITEM6_STAGE2_FEATURE_SPEC_V1.json",
+    "ITEM6_STAGE2_FOLD_MANIFEST_V1.json",
+    "ITEM6_STAGE2_THRESHOLD_POLICY_V1.json",
+    "ITEM6_STAGE2_SIMILARITY_POLICY_V1.json",
+    "ITEM6_STAGE2_GRAMMAR_EXTENSIONS_V1.json",
+    "ITEM6_STAGE2_PROVIDER_MEASURABILITY_V1.json"
+   ]
+  }
+ ],
  "governing_principle": "The LLM is not the predictor. Its role ended at hypothesis proposal. No LLM numerical reasoning enters Stage 2: the deterministic engine owns feature construction, thresholds, support counts, similarity, screening, regularization, coefficients, calibration, p_model and evaluation.",
  "market_edge_excluded_from_primary_endpoint": true,
  "measurement_requirement_source": "deterministic distinct_metrics (NOT the LLM-authored provider_requirements field)",

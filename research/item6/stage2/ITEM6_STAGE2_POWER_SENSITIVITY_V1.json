@@ -1,6 +1,6 @@
 {
  "analysis_kind": "SENSITIVITY_NOT_CLASSICAL_POWER",
- "artifact_sha256": "e1adab49e04e20217bdd4d7b6bc9c41c37755b8c8a5b04f0daa9c709b9caa3cd",
+ "artifact_sha256": "45cb6d1d958ad5030aca1612631a442429f3bb474f895d3a23f973a283cc79d0",
  "assumed_paired_sd_range": [
   0.005,
   0.01,
@@ -10,83 +10,133 @@
   0.2
  ],
  "ci_level": 0.95,
- "effective_n_used_for_mde": "n_blocks (conservative: assumes perfect within-week correlation)",
+ "conjunctive_rule_power_ceiling_at_mpi": "A true effect of exactly MPI passes S2P3 with probability <= 0.5 at any sample size, because S2P3 requires the point estimate itself to reach MPI. 80%-power effect sizes are tabulated per bound.",
+ "effective_n_bounds": {
+  "conservative": "n_blocks (perfect within-week correlation)",
+  "independent": "n_oos_predictions (independent fixtures)",
+  "realised": "the frozen block bootstrap; expected between the two bounds"
+ },
  "feature_coverage_sensitivity": {
   "median_llm_feature_coverage": 0.799667,
   "n_columns_below_coverage_screen": 2,
   "note": "Columns below the inherited >=0.60 training-period coverage screen are dropped inside each training fold, identically to how M0 columns are screened. Lower coverage reduces M1's effective information and biases the comparison TOWARD the null, never toward a false positive."
  },
  "max_paired_sd_detectable_at_minimum_practical_improvement": 0.004973,
+ "max_paired_sd_with_ci_half_width_at_or_below_mpi": {
+  "conservative_bound": 0.004973,
+  "independent_bound": 0.0582
+ },
  "minimum_practical_improvement": 0.001,
  "n_bootstrap_blocks_iso_weeks": 95,
  "n_folds": 5,
+ "n_oos_predictions_is_upper_bound": true,
  "n_oos_predictions_planned": 13012,
- "power_version": "item6_stage2_power_v1",
- "precision_of_paired_difference": [
-  {
-   "assumed_paired_sd": 0.005,
-   "half_width_95ci": 0.001005
-  },
-  {
-   "assumed_paired_sd": 0.01,
-   "half_width_95ci": 0.002011
-  },
-  {
-   "assumed_paired_sd": 0.02,
-   "half_width_95ci": 0.004022
-  },
-  {
-   "assumed_paired_sd": 0.05,
-   "half_width_95ci": 0.010054
-  },
-  {
-   "assumed_paired_sd": 0.1,
-   "half_width_95ci": 0.020109
-  },
-  {
-   "assumed_paired_sd": 0.2,
-   "half_width_95ci": 0.040218
-  }
- ],
+ "power_version": "item6_stage2_power_v2",
  "reads_outcomes": false,
  "sensitivity_table": [
   {
    "assumed_paired_sd": 0.005,
-   "detectable_at_minimum_practical_improvement": false,
-   "minimum_detectable_delta_logloss": 0.001005,
-   "n_blocks_required_for_minimum_practical_improvement": 97
+   "conservative_bound_n_blocks": {
+    "ci_half_width_95": 0.001005,
+    "ci_half_width_at_or_below_mpi": false,
+    "power_at_true_delta_equal_mpi": 0.4958,
+    "standard_error": 0.000513,
+    "true_delta_for_80pct_power": 0.001437
+   },
+   "independent_bound_n_fixtures": {
+    "ci_half_width_95": 8.6e-05,
+    "ci_half_width_at_or_below_mpi": true,
+    "power_at_true_delta_equal_mpi": 0.5,
+    "standard_error": 4.4e-05,
+    "true_delta_for_80pct_power": 0.001037
+   }
   },
   {
    "assumed_paired_sd": 0.01,
-   "detectable_at_minimum_practical_improvement": false,
-   "minimum_detectable_delta_logloss": 0.002011,
-   "n_blocks_required_for_minimum_practical_improvement": 385
+   "conservative_bound_n_blocks": {
+    "ci_half_width_95": 0.002011,
+    "ci_half_width_at_or_below_mpi": false,
+    "power_at_true_delta_equal_mpi": 0.1622,
+    "standard_error": 0.001026,
+    "true_delta_for_80pct_power": 0.002874
+   },
+   "independent_bound_n_fixtures": {
+    "ci_half_width_95": 0.000172,
+    "ci_half_width_at_or_below_mpi": true,
+    "power_at_true_delta_equal_mpi": 0.5,
+    "standard_error": 8.8e-05,
+    "true_delta_for_80pct_power": 0.001074
+   }
   },
   {
    "assumed_paired_sd": 0.02,
-   "detectable_at_minimum_practical_improvement": false,
-   "minimum_detectable_delta_logloss": 0.004022,
-   "n_blocks_required_for_minimum_practical_improvement": 1537
+   "conservative_bound_n_blocks": {
+    "ci_half_width_95": 0.004022,
+    "ci_half_width_at_or_below_mpi": false,
+    "power_at_true_delta_equal_mpi": 0.0704,
+    "standard_error": 0.002052,
+    "true_delta_for_80pct_power": 0.005749
+   },
+   "independent_bound_n_fixtures": {
+    "ci_half_width_95": 0.000344,
+    "ci_half_width_at_or_below_mpi": true,
+    "power_at_true_delta_equal_mpi": 0.5,
+    "standard_error": 0.000175,
+    "true_delta_for_80pct_power": 0.001148
+   }
   },
   {
    "assumed_paired_sd": 0.05,
-   "detectable_at_minimum_practical_improvement": false,
-   "minimum_detectable_delta_logloss": 0.010054,
-   "n_blocks_required_for_minimum_practical_improvement": 9604
+   "conservative_bound_n_blocks": {
+    "ci_half_width_95": 0.010054,
+    "ci_half_width_at_or_below_mpi": false,
+    "power_at_true_delta_equal_mpi": 0.0388,
+    "standard_error": 0.00513,
+    "true_delta_for_80pct_power": 0.014372
+   },
+   "independent_bound_n_fixtures": {
+    "ci_half_width_95": 0.000859,
+    "ci_half_width_at_or_below_mpi": true,
+    "power_at_true_delta_equal_mpi": 0.5,
+    "standard_error": 0.000438,
+    "true_delta_for_80pct_power": 0.001369
+   }
   },
   {
    "assumed_paired_sd": 0.1,
-   "detectable_at_minimum_practical_improvement": false,
-   "minimum_detectable_delta_logloss": 0.020109,
-   "n_blocks_required_for_minimum_practical_improvement": 38415
+   "conservative_bound_n_blocks": {
+    "ci_half_width_95": 0.020109,
+    "ci_half_width_at_or_below_mpi": false,
+    "power_at_true_delta_equal_mpi": 0.0313,
+    "standard_error": 0.01026,
+    "true_delta_for_80pct_power": 0.028744
+   },
+   "independent_bound_n_fixtures": {
+    "ci_half_width_95": 0.001718,
+    "ci_half_width_at_or_below_mpi": false,
+    "power_at_true_delta_equal_mpi": 0.2063,
+    "standard_error": 0.000877,
+    "true_delta_for_80pct_power": 0.002456
+   }
   },
   {
    "assumed_paired_sd": 0.2,
-   "detectable_at_minimum_practical_improvement": false,
-   "minimum_detectable_delta_logloss": 0.040218,
-   "n_blocks_required_for_minimum_practical_improvement": 153659
+   "conservative_bound_n_blocks": {
+    "ci_half_width_95": 0.040218,
+    "ci_half_width_at_or_below_mpi": false,
+    "power_at_true_delta_equal_mpi": 0.028,
+    "standard_error": 0.02052,
+    "true_delta_for_80pct_power": 0.057487
+   },
+   "independent_bound_n_fixtures": {
+    "ci_half_width_95": 0.003436,
+    "ci_half_width_at_or_below_mpi": false,
+    "power_at_true_delta_equal_mpi": 0.0823,
+    "standard_error": 0.001753,
+    "true_delta_for_80pct_power": 0.004912
+   }
   }
  ],
- "sensitivity_verdict": "The design detects the minimum practical improvement ONLY IF the per-fixture paired log-loss SD is at or below the figure above. If the realised paired SD exceeds it, a true effect of exactly the minimum practical size would not be separable from noise, and a FAIL must be read as INCONCLUSIVE AT THAT EFFECT SIZE rather than as evidence of no effect. The realised paired SD will be reported alongside the result so this distinction is auditable after the fact.",
+ "sensitivity_verdict": "Precision is bracketed, not known. The 95% CI half-width is at or below MPI when the per-fixture paired SD is <= 0.004973 (conservative bound, perfect within-week correlation) or <= 0.0582 (independent-fixture bound); the realised block bootstrap will fall between. After execution the realised paired SD and block-bootstrap SE are reported, and a FAIL is interpreted with them: if the realised SE makes the 80%-power effect size larger than the effect of interest, the FAIL is INCONCLUSIVE AT THAT EFFECT SIZE; otherwise it is evidence against an effect of that size. This reading rule is fixed now, before any outcome.",
  "why_not_classical_power": "The SD of the paired per-fixture log-loss difference is unknowable without fitting and scoring both arms against outcomes, which Stage-2 design must not do. A single power number would require fabricating that SD or peeking at outcomes."
 }

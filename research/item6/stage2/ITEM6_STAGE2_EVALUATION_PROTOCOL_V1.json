@@ -6,7 +6,8 @@
   "M1_HALF_STATE_ONLY",
   "M1_PROFILE_ONLY"
  ],
- "artifact_sha256": "dc6177c57ffe1562dade248e9aa6ed372b5f8f861e66a33a958a2f3c3a321f73",
+ "artifact_sha256": "25c6f0fb46577129216c39713f8095615995933861bc28aa5803a00f1a1888a7",
+ "bootstrap_ci_type": "percentile",
  "bootstrap_resamples": 10000,
  "bootstrap_seed": 0,
  "decision_rule": {
@@ -41,14 +42,32 @@
   "subjective_override_permitted": false
  },
  "dependence_handling": "paired_cluster_block_bootstrap_over_iso_match_weeks",
- "evaluation_version": "item6_stage2_evaluation_v1",
+ "ece_binning": "equal_width_last_bin_closed_count_weighted_abs_gap",
+ "ece_n_bins": 10,
+ "evaluation_version": "item6_stage2_evaluation_v2",
+ "execution_pins": {
+  "ablation_construction": "M1_<FAMILY>_ONLY = M0 columns + the LLM-derived columns whose structural family is <FAMILY>, fit with the identical machinery. M1_ALL is M1.",
+  "bootstrap": "numpy.random.default_rng(BOOTSTRAP_SEED); BOOTSTRAP_RESAMPLES replicates; each replicate draws n_blocks ISO-week blocks (iso_week_block of kickoff) with replacement from the scored set's blocks and computes the fixture-weighted mean paired delta over all fixtures in the drawn blocks (a block drawn k times counts k times).",
+  "brier_delta": "fixture-weighted mean of (brier_M0 - brier_M1); positive = M1 better.",
+  "ci_type": "percentile: numpy.percentile(replicates, [2.5, 97.5]) with numpy's default 'linear' method. S2P2 uses the 2.5th percentile.",
+  "ece": "ECE_BINNING with ECE_N_BINS, computed per arm on the pooled scored set.",
+  "family_level_test": "for each single-family ablation vs M0: one-sided block-bootstrap p = fraction of replicate deltas <= 0 (same rng seed and procedure as the primary), then Benjamini-Hochberg at FAMILY_LEVEL_FDR_Q across the 4 single-family ablations. All 4 are reported whatever the outcome.",
+  "fold_training_failure": "if either arm cannot be fit on a fold (e.g. single-class training labels), that fold's fixtures are dropped from BOTH arms and the fold is reported as skipped; no refit with altered settings is permitted.",
+  "pooling": "DELTA_LOGLOSS is the fixture-weighted mean of per-fixture (logloss_M0 - logloss_M1) over the pooled scored set of all folds. No per-fold averaging, no fold weights.",
+  "probability_scored": "the final post-calibration, post-clip probability from model_specs.PROBABILITY_CLIP; logloss() eps=1e-15 is a numerical guard only.",
+  "residual_deviance_delta": "2 * N_scored * DELTA_LOGLOSS (deterministic transform, no test).",
+  "scored_set": "all fixtures in the frozen fold manifest's test blocks whose primary-target label is resolvable (mix.outcome returns non-None) AND for which BOTH arms return a finite probability. The set is the intersection, identical for both arms; any fixture dropped is dropped from both and the drop count is reported. Missing FEATURES never drop a fixture (they are median-imputed inside the pipeline).",
+  "secondary_target_test": "the full M0-vs-M1 procedure repeated per secondary target; one-sided bootstrap p as above; Benjamini-Hochberg at FAMILY_LEVEL_FDR_Q across the 2 secondary targets.",
+  "selected_feature_stability": "for each column, the fraction of the 5 outer folds in which its final refit coefficient satisfies |coef| > 1e-8 (the champion's selection threshold). Descriptive only."
+ },
  "failure_modes": [
   "DELTA_LOGLOSS <= 0: the LLM-derived universe adds no information or hurts",
   "DELTA_LOGLOSS > 0 but the block-bootstrap CI includes 0: indistinguishable from noise once temporal and repeated-team dependence is respected",
   "DELTA_LOGLOSS > 0 and CI excludes 0 but below the minimum practical improvement: detectable but trivial",
   "calibration deterioration beyond the allowance: sharpness bought at the cost of probability quality",
-  "grouped shrinkage drives every LLM family to zero coefficient: the features carry no independent signal beyond the baseline"
+  "elastic-net selection zeroes every LLM-derived column in every fold: the features carry no independent signal beyond the baseline"
  ],
+ "family_level_fdr_q": 0.1,
  "family_level_multiplicity": "benjamini_hochberg_fdr",
  "hit_rate_used_as_primary": false,
  "inference_method": "paired_cluster_block_bootstrap_over_iso_match_weeks",

@@ -287,6 +287,36 @@ protocol = {
                                "prospective shadow -> calibration -> market comparison -> "
                                "genuine close -> settlement -> promotion review.",
     "market_edge_excluded_from_primary_endpoint": True,
+    "design_amendments": [{
+        "amendment_id": "S2-DESIGN-A1",
+        "timing": "after the v1 freeze, before any Stage-2 execution, fit or outcome access",
+        "unchanged_byte_identical": [
+            "ITEM6_STAGE2_FEASIBILITY_FUNNEL_V1.json",
+            "ITEM6_STAGE2_CANONICAL_FAMILY_REGISTRY_V1.json",
+            "ITEM6_STAGE2_FEATURE_SPEC_V1.json", "ITEM6_STAGE2_FOLD_MANIFEST_V1.json",
+            "ITEM6_STAGE2_THRESHOLD_POLICY_V1.json", "ITEM6_STAGE2_SIMILARITY_POLICY_V1.json",
+            "ITEM6_STAGE2_GRAMMAR_EXTENSIONS_V1.json",
+            "ITEM6_STAGE2_PROVIDER_MEASURABILITY_V1.json"],
+        "changes": [
+            "model_specs v1->v2: removed 'grouped shrinkage over structural families' (declared "
+            "with no group penalty or solver; an executor free parameter and the one declared "
+            "machinery difference between arms). Pinned estimator (saga, max_iter 4000, tol 1e-4, "
+            "random_state 0), selection rule, calibration data source (isotonic on inner "
+            "TimeSeriesSplit OOF predictions, not in-sample), and a [0.01, 0.99] output clip, all "
+            "inherited from the champion fitter where one existed. Parity check now fails on ANY "
+            "non-feature key that differs between arms.",
+            "evaluation v1->v2: pinned scored-set intersection rule, pooling, bootstrap "
+            "procedure, percentile CI, ECE binning (champion's 10 equal-width bins), secondary "
+            "metric definitions, ablation construction, family-level and secondary-target tests, "
+            "fold-failure handling. Decision rule thresholds UNCHANGED.",
+            "power v1->v2: bracketed precision between a conservative (block-count) and an "
+            "independent (fixture-count) bound; v1 stated the worst case as the verdict. Added "
+            "80%-power effect sizes under the conjunctive rule and its <=50% ceiling at MPI.",
+            "outcome-blindness audit: narrowed the champion-metadata claim (full-corpus champion "
+            "overlaps the OOS window) with the reason it cannot bias the paired endpoint."],
+        "decision_rule_changed": False,
+        "minimum_practical_improvement_changed": False,
+        "outcomes_inspected_before_amendment": False}],
     "artifacts": arts,
 }
 rec("ITEM6_STAGE2_PROTOCOL_V1.json", protocol)
@@ -339,11 +369,22 @@ audit = {
         "any per-family predictive result",
     ],
     "champion_metadata_justification":
-        "base_rate / n_train / reported BSS were read from the FROZEN CHAMPION ARTIFACT of a "
-        "PRIOR completed experiment. They are that experiment's training-period metadata, not "
-        "Stage-2 outcomes, and no Stage-2 fold, arm or prediction was scored to obtain them. "
-        "They were used only to anchor the minimum practical improvement and the target "
-        "tie-break, both of which are frozen before execution.",
+        "base_rate / n_train / reported BSS / ECE were read from the FROZEN CHAMPION ARTIFACT "
+        "(research/contextual_matchup/CHAMPION_FREEZE.json) of a PRIOR completed experiment. No "
+        "Stage-2 fold, arm or prediction was scored to obtain them. They were used only to anchor "
+        "the minimum practical improvement and the target tie-break, both frozen before "
+        "execution.",
+    "champion_metadata_overlap_disclosure":
+        "The champion is 'elasticnet_logistic_full_corpus': its base rates come from the same "
+        "FootyStats corpus, so they DO cover calendar periods inside the Stage-2 OOS window, and "
+        "its reported BSS/ECE are an M0-like model's aggregate skill on a chronological 30% tail "
+        "that also overlaps it. They are therefore NOT free of Stage-2-period outcome "
+        "information. What they are is aggregate marginal statistics (one base rate per market, "
+        "one BSS/ECE per market) from a prior experiment already in the repository. They carry "
+        "no information about the paired M0-vs-M1 per-fixture difference, which is the primary "
+        "endpoint, and no information about any LLM-derived feature. So they cannot bias the "
+        "primary comparison and do not trigger a re-cohort; this disclosure narrows the v1 "
+        "claim that they were 'not Stage-2 outcomes'.",
     "mix_outcome_never_called": True,
     "outcome_label_function_scope_note":
         "`mix.outcome()` -- the only label-producing function in the pipeline -- was never "
@@ -382,6 +423,10 @@ summary = {
     "n_blocks": foldman["n_bootstrap_blocks_iso_weeks"],
     "n_folds": foldman["n_folds_usable"],
     "max_detectable_paired_sd": pwr["max_paired_sd_detectable_at_minimum_practical_improvement"],
+    "max_paired_sd_ci_within_mpi_bounds": pwr["max_paired_sd_with_ci_half_width_at_or_below_mpi"],
+    "model_specs_version": MS.MODEL_SPECS_VERSION, "evaluation_version": EV.EVALUATION_VERSION,
+    "power_version": PW.POWER_VERSION,
+    "parity_differing_knobs": parity["differing_shared_knobs"],
     "target_relevance": target_relevance,
 }
 json.dump(summary, open(f"{OUT}/_BUILD_SUMMARY.json", "w"), indent=1, sort_keys=True)

@@ -1,5 +1,5 @@
 """ITEM 6 STAGE 2 evaluation protocol + frozen pass/fail rule
-(`item6_stage2_evaluation_v1`).
+(`item6_stage2_evaluation_v2`).
 
 Defines -- BEFORE any outcome is observed -- the endpoint, the sign convention, the inference
 method, and the conjunctive decision rule. Nothing here computes a metric; it declares how one
@@ -25,13 +25,20 @@ WHY PAIRED
 ----------
 Both arms score the same fixtures from the same folds, so the per-fixture difference removes
 fixture difficulty entirely and the comparison is far more precise than two independent means.
+
+v2 PINS EVERY KNOB THE EXECUTOR WOULD OTHERWISE CHOOSE
+------------------------------------------------------
+v1 declared the endpoint but left the scored set, pooling, ECE binning, bootstrap CI type,
+secondary-metric definitions and ablation construction to the executor. Anything unpinned could
+be chosen after seeing outcomes, so v2 fixes each one below (see EXECUTION_PINS), before any
+execution or outcome access.
 """
 from __future__ import annotations
 
 import math
 from typing import Dict, List, Sequence, Tuple
 
-EVALUATION_VERSION = "item6_stage2_evaluation_v1"
+EVALUATION_VERSION = "item6_stage2_evaluation_v2"
 
 PRIMARY_METRIC = "OOS_MEAN_LOGLOSS_DELTA_M0_MINUS_M1"
 PRIMARY_SIGN_CONVENTION = "positive_means_M1_better"
@@ -63,6 +70,58 @@ MAX_ECE_DETERIORATION = 0.005
 #: Family-level secondary analysis multiplicity control.
 FAMILY_LEVEL_MULTIPLICITY_METHOD = "benjamini_hochberg_fdr"
 FAMILY_LEVEL_FDR_Q = 0.10
+
+#: Expected calibration error, identical in both arms. INHERITED from the champion fitter
+#: (scripts/pilotC_stat_mixer.py:340): 10 equal-width bins on [0, 1], bin b = [b/10, (b+1)/10)
+#: with the last bin closed; ECE = sum_b (n_b / N) * |mean(p_b) - mean(y_b)|; empty bins skipped.
+ECE_N_BINS = 10
+ECE_BINNING = "equal_width_last_bin_closed_count_weighted_abs_gap"
+
+#: Every remaining executor choice, frozen.
+EXECUTION_PINS: Dict[str, str] = {
+    "scored_set":
+        "all fixtures in the frozen fold manifest's test blocks whose primary-target label is "
+        "resolvable (mix.outcome returns non-None) AND for which BOTH arms return a finite "
+        "probability. The set is the intersection, identical for both arms; any fixture dropped "
+        "is dropped from both and the drop count is reported. Missing FEATURES never drop a "
+        "fixture (they are median-imputed inside the pipeline).",
+    "pooling":
+        "DELTA_LOGLOSS is the fixture-weighted mean of per-fixture (logloss_M0 - logloss_M1) "
+        "over the pooled scored set of all folds. No per-fold averaging, no fold weights.",
+    "probability_scored":
+        "the final post-calibration, post-clip probability from model_specs.PROBABILITY_CLIP; "
+        "logloss() eps=1e-15 is a numerical guard only.",
+    "bootstrap":
+        "numpy.random.default_rng(BOOTSTRAP_SEED); BOOTSTRAP_RESAMPLES replicates; each "
+        "replicate draws n_blocks ISO-week blocks (iso_week_block of kickoff) with replacement "
+        "from the scored set's blocks and computes the fixture-weighted mean paired delta over "
+        "all fixtures in the drawn blocks (a block drawn k times counts k times).",
+    "ci_type":
+        "percentile: numpy.percentile(replicates, [2.5, 97.5]) with numpy's default 'linear' "
+        "method. S2P2 uses the 2.5th percentile.",
+    "ece":
+        "ECE_BINNING with ECE_N_BINS, computed per arm on the pooled scored set.",
+    "brier_delta": "fixture-weighted mean of (brier_M0 - brier_M1); positive = M1 better.",
+    "residual_deviance_delta": "2 * N_scored * DELTA_LOGLOSS (deterministic transform, no test).",
+    "selected_feature_stability":
+        "for each column, the fraction of the 5 outer folds in which its final refit coefficient "
+        "satisfies |coef| > 1e-8 (the champion's selection threshold). Descriptive only.",
+    "ablation_construction":
+        "M1_<FAMILY>_ONLY = M0 columns + the LLM-derived columns whose structural family is "
+        "<FAMILY>, fit with the identical machinery. M1_ALL is M1.",
+    "family_level_test":
+        "for each single-family ablation vs M0: one-sided block-bootstrap p = fraction of "
+        "replicate deltas <= 0 (same rng seed and procedure as the primary), then "
+        "Benjamini-Hochberg at FAMILY_LEVEL_FDR_Q across the 4 single-family ablations. All 4 "
+        "are reported whatever the outcome.",
+    "secondary_target_test":
+        "the full M0-vs-M1 procedure repeated per secondary target; one-sided bootstrap p as "
+        "above; Benjamini-Hochberg at FAMILY_LEVEL_FDR_Q across the 2 secondary targets.",
+    "fold_training_failure":
+        "if either arm cannot be fit on a fold (e.g. single-class training labels), that fold's "
+        "fixtures are dropped from BOTH arms and the fold is reported as skipped; no refit with "
+        "altered settings is permitted.",
+}
 
 #: Pre-registered ablations. SECONDARY ONLY -- they do not create additional primary claims.
 ABLATIONS: Tuple[str, ...] = (
@@ -131,8 +190,8 @@ def failure_modes() -> List[str]:
         "detectable but trivial",
         "calibration deterioration beyond the allowance: sharpness bought at the cost of "
         "probability quality",
-        "grouped shrinkage drives every LLM family to zero coefficient: the features carry no "
-        "independent signal beyond the baseline",
+        "elastic-net selection zeroes every LLM-derived column in every fold: the features "
+        "carry no independent signal beyond the baseline",
     ]
 
 
@@ -146,6 +205,11 @@ def version_stamp() -> Dict[str, object]:
         "bootstrap_seed": BOOTSTRAP_SEED,
         "minimum_practical_improvement": MINIMUM_PRACTICAL_LOGLOSS_IMPROVEMENT,
         "max_ece_deterioration": MAX_ECE_DETERIORATION,
+        "ece_n_bins": ECE_N_BINS,
+        "ece_binning": ECE_BINNING,
+        "bootstrap_ci_type": "percentile",
+        "family_level_fdr_q": FAMILY_LEVEL_FDR_Q,
+        "execution_pins": dict(EXECUTION_PINS),
         "family_level_multiplicity": FAMILY_LEVEL_MULTIPLICITY_METHOD,
         "ablations": list(ABLATIONS),
         "hit_rate_used_as_primary": False,

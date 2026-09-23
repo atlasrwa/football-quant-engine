@@ -1,7 +1,7 @@
 {
- "artifact_sha256": "7990d0b8e676299bbe51de5e70b498432f378208c817a043068069efa6efaa39",
+ "artifact_sha256": "02e3d5274087ea625dbc8b25c9aafd92fe3733c448c21b8afc11bc91e077715a",
  "controls": [
-  "grouped_shrinkage_over_structural_families",
+  "elastic_net_uniform_per_coefficient_penalty_both_arms",
   "identical_regularization_grid_and_selection_rule_both_arms",
   "all_selection_and_tuning_nested_inside_training_folds",
   "family_level_results_secondary_and_BH_FDR_corrected"
@@ -9,8 +9,10 @@
  "equal_raw_column_cap_rationale": "Capping M1 to M0's column count would handicap the feature universe under test; fairness is enforced by an identical penalised-selection regime instead.",
  "equal_raw_column_cap_used": false,
  "feature_selected_using_oos_information": false,
+ "grouped_shrinkage_removed_in_v2": "v1 declared grouped shrinkage over structural families without a group penalty or solver, leaving the executor free to choose one and making it the only declared machinery difference between arms. v2 removes it before any execution or outcome access; elastic net under an identical grid and nested chronological CV is the penalised-selection control.",
+ "grouped_shrinkage_used": false,
  "hyperparameters_tuned_on_test_folds": false,
- "multiplicity_policy_version": "item6_stage2_model_specs_v1",
+ "multiplicity_policy_version": "item6_stage2_model_specs_v2",
  "parity_assertions": {
   "differing_shared_knobs": {},
   "m0_universe_is_subset_of_m1": true,
@@ -24,5 +26,6 @@
   "SF_MULTIMETRIC_INTERACTION",
   "SF_HALF_OR_GAME_STATE_INTERACTION",
   "SF_TWO_AXIS_OPPONENT_PROFILE_INTERSECTION"
- ]
+ ],
+ "structural_groups_role": "secondary_ablation_definition_only"
 }

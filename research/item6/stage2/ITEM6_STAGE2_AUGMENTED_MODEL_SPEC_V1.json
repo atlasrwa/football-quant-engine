@@ -1,15 +1,25 @@
 {
  "arm": "M1",
- "artifact_sha256": "a56a3c3367272de3f315cbf3247aa110a924040b51a3f2325102646d7ad5112e",
+ "artifact_sha256": "0627bceb8d8ae65cffd6d67a941125413d914cd8503c5799fccf43c0d3b9e583",
  "c_grid": [
   0.003,
   0.01,
   0.03,
   0.1
  ],
- "calibration": "isotonic_fit_on_training_fold_only",
+ "calibration": "isotonic_fit_on_inner_timeseries_oof_predictions_of_training_block",
  "coverage_screen_min_nonmissing_rate": 0.6,
  "coverage_screen_scope": "outer_training_period_only",
+ "estimator": {
+  "class_weight": null,
+  "fit_intercept": true,
+  "max_iter": 4000,
+  "penalty": "elasticnet",
+  "random_state": 0,
+  "sklearn_class": "LogisticRegression",
+  "solver": "saga",
+  "tol": 0.0001
+ },
  "feature_source": "champion_stat_mixer_pool_unweakened",
  "feature_universe": [
   "h_shots_for_5",
@@ -193,12 +203,6 @@
   "i6_h_yellow_cards_for_band_high",
   "i6_h_yellow_cards_for_band_mid"
  ],
- "grouped_shrinkage_groups": [
-  "SF_THRESHOLD_NONLINEARITY",
-  "SF_MULTIMETRIC_INTERACTION",
-  "SF_HALF_OR_GAME_STATE_INTERACTION",
-  "SF_TWO_AXIS_OPPONENT_PROFILE_INTERSECTION"
- ],
  "imputation": "median_fit_inside_tuning_fold",
  "inner_cv_kind": "TimeSeriesSplit_expanding_chronological",
  "inner_cv_splits": 4,
@@ -321,7 +325,13 @@
  "model_class": "elastic_net_logistic_regression",
  "n_features": 180,
  "n_llm_derived_features": 108,
+ "penalty_structure": "elastic_net_uniform_per_coefficient_no_group_terms",
+ "probability_clip": [
+  0.01,
+  0.99
+ ],
  "role": "baseline_plus_frozen_llm_derived_feature_universe",
  "scaling": "standardize_fit_inside_tuning_fold",
+ "selection_rule": "GridSearchCV_best_mean_inner_neg_log_loss_refit_true_ties_to_first_grid_point",
  "uses_frozen_champion_hyperparameters": false
 }
