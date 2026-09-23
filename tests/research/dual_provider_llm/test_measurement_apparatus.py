@@ -214,7 +214,7 @@ def test_15_repeated_execution_is_byte_identical():
     out = json.loads(a)
     assert set(out["results"]) == set(C.EXPECTED_IDS)
     assert all(r["status"] == S.Status.OK for r in out["results"].values())
-    assert out["bh_family"] == [m for m in C.EXPECTED_IDS
+    assert out["BH_FAMILY_FROZEN"] == [m for m in C.EXPECTED_IDS
                                 if m != "DP5_ALBACETE_RECENT_TERRITORIAL_EXPANSION"]
     assert out["results"]["DP5_ALBACETE_RECENT_TERRITORIAL_EXPANSION"]["primary"][
         "inferential"] is False

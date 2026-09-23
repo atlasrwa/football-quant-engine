@@ -81,6 +81,24 @@ Design notes:
 - **DP6.** `blocked_shots` is never used, preserving the frozen restriction.
 - **DP1 and DP4.** Both use `shots`, which the hypothesis names only in prose ("…corners, shots and shots on target"; "corner/shot behavior"). The quote is recorded and checked by the compiler.
 
+### 6.1 Pre-execution implementation amendment: fixed BH family
+
+`PRE_EXECUTION_IMPLEMENTATION_AMENDMENT` (made before any real-data run; not a scientific redesign).
+
+The BH family is always the frozen five: DP1, DP2, DP3, DP4 and DP6 (`N_FROZEN_BH_TESTS = 5`). It never shrinks because of runtime support status.
+
+Non-evaluable frozen family members are represented by p = 1.0 solely for multiplicity bookkeeping, so the preregistered family size stays fixed. A member is non-evaluable when it returns `INSUFFICIENT_SUPPORT`, `UNSUPPORTED_METRIC` or `NO_QUERY_PROFILE`. It is then recorded as:
+- `primary_p_value = null`
+- `bh_input_p = 1.0`
+- `multiplicity_placeholder = true`
+- plus its fixed-family `bh_q`
+
+Its interpretation is **not evaluable under the frozen support rule**. It is never evidence for the null.
+
+The results report `N_BH_EVALUABLE` and `N_BH_NON_EVALUABLE`. DP5 stays descriptive and outside the family.
+
+The earlier runner built the family from members with status OK only. That was an implementation defect, corrected here. No design element changed.
+
 ## 7. Confounders
 
 | Confounder | How it is handled |

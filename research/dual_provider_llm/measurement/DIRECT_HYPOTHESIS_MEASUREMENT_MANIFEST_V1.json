@@ -6,6 +6,13 @@
   "DP4_GIRONA_CURRENT_TERRITORIAL_REGIME",
   "DP6_PRESSURE_RESOLUTION_CLEARANCE_PROFILE"
  ],
+ "bh_family_frozen": [
+  "DP1_BOX_PRESSURE_MATCHUP",
+  "DP2_WIDE_CENTRAL_INTERACTION",
+  "DP3_ALBACETE_DIRECT_PROGRESSION",
+  "DP4_GIRONA_CURRENT_TERRITORIAL_REGIME",
+  "DP6_PRESSURE_RESOLUTION_CLEARANCE_PROFILE"
+ ],
  "champion_sha256_after": "0b8f5ff3dc4ddf15363d17989330b6f010197265ce8d2ee892cdc7ca410c00c9",
  "champion_sha256_before": "0b8f5ff3dc4ddf15363d17989330b6f010197265ce8d2ee892cdc7ca410c00c9",
  "historical_effects_computed": false,
@@ -15,7 +22,7 @@
  "modules": {
   "src/research/dual_provider_llm/measurement/__init__.py": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
   "src/research/dual_provider_llm/measurement/compiler.py": "ac335f0822ed603aa11dcf728c8ad7f1875d2ac3d96cfe8cac6bc8fd24a2840e",
-  "src/research/dual_provider_llm/measurement/executor.py": "b82b001c52396174d910edb0e17a4b167a5e1daf79e167c1683fbbed8cd15be3",
+  "src/research/dual_provider_llm/measurement/executor.py": "557096560f6d892c0eac24a4244c8a2a46b3a96576bab82d70edacc2d084fd77",
   "src/research/dual_provider_llm/measurement/measures.py": "a243bcaa312047638705f1f1f43775fed97929466166375a199d934d545f6241",
   "src/research/dual_provider_llm/measurement/pit_history.py": "4e27b2c080b7c97e3bfce492408bd5969ffc3a2b6a6465879cb03b946f2df6e5",
   "src/research/dual_provider_llm/measurement/query_spec.py": "f1a13f801d4c8aea40135033724a1f73503c9a8e96df9f8ab749c4107ae26642",
@@ -23,12 +30,24 @@
   "src/research/dual_provider_llm/measurement/support.py": "4932554472e09238cf10e8dbc6aec84bba093ade2d7f6318830bf92f7683bc80"
  },
  "n_compilable": 6,
+ "n_frozen_bh_tests": 5,
  "n_hypotheses": 6,
  "outcomes_read": false,
  "p_model_produced": false,
+ "pre_execution_implementation_amendments": [
+  {
+   "base_head": "6342275e7755a384400b569d9b0b68fa477631fc",
+   "defect": "executor.run_all built the BH family from members with status OK only, so a non-evaluable member shrank the preregistered five-test family",
+   "fix": "BH always runs over the frozen five; a non-evaluable member enters with bh_input_p=1.0 as bookkeeping only (primary_p_value=null, multiplicity_placeholder=true)",
+   "id": "PRE_EXECUTION_IMPLEMENTATION_AMENDMENT_A1",
+   "query_specs_changed": false,
+   "real_historical_measurement_run_before_amendment": false,
+   "scientific_design_changed": false
+  }
+ ],
  "protocol": {
   "path": "research/dual_provider_llm/measurement/DIRECT_HYPOTHESIS_MEASUREMENT_PROTOCOL_V1.md",
-  "sha256": "22adb87bf236b8ae665368ae763fbda849fc491a084b645f17581280625a3d1b"
+  "sha256": "af69e91d0a90213d2531b8bb3b909db3276c8c4fc35c3668658401fa02977d90"
  },
  "query_specs": {
   "path": "research/dual_provider_llm/measurement/DIRECT_HYPOTHESIS_QUERY_SPECS_V1.json",

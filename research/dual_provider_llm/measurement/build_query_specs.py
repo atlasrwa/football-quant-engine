@@ -40,6 +40,22 @@ def main():
         "runner": {"entrypoint": "python -m src.research.dual_provider_llm.measurement.executor "
                                  "--authorized-head <HEAD>",
                    "gate": "HEAD == --authorized-head and clean worktree", "executed": False},
+        "bh_family_frozen": ["DP1_BOX_PRESSURE_MATCHUP", "DP2_WIDE_CENTRAL_INTERACTION",
+                             "DP3_ALBACETE_DIRECT_PROGRESSION",
+                             "DP4_GIRONA_CURRENT_TERRITORIAL_REGIME",
+                             "DP6_PRESSURE_RESOLUTION_CLEARANCE_PROFILE"],
+        "n_frozen_bh_tests": 5,
+        "pre_execution_implementation_amendments": [{
+            "id": "PRE_EXECUTION_IMPLEMENTATION_AMENDMENT_A1",
+            "base_head": "6342275e7755a384400b569d9b0b68fa477631fc",
+            "defect": "executor.run_all built the BH family from members with status OK only, "
+                      "so a non-evaluable member shrank the preregistered five-test family",
+            "fix": "BH always runs over the frozen five; a non-evaluable member enters with "
+                   "bh_input_p=1.0 as bookkeeping only (primary_p_value=null, "
+                   "multiplicity_placeholder=true)",
+            "scientific_design_changed": False,
+            "query_specs_changed": False,
+            "real_historical_measurement_run_before_amendment": False}],
         "n_hypotheses": len(doc["specs"]),
         "n_compilable": sum(a["COMPILABLE"] for a in doc["audits"]),
         "bh_family": doc["bh_family"],

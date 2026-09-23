@@ -302,12 +302,62 @@ def run_all(hist: PITHistory, ctx: Dict[str, Any], specs: Sequence[Dict[str, Any
             out[mid] = run_recent_block(s, hist, A, T)
         else:
             raise ValueError(d)
-    fam = [m for m in sorted(out) if out[m].get("status") == S.Status.OK
-           and "p_two_sided" in out[m].get("primary", {})]
-    qs = M.bh_adjust([out[m]["primary"]["p_two_sided"] for m in fam])
-    for m, q in zip(fam, qs):
-        out[m]["primary"]["bh_q"] = q
-    return {"results": out, "bh_family": fam, "bh_q_level": S.value("BH_Q")}
+    return {"results": out, **apply_fixed_family_bh(out)}
+
+
+#: The preregistered inferential family (protocol section 6). It NEVER shrinks with runtime
+#: support status. DP5 is descriptive and is never a member.
+FROZEN_BH_FAMILY: Tuple[str, ...] = (
+    "DP1_BOX_PRESSURE_MATCHUP",
+    "DP2_WIDE_CENTRAL_INTERACTION",
+    "DP3_ALBACETE_DIRECT_PROGRESSION",
+    "DP4_GIRONA_CURRENT_TERRITORIAL_REGIME",
+    "DP6_PRESSURE_RESOLUTION_CLEARANCE_PROFILE",
+)
+NON_EVALUABLE_STATUSES = (S.Status.INSUFFICIENT_SUPPORT, S.Status.UNSUPPORTED_METRIC,
+                          S.Status.NO_QUERY_PROFILE)
+#: PRE_EXECUTION_IMPLEMENTATION_AMENDMENT: a non-evaluable frozen family member enters BH with
+#: this input solely for multiplicity bookkeeping, so the preregistered family size stays fixed.
+#: It is NOT a measured p-value and is never written as one.
+NON_EVALUABLE_BH_INPUT_P = 1.0
+
+
+def apply_fixed_family_bh(results: Dict[str, Dict[str, Any]]) -> Dict[str, Any]:
+    """Benjamini-Hochberg over exactly FROZEN_BH_FAMILY, whatever each member's status."""
+    inputs, n_eval = [], 0
+    for mid in FROZEN_BH_FAMILY:
+        r = results[mid]                           # a missing member is a hard error
+        st = r.get("status")
+        if st == S.Status.OK:
+            p = r["primary"]["p_two_sided"]        # an OK member must carry a real p-value
+            if p is None:
+                raise ValueError(f"{mid}: status OK without a p-value")
+            inputs.append((mid, float(p), False))
+            n_eval += 1
+        elif st in NON_EVALUABLE_STATUSES:
+            inputs.append((mid, NON_EVALUABLE_BH_INPUT_P, True))
+        else:
+            raise ValueError(f"{mid}: unknown status {st!r}")
+    qs = M.bh_adjust([p for _, p, _ in inputs])
+    for (mid, p, placeholder), q in zip(inputs, qs):
+        results[mid]["multiplicity"] = {
+            "primary_p_value": None if placeholder else p,
+            "bh_input_p": p,
+            "bh_q": q,
+            "multiplicity_placeholder": placeholder,
+            "evaluable": not placeholder,
+            "interpretation": ("NOT EVALUABLE UNDER THE FROZEN SUPPORT RULE (bh_input_p is "
+                               "bookkeeping only, not evidence for the null)") if placeholder
+                              else "evaluated",
+        }
+    if "DP5_ALBACETE_RECENT_TERRITORIAL_EXPANSION" in results:
+        results["DP5_ALBACETE_RECENT_TERRITORIAL_EXPANSION"]["multiplicity"] = {
+            "in_bh_family": False, "descriptive_only": True}
+    return {"BH_FAMILY_FROZEN": list(FROZEN_BH_FAMILY),
+            "N_FROZEN_BH_TESTS": len(FROZEN_BH_FAMILY),
+            "N_BH_EVALUABLE": n_eval, "N_BH_NON_EVALUABLE": len(FROZEN_BH_FAMILY) - n_eval,
+            "NON_EVALUABLE_BH_INPUT_P": NON_EVALUABLE_BH_INPUT_P,
+            "bh_q_level": S.value("BH_Q")}
 
 
 class GateError(RuntimeError):
