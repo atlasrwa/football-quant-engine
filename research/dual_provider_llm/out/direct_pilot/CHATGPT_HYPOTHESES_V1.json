@@ -1,0 +1,259 @@
+{
+  "artifact_version": "direct_chatgpt_hypotheses_v1",
+  "source_packet_path": "research/dual_provider_llm/out/direct_pilot/PILOT_FIXTURE_PACKET_V1.json",
+  "source_packet_sha256": "ea3fb8353801e2b414c056585173e5204539f3e3555cf5cd7dec2a2eba91556c",
+  "fixture_id": "thestatsapi:mt_022075291",
+  "fixture": "Girona FC v Albacete Balompié",
+  "generator": "ChatGPT GPT-5.6 Sol",
+  "hypothesis_only": true,
+  "target_outcome_read": false,
+  "market_data_read": false,
+  "p_model_produced": false,
+  "probabilities_produced": false,
+  "mechanisms": [
+    {
+      "mechanism_id": "DP1_BOX_PRESSURE_MATCHUP",
+      "research_question": "Against away opponents whose defensive profile resembles Albacete's combination of opponent possession, box-touch concession, inside-box-shot concession and corner concession, does Girona's home attacking pressure produce a different distribution of corners, shots and shots on target than against other away defensive profiles?",
+      "football_rationale": "Girona's home evidence shows sustained box access and corner generation, while Albacete's away history shows opponents repeatedly reaching the box and generating inside-box shots and corners. This motivates a profile-conditioned pressure question rather than a one-metric high/low rule.",
+      "evidence_refs": [
+        "tsa.HOME_TEAM.touches_in_box.FOR.ALL_PRIOR.HOME",
+        "tsa.HOME_TEAM.shots_inside_box.FOR.ALL_PRIOR.HOME",
+        "tsa.HOME_TEAM.corners.FOR.ALL_PRIOR.HOME",
+        "tsa.HOME_TEAM.shots_on_target.FOR.ALL_PRIOR.HOME",
+        "tsa.AWAY_TEAM.possession.AGAINST.ALL_PRIOR.AWAY",
+        "tsa.AWAY_TEAM.touches_in_box.AGAINST.ALL_PRIOR.AWAY",
+        "tsa.AWAY_TEAM.shots_inside_box.AGAINST.ALL_PRIOR.AWAY",
+        "tsa.AWAY_TEAM.corners.AGAINST.ALL_PRIOR.AWAY"
+      ],
+      "variables": [
+        "thestatsapi:touches_in_box",
+        "thestatsapi:shots_inside_box",
+        "thestatsapi:corners",
+        "thestatsapi:shots_on_target",
+        "thestatsapi:possession"
+      ],
+      "relationship_type": "OPPONENT_PROFILE_SIMILARITY",
+      "deterministic_measurement_plan": "Construct a pre-fixture away-defensive similarity profile using possession conceded, touches in box conceded, inside-box shots conceded and corners conceded. Deterministically identify historical Girona home matches against similar profiles, then compare Girona's pressure-output vector (corners, shots, shots on target) with its other home matches using training-only similarity parameters and appropriate shrinkage.",
+      "similarity_dimensions": [
+        "opponent possession share against Albacete away",
+        "touches in box conceded away",
+        "inside-box shots conceded away",
+        "corners conceded away"
+      ],
+      "confounders": [
+        "competition",
+        "venue",
+        "opponent baseline strength",
+        "season/tactical regime",
+        "sample support"
+      ],
+      "required_resolution": "MATCH",
+      "provider_constraints": "TheStatsAPI only. Keep fields provider-specific; do not substitute FootyStats fields by name.",
+      "abstain_reason": null
+    },
+    {
+      "mechanism_id": "DP2_WIDE_CENTRAL_INTERACTION",
+      "research_question": "Is Girona's home corner production associated with the joint presence of accurate crossing and box penetration, especially against away defenses that concede both accurate crosses and box touches as Albacete does?",
+      "football_rationale": "The packet exposes both Girona's home crossing/box-entry behavior and Albacete's away concession of the same dimensions. The relevant mechanism is whether wide delivery and central penetration jointly create sustained defensive pressure, not whether either metric is simply 'high'.",
+      "evidence_refs": [
+        "tsa.HOME_TEAM.accurate_crosses.FOR.ALL_PRIOR.HOME",
+        "tsa.HOME_TEAM.touches_in_box.FOR.ALL_PRIOR.HOME",
+        "tsa.HOME_TEAM.corners.FOR.ALL_PRIOR.HOME",
+        "tsa.AWAY_TEAM.accurate_crosses.AGAINST.ALL_PRIOR.AWAY",
+        "tsa.AWAY_TEAM.touches_in_box.AGAINST.ALL_PRIOR.AWAY",
+        "tsa.AWAY_TEAM.corners.AGAINST.ALL_PRIOR.AWAY"
+      ],
+      "variables": [
+        "thestatsapi:accurate_crosses",
+        "thestatsapi:touches_in_box",
+        "thestatsapi:corners"
+      ],
+      "relationship_type": "MULTIMETRIC_INTERACTION",
+      "deterministic_measurement_plan": "Represent crossing and box penetration as continuous training-fold variables and test their interaction for Girona home corner output. Separately condition on opponents whose away concession profile is jointly similar on accurate crosses and box touches. Do not use an LLM-written threshold.",
+      "similarity_dimensions": [
+        "accurate crosses conceded away",
+        "touches in box conceded away"
+      ],
+      "confounders": [
+        "competition",
+        "venue",
+        "opponent possession",
+        "opponent defensive strength",
+        "recent-vs-long-run regime"
+      ],
+      "required_resolution": "MATCH",
+      "provider_constraints": "TheStatsAPI accurate_crosses and touches_in_box definitions only; no cross-provider equivalence assumption.",
+      "abstain_reason": null
+    },
+    {
+      "mechanism_id": "DP3_ALBACETE_DIRECT_PROGRESSION",
+      "research_question": "When Albacete plays away with relatively low possession, does a direct-progression pattern combining accurate long balls and final-third entries preserve its shot and corner output against home opponents with defensive profiles similar to Girona's?",
+      "football_rationale": "Albacete's away evidence combines lower possession with substantial long-ball and final-third activity. Girona's home defensive packet supplies the corresponding opponent-access dimensions. This supports testing whether Albacete can progress and create without needing sustained possession.",
+      "evidence_refs": [
+        "tsa.AWAY_TEAM.possession.FOR.ALL_PRIOR.AWAY",
+        "tsa.AWAY_TEAM.accurate_long_balls.FOR.ALL_PRIOR.AWAY",
+        "tsa.AWAY_TEAM.final_third_entries.FOR.ALL_PRIOR.AWAY",
+        "tsa.AWAY_TEAM.shots.FOR.ALL_PRIOR.AWAY",
+        "tsa.AWAY_TEAM.corners.FOR.ALL_PRIOR.AWAY",
+        "tsa.HOME_TEAM.possession.AGAINST.ALL_PRIOR.HOME",
+        "tsa.HOME_TEAM.final_third_entries.AGAINST.ALL_PRIOR.HOME",
+        "tsa.HOME_TEAM.shots.AGAINST.ALL_PRIOR.HOME",
+        "tsa.HOME_TEAM.corners.AGAINST.ALL_PRIOR.HOME"
+      ],
+      "variables": [
+        "thestatsapi:possession",
+        "thestatsapi:accurate_long_balls",
+        "thestatsapi:final_third_entries",
+        "thestatsapi:shots",
+        "thestatsapi:corners"
+      ],
+      "relationship_type": "ASYMMETRIC_MATCHUP",
+      "deterministic_measurement_plan": "Define a training-only direct-progression representation from possession, accurate long balls and final-third entries. Measure Albacete's away shots and corners across historical matches as that representation varies, then condition on home-opponent defensive profiles similar to Girona's pre-fixture profile.",
+      "similarity_dimensions": [
+        "home-opponent possession allowed",
+        "final-third entries allowed",
+        "shots allowed",
+        "corners allowed"
+      ],
+      "confounders": [
+        "competition",
+        "away venue",
+        "opponent strength",
+        "score-state effects not observable at finer resolution",
+        "season"
+      ],
+      "required_resolution": "MATCH",
+      "provider_constraints": "Do not interpret accurate_long_balls as tactical intent; treat it only as an observed match statistic.",
+      "abstain_reason": null
+    },
+    {
+      "mechanism_id": "DP4_GIRONA_CURRENT_TERRITORIAL_REGIME",
+      "research_question": "Within comparable competition and venue contexts, is Girona's relationship between territorial control and attacking output different in matches resembling its recent low-possession/low-final-third/low-box-touch state than in matches resembling its broader recent-10 profile?",
+      "football_rationale": "Girona's RECENT_5 and RECENT_10 evidence differs simultaneously in possession, final-third entries, box touches, crosses and corners. Because the recent windows straddle a competition change, the useful question is whether this is a repeatable behavioral state after controlling competition and venue, not whether the raw recent averages alone are predictive.",
+      "evidence_refs": [
+        "tsa.HOME_TEAM.possession.FOR.RECENT_5.ALL",
+        "tsa.HOME_TEAM.final_third_entries.FOR.RECENT_5.ALL",
+        "tsa.HOME_TEAM.touches_in_box.FOR.RECENT_5.ALL",
+        "tsa.HOME_TEAM.accurate_crosses.FOR.RECENT_5.ALL",
+        "tsa.HOME_TEAM.corners.FOR.RECENT_5.ALL",
+        "tsa.HOME_TEAM.possession.FOR.RECENT_10.ALL",
+        "tsa.HOME_TEAM.final_third_entries.FOR.RECENT_10.ALL",
+        "tsa.HOME_TEAM.touches_in_box.FOR.RECENT_10.ALL",
+        "tsa.HOME_TEAM.accurate_crosses.FOR.RECENT_10.ALL",
+        "tsa.HOME_TEAM.corners.FOR.RECENT_10.ALL"
+      ],
+      "variables": [
+        "thestatsapi:possession",
+        "thestatsapi:final_third_entries",
+        "thestatsapi:touches_in_box",
+        "thestatsapi:accurate_crosses",
+        "thestatsapi:corners"
+      ],
+      "relationship_type": "RECENT_VS_LONG_RUN",
+      "deterministic_measurement_plan": "Construct a continuous territorial-state representation using possession, final-third entries, touches in box and accurate crosses. Within competition- and venue-matched historical data, estimate Girona's corner/shot behavior across similar states using shrinkage rather than treating RECENT_5 as truth.",
+      "similarity_dimensions": [
+        "possession",
+        "final-third entries",
+        "touches in box",
+        "accurate crosses"
+      ],
+      "confounders": [
+        "competition change between LaLiga and LaLiga 2",
+        "venue",
+        "opponent strength",
+        "small RECENT_5 support",
+        "season/tactical regime"
+      ],
+      "required_resolution": "MATCH",
+      "provider_constraints": "Recent-window aggregates are descriptive context only; do not turn the observed window differences into fixed predictive adjustments.",
+      "abstain_reason": null
+    },
+    {
+      "mechanism_id": "DP5_ALBACETE_RECENT_TERRITORIAL_EXPANSION",
+      "research_question": "After conditioning on venue and opponent profile, does Albacete's recent combination of possession, final-third entries, box touches and corners represent a persistent attacking regime or mainly a home/fixture-mix effect relative to its longer-run away behavior?",
+      "football_rationale": "Albacete's RECENT_5 packet is more territorially active than its long-run away profile across several dimensions at once. Because RECENT_5 mixes venues, the deterministic engine should test whether the pattern survives away-only and opponent-profile controls before considering it informative.",
+      "evidence_refs": [
+        "tsa.AWAY_TEAM.possession.FOR.RECENT_5.ALL",
+        "tsa.AWAY_TEAM.final_third_entries.FOR.RECENT_5.ALL",
+        "tsa.AWAY_TEAM.touches_in_box.FOR.RECENT_5.ALL",
+        "tsa.AWAY_TEAM.corners.FOR.RECENT_5.ALL",
+        "tsa.AWAY_TEAM.possession.FOR.ALL_PRIOR.AWAY",
+        "tsa.AWAY_TEAM.final_third_entries.FOR.ALL_PRIOR.AWAY",
+        "tsa.AWAY_TEAM.touches_in_box.FOR.ALL_PRIOR.AWAY",
+        "tsa.AWAY_TEAM.corners.FOR.ALL_PRIOR.AWAY"
+      ],
+      "variables": [
+        "thestatsapi:possession",
+        "thestatsapi:final_third_entries",
+        "thestatsapi:touches_in_box",
+        "thestatsapi:corners"
+      ],
+      "relationship_type": "RECENT_VS_LONG_RUN",
+      "deterministic_measurement_plan": "Measure Albacete's away-only territorial vector historically and compare recent matches with prior away states using decay/shrinkage. Test whether any apparent regime persists after matching on opponent possession/defensive profile and competition; do not use the RECENT_5 difference as a feature directly.",
+      "similarity_dimensions": [
+        "opponent possession profile",
+        "opponent final-third concession",
+        "opponent box-touch concession"
+      ],
+      "confounders": [
+        "venue mix in RECENT_5",
+        "opponent strength",
+        "competition",
+        "small recent sample",
+        "season"
+      ],
+      "required_resolution": "MATCH",
+      "provider_constraints": "Use only TheStatsAPI historical observations present before kickoff. No numerical threshold is supplied by the LLM.",
+      "abstain_reason": null
+    },
+    {
+      "mechanism_id": "DP6_PRESSURE_RESOLUTION_CLEARANCE_PROFILE",
+      "research_question": "Against away defenses that absorb pressure through frequent clearances while conceding box entries and shots, does Girona's home pressure resolve more often into corners versus shots on target or big chances?",
+      "football_rationale": "Albacete's away history combines substantial opponent box access and shot volume with a notable clearance workload. Girona's home evidence provides corner, shot-on-target and big-chance outputs. This motivates a pressure-resolution mechanism: the same territorial pressure may end in different event types depending on how the opponent defends.",
+      "evidence_refs": [
+        "tsa.AWAY_TEAM.clearances.FOR.ALL_PRIOR.AWAY",
+        "tsa.AWAY_TEAM.touches_in_box.AGAINST.ALL_PRIOR.AWAY",
+        "tsa.AWAY_TEAM.shots.AGAINST.ALL_PRIOR.AWAY",
+        "tsa.AWAY_TEAM.shots_inside_box.AGAINST.ALL_PRIOR.AWAY",
+        "tsa.HOME_TEAM.corners.FOR.ALL_PRIOR.HOME",
+        "tsa.HOME_TEAM.shots_on_target.FOR.ALL_PRIOR.HOME",
+        "tsa.HOME_TEAM.big_chances.FOR.ALL_PRIOR.HOME",
+        "tsa.HOME_TEAM.touches_in_box.FOR.ALL_PRIOR.HOME"
+      ],
+      "variables": [
+        "thestatsapi:clearances",
+        "thestatsapi:touches_in_box",
+        "thestatsapi:shots",
+        "thestatsapi:shots_inside_box",
+        "thestatsapi:corners",
+        "thestatsapi:shots_on_target",
+        "thestatsapi:big_chances"
+      ],
+      "relationship_type": "MULTIMETRIC_INTERACTION",
+      "deterministic_measurement_plan": "Build an away-defensive pressure-absorption profile from clearances plus box/shot concessions. In historical Girona home matches against similar profiles, compare the composition of attacking output across corners, shots on target and big chances. Use deterministic continuous features or training-only bins; do not force one outcome channel.",
+      "similarity_dimensions": [
+        "defensive clearances",
+        "touches in box conceded",
+        "shots conceded",
+        "inside-box shots conceded"
+      ],
+      "confounders": [
+        "opponent strength",
+        "competition",
+        "venue",
+        "possession",
+        "score-state effects unavailable below match resolution"
+      ],
+      "required_resolution": "MATCH",
+      "provider_constraints": "Do not use blocked_shots in this mechanism because the packet notes its provider semantics are not sufficiently verified for a defensive-block interpretation.",
+      "abstain_reason": null
+    }
+  ],
+  "audit_notes": [
+    "All cited variables have evidence_ref entries in the committed packet.",
+    "No probability, effect size, odds, EV, stake or p_model is produced.",
+    "No half-state mechanism is proposed because the pilot packet has no half-level splits.",
+    "TheStatsAPI blocked_shots is deliberately excluded from defensive-block interpretation because its exact semantic direction is unresolved.",
+    "Competition/season mix is treated as a confounder, especially for Girona where recent history spans LaLiga and LaLiga 2."
+  ]
+}
