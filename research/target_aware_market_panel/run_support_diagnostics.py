@@ -125,6 +125,8 @@ def main():
     reg_path = OUT / "SOL_CLASS_C_TEMPLATE_REGISTRY_V1.json"
     if fsha(reg_path) != SOURCE_REGISTRY_SHA256:
         raise SystemExit("CLASS_C_REGISTRY_HASH_MISMATCH")
+    if fsha(RESPONSE_MANIFEST) != SOURCE_RESPONSE_MANIFEST_SHA256:
+        raise SystemExit("RESPONSE_MANIFEST_HASH_MISMATCH")
     for n in OUTPUTS:
         if (OUT / n).exists():
             raise SystemExit(f"OUTPUT_ALREADY_EXISTS:{n}")
