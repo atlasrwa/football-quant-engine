@@ -1,0 +1,97 @@
+{
+ "artifact_version": "target_aware_v1_oos_gate_decision_v1",
+ "authorized_support_execution_head": "95bf505d66cb561197b31184f49599c5d5286653",
+ "champion_sha256": "0b8f5ff3dc4ddf15363d17989330b6f010197265ce8d2ee892cdc7ca410c00c9",
+ "decision": "ABORT_V1_PREDICTIVE_OOS_BEFORE_OUTCOME_ACCESS",
+ "families_never_differ_from_m0_under_frozen_gate": [
+  "BOOKINGS",
+  "CORNERS",
+  "TEAM_TOTALS"
+ ],
+ "frozen_training_fold_availability": {
+  "0": {
+   "eligible": [],
+   "n_eligible_class_c": 0
+  },
+  "1": {
+   "eligible": [],
+   "n_eligible_class_c": 0
+  },
+  "2": {
+   "eligible": [
+    {
+     "canonical_signature_sha256": "97f7d6726d14bfe73cc141d874666645233fde291d7503969fea9a8ab494ed59",
+     "family": "GOALS",
+     "hypothesis_id": "mt_377417012_GOALS_RECIPROCAL_CHANCE_MATCHUP",
+     "market_id": "TOTAL_GOALS",
+     "template_type": "MULTI_DIMENSION_MATCHUP",
+     "training_coverage": 0.6810403832991102
+    }
+   ],
+   "n_eligible_class_c": 1
+  },
+  "3": {
+   "eligible": [],
+   "n_eligible_class_c": 0
+  },
+  "4": {
+   "eligible": [
+    {
+     "canonical_signature_sha256": "97f7d6726d14bfe73cc141d874666645233fde291d7503969fea9a8ab494ed59",
+     "family": "GOALS",
+     "hypothesis_id": "mt_377417012_GOALS_RECIPROCAL_CHANCE_MATCHUP",
+     "market_id": "TOTAL_GOALS",
+     "template_type": "MULTI_DIMENSION_MATCHUP",
+     "training_coverage": 0.6453389830508475
+    }
+   ],
+   "n_eligible_class_c": 1
+  }
+ },
+ "interpretation": "The dominant similarity features are not zero-support. Their segment coverage rises sharply in later folds, indicating a left-censoring / warm-up interaction with the cumulative training-coverage screen rather than absence of historical support.",
+ "late_segment_similarity_support": {
+  "FOLD_0": {
+   "median_segment_coverage": 0.0,
+   "n_similarity_templates": 116,
+   "n_similarity_templates_ge_60_segment_coverage": 0
+  },
+  "FOLD_1": {
+   "median_segment_coverage": 0.09454949944382647,
+   "n_similarity_templates": 116,
+   "n_similarity_templates_ge_60_segment_coverage": 0
+  },
+  "FOLD_2": {
+   "median_segment_coverage": 0.6610549943883277,
+   "n_similarity_templates": 116,
+   "n_similarity_templates_ge_60_segment_coverage": 116
+  },
+  "FOLD_3": {
+   "median_segment_coverage": 0.9283351708930541,
+   "n_similarity_templates": 116,
+   "n_similarity_templates_ge_60_segment_coverage": 116
+  },
+  "FOLD_4": {
+   "median_segment_coverage": 0.9511111111111111,
+   "n_similarity_templates": 116,
+   "n_similarity_templates_ge_60_segment_coverage": 116
+  }
+ },
+ "market_results_read": false,
+ "model_fit": false,
+ "n_class_c_templates": 124,
+ "n_similarity_templates": 116,
+ "n_similarity_templates_ever_training_eligible": 0,
+ "next_version": "TARGET_AWARE_MARKET_PANEL_V1_2_EVALUABILITY_REPAIR",
+ "oos_executed": false,
+ "reason": "The frozen 60% training-row coverage gate prevents the generated class-C feature family from being meaningfully exercised: 116/116 opponent-similarity templates are ineligible in every training fold; only one multi-dimensional GOALS feature is eligible, and only in folds 2 and 4. Running the frozen OOS would therefore make M1 identical to M0 for BOOKINGS, CORNERS and TEAM_TOTALS in every fold and would not test the dominant Sol hypothesis class.",
+ "reason_code": "STRUCTURAL_EVALUABILITY_FAILURE",
+ "repair_principle": "Do not lower the frozen 60% threshold. Pre-register a new experiment with adequate prehistory / explicit outcome-blind warm-up semantics so structural history requirements are not counted as ordinary feature missingness, then re-freeze folds and evaluability gates before reading outcomes.",
+ "support_audit_sha256": "c3348341d93e6c3df4372d34b46afaef213a4914625934ab1315d9a6aff032c0",
+ "support_diagnostics_sha256": "2c77a3df577e5b0767ed9002b899f83fd2c77fa3287b20dc8af6200a86f886b2",
+ "support_freeze_head": "ac0dc462b7fec730a58e29068682464bfea3d924",
+ "target_outcomes_read": false,
+ "v1_1_reserved_for": "HALF_MARKETS",
+ "v1_changes_allowed": false,
+ "v1_hypothesis_rewrite_allowed": false,
+ "v1_threshold_change_allowed": false
+}
