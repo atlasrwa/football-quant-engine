@@ -35,3 +35,12 @@ def test_validate_fixture_fails_closed_on_wrong_scope():
         pass
     else:
         raise AssertionError("scheduled fixture did not fail closed")
+
+
+def test_recovery_runner_is_zero_network_and_first_pass_bound():
+    src = Path("research/target_aware_market_panel/v1_2_finalize_fixture_discovery.py").read_text()
+    assert "from src.research.prospective.capture import ProspectiveApiClient" not in src
+    assert "client.get(" not in src
+    assert 'SOURCE_FAILED_HEAD = "5a79c8aff17e4c5dc18d9b944116019a3a5ac986"' in src
+    assert "EXPECTED_RAW_PAGES = 54" in src
+    assert "EXPECTED_FINISHED_FIXTURES = 4994" in src
