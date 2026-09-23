@@ -254,6 +254,18 @@ def verify_imports(mix_module) -> None:
             raise GateError(f"{mod.__name__} imported from outside this checkout: {f}")
 
 
+def artifact_parity(m0_artifact: Dict, m1_artifact: Dict) -> Dict[str, object]:
+    """Frozen parity check applied to the on-disk spec ARTIFACTS.
+
+    Each artifact carries its own canonical self-hash (`artifact_sha256`), which necessarily
+    differs between the arms because their feature universes differ. It is file metadata, not
+    a model setting, so it is removed before the frozen `parity_assertions` runs; every other
+    key is still compared.
+    """
+    strip = lambda d: {k: v for k, v in d.items() if k != "artifact_sha256"}  # noqa: E731
+    return MS.parity_assertions(strip(m0_artifact), strip(m1_artifact))
+
+
 # ─────────────────────────────── fitting machinery ───────────────────────────────
 def make_pipeline():
     from sklearn.impute import SimpleImputer
@@ -539,7 +551,7 @@ def phase_predict(authorized_head: str) -> None:
     fm = json.loads((STAGE2_DIR / "ITEM6_STAGE2_FOLD_MANIFEST_V1.json").read_text())
     m1spec = json.loads((STAGE2_DIR / "ITEM6_STAGE2_AUGMENTED_MODEL_SPEC_V1.json").read_text())
     m0spec = json.loads((STAGE2_DIR / "ITEM6_STAGE2_BASELINE_MODEL_SPEC_V1.json").read_text())
-    par = MS.parity_assertions(m0spec, m1spec)
+    par = artifact_parity(m0spec, m1spec)
     if not par["only_difference_is_llm_feature_availability"]:
         raise GateError(f"parity violated: {par}")
     llm_names = [str(c["name"]) for c in spec["columns"]]

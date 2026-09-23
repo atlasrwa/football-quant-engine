@@ -143,3 +143,17 @@ def test_executor_makes_no_llm_or_network_call_and_never_writes_champion():
         assert banned not in src
     assert "CHAMPION_PATH" in src and ".write_text" in src
     assert "(ROOT / CHAMPION_PATH).write" not in src and "open(CHAMPION_PATH" not in src
+
+
+def test_executor_parity_check_passes_on_the_real_frozen_spec_artifacts():
+    """Regression: the first authorized predict run stopped at this gate (before any data
+    access) because the artifacts' own self-hash was compared as if it were a model knob."""
+    import json
+    d = "research/item6/stage2/"
+    m0 = json.load(open(d + "ITEM6_STAGE2_BASELINE_MODEL_SPEC_V1.json"))
+    m1 = json.load(open(d + "ITEM6_STAGE2_AUGMENTED_MODEL_SPEC_V1.json"))
+    p = X.artifact_parity(m0, m1)
+    assert p["only_difference_is_llm_feature_availability"] is True
+    assert p["differing_shared_knobs"] == {} and p["n_added_features"] == 108
+    bad = dict(m1); bad["calibration"] = "platt"
+    assert X.artifact_parity(m0, bad)["only_difference_is_llm_feature_availability"] is False
