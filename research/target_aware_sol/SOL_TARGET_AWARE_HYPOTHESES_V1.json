@@ -1,0 +1,291 @@
+{
+  "artifact_version": "sol_target_aware_hypotheses_v1",
+  "generator": "ChatGPT GPT-5.6 Sol",
+  "source_packet_sha256": "ea3fb8353801e2b414c056585173e5204539f3e3555cf5cd7dec2a2eba91556c",
+  "source_fixture": "thestatsapi:mt_022075291",
+  "target_registry_version": "target_aware_pilot_targets_v1",
+  "probabilities_produced": false,
+  "market_direction_selected": false,
+  "p_model_produced": false,
+  "hypotheses": [
+    {
+      "hypothesis_id": "TA_GOALS_01_MUTUAL_BOX_THREAT",
+      "target": "TOTAL_GOALS_OVER_2_5",
+      "fixture_context_observation": "Girona's home history contains box access, inside-box shots, shots on target and big chances, while Albacete's away history shows substantial concession on the same chance-quality dimensions. Girona also concedes meaningful shot and box access at home, so the matchup contains two-sided chance-quality information rather than only one team's scoring average.",
+      "predictive_mechanism": "A fixture may carry incremental total-goals information when both teams' pre-match chance-creation phenotypes interact with the opponent's pre-match chance-concession phenotype, especially when the interaction indicates two-sided access to high-value shooting zones.",
+      "evidence_refs": [
+        "tsa.HOME_TEAM.shots_inside_box.FOR.ALL_PRIOR.HOME",
+        "tsa.HOME_TEAM.shots_on_target.FOR.ALL_PRIOR.HOME",
+        "tsa.HOME_TEAM.big_chances.FOR.ALL_PRIOR.HOME",
+        "tsa.HOME_TEAM.shots_inside_box.AGAINST.ALL_PRIOR.HOME",
+        "tsa.HOME_TEAM.shots_on_target.AGAINST.ALL_PRIOR.HOME",
+        "tsa.AWAY_TEAM.shots_inside_box.FOR.ALL_PRIOR.AWAY",
+        "tsa.AWAY_TEAM.shots_on_target.FOR.ALL_PRIOR.AWAY",
+        "tsa.AWAY_TEAM.shots_inside_box.AGAINST.ALL_PRIOR.AWAY",
+        "tsa.AWAY_TEAM.shots_on_target.AGAINST.ALL_PRIOR.AWAY",
+        "tsa.AWAY_TEAM.big_chances.AGAINST.ALL_PRIOR.AWAY"
+      ],
+      "pre_match_feature_inputs": [
+        "home historical inside-box shots FOR",
+        "home historical SoT FOR",
+        "home historical big chances FOR",
+        "home historical inside-box shots AGAINST",
+        "home historical SoT AGAINST",
+        "away historical inside-box shots FOR",
+        "away historical SoT FOR",
+        "away historical inside-box shots AGAINST",
+        "away historical SoT AGAINST",
+        "away historical big chances AGAINST"
+      ],
+      "feature_template": "PIT home chance-creation phenotype × PIT away chance-concession phenotype, combined with PIT away chance-creation phenotype × PIT home chance-concession phenotype",
+      "opponent_profile_dimensions": [
+        "shots_inside_box",
+        "shots_on_target",
+        "big_chances"
+      ],
+      "why_baseline_may_miss_it": "Ordinary goal averages and goals-conceded averages do not encode whether each side reaches or concedes dangerous shooting locations through the same structural channels. The interaction may distinguish superficially similar scoring histories with different underlying chance profiles.",
+      "panel_generalization_rule": "For every historical fixture, construct both teams' pre-kickoff venue-conditioned chance-creation and concession profiles from prior matches only, form deterministic attack-defense interaction features, and test them against the fixture's future TOTAL_GOALS_OVER_2_5 label.",
+      "deterministic_test_request": "Instantiate across a large historical PIT-safe fixture panel and compare a frozen baseline goals model with and without these interaction features using walk-forward log loss, Brier and calibration. Do not infer value from this fixture alone.",
+      "confounders": [
+        "competition",
+        "venue",
+        "team/opponent strength",
+        "season/regime",
+        "red cards/score state unavailable pre-match"
+      ],
+      "provider_constraints": "TheStatsAPI fields only in this pilot; big_chances coverage must be checked per historical row.",
+      "invalid_if_same_match_information_required": true,
+      "required_resolution": "MATCH",
+      "abstain_reason": null
+    },
+    {
+      "hypothesis_id": "TA_GOALS_02_TERRITORY_TO_CHANCE_CONVERSION",
+      "target": "TOTAL_GOALS_OVER_2_5",
+      "fixture_context_observation": "The packet contains possession, final-third entries and touches in box together with shot-quality measures for both teams, allowing a distinction between territorial volume and actual chance creation/concession.",
+      "predictive_mechanism": "The interaction between a team's historical territorial penetration and its conversion of territory into box shots/big chances, matched against the opponent's historical resistance to the same progression, may add information about future total goals beyond raw scoring form.",
+      "evidence_refs": [
+        "tsa.HOME_TEAM.possession.FOR.ALL_PRIOR.HOME",
+        "tsa.HOME_TEAM.touches_in_box.FOR.ALL_PRIOR.HOME",
+        "tsa.HOME_TEAM.final_third_entries.FOR.ALL_PRIOR.HOME",
+        "tsa.HOME_TEAM.shots_inside_box.FOR.ALL_PRIOR.HOME",
+        "tsa.AWAY_TEAM.possession.AGAINST.ALL_PRIOR.AWAY",
+        "tsa.AWAY_TEAM.touches_in_box.AGAINST.ALL_PRIOR.AWAY",
+        "tsa.AWAY_TEAM.final_third_entries.AGAINST.ALL_PRIOR.AWAY",
+        "tsa.AWAY_TEAM.shots_inside_box.AGAINST.ALL_PRIOR.AWAY"
+      ],
+      "pre_match_feature_inputs": [
+        "historical possession",
+        "historical final-third entries",
+        "historical box touches",
+        "historical inside-box shots",
+        "opponent historical concessions of the same"
+      ],
+      "feature_template": "PIT penetration-to-chance conversion profile of attack × PIT territorial-resistance/concession profile of opponent",
+      "opponent_profile_dimensions": [
+        "possession_against",
+        "final_third_entries_against",
+        "touches_in_box_against",
+        "shots_inside_box_against"
+      ],
+      "why_baseline_may_miss_it": "Averages can treat two teams with equal shot or goal rates as equivalent even when one creates chances through sustained penetration and another does not. The conditional conversion structure is an interaction rather than a marginal mean.",
+      "panel_generalization_rule": "For each historical fixture, compute prior venue-conditioned territorial and chance-conversion profiles for both sides and test whether their interaction improves next-match total-goals prediction OOS.",
+      "deterministic_test_request": "Compile continuous PIT-safe features without LLM thresholds; evaluate incremental walk-forward predictive value against the goals baseline.",
+      "confounders": [
+        "competition",
+        "venue",
+        "strength",
+        "recent regime",
+        "provider definition of final-third entries"
+      ],
+      "provider_constraints": "Use provider-specific TheStatsAPI semantics; no cross-provider blending without validation.",
+      "invalid_if_same_match_information_required": true,
+      "required_resolution": "MATCH",
+      "abstain_reason": null
+    },
+    {
+      "hypothesis_id": "TA_HCORNERS_01_WIDE_CENTRAL_PRESSURE",
+      "target": "HOME_CORNERS_OVER_4_5",
+      "fixture_context_observation": "Girona's home packet contains accurate crosses, box touches, final-third entries and corners; Albacete's away defensive history contains concessions in accurate crosses, box touches, inside-box shots and corners.",
+      "predictive_mechanism": "Home-corner production may depend on the interaction between the home side's pre-match wide-delivery plus central-penetration phenotype and the away side's pre-match tendency to concede those forms of pressure.",
+      "evidence_refs": [
+        "tsa.HOME_TEAM.accurate_crosses.FOR.ALL_PRIOR.HOME",
+        "tsa.HOME_TEAM.touches_in_box.FOR.ALL_PRIOR.HOME",
+        "tsa.HOME_TEAM.final_third_entries.FOR.ALL_PRIOR.HOME",
+        "tsa.HOME_TEAM.corners.FOR.ALL_PRIOR.HOME",
+        "tsa.AWAY_TEAM.accurate_crosses.AGAINST.ALL_PRIOR.AWAY",
+        "tsa.AWAY_TEAM.touches_in_box.AGAINST.ALL_PRIOR.AWAY",
+        "tsa.AWAY_TEAM.shots_inside_box.AGAINST.ALL_PRIOR.AWAY",
+        "tsa.AWAY_TEAM.corners.AGAINST.ALL_PRIOR.AWAY"
+      ],
+      "pre_match_feature_inputs": [
+        "home historical accurate crosses FOR",
+        "home historical box touches FOR",
+        "home historical final-third entries FOR",
+        "away historical accurate crosses AGAINST",
+        "away historical box touches AGAINST",
+        "away historical inside-box shots AGAINST",
+        "away historical corners AGAINST"
+      ],
+      "feature_template": "PIT home wide+central pressure phenotype × PIT away pressure-concession phenotype",
+      "opponent_profile_dimensions": [
+        "accurate_crosses_against",
+        "touches_in_box_against",
+        "shots_inside_box_against",
+        "corners_against"
+      ],
+      "why_baseline_may_miss_it": "Home corner average plus away corners-conceded average does not describe how pressure is generated or whether the attacking route matches the opponent's defensive weakness.",
+      "panel_generalization_rule": "For every fixture, create the same pre-match home pressure and away concession profiles and test the interaction against future HOME_CORNERS_OVER_4_5.",
+      "deterministic_test_request": "Test as a panel feature against a corners baseline using walk-forward OOS; exact transformations, shrinkage and similarity are deterministic.",
+      "confounders": [
+        "competition",
+        "venue",
+        "opponent strength",
+        "game-state effects",
+        "possible corner contribution to accurate-cross semantics"
+      ],
+      "provider_constraints": "Verify whether accurate_crosses includes corner deliveries before promoting; if mechanically contaminated, omit or isolate it deterministically.",
+      "invalid_if_same_match_information_required": true,
+      "required_resolution": "MATCH",
+      "abstain_reason": null
+    },
+    {
+      "hypothesis_id": "TA_HCORNERS_02_PRESSURE_ABSORPTION",
+      "target": "HOME_CORNERS_OVER_4_5",
+      "fixture_context_observation": "Albacete's away history combines a meaningful clearance workload with opponents reaching the box, shooting from inside the box and winning corners. Girona's home history supplies corresponding attacking pressure measures.",
+      "predictive_mechanism": "Some defenses absorb territorial pressure by repeated clearances and concessions rather than preventing entry. A home attack with compatible pressure characteristics may convert that matchup into corners differently from defenses with similar strength but different pressure-resolution behavior.",
+      "evidence_refs": [
+        "tsa.AWAY_TEAM.clearances.FOR.ALL_PRIOR.AWAY",
+        "tsa.AWAY_TEAM.touches_in_box.AGAINST.ALL_PRIOR.AWAY",
+        "tsa.AWAY_TEAM.shots_inside_box.AGAINST.ALL_PRIOR.AWAY",
+        "tsa.AWAY_TEAM.corners.AGAINST.ALL_PRIOR.AWAY",
+        "tsa.HOME_TEAM.touches_in_box.FOR.ALL_PRIOR.HOME",
+        "tsa.HOME_TEAM.shots_inside_box.FOR.ALL_PRIOR.HOME",
+        "tsa.HOME_TEAM.corners.FOR.ALL_PRIOR.HOME"
+      ],
+      "pre_match_feature_inputs": [
+        "away historical clearances FOR",
+        "away historical box touches AGAINST",
+        "away historical inside-box shots AGAINST",
+        "away historical corners AGAINST",
+        "home historical box touches FOR",
+        "home historical inside-box shots FOR"
+      ],
+      "feature_template": "PIT away pressure-absorption profile × PIT home pressure-generation profile",
+      "opponent_profile_dimensions": [
+        "clearances_for",
+        "touches_in_box_against",
+        "shots_inside_box_against",
+        "corners_against"
+      ],
+      "why_baseline_may_miss_it": "Two defenses can concede similar corner averages for different reasons. Clearance-heavy absorption may interact differently with a high-box-pressure attack than a defense that suppresses entry but concedes occasional set pieces.",
+      "panel_generalization_rule": "Instantiate the same defense-response and attack-pressure profiles for each historical home fixture and evaluate future home-corner threshold labels.",
+      "deterministic_test_request": "Use a large PIT-safe panel, control/adjust strength separately from style, and compare OOS baseline versus baseline+context feature.",
+      "confounders": [
+        "opponent strength",
+        "competition",
+        "venue",
+        "score state",
+        "style-strength correlation"
+      ],
+      "provider_constraints": "Do not reinterpret blocked_shots as defensive blocks; use clearances and concession metrics with verified semantics.",
+      "invalid_if_same_match_information_required": true,
+      "required_resolution": "MATCH",
+      "abstain_reason": null
+    },
+    {
+      "hypothesis_id": "TA_BOOKINGS_01_CONTACT_DISCIPLINE_MATCHUP",
+      "target": "TOTAL_BOOKINGS_OVER_3_5",
+      "fixture_context_observation": "Both teams have historical fouls and yellow-card evidence from their relevant venue contexts, as well as opponent fouls/cards, tackles and duel measures.",
+      "predictive_mechanism": "Total bookings may depend on the interaction between each side's historical contact/discipline tendency and the opponent's tendency to draw fouls/cards, rather than on each team's card average independently.",
+      "evidence_refs": [
+        "tsa.HOME_TEAM.fouls.FOR.ALL_PRIOR.HOME",
+        "tsa.HOME_TEAM.yellow_cards.FOR.ALL_PRIOR.HOME",
+        "tsa.HOME_TEAM.fouls.AGAINST.ALL_PRIOR.HOME",
+        "tsa.HOME_TEAM.yellow_cards.AGAINST.ALL_PRIOR.HOME",
+        "tsa.AWAY_TEAM.fouls.FOR.ALL_PRIOR.AWAY",
+        "tsa.AWAY_TEAM.yellow_cards.FOR.ALL_PRIOR.AWAY",
+        "tsa.AWAY_TEAM.fouls.AGAINST.ALL_PRIOR.AWAY",
+        "tsa.AWAY_TEAM.yellow_cards.AGAINST.ALL_PRIOR.AWAY",
+        "tsa.HOME_TEAM.tackles.FOR.ALL_PRIOR.HOME",
+        "tsa.AWAY_TEAM.tackles.FOR.ALL_PRIOR.AWAY"
+      ],
+      "pre_match_feature_inputs": [
+        "home historical fouls/cards FOR",
+        "home historical opponent fouls/cards",
+        "away historical fouls/cards FOR",
+        "away historical opponent fouls/cards",
+        "historical tackles"
+      ],
+      "feature_template": "PIT home contact/discipline phenotype × PIT away foul-drawing/contact phenotype plus reciprocal interaction",
+      "opponent_profile_dimensions": [
+        "fouls_for",
+        "yellow_cards_for",
+        "fouls_against",
+        "yellow_cards_against",
+        "tackles_for"
+      ],
+      "why_baseline_may_miss_it": "Simple total-card averages do not distinguish a team that receives cards because it commits many fouls from one whose opponents systematically receive cards when facing it. The reciprocal matchup could contain incremental information.",
+      "panel_generalization_rule": "Construct reciprocal pre-match discipline/contact profiles for arbitrary historical fixtures and test against future TOTAL_BOOKINGS_OVER_3_5.",
+      "deterministic_test_request": "Evaluate PIT-safe interaction features in a walk-forward bookings model; use yellow cards as the core label input only if the project's booking settlement definition matches provider semantics.",
+      "confounders": [
+        "competition officiating environment",
+        "referee if timestamp-safe and sufficiently covered",
+        "venue",
+        "team strength",
+        "red-card effects"
+      ],
+      "provider_constraints": "Red-card coverage in this packet is sparse and should not be used in this pilot feature; verify booking settlement semantics before model promotion.",
+      "invalid_if_same_match_information_required": true,
+      "required_resolution": "MATCH",
+      "abstain_reason": null
+    },
+    {
+      "hypothesis_id": "TA_BOOKINGS_02_TERRITORIAL_FRICTION",
+      "target": "TOTAL_BOOKINGS_OVER_3_5",
+      "fixture_context_observation": "The packet allows territorial behavior (possession/final-third activity) to be considered jointly with tackles, fouls, yellow cards and fouls drawn in the final third.",
+      "predictive_mechanism": "A mismatch between one side's pre-match territorial penetration and the opponent's pre-match defensive-contact response may create a different booking environment than card averages alone capture.",
+      "evidence_refs": [
+        "tsa.HOME_TEAM.possession.FOR.ALL_PRIOR.HOME",
+        "tsa.HOME_TEAM.final_third_entries.FOR.ALL_PRIOR.HOME",
+        "tsa.HOME_TEAM.fouled_in_final_third.FOR.ALL_PRIOR.HOME",
+        "tsa.AWAY_TEAM.tackles.FOR.ALL_PRIOR.AWAY",
+        "tsa.AWAY_TEAM.fouls.FOR.ALL_PRIOR.AWAY",
+        "tsa.AWAY_TEAM.yellow_cards.FOR.ALL_PRIOR.AWAY",
+        "tsa.AWAY_TEAM.possession.FOR.ALL_PRIOR.AWAY",
+        "tsa.HOME_TEAM.tackles.FOR.ALL_PRIOR.HOME",
+        "tsa.HOME_TEAM.fouls.FOR.ALL_PRIOR.HOME",
+        "tsa.HOME_TEAM.yellow_cards.FOR.ALL_PRIOR.HOME"
+      ],
+      "pre_match_feature_inputs": [
+        "historical possession",
+        "historical final-third entries",
+        "historical fouls drawn in final third",
+        "opponent historical tackles",
+        "opponent historical fouls",
+        "opponent historical yellow cards"
+      ],
+      "feature_template": "PIT territorial-penetration phenotype of one team × PIT defensive-contact phenotype of opponent, evaluated reciprocally",
+      "opponent_profile_dimensions": [
+        "tackles_for",
+        "fouls_for",
+        "yellow_cards_for",
+        "possession_for"
+      ],
+      "why_baseline_may_miss_it": "Bookings can be matchup-generated: a defense's card tendency may matter differently against a team that repeatedly forces defensive actions in advanced areas. Marginal booking rates cannot represent that interaction.",
+      "panel_generalization_rule": "Build reciprocal pre-match territorial-friction interaction features for every eligible historical fixture and test their incremental contribution to the future total-bookings threshold.",
+      "deterministic_test_request": "Run a panel OOS comparison versus the bookings baseline with competition/officiating controls where provider-safe.",
+      "confounders": [
+        "competition card environment",
+        "referee",
+        "venue",
+        "strength",
+        "score state",
+        "provider meaning of fouled_in_final_third"
+      ],
+      "provider_constraints": "Use only fields with adequate historical coverage and verified semantics; no referee feature unless truly PIT-safe.",
+      "invalid_if_same_match_information_required": true,
+      "required_resolution": "MATCH",
+      "abstain_reason": null
+    }
+  ]
+}
