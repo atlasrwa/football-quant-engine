@@ -37,3 +37,14 @@ def test_support_plan_binds_all_support_semantic_modules_and_runner_template():
         "research/target_aware_market_panel/v1_2_freeze_prehistory.py",
     }
     assert P.runner_template_sha256() == P.fsha(P.V12_SUPPORT_RUNNER)
+
+
+def test_support_plan_script_is_directly_invocable():
+    import subprocess
+    import sys
+    proc = subprocess.run(
+        [sys.executable, "research/target_aware_market_panel/v1_2_make_support_plan.py", "--help"],
+        cwd=P.ROOT, capture_output=True, text=True,
+    )
+    assert proc.returncode == 0, proc.stderr
+    assert "--authorized-head" in proc.stdout

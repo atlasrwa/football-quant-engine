@@ -5,11 +5,13 @@ import argparse
 import hashlib
 import json
 import subprocess
+import sys
 from pathlib import Path
 
-from src.research.target_aware_market_panel import panel as PN
-
 ROOT = Path(__file__).resolve().parents[2]
+sys.path.insert(0, str(ROOT))
+
+from src.research.target_aware_market_panel import panel as PN  # noqa: E402
 OUT = ROOT / "research/target_aware_market_panel"
 RAW_MANIFEST = OUT / "V1_2_PREHISTORY_RAW_MANIFEST_V1.json"
 PLAN_OUT = OUT / "V1_2_SUPPORT_EXECUTION_PLAN_V1.json"
