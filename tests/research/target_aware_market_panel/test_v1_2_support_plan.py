@@ -36,7 +36,10 @@ def test_support_plan_binds_all_support_semantic_modules_and_runner_template():
         "research/target_aware_market_panel/run_support_diagnostics.py",
         "research/target_aware_market_panel/v1_2_freeze_prehistory.py",
     }
-    assert P.runner_template_sha256() == P.fsha(P.V12_SUPPORT_RUNNER)
+    import json
+    from research.target_aware_market_panel import run_support_diagnostics_v1_2 as R
+    plan = json.loads(P.PLAN_OUT.read_text())
+    assert R.normalized_self_template_sha256() == plan["support_runner_template_sha256"]
 
 
 def test_support_plan_script_is_directly_invocable():

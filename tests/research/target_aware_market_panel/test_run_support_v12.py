@@ -3,8 +3,9 @@ from pathlib import Path
 from research.target_aware_market_panel import run_support_diagnostics_v1_2 as R
 
 
-def test_runner_is_fail_closed_until_plan_hash_is_pinned():
-    assert R.PLAN_SHA256 == "__PIN_AFTER_PLAN_FREEZE__"
+def test_runner_is_bound_to_frozen_plan_hash():
+    assert not R.PLAN_SHA256.startswith("__")
+    assert R.PLAN_SHA256 == R.fsha(R.SUPPORT_PLAN)
     src = Path(
         "research/target_aware_market_panel/run_support_diagnostics_v1_2.py"
     ).read_text()
@@ -54,5 +55,7 @@ def test_runner_verifies_frozen_semantic_module_hashes_and_template_hash():
     ).read_text()
     assert "SUPPORT_RUNNER_TEMPLATE_HASH_MISMATCH" in src
     assert "SEMANTIC_MODULE_HASH_MISMATCH" in src
+    import json
     assert 'plan["semantic_module_sha256"]' in src
-    assert R.normalized_self_template_sha256() == R.fsha(Path(R.__file__))
+    plan = json.loads(R.SUPPORT_PLAN.read_text())
+    assert R.normalized_self_template_sha256() == plan["support_runner_template_sha256"]
