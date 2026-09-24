@@ -46,3 +46,13 @@ def test_runner_outputs_explicit_gate_before_any_next_stage():
         "V1_2_EVALUABILITY_GATE_DECISION_V1.json",
         "SOL_PANEL_SUPPORT_FREEZE_MANIFEST_V1_2.json",
     )
+
+
+def test_runner_verifies_frozen_semantic_module_hashes_and_template_hash():
+    src = Path(
+        "research/target_aware_market_panel/run_support_diagnostics_v1_2.py"
+    ).read_text()
+    assert "SUPPORT_RUNNER_TEMPLATE_HASH_MISMATCH" in src
+    assert "SEMANTIC_MODULE_HASH_MISMATCH" in src
+    assert 'plan["semantic_module_sha256"]' in src
+    assert R.normalized_self_template_sha256() == R.fsha(Path(R.__file__))

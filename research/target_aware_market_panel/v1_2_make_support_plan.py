@@ -20,6 +20,18 @@ SCOPE = OUT / "V1_SCOPE_FREEZE_V1.json"
 V1_GATE = OUT / "V1_OOS_GATE_DECISION_V1.json"
 CHAMPION = Path("/home/ubuntu/data/discovery/pilotC_stat_mixer.json")
 PANEL_MODULE = ROOT / "src/research/target_aware_market_panel/panel.py"
+SUPPORT_MODULE = ROOT / "src/research/target_aware_market_panel/support.py"
+SUPPORT_V12_MODULE = ROOT / "src/research/target_aware_market_panel/support_v12.py"
+COHORT_MODULE = ROOT / "src/research/target_aware_market_panel/cohort_packets.py"
+PACKET_MODULE = ROOT / "src/research/dual_provider_llm/packet.py"
+NORMALIZER_MODULE = ROOT / "src/research/thestatsapi/normalizer.py"
+V1_SUPPORT_RUNNER = OUT / "run_support_diagnostics.py"
+RAW_FREEZER = OUT / "v1_2_freeze_prehistory.py"
+V12_SUPPORT_RUNNER = OUT / "run_support_diagnostics_v1_2.py"
+SEMANTIC_MODULES = (
+    PANEL_MODULE, SUPPORT_MODULE, SUPPORT_V12_MODULE, COHORT_MODULE,
+    PACKET_MODULE, NORMALIZER_MODULE, V1_SUPPORT_RUNNER, RAW_FREEZER,
+)
 FOLD_SHA256 = "f353068ec40864d56ac2c514a22e1199a9e237f58b1399e9739c71ae4488d3a1"
 REGISTRY_SHA256 = "2367b9ea5b3bad10b66c2958599069d574d5bc8c829d6066dc04b75aa069bf1b"
 RESPONSES_SHA256 = "79edc665876aca82ba9425eb741d74fa5252722b9b017dd10bf8f37744b46c6a"
@@ -35,6 +47,15 @@ COVERAGE_THRESHOLD = 0.60
 
 def fsha(path: Path) -> str:
     return hashlib.sha256(path.read_bytes()).hexdigest()
+
+
+def runner_template_sha256() -> str:
+    text = V12_SUPPORT_RUNNER.read_text()
+    marker = 'PLAN_SHA256 = "__PIN_AFTER_PLAN_FREEZE__"'
+    hits = [line for line in text.splitlines() if line == marker]
+    if len(hits) != 1:
+        raise RuntimeError("SUPPORT_RUNNER_NOT_IN_TEMPLATE_STATE")
+    return hashlib.sha256(text.encode()).hexdigest()
 
 
 def git(*args: str) -> str:
@@ -80,7 +101,10 @@ def build_plan(authorized_head: str) -> dict:
         "v1_scope_freeze_sha256": SCOPE_SHA256,
         "v1_gate_decision_sha256": V1_GATE_SHA256,
         "champion_sha256": CHAMPION_SHA256,
-        "panel_module_sha256": fsha(PANEL_MODULE),
+        "semantic_module_sha256": {
+            str(path.relative_to(ROOT)): fsha(path) for path in SEMANTIC_MODULES
+        },
+        "support_runner_template_sha256": runner_template_sha256(),
         "n_scored_rows": EXPECTED_PANEL_ROWS,
         "n_templates": EXPECTED_TEMPLATES,
         "n_similarity_templates": EXPECTED_SIMILARITY,

@@ -22,3 +22,18 @@ def test_support_plan_generator_contains_no_execution_path():
     assert '"target_outcomes_read": False' in src
     assert '"model_fit": False' in src
     assert '"oos_executed": False' in src
+
+
+def test_support_plan_binds_all_support_semantic_modules_and_runner_template():
+    rel = {str(p.relative_to(P.ROOT)) for p in P.SEMANTIC_MODULES}
+    assert rel == {
+        "src/research/target_aware_market_panel/panel.py",
+        "src/research/target_aware_market_panel/support.py",
+        "src/research/target_aware_market_panel/support_v12.py",
+        "src/research/target_aware_market_panel/cohort_packets.py",
+        "src/research/dual_provider_llm/packet.py",
+        "src/research/thestatsapi/normalizer.py",
+        "research/target_aware_market_panel/run_support_diagnostics.py",
+        "research/target_aware_market_panel/v1_2_freeze_prehistory.py",
+    }
+    assert P.runner_template_sha256() == P.fsha(P.V12_SUPPORT_RUNNER)

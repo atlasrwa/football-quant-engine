@@ -51,6 +51,17 @@ def fsha(path: Path) -> str:
     return hashlib.sha256(path.read_bytes()).hexdigest()
 
 
+def normalized_self_template_sha256() -> str:
+    text = Path(__file__).read_text()
+    lines = text.splitlines(keepends=True)
+    hits = [i for i, line in enumerate(lines) if line.startswith("PLAN_SHA256 = ")]
+    if len(hits) != 1:
+        raise RuntimeError("SUPPORT_RUNNER_PLAN_BINDING_NOT_UNIQUE")
+    newline = "\n" if lines[hits[0]].endswith("\n") else ""
+    lines[hits[0]] = 'PLAN_SHA256 = "__PIN_AFTER_PLAN_FREEZE__"' + newline
+    return hashlib.sha256("".join(lines).encode()).hexdigest()
+
+
 def git(*args: str) -> str:
     return subprocess.run(["git", "-C", str(ROOT), *args], check=True,
                           capture_output=True, text=True).stdout.strip()
@@ -173,6 +184,12 @@ def main() -> None:
             raise SystemExit(f"OUTPUT_ALREADY_EXISTS:{name}")
 
     plan = json.loads(SUPPORT_PLAN.read_text())
+    if normalized_self_template_sha256() != plan["support_runner_template_sha256"]:
+        raise SystemExit("SUPPORT_RUNNER_TEMPLATE_HASH_MISMATCH")
+    for relpath, expected in sorted(plan["semantic_module_sha256"].items()):
+        path = ROOT / relpath
+        if not path.exists() or fsha(path) != expected:
+            raise SystemExit(f"SEMANTIC_MODULE_HASH_MISMATCH:{relpath}")
     threshold = float(plan["training_coverage_threshold"])
     if threshold != S12.COVERAGE_THRESHOLD:
         raise SystemExit("SUPPORT_PLAN_THRESHOLD_MISMATCH")
