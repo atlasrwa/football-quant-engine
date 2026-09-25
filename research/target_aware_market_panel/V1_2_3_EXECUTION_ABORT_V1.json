@@ -1,17 +1,17 @@
 {
  "artifact_version": "target_aware_v1_2_3_execution_abort_v1",
- "decision": "ABORT_V1_2_3_PREDICTIVE_EXECUTION",
- "frozen_binding_head": "dda5a45c5b9acc5418eb555e94a1dc9cded9b3a8",
+ "decision": "ABORT_V1_2_3_EXECUTION_NO_SCIENTIFIC_RESULT",
+ "apparatus_head": "dda5a45c5b9acc5418eb555e94a1dc9cded9b3a8",
  "binding_sha256": "2741f677a8c0bd7b85e6281544d98542977d69f01146a79e2d3a510a79b7b20b",
- "reason_code": "CONCURRENT_RUNNER_OUTPUT_RACE",
- "reason": "Two concurrent copies of the frozen V1.2.3 prediction runner were detected targeting the same final output paths. Both were terminated before any prediction, fold-diagnostic, prediction-freeze, evaluation, or evaluation-audit artifact was written or inspected.",
- "repair": "Create V1.2.4 with an exclusive single-run execution lock and atomic final-output publication. Preserve V1.2.3 feature matrices, targets, folds, strong M0, Sol class-C templates, coverage threshold, fitter, tuning, calibration, scoring sets, and evaluation rules unchanged.",
- "target_outcomes_read": true,
- "model_fit_started": true,
- "oos_execution_completed": false,
- "prediction_artifact_written": false,
- "evaluation_artifact_written": false,
+ "feature_freeze_manifest_sha256": "c366abea89c98622f7e923c7206a6a719f2a68972b3a880d425a54d12786521a",
+ "reason_code": "EXECUTION_CONCURRENCY_AND_NONTERMINAL_PROCESS_EXIT",
+ "reason": "The frozen predictive runner was started from the authorized clean HEAD and accessed target labels, but no prediction, fold-diagnostic, prediction-freeze, evaluation, or audit artifact was emitted. During execution a second identical runner was detected, exposing the lack of an exclusive execution lock. The later duplicate was terminated. The original process later exited without terminal output; no OOM evidence was found and the exact termination cause was not established.",
+ "repair_scope": "Execution reliability only: add a fail-closed exclusive process lock before label access/output creation. Preserve every scientific input and rule byte-for-byte, including feature matrices, targets, folds, coverage threshold, model fitter, hyperparameter grid, calibration, scoring sets, bootstrap, multiplicity and gates.",
+ "target_outcomes_access_started": true,
  "scientific_result_observed": false,
+ "prediction_artifact_created": false,
+ "evaluation_artifact_created": false,
  "market_results_read": false,
- "champion_changed": false
+ "champion_changed": false,
+ "rerun_allowed_only_if_scientific_semantics_unchanged": true
 }
