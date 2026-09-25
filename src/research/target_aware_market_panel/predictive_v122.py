@@ -145,6 +145,13 @@ def memoize_history(h: PN.PanelHistory) -> None:
         if k not in sc: sc[k]=orig_s(team,comp,before)
         return sc[k]
     h.strength=strength
+    orig_style=PN.style_profile; pc={}
+    def style(hh,team,venue,dims,before,comp):
+        dk=tuple(sorted((str(x["metric"]),str(x["perspective"])) for x in dims))
+        k=(str(team),venue,dk,int(before),str(comp))
+        if k not in pc: pc[k]=orig_style(hh,team,venue,dims,before,comp)
+        return pc[k]
+    PN.style_profile=style
 
 def build_family_matrix(h: PN.PanelHistory, fixtures: Sequence[Mapping[str,Any]],
                         family: str, templates: Sequence[Mapping[str,Any]]
