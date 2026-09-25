@@ -10,7 +10,7 @@ SIMILARITY_TYPE = "OPPONENT_SIMILARITY_CONDITIONAL"
 
 
 def _finite(v: Any) -> bool:
-    return v is not None and np.isfinite(float(v))
+    return bool(v is not None and np.isfinite(float(v)))
 
 
 def training_coverage(values: Sequence[Any], fixtures: Sequence[Mapping[str, Any]],
