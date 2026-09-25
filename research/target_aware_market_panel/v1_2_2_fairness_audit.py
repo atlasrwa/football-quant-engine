@@ -1,12 +1,13 @@
 """Outcome-blind fairness audit for Target-Aware Market Panel V1.2.2 predictive stage."""
 from __future__ import annotations
-import hashlib, json, re, subprocess
+import hashlib, json, re, subprocess, sys
 from pathlib import Path
 from typing import Any
 
-from src.research.target_aware_market_panel import cohort_packets as CP
-
 ROOT = Path(__file__).resolve().parents[2]
+sys.path.insert(0, str(ROOT))
+
+from src.research.target_aware_market_panel import cohort_packets as CP
 OUT = ROOT / "research/target_aware_market_panel"
 REQ_ROOT = OUT / "out/sol_requests"
 FOLDS = OUT / "TARGET_AWARE_FOLD_MANIFEST_V1.json"

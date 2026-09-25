@@ -17,3 +17,11 @@ def test_strict_unseen_is_secondary_not_primary():
     assert "retrospective transferability screen" in src
     assert "secondary robustness set" in src
     assert "mandatory for any claim" in src
+
+
+def test_fairness_audit_direct_invocation_help():
+    import subprocess, sys
+    p = subprocess.run([sys.executable, "research/target_aware_market_panel/v1_2_2_fairness_audit.py", "--help"],
+                       cwd=A.ROOT, capture_output=True, text=True)
+    assert p.returncode == 0, p.stderr
+    assert "--authorized-head" in p.stdout
