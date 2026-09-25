@@ -1,0 +1,72 @@
+{
+ "artifact_version": "target_aware_v1_2_2_predictive_fairness_audit_v1",
+ "authorized_head": "4dd5612b8ccfcffea152e5e80dd72f5a7a46302a",
+ "champion_changed": false,
+ "champion_sha256": "0b8f5ff3dc4ddf15363d17989330b6f010197265ce8d2ee892cdc7ca410c00c9",
+ "market_results_read": false,
+ "model_fit": false,
+ "n_match_ids_referenced_in_sol_packets": 1934,
+ "n_referenced_match_ids_resolved": 1922,
+ "n_sol_requests": 48,
+ "n_team_ids_exposed_anywhere_in_sol_packet_history": 124,
+ "oos_executed": false,
+ "panel_boundary_correction": {
+  "actual_base_history_end_unix": 1789412400,
+  "actual_base_history_start_unix": 1691175600,
+  "frozen_protocol_text_claim": "panel rows 2024-08 through 2026-09-14",
+  "interpretation": "2023-08 through 2024-10-22 is burn-in/training history; frozen OOS starts 2024-10-23. Do not rewrite the frozen V1 protocol; record this correction here.",
+  "oos_max_kickoff_unix": 1789412400,
+  "oos_min_kickoff_unix": 1729702800,
+  "train_only_max_kickoff_unix": 1729623600,
+  "train_only_min_kickoff_unix": 1691175600
+ },
+ "per_fold": {
+  "0": {
+   "all_oos": 899,
+   "frozen_primary": 626,
+   "strict_unseen": 67
+  },
+  "1": {
+   "all_oos": 899,
+   "frozen_primary": 649,
+   "strict_unseen": 88
+  },
+  "2": {
+   "all_oos": 891,
+   "frozen_primary": 588,
+   "strict_unseen": 72
+  },
+  "3": {
+   "all_oos": 907,
+   "frozen_primary": 589,
+   "strict_unseen": 77
+  },
+  "4": {
+   "all_oos": 900,
+   "frozen_primary": 605,
+   "strict_unseen": 92
+  }
+ },
+ "scoring_sets": {
+  "frozen_primary_non_cohort": {
+   "n": 3057,
+   "sha256": "b735113a2875b461612c7fcde3ffc8ab5fc9acaae3fbc5c7dad8727d1f3890c6"
+  },
+  "strict_unseen_team_robustness": {
+   "definition": "frozen primary rows where neither team id appears in any historical match id referenced anywhere in the 48 Sol request packets",
+   "n": 396,
+   "sha256": "b14b5bbd6252cc1f4b5e86c7490f265329a28ad42f2bb9b011347089b499e707"
+  }
+ },
+ "sol_request_hashes_sha256": "ab5c93ad92192468c18fdedad0ace9bc0d7895190cda6c250aae8305d12cb428",
+ "source_fold_manifest_sha256": "f353068ec40864d56ac2c514a22e1199a9e237f58b1399e9739c71ae4488d3a1",
+ "source_v1_2_1_support_freeze_sha256": "d21f4ec5226eb56977cef2c733edfcef1287e5d756220e6496797c6816f1b40d",
+ "source_v1_protocol_sha256": "0ea8328ef94fc3256b144c5d83b879481b9cfba4e006d0f3dada020f65cf2eac",
+ "target_outcomes_read": false,
+ "validity_interpretation": {
+  "frozen_primary_role": "retrospective transferability screen; valid for testing incremental information of already-frozen templates on non-cohort fixtures, but not a clean feature-discovery holdout",
+  "primary_pass_does_not_equal_prospective_validation": true,
+  "prospective_requirement": "mandatory for any claim that the LLM discovery process generalizes or for feature promotion/production use",
+  "strict_unseen_role": "secondary robustness set; more independent from packet exposure but underpowered for a replacement primary endpoint"
+ }
+}
