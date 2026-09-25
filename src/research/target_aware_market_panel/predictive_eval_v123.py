@@ -1,4 +1,4 @@
-"""Frozen V1.2.2 evaluation functions. No file I/O and no model fitting."""
+"""Frozen V1.2.3 evaluation functions. No file I/O and no model fitting."""
 from __future__ import annotations
 import datetime as dt
 from typing import Dict, Mapping, Sequence
