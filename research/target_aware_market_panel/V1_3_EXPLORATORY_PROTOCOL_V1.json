@@ -1,0 +1,61 @@
+{
+ "artifact_version": "target_aware_v1_3_exploratory_protocol_v1",
+ "status": "FROZEN_BEFORE_V1_3_EXECUTION",
+ "scientific_role": "EXPLORATORY_MODEL_DEVELOPMENT_ONLY",
+ "reason_not_confirmatory": "V1.2.4 outcomes on these historical OOS folds have already been observed. V1.3 may develop a method on the same frozen corpus but cannot constitute independent confirmation.",
+ "parent_v1_2_4_evaluation_sha256": "df9882e64ac9a9c265ae8c74d9ac94e96d0598a72e62dd5c91f188ebffcdda00",
+ "parent_v1_2_4_evaluation_freeze_sha256": "afd24fe9e0945f571262267dc982f9d27b5136ef5774c5a3f9e2a6bea4a95095",
+ "feature_freeze_manifest": "research/target_aware_market_panel/V1_2_3_FEATURE_FREEZE_MANIFEST_V1.json",
+ "feature_freeze_manifest_sha256": "c366abea89c98622f7e923c7206a6a719f2a68972b3a880d425a54d12786521a",
+ "v1_2_4_binding_sha256": "c2c158520ac38761c1f1d4bf94da9b8bb0a24da8951668f6b8a41eca5c9ffae7",
+ "v1_2_4_predictions_sha256": "8c61de90e4de128ee070b9df84525b52016e543cd89c084cfc021534af251d08",
+ "data_policy": {
+   "provider_calls": 0,
+   "network_calls": 0,
+   "new_historical_data": false,
+   "feature_matrices": "reuse frozen V1.2.3 strong-M0 and Sol matrices byte-for-byte",
+   "baseline_predictions": "reuse frozen V1.2.4 M0 probabilities byte-for-byte",
+   "labels": "same local frozen historical corpus semantics used in V1.2.4"
+ },
+ "arms": {
+   "M0": "frozen V1.2.4 strong deterministic baseline probabilities",
+   "M1_STABLE": "same strong deterministic baseline feature matrix plus only Sol columns selected by nested training-only stability selection"
+ },
+ "selection_rule": {
+   "scope": "independently inside each outer target/fold using outer-training rows only",
+   "outer_coverage_threshold": 0.60,
+   "candidate_pool": "all family-specific Sol columns meeting outer-training 60% nonmissing coverage",
+   "stability_splits": 3,
+   "stability_split_kind": "TimeSeriesSplit expanding chronological",
+   "stability_subfit": "elastic-net logistic grid search using the same pipeline, C grid, l1_ratio grid and 4-split chronological tuning CV as the frozen fitter; calibration omitted because only coefficient support/sign is used",
+   "nonzero_threshold": 1e-8,
+   "selection_requirement": "nonzero Sol coefficient in at least 2 of 3 successful stability subfits AND identical sign in every nonzero occurrence",
+   "minimum_successful_stability_subfits": 2,
+   "if_fewer_than_two_successful_subfits": "select zero Sol columns",
+   "if_zero_selected": "M1_STABLE uses the exact M0 feature matrix for that target/fold",
+   "top_k": null,
+   "family_specific_thresholds": false,
+   "uses_outer_test_labels": false,
+   "uses_v1_2_4_oos_effects_for_selection": false
+ },
+ "final_fit_rule": {
+   "m1_fitter": "src.research.item6.stage2.executor.fit_arm",
+   "m1_tuning_and_calibration": "unchanged from V1.2.4",
+   "m0_refit": false,
+   "m0_reason": "carry forward the already-frozen identical strong-baseline predictions to avoid stochastic or execution drift"
+ },
+ "scoring": {
+   "primary_set": "same 3057-fixture V1.2.4 frozen primary retrospective transferability set",
+   "strict_unseen": "same 396-fixture secondary robustness set",
+   "family_weighting": "equal weight across fixed primary targets within family",
+   "bootstrap": "paired ISO-week block bootstrap, 10000 resamples, seed 0",
+   "multiplicity": "Holm-Bonferroni across four fixed families",
+   "screen_thresholds": "same numerical thresholds as V1.2.4, reported descriptively only because V1.3 is exploratory"
+ },
+ "interpretation": {
+   "positive_result": "evidence that training-only stable subset selection may improve representation; not independent confirmation",
+   "negative_result": "no evidence that this stability-selection representation rescues the frozen Sol hypothesis set",
+   "prospective_confirmation_required": true,
+   "champion_change_authorized": false
+ }
+}
