@@ -1,0 +1,83 @@
+{
+ "artifact_version": "target_aware_v1_4_exploratory_angle_battery_protocol_v1",
+ "status": "FROZEN_BEFORE_V1_4_EXECUTION",
+ "scientific_role": "EXPLORATORY_MODEL_DEVELOPMENT_ONLY",
+ "reason_not_confirmatory": "The historical OOS period has already been observed in V1.2.4 and V1.3. V1.4 is a mechanism-discovery battery only.",
+ "data_policy": {
+   "provider_calls": 0,
+   "network_calls": 0,
+   "new_historical_data": false,
+   "feature_matrices": "reuse frozen V1.2.3 strong-M0 and Sol matrices byte-for-byte",
+   "labels": "reuse the same local frozen historical corpus semantics",
+   "baseline_logistic_predictions": "reuse frozen V1.2.4 M0 probabilities byte-for-byte when the test uses the logistic strong-M0 comparator"
+ },
+ "fixed_reference_results": {
+   "RAW_ALL_V1_2_4": "V1.2.4 M0 vs M0+all eligible Sol features under elastic-net logistic",
+   "STABILITY_V1_3": "V1.3 M0 vs M0+training-stable Sol subset"
+ },
+ "new_tests": {
+   "LLM_ONLY_LOGIT": {
+     "question": "Do the frozen Sol features contain standalone predictive information at all?",
+     "arm0": "frozen V1.2.4 strong-M0 probabilities",
+     "arm1": "family-specific Sol features only, 60% outer-training coverage, frozen elastic-net fitter",
+     "interpretation": "diagnostic feature-universe comparison, not an incremental parity claim"
+   },
+   "PCA80_LOGIT": {
+     "question": "Is useful Sol information hidden by collinearity/redundancy?",
+     "arm0": "frozen V1.2.4 strong-M0 probabilities",
+     "arm1": "strong M0 plus training-only PCA of eligible Sol columns retaining >=80% training variance",
+     "pca": "median-impute and standardize on outer training only; PCA fit outer training only; no target labels used in PCA"
+   },
+   "ORTHO_RIDGE_LOGIT": {
+     "question": "Do Sol features contain information orthogonal to what strong M0 already represents?",
+     "arm0": "frozen V1.2.4 strong-M0 probabilities",
+     "arm1": "strong M0 plus training-only Ridge residuals of eligible standardized Sol features after prediction from eligible standardized M0",
+     "ridge_alpha_grid": [0.1, 1.0, 10.0, 100.0],
+     "ridge_cv": "3-split chronological TimeSeriesSplit, reconstruction MSE only; no target labels"
+   },
+   "GOALS_MULTI_ONLY_LOGIT": {
+     "question": "Are the eight MULTI_DIMENSION_MATCHUP hypotheses more useful than the dominant similarity grammar?",
+     "scope": "GOALS targets only",
+     "arm0": "frozen V1.2.4 strong-M0 probabilities",
+     "arm1": "strong M0 plus only GOALS MULTI_DIMENSION_MATCHUP Sol columns"
+   },
+   "GOALS_SIM_ONLY_LOGIT": {
+     "question": "Within GOALS, is the OPPONENT_SIMILARITY_CONDITIONAL grammar the useful component?",
+     "scope": "GOALS targets only",
+     "arm0": "frozen V1.2.4 strong-M0 probabilities",
+     "arm1": "strong M0 plus only GOALS OPPONENT_SIMILARITY_CONDITIONAL Sol columns"
+   },
+   "HGB_RAW_PARITY": {
+     "question": "Is the Sol information nonlinear/interaction-dependent and therefore missed by elastic-net logistic?",
+     "arm0": "strong M0 feature matrix under fixed HistGradientBoostingClassifier",
+     "arm1": "identical HGB machinery on strong M0 plus all eligible Sol columns",
+     "hyperparameters": {
+       "learning_rate": 0.05,
+       "max_iter": 200,
+       "max_leaf_nodes": 15,
+       "min_samples_leaf": 30,
+       "l2_regularization": 1.0,
+       "random_state": 0,
+       "early_stopping": false
+     },
+     "calibration": "3-split chronological OOF isotonic fit inside each outer training fold; clip [0.01,0.99]"
+   }
+ },
+ "shared_rules": {
+   "outer_coverage_threshold": 0.60,
+   "outer_folds": "unchanged frozen five expanding folds",
+   "primary_set": "same 3057-fixture retrospective transferability set",
+   "strict_unseen": "same 396-fixture robustness set",
+   "bootstrap": "paired ISO-week blocks, 10000 resamples, seed 0",
+   "within_test_family_multiplicity": "Holm-Bonferroni across the applicable fixed families",
+   "cross_test_multiplicity": "no confirmatory cross-test claim; report all tests as exploratory scorecard",
+   "no_adaptive_thresholds": true,
+   "no_post_result_method_changes_inside_v1_4": true
+ },
+ "interpretation": {
+   "goal": "identify which mechanism, if any, deserves a newly frozen prospective experiment",
+   "positive_historical_result": "development evidence only",
+   "prospective_confirmation_required": true,
+   "champion_change_authorized": false
+ }
+}
