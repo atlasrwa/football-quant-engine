@@ -30,3 +30,7 @@ This file deliberately does not answer that question. The ledger exists to preve
 ## Market benchmark rule
 
 For every new hypothesis, capture both sides of the same bookmaker market when available. Store reciprocal implied probabilities, the two-way overround, and the proportional no-vig market probabilities. The no-vig probability is the market benchmark; it is not `p_model`. A model edge may only be calculated later from a deterministic/statistical probability produced outside the LLM.
+
+## Active operating direction
+
+User decision on 28 September 2026: finish the existing 40-test pilot manually using supplied Scores365 snapshots, contextual online research, deterministic multi-market analysis and pre-kickoff ledger freezing. Revisit champion implementation after the pilot. See [manual pilot decision](MANUAL_PILOT_FIRST_DECISION_20260928.md). Historical declarations and retrospective reviews retain their existing provenance and counts.
