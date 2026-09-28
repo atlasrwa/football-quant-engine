@@ -1,0 +1,113 @@
+{
+  "observed_at_utc": "2026-09-28T23:49:56.964936+00:00",
+  "source_worktree": "/home/ubuntu/qfe-curated-offline",
+  "source_base_head": "3afa8c716b9d599cce7eec9bac30a0e0ec8c6fb0",
+  "source_candidate_files_uncommitted": true,
+  "inspection_only_not_new_empirical_run": true,
+  "source_hashes": {
+    "research/lean_champion/COMPARISON_V1.json": "63f7ce82f12c88c21ffc988b6bea20fe2d0841ffa81adc03bd536e50ea40d53b",
+    "research/lean_champion/REPLAY_V1.json": "c6aa9518196986005e8177645f0e6c8dbb043e15ddecde2987c1f170dd330196",
+    "src/research/lean_champion/model.py": "2770df0c1c197fe5fb8f31b285cd95ec924392a97fbd6238163492da598553b4",
+    "src/research/lean_champion/replay.py": "dacd5e09079bb7a26bdf3063bacf8239767790d9bc84a9c0195df6d65979d80c",
+    "src/research/lean_champion/decide.py": "b94ace318c7a35f3c394999fb23d02d79a1d0bc5111b4f36b4627ce22abf0a4a",
+    "src/research/lean_champion/pricing.py": "bd259a5c5c58a2b610113421b0fd2a120478c021cc7e2b9d19d257111dad4309"
+  },
+  "comparison": {
+    "line": 9.5,
+    "n_matched": 1201,
+    "n_m0_subset": 50,
+    "scores": {
+      "M1_simple_baseline": {
+        "n": 1201,
+        "logloss": 0.6909214403328997,
+        "brier": 0.24888812614020486,
+        "base_rate": 0.4870940882597835,
+        "mean_pred": 0.48770666004295954,
+        "calibration_intercept": 0.024133451721706008,
+        "calibration_slope": 1.539322232862383
+      },
+      "M2_lean_candidate": {
+        "n": 1201,
+        "logloss": 0.6918658270358514,
+        "brier": 0.24936049084041553,
+        "base_rate": 0.4870940882597835,
+        "mean_pred": 0.48319596057670067,
+        "calibration_intercept": 0.10960383998228461,
+        "calibration_slope": 2.352714027350293
+      },
+      "M0_market_novig_subset": {
+        "n": 50,
+        "logloss": 0.7013449645730158,
+        "brier": 0.254094534999322,
+        "base_rate": 0.34,
+        "mean_pred": 0.5122026532182423,
+        "calibration_intercept": -0.6901576279607616,
+        "calibration_slope": 0.5361096251198512,
+        "subset_only": true
+      },
+      "M1_on_M0_subset": {
+        "n": 50,
+        "logloss": 0.692258431047555,
+        "brier": 0.2495547186752184,
+        "base_rate": 0.34,
+        "mean_pred": 0.49870635610423797,
+        "calibration_intercept": -0.6608075124871746,
+        "calibration_slope": 0.5856021930297088
+      },
+      "M2_on_M0_subset": {
+        "n": 50,
+        "logloss": 0.6828307579612232,
+        "brier": 0.24484415122495196,
+        "base_rate": 0.34,
+        "mean_pred": 0.4840135905708909,
+        "calibration_intercept": -0.4717065750286104,
+        "calibration_slope": 3.0
+      }
+    },
+    "paired_deltas": {
+      "M2_vs_M1_full": {
+        "logloss_improvement": -0.0009443867029518424,
+        "ci_14d": [
+          -0.0025659491544023244,
+          0.001494598745884559
+        ],
+        "scope": "EXPLORATORY_DEVELOPMENT_ONLY_NO_PROMOTION"
+      },
+      "M2_vs_M0_subset": {
+        "logloss_improvement": 0.018514206611792542,
+        "ci_14d": [
+          null,
+          null
+        ],
+        "scope": "EXPLORATORY_DEVELOPMENT_ONLY_NO_PROMOTION"
+      },
+      "M2_vs_M1_on_M0_subset": {
+        "logloss_improvement": 0.009427673086331767,
+        "ci_14d": [
+          null,
+          null
+        ],
+        "scope": "EXPLORATORY_DEVELOPMENT_ONLY_NO_PROMOTION"
+      }
+    },
+    "unreproduced_comparators": {
+      "production_incumbent_pilotC_elasticnet": {
+        "status": "UNREPRODUCED",
+        "reason": "Frozen fitted bundle not recoverable in this offline worktree; it targets a different cohort/label. The governing documents forbid reconstructing it from hyperparameters or relabeling HGB M2 results."
+      },
+      "manual_eight_selection_baseline": {
+        "status": "UNREPRODUCED",
+        "reason": "Original point-in-time inputs, odds, stakes and formulas are not recoverable. Recreating a formula to fit the eight outcomes is explicitly disallowed."
+      }
+    },
+    "market_adjusted_status": "MARKET_UNTESTED",
+    "market_adjusted_note": "No market-adjusted (p_deploy) model was fit: only 50 eligible no-vig pairs at decision time, far below the 200-pair minimum. Complementary market value remains untested.",
+    "settlement_returns": "NOT_COMPUTED_IN_PREDICTIVE_LAYER"
+  },
+  "bundle_calibration": null,
+  "p_over9_5_range": [
+    0.4090509504295674,
+    0.5039949221609777
+  ],
+  "excluded_user_fixture_outcomes_used": false
+}
