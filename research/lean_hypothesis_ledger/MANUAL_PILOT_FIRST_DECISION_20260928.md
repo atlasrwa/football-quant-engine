@@ -33,3 +33,7 @@ This is a workflow and priority decision, not a new probability formula, model p
 Defer further champion-rework implementation and replacement decisions until the pilot review, unless the user explicitly changes this direction. Preserve the existing local prototype and production champion. This record does not stop remote processes, change services, disable capture jobs, or deploy anything; no operational shutdown is claimed.
 
 The separate offline development restrictions still apply to any future code work. User-authorized manual web research for the pilot is a distinct activity; it does not authorize live provider APIs, paid LLM calls, automatic ingestion, betting or publishing predictions.
+
+## Explicit exclusion
+
+The user subsequently excluded today’s Türkiye–Italy, Sweden–Poland and Romania–Bosnia analyses as incorrect. Do not promote their research candidates into pilot declarations or use their retrospective outcomes as performance evidence. Retained records are audit-only. The pilot remains 11/40 with 29 declarations remaining.

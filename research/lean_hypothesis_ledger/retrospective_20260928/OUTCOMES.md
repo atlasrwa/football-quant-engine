@@ -1,3 +1,5 @@
+> EXCLUDED BY USER — 28 September 2026: The user considers these fixture analyses incorrect. This document is retained only as an audit trail, excluded from pilot counts, performance summaries, model validation and promotion evidence. See QFE-USER-EXCLUSION-20260928-TUR-SWE-ROU in the ledger.
+
 # User-reported outcomes — retrospective review
 
 Reported results: Türkiye 6 corners, Türkiye–Italy 8 total corners and 4 goals; Poland 4 corners, Sweden–Poland 8 total corners and 4 goals; Romania–Bosnia 5 goals. Italy 2 corners and Sweden 4 corners are arithmetic derivations, not independently verified observations.

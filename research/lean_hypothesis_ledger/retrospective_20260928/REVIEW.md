@@ -1,3 +1,5 @@
+> EXCLUDED BY USER — 28 September 2026: The user considers these fixture analyses incorrect. This document is retained only as an audit trail, excluded from pilot counts, performance summaries, model validation and promotion evidence. See QFE-USER-EXCLUSION-20260928-TUR-SWE-ROU in the ledger.
+
 # Retrospective market-disagreement review — 28 September 2026
 
 This review covers Türkiye–Italy, Sweden–Poland and Romania–Bosnia. It reconstructs the recorded pre-match scans and extends their supported market coverage. It is not a blind replay: result-bearing pages were encountered during research. No result or post-match statistic enters the calculations, and no selection is backdated or added to the 40-test pilot.
