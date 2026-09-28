@@ -26,3 +26,7 @@ The deterministic engine remains responsible for any probability, calibration, n
 Can a lean evidence layer using focused team/market statistics plus deterministic shrinkage and conditional state features perform competitively enough that parts of the heavier research apparatus can be removed?
 
 This file deliberately does not answer that question. The ledger exists to prevent hindsight and cherry-picking while the evidence accumulates.
+
+## Market benchmark rule
+
+For every new hypothesis, capture both sides of the same bookmaker market when available. Store reciprocal implied probabilities, the two-way overround, and the proportional no-vig market probabilities. The no-vig probability is the market benchmark; it is not `p_model`. A model edge may only be calculated later from a deterministic/statistical probability produced outside the LLM.
