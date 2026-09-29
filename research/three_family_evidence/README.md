@@ -29,10 +29,14 @@ python3 research/three_family_evidence/build_evidence.py --cache /home/ubuntu/da
 
 The output directory must not exist. Input caches are read only. Seven boundary/regression tests passed. Output digest is recorded in out/v1/coverage.json; the full immutable derived evidence is in out/v1/evidence.jsonl. Input cache misses remain missing and never trigger a network request.
 
-## Remaining work and promotion boundaries
+## Initial evidence-build status (superseded by the development report below)
 
 This is the data/research foundation, not a trained richer pilot. No lagged feature matrix, hypothesis effect estimate, trained model, calibration fit, market comparison or prospective commitment has been produced. The raw rows explicitly declare prediction_input_eligible=false. They must not be passed directly into a predictor.
 
 Before fitting: resolve period/booking semantics, verify historical manager fidelity, define chronological lagged profiles and bounded hypotheses, and register all currently-null evaluation choices. Retrospective reconstruction cannot be represented as original point-in-time replay. Match outcomes and same-match stats are never prediction inputs for that match.
 
 Use the accompanying SOURCE_OF_TRUTH.md and research_registry.json for independent M1/M2/M2+H evaluation. Preserve prior frozen results and do not backdate successor predictions. All markets remain DEVELOPMENT_ONLY/NOT_EVALUATED; models fitted=0, promotions=0, live calls=0. Keep production CHAMPION and capture jobs unchanged.
+
+## Chronological follow-up completed
+
+See CHRONOLOGICAL_DEVELOPMENT_REPORT.md for executed semantic quarantine, lagged features, calibration and nine-target development comparisons. The initial models_fitted=0 statement above describes the earlier evidence-only commit. All current targets remain DEVELOPMENT_ONLY and MARKET_UNTESTED; promotions remain zero.
