@@ -1,0 +1,84 @@
+{
+  "corners": {
+    "policy": "UNCHANGED_NOT_RUN_BY_V31",
+    "protected_v3_model_sha256": "6497afc1c203d1da9f7f8385fbbfa49e03b2be0afb4f05f7155d1b401cfe191d"
+  },
+  "freeze_sha256": "73b185749aaea6e25880807adbf3d337331a638942c52625aa48f77da3c1aa94",
+  "frozen_at_utc": "2026-09-29T15:45:00Z",
+  "goals_btts": {
+    "calibration_fraction": 0.25,
+    "dependence": "independent side Poisson counts; BTTS derived from same joint law; unvalidated assumption",
+    "feature_half_life_days": 365.0,
+    "features": [
+      "goals_for_against",
+      "total_shots",
+      "shots_on_target",
+      "shots_inside_box",
+      "big_chances",
+      "venue_context"
+    ],
+    "historical_feature_cutoff_hours_before_fixture": 24,
+    "historical_stat_publication_buffer_hours": 4,
+    "history_max_matches": 120,
+    "joint_calibration": {
+      "intercept_bounds": [
+        -2.0,
+        2.0
+      ],
+      "ridge": 0.05,
+      "slope_bounds": [
+        0.25,
+        3.0
+      ],
+      "type": "mu_side=exp(intercept_side+slope*log(raw_mu_side))"
+    },
+    "markets": [
+      "total_goals@2.5",
+      "total_goals@3.5",
+      "btts"
+    ],
+    "max_calibration_fixtures": 40,
+    "min_calibration_fixtures": 15,
+    "min_team_history": 3,
+    "min_train_fixtures": 30,
+    "model": "PoissonRegressor side-count model with chronological team profiles",
+    "poisson_alpha": 1.0,
+    "profile_shrink_k": 5.0,
+    "research_state": "POST_EXPOSURE_DEVELOPMENT_ONLY_NOT_PROMOTED",
+    "version": "QFE_GOALS_BTTS_V31_RICH_JOINTCAL"
+  },
+  "integrity": {
+    "append_only_shadow_ledger": true,
+    "future_outcomes_forbidden": true,
+    "missing_data_action": "ABSTAIN",
+    "post_kickoff_features_forbidden": true,
+    "prediction_before_market_comparison": true,
+    "v3_counting_experiment_mutation_forbidden": true
+  },
+  "parent": {
+    "v3_commit": "f60ef8a5310e85daf3bf9f0f5d1bf101c40bbd31",
+    "v3_counting_ledger": "UNCHANGED_21_40",
+    "v3_freeze_sha256": "452daf38d7797a7f0cb530ee9882e87b02b002ccac19f330eb4733b252275aff"
+  },
+  "provider": {
+    "football": "THESTATSAPI_ONLY",
+    "market": "Bet365 via TheStatsAPI",
+    "no_implicit_blending": true,
+    "odds_field_for_entry": "last_seen observed prospectively",
+    "opening_field": "opening reference only"
+  },
+  "schema_version": "qfe-v31-freeze/1",
+  "selection": {
+    "bookmaker": "Bet365",
+    "min_model_minus_market_novig": 0.05,
+    "min_selected_probability": 0.6,
+    "must_beat_vig_loaded_break_even": true,
+    "two_way_devig": "proportional"
+  },
+  "status": "FROZEN_PROSPECTIVE_SHADOW_CANDIDATE",
+  "telegram": {
+    "counting_status": "DOES_NOT_COUNT_TOWARD_V3_40",
+    "label": "QFE V3.1 RESEARCH SHADOW",
+    "route": "same dedicated V3 bot credentials"
+  }
+}
