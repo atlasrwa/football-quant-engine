@@ -1,0 +1,98 @@
+{
+  "corners": {
+    "baseline": "competition provider-native corner mean when >=10 prior observations; otherwise global provider-native mean from frozen available history",
+    "distribution": "Poisson total from two side lambdas",
+    "estimators": {
+      "long5": {
+        "min_n": 5,
+        "n": 5
+      },
+      "recent3": {
+        "min_n": 3,
+        "n": 3
+      },
+      "venue3": {
+        "min_n": 2,
+        "n": 3
+      }
+    },
+    "line_selection": "among valid half-lines with both Bet365 sides, choose the line whose proportional no-vig OVER probability is closest to 0.50; ties by numeric line ascending",
+    "markets": [
+      "match_corners"
+    ],
+    "min_valid_estimators_per_side": 2,
+    "shrink_k": 5.0,
+    "side_lambda": "median(valid sqrt(shrunk team corners-for * shrunk opponent corners-against))",
+    "version": "QFE_CORNERS_V3_TSA_MEDIAN"
+  },
+  "freeze_sha256": "452daf38d7797a7f0cb530ee9882e87b02b002ccac19f330eb4733b252275aff",
+  "frozen_at_utc": "2026-09-29T00:00:00Z",
+  "goals": {
+    "algorithm": "Dixon-Coles score model",
+    "calibration": {
+      "min_calibration_targets": 50,
+      "protocol": "competition-specific chronological prior-season calibration; coefficients fit only from matches before target fixture",
+      "ridge_l2": 0.25,
+      "type": "Platt/logit calibration"
+    },
+    "half_life_days": 365.0,
+    "markets": [
+      "total_goals@2.5",
+      "total_goals@3.5"
+    ],
+    "min_train_matches": 120,
+    "rho_bound_abs": 0.18,
+    "ridge_l2": 0.75,
+    "score_matrix_max_goals": 10,
+    "version": "QFE_GOALS_V3_DC_CALIBRATED"
+  },
+  "integrity": {
+    "append_only_evidence": true,
+    "champion_unchanged": true,
+    "future_outcomes_forbidden": true,
+    "hash_chained_v3_events": true,
+    "missing_data_action": "ABSTAIN",
+    "model_manifest_must_hash_match": true,
+    "post_kickoff_features_forbidden": true,
+    "prediction_before_market_comparison": true
+  },
+  "pilot": {
+    "existing_tests": 20,
+    "new_declarations_max": 20,
+    "new_test_numbers": [
+      21,
+      40
+    ],
+    "post_40_policy": "NO_MORE_COUNTING_DECLARATIONS; SHADOW_CAPTURE_AND_SETTLEMENT_CONTINUE",
+    "selection_order": [
+      "kickoff_utc",
+      "fixture_id",
+      "market_family",
+      "line",
+      "side"
+    ]
+  },
+  "provider": {
+    "closing": "last prospectively observed same-book price strictly before kickoff",
+    "football": "THESTATSAPI_ONLY",
+    "market": "Bet365 via TheStatsAPI",
+    "no_implicit_blending": true,
+    "odds_field_for_entry": "last_seen observed prospectively",
+    "opening_field": "opening reference only"
+  },
+  "schema_version": "qfe-v3-freeze/1",
+  "selection": {
+    "bookmaker": "Bet365",
+    "min_model_minus_market_novig": 0.05,
+    "min_selected_probability": 0.6,
+    "must_beat_vig_loaded_break_even": true,
+    "two_way_devig": "proportional"
+  },
+  "status": "FROZEN_PROSPECTIVE_PILOT_CANDIDATE",
+  "unsupported": [
+    "BTTS",
+    "bookings/cards",
+    "goals lines other than 2.5/3.5",
+    "team corners until provider market semantics are explicitly verified"
+  ]
+}

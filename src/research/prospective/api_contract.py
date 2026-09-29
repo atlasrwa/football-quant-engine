@@ -79,6 +79,7 @@ class Endpoint(str, Enum):
     # --- discovery -------------------------------------------------------
     MATCHES = "/football/matches"
     MATCH_DETAIL = "/football/matches/{match_id}"
+    MATCH_STATS = "/football/matches/{match_id}/stats"
     COVERAGE_LEAGUES = "/coverage/leagues"
     COMPETITION_SEASONS = "/football/competitions/{competition_id}/seasons"
 
