@@ -5,6 +5,10 @@ Scope amended: 2026-09-29 (America/Bogota), by explicit user instruction.
 
 Status: governing research direction for the next implementation cycle. This document does not claim that code has been changed, tests have passed, or a market advantage has been established.
 
+## Latest scope override — 2026-09-29
+
+Explicit user instruction: leave the existing corners model unchanged and run no further corner experiments. Active improvement scope is goals, BTTS and cards, prioritizing calibration and timestamped market disagreement. Earlier three-family evidence remains archived; it does not authorize changing corners. See ../goals_btts_cards/SCOPE.md. All offline and promotion restrictions remain in force.
+
 ## Objective
 
 A hypothesis earns promotion by improving genuinely out-of-sample probability forecasts beyond a competitive baseline, maintaining or improving calibration, and adding predictive value after market information is included. Market disagreement alone is not success.
