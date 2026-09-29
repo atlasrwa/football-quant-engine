@@ -11,6 +11,7 @@ from .model import InsufficientRichHistory, canonical_hash, fit_predict, rich_hi
 from .provider import V31Provider
 from .telegram import declaration_message, settlement_message, send
 from src.research.v3_pilot.provider import ProviderBudgetStop
+from src.research.prospective.capture import ProspectiveTransportError
 
 FREEZE=load_freeze(); G=FREEZE['goals_btts']
 
@@ -62,8 +63,16 @@ def _rich_rows(provider,history,target):
     maxn=int(G['history_max_matches']); base=[m for m in history.get('matches',[]) if float(m['ts'])<float(target['ts'])][-maxn:]
     got=[]
     for m in reversed(base):
-        try: payload,_,_=provider.stats(str(m['match_id']))
-        except ProviderBudgetStop: raise
+        try:
+            payload,_,_=provider.stats(str(m['match_id']))
+        except ProviderBudgetStop:
+            raise
+        except ProspectiveTransportError as exc:
+            # The provider returns 404/409 for some finished matches whose detailed
+            # stats are unavailable. Missing raw evidence is skipped, never zero-filled.
+            if 'HTTP 404' in str(exc) or 'HTTP 409' in str(exc):
+                continue
+            raise
         if payload is None: continue
         row=rich_history_row(m,payload)
         if row is not None: got.append(row)

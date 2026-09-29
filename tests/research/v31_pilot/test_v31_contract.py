@@ -13,3 +13,7 @@ def test_v3_corners_protected_byte_identical():
     f=load_freeze(); root=Path(__file__).resolve().parents[3]
     observed=hashlib.sha256((root/'src/research/v3_pilot/model.py').read_bytes()).hexdigest()
     assert observed==f['corners']['protected_v3_model_sha256']
+
+def test_missing_provider_stats_policy_is_abstain_not_zero_fill():
+    from src.research.v31_pilot.freeze import load_freeze
+    assert load_freeze()['integrity']['missing_data_action']=='ABSTAIN'
