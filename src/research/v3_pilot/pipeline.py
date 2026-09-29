@@ -11,6 +11,7 @@ from pathlib import Path
 from typing import Any
 
 from . import ledger
+from .audit import refresh_audit_map
 from .config import (
     DATA_ROOT, DISCOVERY_HOURS, DISCOVERY_REFRESH_SECONDS, EVIDENCE_DIR,
     EARLY_WINDOW, FINAL_WINDOW, MID_WINDOW, OBSERVATION_LOG,
@@ -629,5 +630,6 @@ def tick(*, dry_run: bool = False, force_discovery: bool = False) -> dict:
     if not dry_run:
         out["final"] = capture_final_for_declared(provider)
         out["settlement"] = settle_due(provider)
+    out["audit"] = refresh_audit_map()
     out["requests_total"] = provider.requests
     return out

@@ -1,0 +1,60 @@
+{
+  "schema_version": "qfe-v3-pilot-audit/1",
+  "status": "FROZEN_BEFORE_V3_OUTCOMES",
+  "frozen_at_utc": "2026-09-29T13:37:08Z",
+  "scope": {
+    "pilot_target": 40,
+    "legacy_tests": [1, 20],
+    "primary_prospective_tests": [21, 40],
+    "primary_origin": "V3_AUTOMATED_THESTATSAPI_PROSPECTIVE",
+    "pool_legacy_with_v3_for_primary_metrics": false,
+    "reason": "Tests 1-20 have mixed/manual methodology and provenance; tests 21-40 share the frozen V3 contract."
+  },
+  "integrity_requirements": {
+    "v3_hash_chain_valid": true,
+    "immutable_evidence_hashes_valid": true,
+    "freeze_hash_constant": "452daf38d7797a7f0cb530ee9882e87b02b002ccac19f330eb4733b252275aff",
+    "prediction_precedes_market_comparison": true,
+    "entry_quote_precedes_kickoff": true,
+    "settlement_is_append_only": true,
+    "no_post_outcome_reselection": true
+  },
+  "primary_predictive_metric": {
+    "name": "paired_log_loss_improvement_vs_entry_no_vig",
+    "definition": "mean(logloss_market_entry - logloss_model) on the same settled V3 declarations",
+    "better_direction": "positive"
+  },
+  "supporting_metrics": {
+    "paired_brier_improvement_vs_entry_no_vig": "mean(brier_market_entry - brier_model)",
+    "model_log_loss": true,
+    "market_entry_log_loss": true,
+    "model_brier": true,
+    "market_entry_brier": true,
+    "fixed_probability_bin_ece": {
+      "bins": [0.0, 0.6, 0.7, 0.8, 0.9, 1.0],
+      "descriptive_only": true
+    },
+    "mean_clv_probability_movement_toward_selection": true,
+    "genuine_close_coverage": true,
+    "minimum_genuine_close_coverage_for_directional_adjudication": 0.8,
+    "unit_stake_pnl": "WIN=entry_odds-1; LOSS=-1; PUSH=0",
+    "unit_stake_roi": true,
+    "hit_rate": "secondary_only"
+  },
+  "adjudication": {
+    "DIRECTIONAL_PASS": "All 20 V3 declarations settled with integrity PASS; paired log-loss improvement > 0; paired Brier improvement > 0; mean available CLV movement toward selection > 0; unit-stake P&L > 0.",
+    "DIRECTIONAL_FAIL": "All 20 V3 declarations settled with integrity PASS; paired log-loss improvement <= 0; paired Brier improvement <= 0; mean available CLV movement toward selection <= 0; unit-stake P&L <= 0.",
+    "INCONCLUSIVE": "Any mixed directional result, material close-price missingness, integrity failure, or incomplete settlement.",
+    "interpretation": "Directional pilot adjudication only. It is not a claim of statistical confirmation, calibrated superiority, or betting authorization."
+  },
+  "market_scope": {
+    "counting_v1": ["total_goals@2.5", "total_goals@3.5", "match_corners"],
+    "btts_status": "SHADOW_ONLY_UNTIL_VERSIONED_PROSPECTIVE_AMENDMENT",
+    "v0_2H_status": "NOT_NUMERICALLY_PREREGISTERED; DO_NOT RETROFIT INTO TESTS 21-24"
+  },
+  "post_40": {
+    "stop_new_counting_declarations": true,
+    "continue_capture_and_settlement": true,
+    "audit_before_model_rework": true
+  }
+}

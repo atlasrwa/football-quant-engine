@@ -84,6 +84,17 @@ def cmd_settle() -> int:
     print(json.dumps(result, indent=2, sort_keys=True, default=str))
     return 0
 
+def cmd_audit() -> int:
+    from src.research.v3_pilot.audit import build_map, refresh_audit_map
+    refreshed = refresh_audit_map()
+    obj = build_map()
+    print(json.dumps({
+        "artifact": refreshed,
+        "summary": obj["summary"],
+        "integrity": obj["integrity"],
+    }, indent=2, sort_keys=True, default=str))
+    return 0 if obj["integrity"]["status"] == "PASS" else 3
+
 def cmd_telegram_test() -> int:
     from src.research.v3_pilot.telegram import send
     ok, detail = send(
@@ -102,6 +113,7 @@ def main() -> int:
     tick_p = sub.add_parser("tick")
     tick_p.add_argument("--force-discovery", action="store_true")
     sub.add_parser("settle")
+    sub.add_parser("audit")
     sub.add_parser("telegram-test")
     args = parser.parse_args()
     if args.cmd == "status":
@@ -112,6 +124,8 @@ def main() -> int:
         return cmd_tick(args.force_discovery)
     if args.cmd == "settle":
         return cmd_settle()
+    if args.cmd == "audit":
+        return cmd_audit()
     if args.cmd == "telegram-test":
         return cmd_telegram_test()
     return 2

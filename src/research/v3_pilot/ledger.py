@@ -189,6 +189,26 @@ def append_settlement(hypothesis_id: str, settlement: dict[str, Any]) -> dict | 
     }
     return _append_locked(event)
 
+def bind_audit_protocol(*, protocol_sha256: str, protocol_repo_commit: str, protocol_path: str) -> dict:
+    rows = _rows()
+    for row in rows:
+        if (
+            row.get("event_type") == "V3_AUDIT_PROTOCOL_FROZEN"
+            and row.get("audit_protocol_sha256") == protocol_sha256
+        ):
+            return row
+    event = {
+        "event_type": "V3_AUDIT_PROTOCOL_FROZEN",
+        "counts_toward_40": False,
+        "recorded_at_utc": _now_iso(),
+        "audit_protocol_sha256": protocol_sha256,
+        "audit_protocol_repo_commit": protocol_repo_commit,
+        "audit_protocol_path": protocol_path,
+        "primary_cohort": [21, 40],
+        "note": "Audit criteria frozen before any V3 test outcome; tests 1-20 remain descriptive legacy evidence.",
+    }
+    return _append_locked(event)
+
 def git_commit(paths: list[Path], message: str) -> str | None:
     rels = [str(p.relative_to(LEAN_LEDGER_REPO)) for p in paths]
     subprocess.run(["git", "add", "--", *rels], cwd=LEAN_LEDGER_REPO, check=True)
