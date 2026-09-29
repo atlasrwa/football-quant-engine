@@ -1,0 +1,75 @@
+{
+  "status": "DEVELOPMENT_ONLY_NOT_CONFIRMATORY",
+  "input": "out/v1/evidence.jsonl",
+  "input_digest": "d30b402c3ea52eaafe16faa401233ea23e162e0e0219d148feb00d78ccbaa19e",
+  "families": [
+    "corners",
+    "yellow_card_proxy"
+  ],
+  "targets": [
+    "home",
+    "away",
+    "total"
+  ],
+  "decision_horizon_hours": 24,
+  "historical_completion_buffer_hours": 4,
+  "decay_half_life_days": 365,
+  "profile_prior_equivalent_matches": 5,
+  "minimum_prior_matches_per_team": 3,
+  "folds": [
+    {
+      "train_before": "2024-11-14",
+      "calibration_before": "2025-01-01",
+      "test_before": "2026-09-29"
+    }
+  ],
+  "min_train_fixtures": 30,
+  "min_calibration_fixtures": 15,
+  "min_test_fixtures": 10,
+  "arms": [
+    "M1",
+    "M2",
+    "M2+H"
+  ],
+  "regression": "Poisson GLM, alpha=1, training-only imputation/scaling",
+  "search_budget": "one fixed specification per arm, no tuning or winner selection",
+  "calibration": "side-specific multiplicative mean correction, prior mass=20 expected events; fit calibration segment only",
+  "total_distribution": "sum of independent calibrated side Poissons; dependence unvalidated",
+  "hypothesis": "H: kernel-weighted historical own production against opponents similar in pre-fixture target concession and shot concession; deterministic scale, shrink to unconditional production",
+  "hypothesis_dimensions_scale": "(1+abs(target current opponent profile)) per dimension; no learned future scales",
+  "minimum_similarity_matches": 3,
+  "primary": "paired binary log-loss M2 minus M2+H; report M1 minus M2 too",
+  "lines": {
+    "goals": {
+      "home": 1.5,
+      "away": 1.5,
+      "total": 2.5
+    },
+    "corners": {
+      "home": 4.5,
+      "away": 4.5,
+      "total": 9.5
+    },
+    "yellow_card_proxy": {
+      "home": 1.5,
+      "away": 1.5,
+      "total": 3.5
+    }
+  },
+  "supporting": [
+    "Brier",
+    "count log-loss",
+    "reliability bins",
+    "calibration intercept/slope",
+    "paired UTC-week-block bootstrap interval"
+  ],
+  "bootstrap_draws": 1000,
+  "seed": 729,
+  "promotion": "disabled; no protected holdout, verified market layer or preregistered confirmation tolerances",
+  "period_policy": "exclude ambiguous/extra-time all stats; quarantine additive mismatch cells and duplicates; do not repair values",
+  "xg_npxg": "excluded from fit; raw preserved",
+  "manager_referee_lineup": "excluded until semantic/asof fidelity verified",
+  "market_state": "MARKET_UNTESTED; yellow card proxy not market equivalent",
+  "version": "COVERAGE_SUPPLEMENT_V2",
+  "reason": "V1 corners/cards could not fit due to early-history support; preserve V1 and use later coverage-selected development fold; no corner/card model outcomes inspected before this specification."
+}
