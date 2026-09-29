@@ -1,0 +1,33 @@
+{
+  "version": "GOALS_BTTS_CARDS_CALIBRATION_DEV_V1",
+  "scope": [
+    "goals.home",
+    "goals.away",
+    "goals.total",
+    "btts",
+    "yellow_card_proxy.home",
+    "yellow_card_proxy.away",
+    "yellow_card_proxy.total"
+  ],
+  "corners": "LOCKED_NO_CHANGES_NO_FITTING_NO_NEW_COMPARISONS",
+  "source_commit": "bcb2ef178eaf22664d2d79f5b92c18bef82f4697",
+  "status": "POST_EXPOSURE_DEVELOPMENT_ONLY",
+  "base_arm": "M2 fixed from previous development; selection informed by exposed development results",
+  "comparison": "existing shrunk mean correction versus joint coherent intercept/slope calibration",
+  "calibration": "mu_side=exp(intercept_side + slope*log(raw_mu_side)); minimize calibration-segment mean joint Poisson NLL plus 0.05*(sum(intercept^2)+(slope-1)^2); bounds intercept [-2,2], slope [0.25,3]",
+  "joint_distribution": "independent side Poissons; BTTS from same joint law; dependence not validated",
+  "folds": "reuse original goals folds and coverage supplement card fold; no new corner calls",
+  "lines": {
+    "goals.home": 1.5,
+    "goals.away": 1.5,
+    "goals.total": 2.5,
+    "btts": null,
+    "yellow_card_proxy.home": 1.5,
+    "yellow_card_proxy.away": 1.5,
+    "yellow_card_proxy.total": 3.5
+  },
+  "search_budget": "one calibration candidate; no tuning; preserve negative results",
+  "promotion": "DISABLED; need untouched evaluation, calibration gate and timestamped market evidence",
+  "market_disagreement": "matched market/side/period/line, two-way odds captured by freeze, no-vig reference and executable-price EV; disagreement is not proof of edge",
+  "protected_model_sha256": "6497afc1c203d1da9f7f8385fbbfa49e03b2be0afb4f05f7155d1b401cfe191d"
+}
