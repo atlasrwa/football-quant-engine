@@ -37,9 +37,16 @@ The prototype secret file is `/home/ubuntu/.config/qfe-v3/prototype.env` (mode 0
 `./scripts/v3_pilot.py canary`
 `./scripts/v3_pilot.py tick`
 `./scripts/v3_pilot.py settle`
+`./scripts/v3_pilot.py audit`
 `./scripts/v3_pilot.py telegram-test`
 
 The cron tick runs every 15 minutes, but competition discovery is internally throttled to six-hour intervals. Provider requests have a 160-call/run hard cap, 2.1-second pacing and a 10,000-request monthly reserve.
+
+## Ledger and audit
+
+`PILOT_AUDIT_PROTOCOL_V1.json` was frozen before any V3 test outcome and its content hash/commit are bound into the append-only V3 ledger chain. Tests 1-20 remain a mixed-provenance legacy cohort and are descriptive only; tests 21-40 are the primary V3 prospective cohort. `data/v3_pilot/lean_ledger_map_v1.json` is regenerated from the append-only ledger and verifies evidence hashes, point-in-time ordering and the V3 chain.
+
+Legacy team-corner/goals/BTTS rows may be settled automatically only when provider semantics are unambiguous. Rushbet booking-point rows remain manual because aggregate yellow/red totals cannot safely reconstruct second-yellow scoring. BTTS and the informal v0.2H noise-control concept remain non-counting/shadow-only until a separate prospective protocol amendment is frozen; V3_FREEZE_V1 is never edited retroactively.
 
 ## Pilot stop
 

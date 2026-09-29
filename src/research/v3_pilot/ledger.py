@@ -182,7 +182,9 @@ def append_settlement(hypothesis_id: str, settlement: dict[str, Any]) -> dict | 
         "settled_value": settlement.get("settled_value"),
         "settled_unit": settlement["settled_unit"],
         "final_score": settlement.get("final_score"),
-        "verification_class": "THESTATSAPI_AUTOMATED_PROSPECTIVE",
+        "verification_class": settlement.get(
+            "verification_class", "THESTATSAPI_AUTOMATED_PROSPECTIVE"
+        ),
         "closing_benchmark": settlement.get("closing_benchmark"),
         "source_payload_hashes": settlement.get("source_payload_hashes", {}),
         "recorded_at_utc": _now_iso(),

@@ -330,6 +330,10 @@ def build_map(rows: list[dict] | None = None) -> dict:
     primary_metrics = _metrics(primary_rows)
     legacy_metrics = _metrics(legacy_rows)
     whole_metrics = _metrics(mapped)
+    manual_blockers = [
+        r["hypothesis_id"] for r in legacy_rows
+        if r.get("result") == "PENDING" and r.get("market_family") == "bookings"
+    ]
     protocol_hash = _sha256_file(AUDIT_PROTOCOL) if AUDIT_PROTOCOL.exists() else None
     return {
         "schema_version": "qfe-lean-ledger-map/1",
@@ -344,6 +348,7 @@ def build_map(rows: list[dict] | None = None) -> dict:
             "legacy_1_20_descriptive": legacy_metrics,
             "v3_primary_21_40": primary_metrics,
             "v3_adjudication": _adjudicate(primary_metrics, integrity),
+            "legacy_manual_settlement_required": manual_blockers,
             "warning": "Do not pool legacy 1-20 with V3 21-40 for primary predictive claims.",
         },
         "tests": mapped,

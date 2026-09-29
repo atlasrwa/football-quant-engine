@@ -77,10 +77,17 @@ def cmd_tick(force_discovery: bool) -> int:
     return 0
 
 def cmd_settle() -> int:
+    from src.research.v3_pilot.audit import refresh_audit_map
+    from src.research.v3_pilot.legacy_settlement import settle_legacy_due
     from src.research.v3_pilot.pipeline import settle_due
     from src.research.v3_pilot.provider import V3Provider
     with _locked():
-        result = settle_due(V3Provider())
+        provider = V3Provider()
+        result = {
+            "legacy": settle_legacy_due(provider),
+            "v3": settle_due(provider),
+            "audit": refresh_audit_map(),
+        }
     print(json.dumps(result, indent=2, sort_keys=True, default=str))
     return 0
 

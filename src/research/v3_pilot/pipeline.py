@@ -18,6 +18,7 @@ from .config import (
     PREDICTION_ROOT, SETTLEMENT_LOG, SHADOW_LOG, STATE_PATH, load_scope,
 )
 from .freeze import freeze_hash, load_freeze
+from .legacy_settlement import settle_legacy_due
 from .market import corner_comparison, devig, goal_comparisons
 from .model import (
     InsufficientHistory, canonical_hash, fit_goal_calibrators,
@@ -629,6 +630,7 @@ def tick(*, dry_run: bool = False, force_discovery: bool = False) -> dict:
     out["evaluation"] = evaluate_due(provider, dry_run=dry_run)
     if not dry_run:
         out["final"] = capture_final_for_declared(provider)
+        out["legacy_settlement"] = settle_legacy_due(provider)
         out["settlement"] = settle_due(provider)
     out["audit"] = refresh_audit_map()
     out["requests_total"] = provider.requests
