@@ -1,0 +1,98 @@
+{
+  "version": "EVIDENCE_V32_2_DEVELOPMENT_1",
+  "registered_before_new_results": true,
+  "state": "DEVELOPMENT_ONLY",
+  "scope": "expanded offline TheStatsAPI evidence; separate goals, BTTS and provider-yellow-card model comparisons; corners protected",
+  "sources": [
+    {"id": "V3_PROVIDER_CACHE", "path": "/home/ubuntu/data/v3_pilot/provider_cache"},
+    {"id": "LEGACY_THESTATSAPI_CACHE", "path": "/home/ubuntu/data/thestatsapi/championship"}
+  ],
+  "source_policy": "same provider only; preserve source file/hash; exact match_id identity; conflicting finished fixture or stats payloads quarantine the match; no implicit provider blending",
+  "network": "FORBIDDEN",
+  "feature_horizon_hours": 24,
+  "completion_buffer_hours": 4,
+  "decay_half_life_days": 365,
+  "shrink_matches": 5,
+  "minimum_team_target_history": 5,
+  "minimum_feature_history": 3,
+  "walk_forward": {
+    "scheme": "expanding train, fixed calibration, non-overlapping chronological test windows; timestamp groups; 28h purge",
+    "minimum_train": 250,
+    "minimum_calibration": 60,
+    "minimum_test": 60
+  },  "folds": [
+    {"train_end": 0.40, "cal_end": 0.50, "test_end": 0.60},
+    {"train_end": 0.50, "cal_end": 0.60, "test_end": 0.70},
+    {"train_end": 0.60, "cal_end": 0.70, "test_end": 0.80},
+    {"train_end": 0.70, "cal_end": 0.80, "test_end": 0.90},
+    {"train_end": 0.80, "cal_end": 0.90, "test_end": 1.00}
+  ],
+  "base_context": [
+    "own_target_history", "opponent_target_concession",
+    "opponent_target_history", "own_target_concession",
+    "lagged_competition_elo", "venue", "competition_target_prior"
+  ],
+  "goals_primary_raw": [
+    "shots", "sot", "box", "big", "blocked", "crosses", "entries",
+    "possession", "saves", "clearances", "corners"
+  ],
+  "goals_deep_raw": [
+    "touches_box", "big_missed", "dispossessed", "fouled_final_third",
+    "ball_recoveries", "shots_off", "shots_outside", "passes",
+    "accurate_passes", "offsides"
+  ],  "goals_optional": {
+    "xg": "overview.expected_goals support-matched arm only",
+    "npxg": "excluded pending separate verified specification"
+  },
+  "cards_primary_raw": [
+    "fouls", "tackles", "interceptions", "possession", "duels_won_percentage"
+  ],
+  "cards_deep_raw": [
+    "dispossessed", "fouled_final_third", "ball_recoveries",
+    "passes", "accurate_passes"
+  ],
+  "unsupported_context": [
+    "weather", "prospective lineup", "unverified referee context",
+    "formation as mandatory input"
+  ],
+  "goals_models": [
+    "BASE_POISSON", "RICH_POISSON", "DEEP_POISSON",
+    "DEEP_HISTGB_POISSON", "DEEP_NB", "DEEP_DC"
+  ],
+  "btts_models": [
+    "JOINT_DEEP_POISSON", "DIRECT_LOGISTIC", "DIRECT_HISTGB"
+  ],
+  "cards_models": [
+    "BASE_POISSON", "RICH_POISSON", "DEEP_POISSON",
+    "DEEP_HISTGB_POISSON", "DEEP_NB"
+  ],  "fixed_hyperparameters": {
+    "linear_ridge_alpha": 1.0,
+    "logistic_C": 1.0,
+    "histgb_learning_rate": 0.05,
+    "histgb_max_iter": 150,
+    "histgb_max_leaf_nodes": 15,
+    "histgb_min_samples_leaf": 25,
+    "histgb_l2_regularization": 1.0,
+    "direct_btts_platt_ridge": 0.05,
+    "count_side_scale_ridge": 0.05,
+    "dc_rho_bounds": [-0.15, 0.15]
+  },
+  "feature_support": "exact provider path; missing != zero; period-conflicted cells excluded; no all-missing feature accepted; deep feature must be present for both sides in >=80% of joined raw-stat fixtures before outcomes are scored",
+  "calibration": "count models use two side multiplicative scales fit only on calibration segment; direct BTTS uses regularized Platt calibration fit only on calibration segment",
+  "targets": {
+    "goals": ["home>1.5", "away>1.5", "total>2.5", "total>3.5"],
+    "btts": ["BTTS"],
+    "cards": ["home_yellow>1.5", "away_yellow>1.5", "total_yellow>3.5"]
+  },  "primary_metrics": [
+    "paired_log_loss", "Brier", "calibration_intercept", "calibration_slope"
+  ],
+  "supporting_metrics": [
+    "joint_count_log_loss", "week_block_bootstrap_interval", "coverage"
+  ],
+  "uncertainty": "paired ISO-week block bootstrap; fixture rows grouped; 2000 resamples; fixed seed 3220",
+  "market_layer": "not used for fitting or model selection; historical market evidence separately audited; unavailable matched quotes => MARKET_UNTESTED",
+  "promotion": "none; all currently accessible outcomes are development data; prospective shadow evidence required",
+  "settlement": "inherit V32.1 stable regulation-score gate; append-only corrections",
+  "corners": "frozen V3 corners model byte-identical; no refit or experiment",
+  "anti_adaptation": "all arms, features, folds, thresholds and hyperparameters frozen before V32.2 result generation; failed or negative arms retained"
+}
