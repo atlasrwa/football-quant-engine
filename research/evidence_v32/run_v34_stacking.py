@@ -3,7 +3,9 @@ from __future__ import annotations
 
 import json
 import math
+import os
 from collections import defaultdict
+from concurrent.futures import ProcessPoolExecutor, as_completed
 from pathlib import Path
 
 import numpy as np
@@ -162,6 +164,78 @@ def v3_goal_rows(rows: list[dict]) -> dict[str, list[dict]]:
     return out
 
 
+def _replay_v3_goals_comp(comp: str, rows_needed: list[dict],
+                          history: list[dict]) -> tuple[dict, dict]:
+    predictions = {}
+    diagnostics = {
+        "supported": 0, "unsupported": 0,
+        "unsupported_reasons": defaultdict(int),
+        "calibrators": {}, "dc_fits": 0,
+    }
+
+    by_season = defaultdict(list)
+    for r in rows_needed:
+        by_season[str(r.get("season_id") or "")].append(r)
+
+    cal_cache = {}
+    for season, season_targets in by_season.items():
+        first_ts = min(float(r["kickoff_ts"]) for r in season_targets)
+        hist_before = [h for h in history if h["ts"] < first_ts]
+        try:
+            cal_cache[season] = fit_goal_calibrators(hist_before, season)
+            diagnostics["calibrators"][f"{comp}:{season}"] = (
+                cal_cache[season]["calibration_season_id"])
+        except Exception as exc:
+            cal_cache[season] = exc
+            diagnostics["unsupported_reasons"][
+                f"calibrator:{type(exc).__name__}"
+            ] += len(season_targets)
+
+    by_ts = defaultdict(list)
+    for r in rows_needed:
+        by_ts[float(r["kickoff_ts"])].append(r)
+
+    for ts, group in sorted(by_ts.items()):
+        supported_group = [
+            r for r in group
+            if not isinstance(cal_cache.get(str(r.get("season_id") or "")), Exception)
+        ]
+        if not supported_group:
+            diagnostics["unsupported"] += len(group)
+            continue
+        try:
+            model = fit_dc(history, ts)
+            diagnostics["dc_fits"] += 1
+        except Exception as exc:
+            diagnostics["unsupported"] += len(group)
+            diagnostics["unsupported_reasons"][
+                f"dc:{type(exc).__name__}"
+            ] += len(group)
+            continue
+
+        for r in group:
+            season = str(r.get("season_id") or "")
+            cal = cal_cache.get(season)
+            if isinstance(cal, Exception) or cal is None:
+                diagnostics["unsupported"] += 1
+                continue
+            lh, la = _dc_lambdas(model, str(r["home_id"]), str(r["away_id"]))
+            P = _dc_matrix(lh, la, float(model["rho"]))
+            actual = int(r["y"][0] + r["y"][1])
+            for line in GOAL_LINES:
+                raw = _p_total_over(P, line)
+                pgoal = _clip(apply_platt(cal["calibrators"][str(line)], raw))
+                predictions[(r["match_id"], f"total>{line}")] = {
+                    "match_id": r["match_id"], "competition_id": comp,
+                    "date": r["date"], "target": f"total>{line}",
+                    "event": int(actual > line), "p": pgoal,
+                }
+            diagnostics["supported"] += 1
+
+    diagnostics["unsupported_reasons"] = dict(diagnostics["unsupported_reasons"])
+    return predictions, diagnostics
+
+
 def replay_v3_goals(target_rows: list[dict], all_rows: list[dict]) -> tuple[dict, dict]:
     histories = v3_goal_rows(all_rows)
     targets = {r["match_id"]: r for r in target_rows}
@@ -170,64 +244,37 @@ def replay_v3_goals(target_rows: list[dict], all_rows: list[dict]) -> tuple[dict
         needed[str(r["competition_id"])].append(r)
 
     predictions = {}
-    diagnostics = {"supported": 0, "unsupported": 0, "unsupported_reasons": defaultdict(int),
-                   "calibrators": {}, "dc_fits": 0}
+    diagnostics = {
+        "supported": 0, "unsupported": 0, "unsupported_reasons": defaultdict(int),
+        "calibrators": {}, "dc_fits": 0, "workers": 0,
+    }
 
-    for comp, rows_needed in needed.items():
-        history = histories.get(comp, [])
-        by_season = defaultdict(list)
-        for r in rows_needed:
-            by_season[str(r.get("season_id") or "")].append(r)
+    jobs = [
+        (comp, rows_needed, histories.get(comp, []))
+        for comp, rows_needed in sorted(needed.items())
+    ]
+    max_workers = max(1, min(8, len(jobs), os.cpu_count() or 1))
+    diagnostics["workers"] = max_workers
 
-        cal_cache = {}
-        for season, season_targets in by_season.items():
-            first_ts = min(float(r["kickoff_ts"]) for r in season_targets)
-            hist_before = [h for h in history if h["ts"] < first_ts]
-            try:
-                cal_cache[season] = fit_goal_calibrators(hist_before, season)
-                diagnostics["calibrators"][f"{comp}:{season}"] = (
-                    cal_cache[season]["calibration_season_id"])
-            except Exception as exc:
-                cal_cache[season] = exc
-                diagnostics["unsupported_reasons"][f"calibrator:{type(exc).__name__}"] += len(season_targets)
+    with ProcessPoolExecutor(max_workers=max_workers) as pool:
+        futures = {
+            pool.submit(_replay_v3_goals_comp, comp, rows_needed, history): comp
+            for comp, rows_needed, history in jobs
+        }
+        for future in as_completed(futures):
+            pred, diag = future.result()
+            predictions.update(pred)
+            diagnostics["supported"] += diag["supported"]
+            diagnostics["unsupported"] += diag["unsupported"]
+            diagnostics["dc_fits"] += diag["dc_fits"]
+            diagnostics["calibrators"].update(diag["calibrators"])
+            for reason, n in diag["unsupported_reasons"].items():
+                diagnostics["unsupported_reasons"][reason] += n
 
-        by_ts = defaultdict(list)
-        for r in rows_needed:
-            by_ts[float(r["kickoff_ts"])].append(r)
-        for ts, group in sorted(by_ts.items()):
-            supported_group = [r for r in group if not isinstance(
-                cal_cache.get(str(r.get("season_id") or "")), Exception)]
-            if not supported_group:
-                diagnostics["unsupported"] += len(group)
-                continue
-            try:
-                model = fit_dc(history, ts)
-                diagnostics["dc_fits"] += 1
-            except Exception as exc:
-                diagnostics["unsupported"] += len(group)
-                diagnostics["unsupported_reasons"][f"dc:{type(exc).__name__}"] += len(group)
-                continue
-
-            for r in group:
-                season = str(r.get("season_id") or "")
-                cal = cal_cache.get(season)
-                if isinstance(cal, Exception) or cal is None:
-                    diagnostics["unsupported"] += 1
-                    continue
-                lh, la = _dc_lambdas(model, str(r["home_id"]), str(r["away_id"]))
-                P = _dc_matrix(lh, la, float(model["rho"]))
-                actual = int(r["y"][0] + r["y"][1])
-                for line in GOAL_LINES:
-                    raw = _p_total_over(P, line)
-                    p = _clip(apply_platt(cal["calibrators"][str(line)], raw))
-                    predictions[(r["match_id"], f"total>{line}")] = {
-                        "match_id": r["match_id"], "competition_id": comp,
-                        "date": r["date"], "target": f"total>{line}",
-                        "event": int(actual > line), "p": p,
-                    }
-                diagnostics["supported"] += 1
     diagnostics["unsupported_reasons"] = dict(diagnostics["unsupported_reasons"])
     return predictions, diagnostics
+
+
 def corner_history_rows(rows: list[dict]) -> dict[str, list[dict]]:
     out = defaultdict(list)
     for r in rows:
