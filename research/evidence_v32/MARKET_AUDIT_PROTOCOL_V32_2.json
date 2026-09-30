@@ -1,0 +1,39 @@
+{
+  "version": "MARKET_AUDIT_V32_2_1",
+  "registered_before_v322_results_opened": true,
+  "source": "/home/ubuntu/data/thestatsapi/championship/research_odds_*_bet365_*.json",
+  "bookmaker": "Bet365",
+  "provider": "THESTATSAPI_ONLY",
+  "timestamp": "UTC timestamp parsed from cache filename; no invented observation times",
+  "model_information_cutoff": "kickoff minus 24 hours",
+  "markets": {
+    "goals": ["total_goals 2.5", "total_goals 3.5"],
+    "btts": ["btts yes/no"],
+    "cards": "EXCLUDED: bookmaker total_cards semantics not proven equivalent to provider-yellow target"
+  },
+  "quote_field": "last_seen at the timestamped snapshot",
+  "two_way_no_vig": "proportional inverse-odds normalization",
+  "quote_requirements": "both outcomes present, finite decimal odds > 1, snapshot before kickoff",
+  "windows": [
+    {"id": "H24", "seconds_before_kickoff_min": 57600, "seconds_before_kickoff_max": 86400},
+    {"id": "H6", "seconds_before_kickoff_min": 10800, "seconds_before_kickoff_max": 32400},
+    {"id": "H15M", "seconds_before_kickoff_min": 300, "seconds_before_kickoff_max": 1200}
+  ],
+  "snapshot_selection": "latest eligible snapshot within each window; one quote per fixture-market-window",
+  "eligible_predictions": "only V32.2 non-overlapping walk-forward test predictions; exact match_id and target identity",
+  "model_arms": {
+    "goals": ["BASE_POISSON", "RICH_POISSON", "DEEP_POISSON", "DEEP_HISTGB_POISSON", "DEEP_NB", "DEEP_DC"],
+    "btts": ["JOINT_DEEP_POISSON", "DIRECT_LOGISTIC", "DIRECT_HISTGB"]
+  },
+  "reported_metrics": [
+    "matched N", "model log loss", "market no-vig log loss",
+    "paired log-loss difference", "model Brier", "market Brier",
+    "mean signed model-minus-market probability", "week-block uncertainty"
+  ],
+  "selection_policy": "none; this audit does not choose bets, thresholds, leagues or winning arms",
+  "ev_policy": "not a promotion criterion here; no retrospective bet selection from disagreement",
+  "closing_policy": "H15M is near-close only, not claimed as genuine closing line",
+  "market_adjusted_model": "not fitted in this audit; requires separately registered earlier-data blending and adequate quote coverage",
+  "state": "DEVELOPMENT_ONLY",
+  "promotion": "FORBIDDEN"
+}
