@@ -1,0 +1,57 @@
+{
+  "version": "QFE_V34_STACKING_DEVELOPMENT_1",
+  "registered_before_new_results": true,
+  "state": "DEVELOPMENT_ONLY",
+  "parent_commit": "256d456",
+  "network": "FORBIDDEN",
+  "purpose": "test whether complementary frozen/reference and raw-evidence models add value when combined without test-set tuning",
+  "evidence": "reuse frozen V32.2 evidence_v2 bytes only",
+  "chronology": "reuse V32.2 five expanding train/calibration/test folds with 28h purge",
+  "stacking": {
+    "transform": "convex blend in logit probability space",
+    "formula": "logit(p_stack)=(1-w)*logit(p_reference)+w*logit(p_challenger)",
+    "weight_bounds": [0.0, 1.0],
+    "fit_segment": "calibration only",
+    "objective": "binary log loss",
+    "weights": "separate fixed weight per family x line x fold",
+    "test_outcomes_used_for_weight": false,
+    "extra_intercept": false,
+    "extra_slope": false
+  },
+  "goals": {
+    "reference": "QFE_GOALS_V3_DC_CALIBRATED",
+    "challenger": "VENUE_DEEP_POISSON",
+    "lines": [2.5, 3.5],
+    "v3_replay": {
+      "scope": "all calibration/test fixtures on the V32.3 venue-supported panel where the exact V3 contract is reconstructible",
+      "history": "same competition only, strictly prior matches",
+      "prior_season_calibration": "fit only from prior seasons available before target; no future-season knowledge",
+      "min_train_matches": "inherit frozen V3",
+      "calibration": "inherit frozen V3 prior-season Platt calibration",
+      "unsupported": "fail closed and exclude symmetrically from all compared arms"
+    },
+    "decision_rule": "retain stack as future prospective challenger only if it improves paired test log loss and Brier versus both parents without materially worse calibration; interior calibration weights are supporting evidence of complementarity, not sufficient alone"
+  },
+  "corners": {
+    "reference": "QFE_CORNERS_V3_TSA_MEDIAN",
+    "challenger": "CORNERS_PRESSURE_POISSON",
+    "lines": [8.5, 9.5, 10.5],
+    "challenger_features": [
+      "shots", "blocked", "crosses", "final_third_entries", "shots_inside_box",
+      "touches_in_penalty_area", "possession", "clearances", "shots_off_target"
+    ],
+    "excluded_from_stack": [
+      "corner venue-pressure add-on", "throw_ins", "accurate_long_balls",
+      "offsides", "goal_kicks", "free_kicks"
+    ],
+    "decision_rule": "retain stack as future prospective challenger only if it improves paired test log loss and Brier versus both parents and calibration is not materially degraded"
+  },
+  "uncertainty": "paired ISO-week block bootstrap, 2000 resamples, fixed seed 3400",
+  "metrics": [
+    "paired_log_loss", "Brier", "calibration_intercept", "calibration_slope",
+    "stack_weight", "coverage"
+  ],
+  "promotion": "none from exposed development outcomes; any retained stack must be frozen prospectively",
+  "production_mutation": false,
+  "market_used_for_fit": false
+}
