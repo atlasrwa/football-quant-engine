@@ -1,0 +1,92 @@
+{
+  "version": "QFE_V33_GOALS_CORNERS_DEVELOPMENT_1",
+  "registered_before_new_results": true,
+  "state": "DEVELOPMENT_ONLY",
+  "parent_commit": "c3151ff",
+  "network": "FORBIDDEN",
+  "evidence": "reuse frozen V32.2 evidence_v2 bytes only",
+  "feature_horizon_hours": 24,
+  "completion_buffer_hours": 4,
+  "decay_half_life_days": 365,
+  "shrink_matches": 5,
+  "minimum_team_target_history": 5,
+  "minimum_feature_history": 3,
+  "walk_forward": {
+    "scheme": "reuse V32.2 five expanding train/calibration/test folds, timestamp grouped, 28h purge",
+    "minimum_train": 250,
+    "minimum_calibration": 60,
+    "minimum_test": 60
+  },
+  "goals": {
+    "scope": ["total>2.5", "total>3.5"],
+    "reference": "DEEP_POISSON",
+    "retained_challenger": "VENUE_DEEP_POISSON",
+    "retained_reason": "positive development LL/Brier direction on both total-goal targets; venue conditioning retained prospectively, not promoted",
+    "compact_chance_raw": [
+      "shots", "sot", "box", "big", "blocked", "crosses", "entries",
+      "possession", "saves", "clearances", "corners",
+      "touches_box", "big_missed", "shots_off", "shots_outside"
+    ],
+    "full_deep_only_raw": [
+      "dispossessed", "fouled_final_third", "ball_recoveries",
+      "passes", "accurate_passes", "offsides"
+    ],
+    "arms": [
+      "RICH_POISSON",
+      "CHANCE_COMPACT_POISSON",
+      "DEEP_POISSON",
+      "VENUE_CHANCE_COMPACT_POISSON",
+      "VENUE_DEEP_POISSON"
+    ],
+    "selection_rule": "a smaller arm may replace a larger exposed-development challenger only if paired LL and Brier do not worsen on both total-goal targets and calibration is not materially degraded; this remains prospective-challenger selection, never production promotion",
+    "xg": "do not add; V32.3 matched-support venue xG worsened BTTS and no new result may rewrite that finding",
+    "npxg": "excluded: repository provider contract marks per-side semantics unaudited",
+    "new_raw_field_policy": "no additional goals raw field enters the retained frontier unless provider semantics are audited and a preregistered support-matched arm improves proper scores"
+  },
+  "corners": {
+    "protected_reference": "QFE_CORNERS_V3_TSA_MEDIAN remains byte-unchanged and remains operational reference",
+    "targets": ["total>8.5", "total>9.5", "total>10.5"],
+    "base_context": [
+      "own_corner_history", "opponent_corner_concession",
+      "opponent_corner_history", "own_corner_concession",
+      "lagged_competition_elo", "venue", "competition_corner_prior"
+    ],
+    "pressure_raw": [
+      "shots", "blocked", "crosses", "entries", "box",
+      "touches_box", "possession", "clearances", "shots_off"
+    ],
+    "extended_raw": [
+      "throw_ins", "accurate_long_balls", "offsides", "goal_kicks", "free_kicks"
+    ],
+    "venue_conditioned_raw": [
+      "corners", "shots", "blocked", "crosses", "entries", "box",
+      "touches_box", "possession", "clearances", "shots_off"
+    ],
+    "arms": [
+      "CORNERS_BASE_POISSON",
+      "CORNERS_PRESSURE_POISSON",
+      "CORNERS_VENUE_PRESSURE_POISSON",
+      "CORNERS_EXTENDED_POISSON"
+    ],
+    "distribution": "independent side Poisson counts with two side calibration multipliers fit on calibration segment only; total-corner probabilities derived from the coherent joint count law",
+    "venue_rule": "target home team uses prior non-neutral home matches; target away team uses prior non-neutral away matches; venue-only profile shrinks to same-team all-venue profile",
+    "minimum_venue_history": 3,
+    "selection_rule": "retain only arms that improve paired log loss and Brier without materially degrading calibration; extended proxy fields are dropped if they fail incremental comparison",
+    "market": "not used for fitting or model selection"
+  },
+  "raw_feature_rejections_before_results": {
+    "goals_prevented": "historically semantically/coverage unsafe in repo audits",
+    "npxg": "provider contract marks side semantics unaudited",
+    "duel_percentage_fields": "not admitted until provider semantics/units are separately audited",
+    "tackles_won_percentage": "name/unit behavior is ambiguous in raw payload and not needed for goals/corners primary mechanisms",
+    "xg": "not forced after negative V32.3 support-matched result"
+  },
+  "metrics": [
+    "paired_log_loss", "Brier", "calibration_intercept",
+    "calibration_slope", "joint_count_log_loss", "coverage"
+  ],
+  "uncertainty": "paired ISO-week block bootstrap, 2000 resamples, fixed seed 3300",
+  "promotion": "none from this exposed development corpus; any retained model must be frozen prospectively before new outcomes",
+  "corners_production_mutation": false,
+  "goals_production_mutation": false
+}
