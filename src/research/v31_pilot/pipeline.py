@@ -11,6 +11,11 @@ from .model import InsufficientRichHistory, canonical_hash, fit_predict, rich_hi
 from .provider import V31Provider
 from .telegram import declaration_message, settlement_message, send
 from src.research.v3_pilot.provider import ProviderBudgetStop
+from src.research.v3_pilot.config import PROVIDER_CACHE
+from src.research.evidence_v32.settlement import (
+    COMPLETION_BUFFER_SECONDS, SettlementEvidenceError, cached_score_evidence,
+    settle_binary, stable_regulation_score,
+)
 from src.research.prospective.capture import ProspectiveTransportError
 
 FREEZE=load_freeze(); G=FREEZE['goals_btts']
@@ -144,21 +149,37 @@ def evaluate_due(provider:V31Provider):
     _save(state); return {'observations':observations,'declared':declared,'abstained':abstained,'requests':provider.requests,'telegram':_send_pending()}
 
 def settle_due(provider:V31Provider):
-    settled=_settled_ids(); done=0
+    settled=_settled_ids(); done=0; pending_stability=[]; quarantined=[]
+    now=time.time()
     for d in _declarations():
-        if d['signal_id'] in settled or float(datetime.fromisoformat(d['kickoff_utc'].replace('Z','+00:00')).timestamp())>=time.time(): continue
-        try: detail,_,ph=provider.match_detail(d['fixture_id'])
-        except ProviderBudgetStop: break
-        data=(detail or {}).get('data') or detail or {}; status=str(data.get('status') or '').lower()
-        if status not in ('finished','complete','played'): continue
-        score=data.get('score') or {}; reg=score.get('regulation') or {}; h=reg.get('home'); a=reg.get('away')
-        if h is None or a is None: continue
-        h,a=int(h),int(a); total=h+a
-        if d['market_family']=='btts': event=(h>0 and a>0); selected=(d['side']=='YES')
-        else: event=total>float(d['line']); selected=(d['side']=='OVER')
-        ev={'event_type':'V31_SETTLEMENT','signal_id':d['signal_id'],'result':'WIN' if event==selected else 'LOSS','home_goals':h,'away_goals':a,'match_detail_payload_hash':ph}
-        row=_ledger_append(ev); _append(SETTLEMENT_LOG,row); send(settlement_message(row,d)); settled.add(d['signal_id']); done+=1
-    return {'settled':done,'requests':provider.requests}
+        kickoff=float(datetime.fromisoformat(d['kickoff_utc'].replace('Z','+00:00')).timestamp())
+        if d['signal_id'] in settled or now < kickoff + COMPLETION_BUFFER_SECONDS:
+            continue
+        try:
+            provider.match_detail(d['fixture_id'])
+        except ProviderBudgetStop:
+            break
+        cache_dir=PROVIDER_CACHE/'match_detail'/str(d['fixture_id'])
+        evidence=cached_score_evidence(cache_dir,kickoff_ts=kickoff)
+        stable=stable_regulation_score(evidence)
+        if stable is None:
+            pending_stability.append(d['signal_id']); continue
+        try:
+            result,value,unit=settle_binary(
+                market_family=d['market_family'],market=d['market'],side=d['side'],
+                line=d.get('line'),home=stable.home,away=stable.away)
+        except SettlementEvidenceError as exc:
+            quarantined.append({'signal_id':d['signal_id'],'reason':str(exc)}); continue
+        support=evidence[-2:]
+        ev={'event_type':'V31_SETTLEMENT','signal_id':d['signal_id'],'result':result,
+            'settled_value':value,'settled_unit':unit,'home_goals':stable.home,
+            'away_goals':stable.away,'verification_class':'V32_STABLE_POST_BUFFER_SCORE',
+            'settlement_evidence':[{'observed_at':x.observed_at,'payload_hash':x.payload_hash,
+                                    'home':x.home,'away':x.away} for x in support]}
+        row=_ledger_append(ev); _append(SETTLEMENT_LOG,row); send(settlement_message(row,d))
+        settled.add(d['signal_id']); done+=1
+    return {'settled':done,'pending_score_stability':pending_stability,
+            'quarantined':quarantined,'requests':provider.requests}
 
 def tick(force_discovery=False):
     provider=V31Provider(); return {'freeze_sha256':freeze_hash(),'discovery':discover(provider,force=force_discovery),'evaluation':evaluate_due(provider),'settlement':settle_due(provider),'requests':provider.requests}
