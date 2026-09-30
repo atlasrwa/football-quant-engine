@@ -1,0 +1,75 @@
+{
+  "version": "EVIDENCE_V32_3_VENUE_BTTS_DEVELOPMENT_1",
+  "registered_before_new_results": true,
+  "state": "DEVELOPMENT_ONLY",
+  "parent_commit": "29f61b2",
+  "purpose": "test whether explicit historical home/away performance adds OOS information to goals and BTTS",
+  "evidence": "reuse frozen V32.2 evidence_v2 bytes only; no new provider, market or LLM calls",
+  "feature_horizon_hours": 24,
+  "completion_buffer_hours": 4,
+  "venue_conditioning": {
+    "target_home_team": "prior non-neutral matches where that team was home",
+    "target_away_team": "prior non-neutral matches where that team was away",
+    "neutral_matches": "excluded from venue-conditioned profile; retained in all-venue profile",
+    "shrinkage_anchor": "same team's point-in-time all-venue profile",
+    "shrink_matches": 5,
+    "minimum_venue_history": 3
+  },
+  "venue_features_primary": [
+    "goals_for", "goals_against",
+    "clean_sheet_rate", "failed_to_score_rate", "btts_rate",
+    "shots_for", "shots_against",
+    "sot_for", "sot_against",
+    "box_shots_for", "box_shots_against",
+    "big_chances_for", "big_chances_against"
+  ],
+  "venue_xg_optional": [
+    "xg_for", "xg_against"
+  ],
+  "feature_semantics": {
+    "clean_sheet_rate": "indicator opponent regulation goals == 0",
+    "failed_to_score_rate": "indicator own regulation goals == 0",
+    "btts_rate": "indicator own regulation goals > 0 and opponent regulation goals > 0",
+    "shots": "overview.total_shots.all",
+    "sot": "overview.shots_on_target.all",
+    "box_shots": "shots.shots_inside_box.all",
+    "big_chances": "overview.big_chances.all",
+    "xg": "overview.expected_goals.all"
+  },
+  "arms": {
+    "goals_control": "DEEP_POISSON from the identical V32.2 feature basis and fold policy",
+    "goals_candidate": "VENUE_DEEP_POISSON = DEEP_POISSON + venue-conditioned primary features",
+    "goals_xg_candidate": "VENUE_DEEP_POISSON_XG on support-matched xG cohort only",
+    "btts_control": "BTTS derived coherently from DEEP_POISSON joint goal distribution",
+    "btts_candidate": "BTTS derived coherently from VENUE_DEEP_POISSON joint goal distribution",
+    "direct_btts_secondary": "DIRECT_VENUE_LOGISTIC using the same venue-conditioned pre-match evidence"
+  },
+  "chronology": "reuse V32.2 five expanding folds with non-overlapping tests and 28h purge",
+  "calibration": {
+    "count": "side multiplicative calibration on calibration segment only",
+    "direct_btts": "regularized Platt calibration on calibration segment only"
+  },
+  "fixed_hyperparameters": {
+    "poisson_alpha": 1.0,
+    "direct_logistic_C": 1.0,
+    "platt_ridge": 0.05
+  },
+  "evaluation": {
+    "primary": ["paired_log_loss", "brier", "calibration_intercept", "calibration_slope"],
+    "uncertainty": "paired ISO-week block bootstrap; fixture rows grouped; 2000 resamples; seed 3230",
+    "targets": ["home>1.5", "away>1.5", "total>2.5", "total>3.5", "BTTS"]
+  },
+  "support_rules": [
+    "missing is never zero",
+    "venue-specific feature requires minimum three eligible historical venue matches",
+    "venue values shrink to all-venue team profile",
+    "xG never backfills from another field and is evaluated only on support-matched fixtures",
+    "current target-match statistics never enter its own pre-match feature vector",
+    "all inputs must precede the target feature horizon"
+  ],
+  "market_layer": "excluded from fitting and model selection",
+  "promotion": "none; existing outcomes are development data; prospective frozen shadow validation required",
+  "corners": "unchanged",
+  "cards": "unchanged",
+  "settlement": "inherits V32.1/V32.2 stable regulation-score gate"
+}
