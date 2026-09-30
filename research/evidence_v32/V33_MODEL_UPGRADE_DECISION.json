@@ -1,0 +1,86 @@
+{
+  "version": "V33_MODEL_UPGRADE_DECISION_1",
+  "state": "DEVELOPMENT_ONLY",
+  "production_changed": false,
+  "promotion_count": 0,
+  "goals_over_under": {
+    "status": "RETAIN_PROSPECTIVE_CHALLENGER_NOT_PROMOTED",
+    "reference": "DEEP_POISSON",
+    "retained_challenger": "VENUE_DEEP_POISSON",
+    "retained_feature_policy": "full deep raw bundle plus V32.3 home-at-home / away-away venue-conditioned goal and chance evidence",
+    "total_2_5": {
+      "deep_vs_rich_logloss_gain": 0.0009858059432631683,
+      "venue_deep_vs_venue_compact_logloss_gain": 0.001393449933651652,
+      "venue_deep_vs_venue_compact_week_interval": [0.00030023612542231436, 0.002471363900216967],
+      "venue_deep_vs_venue_compact_brier_delta": -0.0006586039844607705
+    },
+    "total_3_5": {
+      "deep_vs_rich_logloss_gain": 0.00039184167366327813,
+      "venue_deep_vs_venue_compact_logloss_gain": 0.0006624557867488129,
+      "venue_deep_vs_venue_compact_week_interval": [-0.0005257807539389889, 0.0018489437904353465],
+      "venue_deep_vs_venue_compact_brier_delta": -0.00021634429133782218
+    },
+    "rejected_or_not_retained": {
+      "CHANCE_COMPACT_POISSON": "does not preserve full-deep improvement; worsens total>3.5 and is effectively flat on total>2.5",
+      "VENUE_CHANCE_COMPACT_POISSON": "inferior to full venue-deep model on both total-goal targets",
+      "VENUE_DEEP_POISSON_XG": "matched-support xG worsens both total>2.5 and total>3.5 proper scores",
+      "NPXG": "provider side semantics unaudited",
+      "DIRECT_BTTS_MODELS": "outside O/U scope and previously rejected"
+    },
+    "market_status": "NOT_CONFIRMED_INCREMENTAL_VALUE; prior timestamped market audit remains small/inconclusive"
+  },
+  "corners_over_under": {
+    "status": "KEEP_FROZEN_V3_REFERENCE_NO_UPGRADE",
+    "protected_reference": "QFE_CORNERS_V3_TSA_MEDIAN",
+    "pressure_features": [
+      "shots", "blocked", "crosses", "final_third_entries", "shots_inside_box",
+      "touches_in_penalty_area", "possession", "clearances", "shots_off_target"
+    ],
+    "pressure_vs_base": {
+      "total>8.5_logloss_gain": 0.000696906065419001,
+      "total>9.5_logloss_gain": 0.0014524717455970928,
+      "total>10.5_logloss_gain": 0.001012658270583039,
+      "decision": "RESEARCH_SIGNAL_ONLY_CALIBRATION_GATE_FAILED"
+    },
+    "venue_pressure": {
+      "total>8.5_logloss_gain": 0.0004312057654630148,
+      "total>9.5_logloss_gain": -0.0008269867217933496,
+      "total>10.5_logloss_gain": -0.0008299674252653503,
+      "decision": "DROP"
+    },
+    "extended_proxies": {
+      "fields": ["throw_ins", "accurate_long_balls", "offsides", "goal_kicks", "free_kicks"],
+      "total>8.5_logloss_gain": -0.001132688013312948,
+      "total>9.5_logloss_gain": -0.0012799507307481998,
+      "total>10.5_logloss_gain": -0.0008678551566182028,
+      "decision": "DROP"
+    },
+    "frozen_v3_vs_venue_pressure": {
+      "total>8.5_logloss_gain": 0.000870416013004484,
+      "total>9.5_logloss_gain": 0.0010913272767246794,
+      "total>10.5_logloss_gain": -0.00003237188354681508,
+      "decision": "INCONCLUSIVE; intervals wide and calibration gate does not authorize replacement"
+    },
+    "next_research_only_hypothesis": "core pressure features may be worth testing with a separately frozen line-calibration layer; do not rescue or mutate this exposed V33 experiment"
+  },
+  "raw_stats_audit": {
+    "goals_new_fields_added": [],
+    "corners_new_fields_promoted": [],
+    "research_only_corner_pressure_bundle_retained_for_future_test": true,
+    "explicit_drops": [
+      "xg as mandatory goals feature",
+      "npxg",
+      "corner venue-pressure add-on",
+      "corner extended proxy bundle",
+      "duel percentage fields",
+      "goals_prevented"
+    ]
+  },
+  "integrity": {
+    "live_calls": 0,
+    "market_used_for_fit": false,
+    "corners_production_mutated": false,
+    "goals_production_mutated": false,
+    "exposed_results_not_rewritten": true
+  }
+}
