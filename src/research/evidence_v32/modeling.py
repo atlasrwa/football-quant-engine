@@ -1,9 +1,9 @@
 """Bounded V3.2 offline feature and count-model comparison core."""
 from __future__ import annotations
 
+import datetime as dt
 import math
 from collections import defaultdict
-from dataclasses import dataclass
 from typing import Any
 
 import numpy as np
@@ -35,9 +35,11 @@ STAT_PATHS = {
     "tackles": "defending.tackles",
     "interceptions": "defending.interceptions",
     "duels_won_percentage": "duels.duels_won_percentage",
+    "xg": "overview.expected_goals",
 }
 GOALS_RICH = ("shots","sot","box","big","blocked","crosses","entries",
               "possession","saves","clearances","corners")
+GOALS_RICH_XG = GOALS_RICH + ("xg",)
 CARDS_RICH = ("fouls","tackles","interceptions","possession","duels_won_percentage")
 
 class UnsupportedFeatures(RuntimeError):
@@ -103,10 +105,10 @@ def _venue(row: dict, side: str) -> float | None:
     if bool(neutral):
         return 0.0
     return 1.0 if side == "home" else -1.0
-def _vector(p: dict, q: dict, side: str, target: str,
-            rich_keys: tuple[str,...], elo_delta: float, rich: bool):
+def _vector(p: dict, q: dict, target: str, rich_keys: tuple[str,...],
+            elo_delta: float, venue: float | None, rich: bool):
     base = [p[f"own_{target}"], p[f"opp_{target}"],
-            q[f"own_{target}"], q[f"opp_{target}"], elo_delta,]
+            q[f"own_{target}"], q[f"opp_{target}"], elo_delta, venue]
     if not rich:
         return base
     values = list(base)
@@ -122,15 +124,31 @@ def _support(profile: dict, keys: tuple[str,...], minimum: int) -> bool:
 def _elo_expected(home: float, away: float, home_bonus: float) -> float:
     return 1.0 / (1.0 + 10 ** (-(home + home_bonus - away) / 400.0))
 
+def _apply_elo_events(ratings: dict[str,float], pending: list[dict],
+                      cutoff: float) -> None:
+    while pending and pending[0]["ts"] + COMPLETION_BUFFER_SECONDS < cutoff:
+        event = pending.pop(0)
+        home_id, away_id = event["home_id"], event["away_id"]
+        home = ratings.get(home_id, 1500.0)
+        away = ratings.get(away_id, 1500.0)
+        bonus = 50.0 if event.get("is_neutral") is False else 0.0
+        expected = _elo_expected(home, away, bonus)
+        actual = 1.0 if event["home_goals"] > event["away_goals"] else (
+            0.0 if event["home_goals"] < event["away_goals"] else 0.5)
+        delta = 20.0 * (actual - expected)
+        ratings[home_id] = home + delta
+        ratings[away_id] = away - delta
+
 def build_panel(rows: list[dict], family: str) -> list[dict]:
     if family not in {"goals", "cards"}:
         raise ValueError(f"unknown family {family}")
     target = "goals" if family == "goals" else "yellow"
     rich_keys = GOALS_RICH if family == "goals" else CARDS_RICH
-    keys = (target,) + rich_keys
+    profile_keys = (target,) + (GOALS_RICH_XG if family == "goals" else rich_keys)
     history: dict[str,list[dict]] = defaultdict(list)
     pools: dict[str,list[dict]] = defaultdict(list)
     ratings: dict[str,dict[str,float]] = defaultdict(dict)
+    elo_pending: dict[str,list[dict]] = defaultdict(list)
     panel = []
     for row in sorted(rows, key=lambda r: (r["kickoff_ts"], r["match_id"])):
         ts = float(row["kickoff_ts"])
@@ -140,8 +158,9 @@ def build_panel(rows: list[dict], family: str) -> list[dict]:
         pool = [e for e in pools[comp] if e["ts"] + COMPLETION_BUFFER_SECONDS < cutoff]
         home_hist = [e for e in history[home_id] if e["ts"] + COMPLETION_BUFFER_SECONDS < cutoff]
         away_hist = [e for e in history[away_id] if e["ts"] + COMPLETION_BUFFER_SECONDS < cutoff]
-        hp = _profile(home_hist, pool, cutoff, keys)
-        ap = _profile(away_hist, pool, cutoff, keys)
+        hp = _profile(home_hist, pool, cutoff, profile_keys)
+        ap = _profile(away_hist, pool, cutoff, profile_keys)
+        _apply_elo_events(ratings[comp], elo_pending[comp], cutoff)
         hr = ratings[comp].get(home_id, 1500.0)
         ar = ratings[comp].get(away_id, 1500.0)
         elo_delta = (hr - ar) / 400.0
@@ -151,18 +170,34 @@ def build_panel(rows: list[dict], family: str) -> list[dict]:
             ap, (target,), MIN_TEAM_TARGET_HISTORY)
         rich_support = core and _support(hp, rich_keys, MIN_FEATURE_HISTORY) and _support(
             ap, rich_keys, MIN_FEATURE_HISTORY)
+        xg_support = (
+            family == "goals" and rich_support
+            and _support(hp, ("xg",), MIN_FEATURE_HISTORY)
+            and _support(ap, ("xg",), MIN_FEATURE_HISTORY)
+        )
+        home_venue, away_venue = _venue(row, "home"), _venue(row, "away")
         panel.append({
             "match_id": row["match_id"], "competition_id": comp, "date": row["kickoff"][:10],
             "kickoff_ts": ts, "cutoff_ts": cutoff, "y": y,
             "eligible_core": core and None not in y,
             "eligible_rich": rich_support and None not in y,
-            "home": {"base": _vector(hp, ap, "home", target, rich_keys, elo_delta, False),
-                     "rich": _vector(hp, ap, "home", target, rich_keys, elo_delta, True)},
-            "away": {"base": _vector(ap, hp, "away", target, rich_keys, -elo_delta, False),
-                     "rich": _vector(ap, hp, "away", target, rich_keys, -elo_delta, True)},
+            "eligible_rich_xg": xg_support and None not in y,
+            "home": {
+                "base": _vector(hp, ap, target, rich_keys, elo_delta, home_venue, False),
+                "rich": _vector(hp, ap, target, rich_keys, elo_delta, home_venue, True),
+                "rich_xg": (_vector(hp, ap, target, GOALS_RICH_XG, elo_delta,
+                                    home_venue, True) if family == "goals" else None),
+            },
+            "away": {
+                "base": _vector(ap, hp, target, rich_keys, -elo_delta, away_venue, False),
+                "rich": _vector(ap, hp, target, rich_keys, -elo_delta, away_venue, True),
+                "rich_xg": (_vector(ap, hp, target, GOALS_RICH_XG, -elo_delta,
+                                    away_venue, True) if family == "goals" else None),
+            },
             "support": {"home_target_n": hp.get(f"own_{target}_n", 0),
                         "away_target_n": ap.get(f"own_{target}_n", 0),
-                        "rich_supported": rich_support},
+                        "rich_supported": rich_support,
+                        "xg_supported": xg_support},
         })
         for side, other, team_id in (("home","away",home_id),("away","home",away_id)):
             entry = {"match_id": row["match_id"], "ts": ts,
@@ -171,12 +206,11 @@ def build_panel(rows: list[dict], family: str) -> list[dict]:
             pools[comp].append(entry)
         gh = metrics["home"]["goals"]; ga = metrics["away"]["goals"]
         if gh is not None and ga is not None:
-            bonus = 0.0 if (row.get("context") or {}).get("is_neutral") else 50.0
-            exp_home = _elo_expected(hr, ar, bonus)
-            actual = 1.0 if gh > ga else 0.0 if gh < ga else 0.5
-            delta = 20.0 * (actual - exp_home)
-            ratings[comp][home_id] = hr + delta
-            ratings[comp][away_id] = ar - delta
+            elo_pending[comp].append({
+                "ts": ts, "home_id": home_id, "away_id": away_id,
+                "home_goals": gh, "away_goals": ga,
+                "is_neutral": (row.get("context") or {}).get("is_neutral"),
+            })
     return panel
 
 class CountRegressor:
@@ -207,7 +241,12 @@ class CountRegressor:
         return np.maximum(self.model.predict((z - self.mean) / self.std), 1e-8)
 
 def design(rows: list[dict], arm: str):
-    key = "base" if arm == "BASE_POISSON" else "rich"
+    if arm == "BASE_POISSON":
+        key = "base"
+    elif arm == "RICH_POISSON_XG":
+        key = "rich_xg"
+    else:
+        key = "rich"
     return [row[side][key] for row in rows for side in ("home","away")]
 def calibrate_scales(means: np.ndarray, outcomes: np.ndarray, ridge: float = 0.05):
     means = np.asarray(means, dtype=float)
@@ -312,11 +351,31 @@ def binary_metrics(predictions: list[dict]):
     return {"n":len(predictions),"log_loss":ll,"brier":brier,
             "calibration_diagnostic":diagnostic}
 
-def paired_gain(base: list[dict], candidate: list[dict]):
+def paired_gain(base: list[dict], candidate: list[dict], *, seed: int = 3201):
     lookup={(r["match_id"],r["target"],r["fold"]):r for r in candidate}
-    diffs=[]
+    diffs=[]; blocks=defaultdict(list)
     for row in base:
         other=lookup.get((row["match_id"],row["target"],row["fold"]))
-        if other is not None:
-            diffs.append(row["loss"]-other["loss"])
-    return {"n":len(diffs),"mean_log_loss_improvement":float(np.mean(diffs)) if diffs else None}
+        if other is None:
+            continue
+        diff=float(row["loss"]-other["loss"])
+        diffs.append(diff)
+        day=dt.date.fromisoformat(row["date"])
+        iso=day.isocalendar()
+        blocks[(iso.year,iso.week)].append(diff)
+    interval=None
+    if blocks:
+        values=list(blocks.values()); rng=np.random.default_rng(seed); samples=[]
+        for _ in range(2000):
+            chosen=rng.integers(0,len(values),len(values))
+            samples.append(float(np.mean([x for i in chosen for x in values[i]])))
+        interval=[float(x) for x in np.quantile(samples,[0.025,0.975])]
+    return {
+        "n":len(diffs),
+        "mean_log_loss_improvement":float(np.mean(diffs)) if diffs else None,
+        "descriptive_week_block_95_interval":interval,
+        "week_blocks":len(blocks),
+        "bootstrap_seed":seed,
+        "confirmatory":False,
+        "warning":"Development interval only; previously accessible outcomes and multiplicity prevent confirmatory inference.",
+    }
