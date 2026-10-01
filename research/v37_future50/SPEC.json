@@ -1,0 +1,35 @@
+{
+  "version": "QFE_V37_FUTURE50_1",
+  "status": "PROSPECTIVE_SHADOW",
+  "authorized_by_user": true,
+  "parent_commit": "962e92e",
+  "cohort": {"unit": "unique_fixture", "target": 50, "no_fixture_51": true},
+  "models": {
+    "goals": "V36_FOLD1_VENUE_DEEP_COUNT_SCALE",
+    "corners": "V36_FOLD1_HORIZON_MATCHED_V3_PLUS_PRESSURE_SHARED_LOGIT"
+  },
+  "lines": {"goals": [2.5, 3.5], "corners": [8.5, 9.5, 10.5]},
+  "football_feature_horizon_seconds": 86400,
+  "completion_buffer_seconds": 14400,
+  "training_evidence": "research/evidence_v32/out/evidence_v2/evidence.jsonl",
+  "model_refit_during_pilot": false,
+  "market": {
+    "bookmaker": "Bet365", "devig": "proportional_two_way",
+    "early_window_seconds": [57600, 115200],
+    "mid_window_seconds": [10800, 32400],
+    "final_window_seconds": [300, 1200]
+  },
+  "selection": {
+    "min_selected_probability": 0.60,
+    "min_model_minus_market_novig": 0.05,
+    "must_beat_raw_break_even": true,
+    "max_one_declaration_per_family_per_fixture": true,
+    "goals_tiebreak": "largest_model_minus_market_novig_then_lower_line"
+  },
+  "enrollment": "first EARLY market observation with at least one supported model/market comparison",
+  "evaluation": ["log_loss", "brier", "calibration", "market_no_vig", "clv", "settlement", "selection_hit_rate_secondary"],
+  "settlement": "V32.1 stable regulation score gate; corners require stable score plus provider-native total corners",
+  "telegram": {"declarations": true, "declaration_settlements": true, "all_fixture_results": false},
+  "production_champion_changed": false,
+  "no_betting_or_staking": true
+}
