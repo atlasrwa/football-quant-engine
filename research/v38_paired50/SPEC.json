@@ -1,0 +1,80 @@
+{
+  "version": "QFE_V38_PAIRED50_DISPERSION_1",
+  "status": "PROSPECTIVE_PAIRED_SHADOW",
+  "purpose": "paired future comparison of frozen V3.7 control versus uncertainty-aware V3.8 corner challenger",
+  "control": {
+    "goals": "V37_GOALS_COUNT_SCALE",
+    "corners": "V37_CORNERS_SHARED_LOGIT_STACK"
+  },
+  "challenger": {
+    "goals": "IDENTICAL_TO_V37_CONTROL",
+    "corners": "V38_NEGATIVE_BINOMIAL_SHARED_LOGIT_WITH_PARENT_DISAGREEMENT_SHRINK"
+  },
+  "corner_challenger": {
+    "pressure_weight": 0.17504026385592653,
+    "pressure_weight_refit": false,
+    "distribution": "negative_binomial_mean_dispersion",
+    "variance_parameterization": "Var(Y)=mu+alpha*mu^2",
+    "dispersion_fit": {
+      "dataset": "V36 fold-1 probability-calibration stage only",
+      "objective": "total-corner count negative log likelihood",
+      "alpha_bounds": [0.00001, 2.0],
+      "separate_alpha": ["v3_parent", "pressure_parent"]
+    },
+    "disagreement_shrink": {
+      "fixture_disagreement": "abs(log(mu_v3/mu_pressure))",
+      "base_probability": "shared logit blend of NB parent probabilities using frozen V37 pressure weight",
+      "formula": "logit(p_final_line)=logit(p_base_line)/(1+k*fixture_disagreement)",
+      "k_bounds": [0.0, 3.0],
+      "ridge": 0.02,
+      "fit_dataset": "same V36 fold-1 probability-calibration stage",
+      "objective": "pooled binary log loss over registered corner lines",
+      "coherence": "same positive shrink divisor for every line in a fixture"
+    },
+    "registered_lines": [8.5, 9.5, 10.5],
+    "competition_specific_routing": false
+  },
+  "historical_sanity_check": {
+    "allowed_after_spec_freeze": true,
+    "dataset": "V36 fold-1 untouched evaluation stage",
+    "may_change_challenger_after_results": false,
+    "purpose": "diagnostic only"
+  },
+  "paired_future_test": {
+    "target_unique_fixtures": 50,
+    "starts_after_v38_model_freeze": true,
+    "control_and_challenger_frozen_before_shared_market_call": true,
+    "same_fixture": true,
+    "same_market_snapshot": true,
+    "same_settlement": true,
+    "separate_from_existing_v37_ledger": true
+  },
+  "market": {
+    "bookmaker": "Bet365",
+    "devig": "proportional_two_way",
+    "early_window_seconds": [57600, 115200],
+    "mid_window_seconds": [10800, 32400],
+    "final_window_seconds": [300, 1200]
+  },
+  "selection": {
+    "min_selected_probability": 0.60,
+    "min_model_minus_market_novig": 0.05,
+    "must_beat_raw_break_even": true,
+    "changed_from_v37": false
+  },
+  "telegram": {
+    "format": "paired side-by-side control versus challenger",
+    "send_when": "either control or challenger qualifies",
+    "max_one_message_per_family_per_fixture": true,
+    "final_vintage": "closing benchmark only"
+  },
+  "evaluation": {
+    "primary": ["paired_log_loss", "paired_brier", "calibration"],
+    "secondary": ["market_no_vig_comparison", "closing_line_movement", "qualifying_selection_settlement"],
+    "paired_analysis": true
+  },
+  "settlement": "V32.1 stable regulation score gate; corners additionally require provider-native final corner total",
+  "production_champion_changed": false,
+  "v37_runtime_changed": false,
+  "no_betting_or_staking": true
+}
