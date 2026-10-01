@@ -23,11 +23,7 @@ from dataclasses import dataclass
 from enum import Enum
 from typing import Any, Iterable, Mapping, Optional
 
-from src.research.prospective.api_contract import (
-    OVER_UNDER_MARKET_KEYS,
-    THREE_WAY_MARKET_KEYS,
-    YES_NO_MARKET_KEYS,
-)
+from src.research.prospective.api_contract import OVER_UNDER_MARKET_KEYS
 from src.research.reconciliation.devig import DevigResult, devig
 
 
@@ -145,8 +141,8 @@ def extract_prices(
     """Extract per-selection prices from a verified ``/odds`` payload.
 
     Stores each bookmaker/market/selection/line separately. Only the over/under
-    markets are extracted by default (goals/corners/cards/shots), which is the
-    scope this research plane evaluates. The extraction is defensive: unknown
+    markets are extracted by default (goals/corners/cards), which is the
+    registered target scope for the QFE V2 reboot. The extraction is defensive: unknown
     or absent shapes are skipped, never guessed.
     """
     data = odds_payload.get("data", odds_payload)

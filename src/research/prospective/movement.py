@@ -12,9 +12,9 @@ carry no timestamp, so no historical movement series can be reconstructed).
 Two uses are kept SEPARATE (mixing them conflates a target with a feature):
 - as a research TARGET: did our model anticipate the later market?
   (see clv_eval.py)
-- as a late-forecast FEATURE: what did the market absorb between vintages?
-  (a movement value observed at a cutoff may feed the residual at a later
-  vintage, never earlier).
+- as a SECONDARY market-adjusted research feature only: what did the market
+  absorb between vintages? Market movement must never enter the independent,
+  odds-blind QFE p_model.
 """
 
 from __future__ import annotations

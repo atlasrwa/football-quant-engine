@@ -1,34 +1,21 @@
-"""Provider-agnostic observation model with point-in-time provenance.
+"""Provider-agnostic point-in-time observation primitives.
 
-An *observation* is a single (field or record) value as reported by ONE
-provider, together with enough provenance to answer:
+An observation preserves the value reported by one provider plus the timestamps
+needed to answer what was actually knowable at the forecast cutoff.
 
-    "What information was actually available when a forecast was generated?"
+Core distinctions:
+- event_time: when the underlying event occurred;
+- observed_at: when the value was actually observable;
+- retrieved_at: when QFE fetched it.
 
-This module intentionally sits ABOVE the per-provider provenance records
-(footystats.DataProvenance, thestatsapi.TheStatsAPIProvenance): those describe
-how a match was fetched/normalized; a ``ProviderObservation`` describes a
-single observed value with the timestamps needed for as-of reconstruction and
-reconciliation.
-
-Core distinctions preserved:
-- event_time      : when the underlying event happened (kickoff).
-- observed_at     : when the value was actually observable/published.
-- retrieved_at    : when we fetched it.
-- forecast_cutoff : the as-of boundary a consumer must respect. An observation
-                    is eligible for a forecast only if observed_at <= cutoff.
-
-Storage is append-only: a later observation for the same key NEVER overwrites
-an earlier one; both are retained so historical point-in-time state can be
-reconstructed. ``as_of`` queries select the latest observation whose
-observed_at <= cutoff.
+Storage is append-only. As-of reads may use only observations whose
+observed_at is at or before the cutoff; later observations never overwrite
+earlier history.
 """
 
-from __future__ import annotations
-
 from src.research.observation.model import (
-    Missing,
     MISSING,
+    Missing,
     ObservationKey,
     ProviderObservation,
 )

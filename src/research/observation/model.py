@@ -60,7 +60,7 @@ class ProviderObservation:
 
     Attributes:
         key: What is being observed (canonical entity + concept).
-        source: Provider id ("footystats" / "thestatsapi").
+        source: Provider id (for example "thestatsapi").
         provider_entity_id: The provider's own id for the entity (kept as a
             string so it is never conflated across providers).
         value: The observed value. May be a number, a string, ``None``

@@ -1,6 +1,6 @@
 """Normalization — TheStatsAPI payloads to canonical ResearchMatch.
 
-CRITICAL RULES (identical philosophy to the FootyStats normalizer):
+CRITICAL RULES:
 1. NULL != ZERO: a field absent from the payload stays None; a genuine 0 is 0.
 2. Deterministic: same payload -> same ResearchMatch -> same content hash.
 3. RAW only: no computed model features here, only source values.

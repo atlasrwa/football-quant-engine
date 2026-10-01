@@ -11,31 +11,17 @@ Implements two standard calibration methods:
 
 Both are implemented without sklearn dependency, using only numpy/scipy.
 
-Usage:
-    # Wrap any model with calibration
-    calibrated = CalibratedModel(base_model, method="isotonic")
-    calibrated.fit(train_features, train_outcomes)  # fits base + calibration
-    pred = calibrated.predict(features)  # returns calibrated probabilities
-
-The calibration step uses a held-out portion of training data (or can be
-fitted on separate calibration data) to avoid overfitting the calibration
-curve to training data.
+These calibrators are mapping primitives only. Under QFE V2 they must be fit
+on externally constructed chronological OOF prediction/outcome pairs; this
+module does not split or refit a base prediction model.
 """
 
 from __future__ import annotations
 
 import math
-from typing import Any, Optional
+from typing import Optional
 
 import numpy as np
-from scipy.optimize import minimize_scalar
-
-from src.research.probability import (
-    ProbabilityEstimate,
-    ProbabilityModel,
-    TrainingMetadata,
-)
-
 
 # ═══════════════════════════════════════════════════════════════
 # PLATT SCALING
@@ -281,172 +267,3 @@ class IsotonicCalibrator:
             unique_y = unique_y_arr.tolist()
 
         return np.array(unique_x), np.array(unique_y)
-
-
-# ═══════════════════════════════════════════════════════════════
-# CALIBRATED MODEL WRAPPER
-# ═══════════════════════════════════════════════════════════════
-
-
-class CalibratedModel(ProbabilityModel):
-    """Wrapper that applies post-hoc calibration to any ProbabilityModel.
-
-    Calibration is fitted on a held-out portion of the training data
-    (last 20% by default) to avoid overfitting the calibration curve.
-
-    Usage:
-        base_model = DixonColesModel(line=2.5)
-        calibrated = CalibratedModel(base_model, method="isotonic")
-        calibrated.fit(features, outcomes)
-        pred = calibrated.predict(features)  # calibrated probability
-
-    Methods:
-        "platt" — Platt scaling (parametric sigmoid)
-        "isotonic" — Isotonic regression (non-parametric)
-    """
-
-    def __init__(
-        self,
-        base_model: ProbabilityModel,
-        method: str = "isotonic",
-        calibration_fraction: float = 0.2,
-    ) -> None:
-        """Initialize calibrated model.
-
-        Args:
-            base_model: The underlying probability model.
-            method: "platt" or "isotonic".
-            calibration_fraction: Fraction of training data reserved for
-                calibration fitting (default 0.2 = last 20%).
-        """
-        self._base_model = base_model
-        self._method = method
-        self._calibration_fraction = calibration_fraction
-
-        if method == "platt":
-            self._calibrator = PlattScaler()
-        elif method == "isotonic":
-            self._calibrator = IsotonicCalibrator()
-        else:
-            raise ValueError(f"method must be 'platt' or 'isotonic', got '{method}'")
-
-        self._fitted = False
-
-    @property
-    def name(self) -> str:
-        return f"{self._base_model.name}_calibrated_{self._method}"
-
-    @property
-    def is_fitted(self) -> bool:
-        return self._fitted
-
-    @property
-    def training_metadata(self) -> Optional[TrainingMetadata]:
-        return self._base_model.training_metadata
-
-    @property
-    def base_model(self) -> ProbabilityModel:
-        """The underlying uncalibrated model."""
-        return self._base_model
-
-    @property
-    def calibration_method(self) -> str:
-        return self._method
-
-    def _get_parameters(self) -> dict[str, Any]:
-        return {
-            "base_model": self._base_model.name,
-            "calibration_method": self._method,
-            "calibration_fraction": self._calibration_fraction,
-        }
-
-    def fit(
-        self,
-        features: list[dict[str, float]],
-        outcomes: list[bool],
-        training_start: Optional[int] = None,
-        training_end: Optional[int] = None,
-    ) -> None:
-        """Fit base model + calibration.
-
-        Splits data:
-        - First (1 - calibration_fraction) → fit base model
-        - Last calibration_fraction → fit calibration mapping
-
-        This ensures calibration is fitted on data the base model
-        hasn't seen during training (avoids overfit).
-        """
-        n = len(features)
-        if n < 30:
-            # Too few samples — fit base model on all data, skip calibration
-            self._base_model.fit(
-                features, outcomes,
-                training_start=training_start,
-                training_end=training_end,
-            )
-            self._fitted = True
-            return
-
-        # Split: train base model on first portion, calibrate on rest
-        cal_start = int(n * (1 - self._calibration_fraction))
-        train_features = features[:cal_start]
-        train_outcomes = outcomes[:cal_start]
-        cal_features = features[cal_start:]
-        cal_outcomes = outcomes[cal_start:]
-
-        # Fit base model
-        self._base_model.fit(
-            train_features, train_outcomes,
-            training_start=training_start,
-            training_end=training_end,
-        )
-
-        # Generate raw predictions on calibration set
-        raw_probs = []
-        cal_actuals = []
-        for feat, outcome in zip(cal_features, cal_outcomes):
-            try:
-                estimate = self._base_model.predict(feat)
-                raw_probs.append(estimate.p_over)
-                cal_actuals.append(outcome)
-            except Exception:
-                continue
-
-        # Fit calibration mapping
-        if len(raw_probs) >= 10:
-            self._calibrator.fit(raw_probs, cal_actuals)
-
-        self._fitted = True
-
-    def predict(self, features: dict[str, float]) -> ProbabilityEstimate:
-        """Predict with calibrated probability."""
-        raw_estimate = self._base_model.predict(features)
-
-        if not self._calibrator.is_fitted:
-            return raw_estimate
-
-        # Calibrate p_over
-        cal_p_over = self._calibrator.transform(raw_estimate.p_over)
-        cal_p_over = max(0.01, min(0.99, cal_p_over))
-
-        return ProbabilityEstimate(
-            p_over=cal_p_over,
-            p_under=1.0 - cal_p_over,
-            model_name=self.name,
-        )
-
-    def predict_raw_and_calibrated(
-        self, features: dict[str, float]
-    ) -> tuple[float, float]:
-        """Return both raw and calibrated p_over for comparison.
-
-        Useful for calibration analysis and debugging.
-        """
-        raw_estimate = self._base_model.predict(features)
-        raw_p = raw_estimate.p_over
-
-        if not self._calibrator.is_fitted:
-            return raw_p, raw_p
-
-        cal_p = self._calibrator.transform(raw_p)
-        return raw_p, cal_p

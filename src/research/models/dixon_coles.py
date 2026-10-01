@@ -319,7 +319,7 @@ class DixonColesModel(ProbabilityModel):
     def get_expected_goals(self, features: dict[str, float]) -> tuple[float, float]:
         """Return (expected_home_goals, expected_away_goals) for a match.
 
-        Useful for downstream models (BTTS, clean sheet) that need
+        Useful for downstream scoreline-derived diagnostics that need
         the underlying Poisson rates.
         """
         if self._params is None:

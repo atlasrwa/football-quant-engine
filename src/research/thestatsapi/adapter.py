@@ -1,19 +1,19 @@
 """TheStatsAPI Data Source Adapter — implements ResearchDataSource.
 
-Mirrors ``FootyStatsDataSource``: fetch -> normalize -> provenance -> expose,
-implementing the EXISTING ``ResearchDataSource`` interface without modifying
-it and without leaking raw payloads into model code.
+Fetch -> normalize -> provenance -> expose football evidence without leaking
+raw provider payloads or bookmaker prices into model code.
 
 Two construction modes (both point-in-time safe):
 1. Cache-backed (default for research/tests): supply a
    ``TheStatsAPICorpusLoader`` plus the fixtures files and a stats glob. No
    network access.
-2. Live: supply a configured ``TheStatsAPIClient`` and season refs. The client
-   handles auth/timeouts/backoff/429 and PIT-safe identity-keyed caching.
+2. Pre-loaded deterministic payloads supplied directly by tests/research jobs.
 
-The adapter is *additive*: it does not modify FootyStatsDataSource and produces
-the same canonical ``ResearchMatch`` / ``MarketOdds`` types, so the existing
-research engine consumes it unchanged. NULL != ZERO is preserved end to end.
+Live prospective requests use ``src.research.prospective.capture.ProspectiveApiClient``
+under the verified API contract; this adapter does not own a second HTTP client.
+
+The adapter produces canonical ``ResearchMatch`` records. Odds are deliberately
+handled by the separate timestamped market layer. NULL != ZERO is preserved.
 """
 
 from __future__ import annotations
@@ -23,7 +23,7 @@ import json
 import logging
 from typing import Any, Optional
 
-from src.research.data_source import MarketOdds, ResearchDataSource, ResearchMatch
+from src.research.data_source import ResearchDataSource, ResearchMatch
 from src.research.thestatsapi.corpus_loader import TheStatsAPICorpusLoader
 from src.research.thestatsapi.normalizer import TheStatsAPINormalizer
 from src.research.thestatsapi.provenance import (
@@ -160,22 +160,6 @@ class TheStatsAPIDataSource(ResearchDataSource):
         if not self._normalizer.field_availability:
             return []
         return sorted(self._normalizer.field_availability.keys())
-
-    def get_market_odds(
-        self,
-        match_ids: Optional[list[int]] = None,
-        market: Optional[str] = None,
-    ) -> list[MarketOdds]:
-        """Return pre-match MarketOdds.
-
-        TheStatsAPI odds live in separate odds payloads, surfaced through the
-        richer ``TheStatsAPIOddsProvider`` (OddsSnapshot). This method returns
-        an empty list rather than fabricating two-sided MarketOdds from match
-        payloads, keeping NULL != ZERO honest. Use the odds provider for the
-        full point-in-time odds series.
-        """
-        self._ensure_loaded()
-        return []
 
     def compute_content_hash(self) -> str:
         self._ensure_loaded()
