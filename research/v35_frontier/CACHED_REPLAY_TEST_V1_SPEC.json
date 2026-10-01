@@ -1,0 +1,33 @@
+{
+  "version": "V35_CACHED_REPLAY_TEST_V1",
+  "registered_before_predictions": true,
+  "artifact_sha256": "7c31f2fcbbab0a92d72981bfa6b79a933d61e0a8ea1d2c47715349655a010f0a",
+  "artifact_last_training_or_calibration_kickoff_ts": 1790697600.0,
+  "selection": {
+    "kickoff": "strictly after artifact cutoff",
+    "odds": "latest cached Bet365 snapshot strictly before kickoff",
+    "supported_goal_lines": [2.5, 3.5],
+    "supported_corner_lines": [8.5, 9.5, 10.5],
+    "market_thresholds": {
+      "min_selected_probability": 0.60,
+      "min_model_minus_market_novig": 0.05,
+      "must_beat_vig_loaded_break_even": true,
+      "devig": "proportional"
+    },
+    "outcome": "cached final regulation score and provider-native finished corner stats when available"
+  },
+  "cohort_policy": {
+    "primary_finished_cohort": "provider match-list status finished with coherent regulation score",
+    "supplemental_diagnostic": "finished detail/stat payload may be shown but is not official settlement unless V32.1 stable-score gate passes",
+    "no_fixture_selection_after_model_output": true
+  },
+  "settlement": {
+    "official_gate": "V32.1: >=4h post-kickoff, >=2 coherent finished detail snapshots, >=5m stable span",
+    "diagnostic_grade": "allowed for this replay and must be labelled NON_LEDGER_DIAGNOSTIC",
+    "official_settlement_if_gate_fails": "UNSETTLED"
+  },
+  "scientific_status": "CACHE_REPLAY_DIAGNOSTIC_NOT_PROSPECTIVE_VALIDATION",
+  "network_calls": 0,
+  "ledger_mutation": false,
+  "telegram_publication": false
+}
