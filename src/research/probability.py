@@ -76,34 +76,6 @@ class ProbabilityEstimate:
 
 
 @dataclass(frozen=True, slots=True)
-class ThreeWayProbabilityEstimate:
-    """A probability estimate for a three-way outcome (HOME/DRAW/AWAY).
-
-    Attributes:
-        p_home: Probability of HOME win.
-        p_draw: Probability of DRAW.
-        p_away: Probability of AWAY win.
-        model_name: Which model produced this estimate.
-        confidence: Optional confidence measure.
-    """
-
-    p_home: float
-    p_draw: float
-    p_away: float
-    model_name: str
-    confidence: Optional[float] = None
-
-    def __post_init__(self):
-        total = self.p_home + self.p_draw + self.p_away
-        assert abs(total - 1.0) < 0.001, (
-            f"Probabilities must sum to 1.0, got {total}"
-        )
-        assert self.p_home >= 0, f"p_home must be >= 0, got {self.p_home}"
-        assert self.p_draw >= 0, f"p_draw must be >= 0, got {self.p_draw}"
-        assert self.p_away >= 0, f"p_away must be >= 0, got {self.p_away}"
-
-
-@dataclass(frozen=True, slots=True)
 class PredictionResult:
     """Wraps a probability estimate with status and metadata.
 
@@ -113,7 +85,6 @@ class PredictionResult:
 
     status: PredictionStatus
     estimate: Optional[ProbabilityEstimate] = None
-    three_way_estimate: Optional[ThreeWayProbabilityEstimate] = None
     reason: Optional[str] = None
 
     @property

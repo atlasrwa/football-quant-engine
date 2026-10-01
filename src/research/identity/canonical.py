@@ -4,7 +4,7 @@ A ``CanonicalEntity`` groups the provider-specific references that all denote
 the same real-world thing:
 
     canonical_team_id
-        ↳ footystats: 251
+        ↳ provider_a: team-251
         ↳ thestatsapi: tm_5290
 
 Mapping is by provider id only. The registry enforces that a given
@@ -47,11 +47,11 @@ class ProviderRef:
     """A provider-specific reference to an entity.
 
     Attributes:
-        provider: Provider id, e.g. "footystats" or "thestatsapi".
+        provider: Provider id, e.g. "provider_a" or "thestatsapi".
         kind: Entity kind.
         provider_id: The provider's own id, kept as a STRING to avoid conflating
-            FootyStats integers with TheStatsAPI prefixed ids (they only meet
-            through an explicit canonical mapping, never by numeric coincidence).
+            one provider's identifiers with another provider's identifiers;
+            they meet only through an explicit canonical mapping.
         display_name: Human-readable name (metadata only, NEVER used for joins).
     """
     provider: str

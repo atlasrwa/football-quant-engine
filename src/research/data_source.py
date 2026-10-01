@@ -1,16 +1,8 @@
 """Research data source abstraction.
 
-Defines the interface for providing normalized football match data
-to the research laboratory. Data-source-agnostic: the lab does not
-know whether data came from FootyStats, CSV, database, or synthetic
-generator.
-
-Every data source must provide:
-- Match records with all available raw fields
-- Market data (odds/lines)
-- Team history
-- League context
-- Available field metadata
+Defines the odds-blind interface for normalized football evidence consumed
+by the QFE V2 probability engine. Bookmaker prices are deliberately excluded
+from this object and live in the separate timestamped market layer.
 """
 
 from __future__ import annotations
@@ -27,15 +19,9 @@ from typing import Any, Optional
 class ResearchMatch:
     """Normalized research match record with all available fields.
 
-    This is the universal match representation consumed by the research
-    laboratory. It supports ALL potential football data fields.
-    Fields not available from a particular source are None.
-
-    Temporal contract:
-    - date_unix: match kickoff timestamp
-    - Fields available BEFORE kickoff: team context, odds, league position
-    - Fields available AFTER kickoff: goals, shots, corners, cards, etc.
-    - The research engine must NEVER use post-kickoff fields as pre-match features
+    Historical post-match fields may be used only to construct features for
+    later fixtures. A match's own realized statistics can never predict itself.
+    Bookmaker odds are intentionally absent from this representation.
     """
 
     # Identity
@@ -73,11 +59,6 @@ class ResearchMatch:
     red_cards_away: Optional[int] = None
     total_cards: Optional[int] = None
 
-    # Offsides (POST-MATCH ONLY)
-    offsides_home: Optional[int] = None
-    offsides_away: Optional[int] = None
-    total_offsides: Optional[int] = None
-
     # Fouls (POST-MATCH ONLY)
     fouls_home: Optional[int] = None
     fouls_away: Optional[int] = None
@@ -102,7 +83,6 @@ class ResearchMatch:
     # unpopulated / partially-populated profile dimensions from cached rich
     # stats. NULL != ZERO is preserved: a field absent from the source (or absent
     # on either side of the match) stays None; a genuine 0 is kept as 0.
-    # Sources not present in the FootyStats broad corpus stay None there.
 
     # Shots detail (shots group)
     shots_inside_box_home: Optional[int] = None
@@ -152,23 +132,6 @@ class ResearchMatch:
     # Referee
     referee: Optional[str] = None
 
-    # Odds (PRE-MATCH — available before kickoff)
-    odds_over_goals: Optional[float] = None
-    odds_under_goals: Optional[float] = None
-    line_goals: Optional[float] = None
-    odds_over_corners: Optional[float] = None
-    odds_under_corners: Optional[float] = None
-    line_corners: Optional[float] = None
-    odds_over_cards: Optional[float] = None
-    odds_under_cards: Optional[float] = None
-    line_cards: Optional[float] = None
-    odds_over_offsides: Optional[float] = None
-    odds_under_offsides: Optional[float] = None
-    line_offsides: Optional[float] = None
-    odds_home_win: Optional[float] = None
-    odds_draw: Optional[float] = None
-    odds_away_win: Optional[float] = None
-
     def to_dict(self) -> dict[str, Any]:
         """Serialize to dict (None values included for schema completeness)."""
         from dataclasses import asdict
@@ -180,23 +143,11 @@ class ResearchMatch:
         return [k for k, v in self.to_dict().items() if v is not None]
 
 
-@dataclass(frozen=True, slots=True)
-class MarketOdds:
-    """Market odds snapshot for a specific match and market."""
-
-    match_id: int
-    market: str  # e.g. "GOALS_TOTAL", "CORNERS_TOTAL"
-    line: float
-    over_odds: Optional[float] = None
-    under_odds: Optional[float] = None
-    timestamp: Optional[int] = None  # When odds were captured
-
-
 class ResearchDataSource(ABC):
     """Abstract interface for research data provision.
 
-    Implementations must provide normalized match data regardless of
-    the underlying data provider (FootyStats, CSV, synthetic, etc.).
+    Implementations provide normalized football evidence only. Market prices
+    use the separate prospective odds-capture/reconciliation layer.
     """
 
     @abstractmethod
@@ -225,23 +176,6 @@ class ResearchDataSource(ABC):
         """Return list of field names this source can provide.
 
         Used by FeatureRegistry to determine what features can be computed.
-        """
-        ...
-
-    @abstractmethod
-    def get_market_odds(
-        self,
-        match_ids: Optional[list[int]] = None,
-        market: Optional[str] = None,
-    ) -> list[MarketOdds]:
-        """Get market odds data.
-
-        Args:
-            match_ids: Filter by match IDs (None = all).
-            market: Filter by market type (None = all).
-
-        Returns:
-            List of MarketOdds records.
         """
         ...
 

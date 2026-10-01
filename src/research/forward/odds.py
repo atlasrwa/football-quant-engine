@@ -21,14 +21,9 @@ from typing import Any, Optional
 
 
 class OddsSelection(Enum):
-    """Market selection types."""
+    """Selections supported by the QFE V2 full-time O/U target layer."""
     OVER = "OVER"
     UNDER = "UNDER"
-    HOME = "HOME"
-    DRAW = "DRAW"
-    AWAY = "AWAY"
-    YES = "YES"
-    NO = "NO"
 
 
 class OddsType(Enum):

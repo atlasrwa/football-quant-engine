@@ -1,104 +1,32 @@
-# Survivor Royale - .gitignore
-
-# ===========================
 # Python
-# ===========================
 __pycache__/
 *.py[cod]
-*$py.class
 *.egg-info/
-.eggs/
-*.egg
+.pytest_cache/
 .venv/
 venv/
-env/
 
-# ===========================
-# Node.js & Dependencies
-# ===========================
-node_modules/
-npm-debug.log*
-yarn-debug.log*
-yarn-error.log*
-pnpm-debug.log*
-lerna-debug.log*
-.pnpm-store/
-
-# ===========================
-# Environment & Secrets
-# ===========================
+# Secrets and local environment
 .env
-.env.local
-.env.*.local
-.env.production
+.env.*
+!.env.example
 *.key
 *.pem
 secrets/
 .secrets/
 
-# Private keys and wallets
-*.keystore
-wallet.json
-mnemonic.txt
-
-# ===========================
-# Build Outputs
-# ===========================
-dist/
-build/
-.venv/
-.env
-.env.local
-.pytest_cache/
-data/raw/*.json
-data/features/*.json
-data/results/*.json
-!data/results/laliga_topflight_corners_preregistration_v1.json
-data/errors/*.jsonl
-!.gitkeep
-
-
-# Manual ad-hoc prediction runtime artifacts (data, not code). The ledger/logs are
-# generated on real use; the model cache is a regenerable, machine-specific pickle of
-# the deterministic fit. Code lives in scripts/manual_predict.py.
-data/forward/manual_commitments.jsonl
-data/forward/manual_reveals.jsonl
-data/forward/manual_predictions.jsonl
-data/forward/manual_settled_log.json
-data/forward/manual_model_cache_*.pkl
-# Heartbeat watchdog dedup state (runtime).
-data/discovery/pilotC_heartbeat_state.json
-# Forecast broadcast watchdog dedup state — operational state, not a record.
-# The permanent record is the append-only ledger in data/forecast_broadcast/.
-data/forecast_broadcast/heartbeat_state.json
-# Pending-delivery queue is working state; it drains. Every transition is logged
-# permanently in data/forecast_broadcast/delivery_log.jsonl instead.
-data/forecast_broadcast/pending_queue.jsonl
-
-
-# On-demand fixture research runtime artifacts (versioned source snapshots, reports,
-# fitted diagnostic caches, and separate attestation ledger).
-data/fixture_research/
-data/forward/fixture_research_commitments.jsonl
-data/forward/fixture_research_reveals.jsonl
-data/thestatsapi/championship/research_odds_*.json
-data/thestatsapi/championship/research_matches_*.json
-data/thestatsapi/championship/research_stats_*.json
-
-
-# On-demand edge-scanner runtime artifacts (data, not code). Flag log, ledgers,
-# settled log, scorecard, and the regenerable model-fit cache are produced on real use;
-# code lives in scripts/edge_scanner.py. The PRE-REGISTRATION document and its
-# attestation ledger are NOT ignored below — they are committed on purpose (§10), the
-# same way Pilot C's pre-registration is tracked.
-data/forward/scanner_flagged_lines.jsonl
-data/forward/scanner_commitments.jsonl
-data/forward/scanner_reveals.jsonl
-data/forward/scanner_settled_log.json
-data/forward/scanner_scorecard.json
-data/forward/scanner_model_cache_*.pkl
-
-
-# Runtime operational logs (research monitor, capture runner, cron jobs).
-# These are runtime artifacts, never source; keep them out of the tree.
+# Generated research/runtime state
+data/
 logs/
+artifacts/
+outputs/
+cache/
+*.lock
+*.pkl
+
+# Build/editor noise
+build/
+dist/
+.DS_Store
+.idea/
+.vscode/

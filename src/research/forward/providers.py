@@ -31,7 +31,6 @@ class FutureFixtureProvider(ABC):
     """Abstract interface for future fixture discovery.
 
     Implementations:
-    - FootyStatsFixtureProvider (real, requires API key)
     - DeterministicFixtureProvider (test, no network)
     """
 

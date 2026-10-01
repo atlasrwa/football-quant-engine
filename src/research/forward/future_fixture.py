@@ -53,7 +53,7 @@ class FutureFixture:
 
     Attributes:
         fixture_id: Deterministic content hash identity.
-        source_fixture_id: Provider-specific fixture identifier (e.g., FootyStats match ID).
+        source_fixture_id: Provider-specific fixture identifier (provider fixture ID).
         home_team_id: Stable team identifier (provider-specific numeric ID preferred).
         away_team_id: Stable team identifier.
         home_team_name: Human-readable team name (metadata, not identity).
@@ -61,7 +61,7 @@ class FutureFixture:
         competition_id: League/competition identifier.
         season_id: Season identifier.
         kickoff_timestamp: Scheduled kickoff as Unix timestamp.
-        source: Data source identifier (e.g., "footystats", "test").
+        source: Data source identifier (e.g., "thestatsapi", "test").
         retrieved_at: When this fixture data was retrieved (not used for identity).
         status: Current fixture lifecycle status.
     """

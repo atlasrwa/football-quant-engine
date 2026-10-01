@@ -1,12 +1,11 @@
 """Data provenance for TheStatsAPI records.
 
-Parallel to ``src/research/footystats/provenance.py`` but for
-source="THESTATSAPI". The provenance record preserves BOTH the numeric ids
+For source="THESTATSAPI", The provenance record preserves BOTH the numeric ids
 used on the canonical ``ResearchMatch`` and the ORIGINAL provider string ids
 (mt_/tm_/sn_) so identity can never be silently lost or conflated with
-FootyStats numeric ids.
+other providers' ids.
 
-Timestamp distinctions (unchanged philosophy from FootyStats):
+Timestamp distinctions:
 - event_timestamp: kickoff (from fixture utc_date)
 - information_timestamp: estimated time post-match stats became available
   (conservative: event + 2h). This is an ESTIMATE and is documented as such.

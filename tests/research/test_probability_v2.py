@@ -2,7 +2,6 @@
 
 Tests cover:
 - Model identity / versioning
-- Three-way probability estimates
 - Training metadata / temporal causality
 - Prediction status / missing-data handling
 - predict_safe() behavior
@@ -21,7 +20,6 @@ from src.research.probability import (
     PredictionResult,
     PredictionStatus,
     ProbabilityEstimate,
-    ThreeWayProbabilityEstimate,
     TrainingMetadata,
 )
 
@@ -80,44 +78,6 @@ class TestModelIdentity:
         identity = ModelIdentity.create("test", 1, {"x": 1})
         with pytest.raises(Exception):
             identity.model_type = "changed"
-
-
-class TestThreeWayProbabilityEstimate:
-    """Tests for three-way (1X2) probability estimates."""
-
-    def test_valid_estimate(self):
-        est = ThreeWayProbabilityEstimate(
-            p_home=0.5, p_draw=0.3, p_away=0.2, model_name="test"
-        )
-        assert est.p_home == 0.5
-        assert est.p_draw == 0.3
-        assert est.p_away == 0.2
-
-    def test_must_sum_to_one(self):
-        with pytest.raises(AssertionError):
-            ThreeWayProbabilityEstimate(
-                p_home=0.5, p_draw=0.3, p_away=0.3, model_name="test"
-            )
-
-    def test_allows_floating_point_deviation(self):
-        # Should not raise
-        est = ThreeWayProbabilityEstimate(
-            p_home=0.333334, p_draw=0.333333, p_away=0.333333, model_name="test"
-        )
-        assert est.p_home > 0
-
-    def test_negative_probability_rejected(self):
-        with pytest.raises(AssertionError):
-            ThreeWayProbabilityEstimate(
-                p_home=-0.1, p_draw=0.6, p_away=0.5, model_name="test"
-            )
-
-    def test_boundary_probabilities(self):
-        """One outcome can be very likely."""
-        est = ThreeWayProbabilityEstimate(
-            p_home=0.95, p_draw=0.03, p_away=0.02, model_name="test"
-        )
-        assert abs(est.p_home + est.p_draw + est.p_away - 1.0) < 0.001
 
 
 class TestTrainingMetadata:

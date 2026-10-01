@@ -1,8 +1,7 @@
 """Forecast vintages for prospective capture.
 
-The champion-side vintage module (``src/research/forward/vintage.py``) defines
-EARLY (~24h) and LATE (~60m) and is left untouched. Prospective capture needs
-a finer ladder of *target capture windows*:
+QFE V2 uses one prospective vintage contract. The default ladder of *target
+capture windows* is:
 
     EARLY  ~ T-24h
     MID    ~ T-6h

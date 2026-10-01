@@ -111,22 +111,14 @@ BOOKMAKER_SLUGS: Final = (
     "betfair-exchange",
 )
 
-#: Canonical over/under market keys used on ``MatchOddsMarkets`` (verified).
-#: These are the keys that carry a ``Map<line, OverUnderOdds>`` shape.
+#: Reboot target-market contract. The provider exposes additional markets, but
+#: QFE V2 captures/evaluates only full-time goals, corners and cards/bookings.
+#: Raw shots/SoT and half-level data remain eligible evidence, not target markets.
 OVER_UNDER_MARKET_KEYS: Final = (
     "total_goals",
     "match_corners",
     "total_cards",
-    "match_shots",
-    "match_shots_on_target",
-    "first_half_total_goals",
 )
-
-#: Two-way (yes/no) market keys (verified).
-YES_NO_MARKET_KEYS: Final = ("btts", "btts_first_half", "btts_second_half")
-
-#: Three-way market keys (verified).
-THREE_WAY_MARKET_KEYS: Final = ("match_odds", "first_half_result", "second_half_result")
 
 
 # ---------------------------------------------------------------------------

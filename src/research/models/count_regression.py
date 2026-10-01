@@ -1,7 +1,7 @@
 """Count regression models for corners and cards prediction.
 
 Implements Poisson and Negative-Binomial regression for count markets
-(corners, cards, offsides). Uses team-level modeling with feature
+(corners, cards). Uses team-level modeling with feature
 conditioning.
 
 Key design decisions:

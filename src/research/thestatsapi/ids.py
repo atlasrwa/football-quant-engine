@@ -13,9 +13,9 @@ between the two representations so identity is never lost and never guessed.
 Rules:
 - Parsing strips the known prefix and returns the integer suffix.
 - The ORIGINAL prefixed string is always preserved separately (on provenance
-  and on the canonical identity map) so we never conflate a FootyStats integer
-  id with a TheStatsAPI integer id: they only ever meet through an explicit
-  canonical mapping, never by numeric coincidence.
+  and on the canonical identity map) so prefixed TheStatsAPI ids are never
+  conflated with another provider's numeric ids; providers meet only through
+  an explicit canonical mapping.
 - Malformed ids raise ``ValueError`` rather than silently coercing to 0, so a
   bad id fails visibly.
 """

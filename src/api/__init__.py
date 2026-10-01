@@ -1,1 +1,0 @@
-"""Football Quant Engine API."""
