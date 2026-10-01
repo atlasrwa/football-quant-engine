@@ -1,1 +1,1 @@
-"""QFE V3.8 paired prospective challenger."""
+"""QFE V3.8 paired future-50 experiment."""
