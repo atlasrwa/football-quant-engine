@@ -2,7 +2,7 @@
 from __future__ import annotations
 import argparse,fcntl,json,os,sys
 from pathlib import Path
-ROOT=Path('/home/ubuntu/handoff_out/evidence_v323'); sys.path.insert(0,str(ROOT))
+ROOT=Path(__file__).resolve().parents[1]; sys.path.insert(0,str(ROOT))
 ENV=Path('/home/ubuntu/.config/qfe-v3/prototype.env'); LOCK=Path('/tmp/qfe_v37_future50.lock')
 def loadenv():
     if not ENV.exists(): raise SystemExit('prototype env missing')
