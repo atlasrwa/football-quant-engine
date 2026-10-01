@@ -74,6 +74,44 @@ def test_corner_market_adapter_uses_only_supported_stack_lines():
     assert cmp["model_parent_probabilities"]["pressure"] == 0.57
 
 
+def test_mixed_corner_runtime_calls_v3_parent_without_recursion(monkeypatch):
+    import src.research.v35_frontier.model as model
+
+    class DummyCount:
+        def predict(self, x):
+            return np.asarray([4.5, 4.0], dtype=float)
+
+    called = {"v3": 0}
+    monkeypatch.setattr(model, "corner_target_features", lambda rows, fixture: {
+        "home": [1.0], "away": [1.0], "cutoff_ts": 123.0,
+    })
+    monkeypatch.setattr(model, "FrozenLinearCount", lambda artifact: DummyCount())
+    monkeypatch.setattr(model, "v3_corner_rows", lambda rows, comp: [])
+
+    def fake_v3(comp_rows, fallback_rows, target):
+        called["v3"] += 1
+        return {"lambda_total": 9.0, "distribution_hash": "v3hash"}
+
+    monkeypatch.setattr(model, "predict_v3_corners", fake_v3)
+    artifact = {
+        "artifact_sha256": "artifact",
+        "training_evidence_sha256": "evidence",
+        "corners": {
+            "pressure_linear_count": {},
+            "pressure_calibration_scales": [1.0, 1.0],
+            "stack_weights": {"8.5": 0.5, "9.5": 0.5, "10.5": 0.5},
+        },
+    }
+    fixture = {
+        "match_id": "m1", "competition_id": "c1", "season_id": "s1",
+        "kickoff_ts": 1000.0, "home_id": "h", "away_id": "a",
+    }
+    out = model.predict_corners([], fixture, artifact)
+    assert called["v3"] == 1
+    assert out["version"] == "V35_CORNERS_V3_PRESSURE_STACK"
+    assert set(out["probabilities"]) == {"8.5", "9.5", "10.5"}
+
+
 def test_corner_market_adapter_abstains_when_only_unsupported_line_exists():
     dist = {
         "probabilities": {

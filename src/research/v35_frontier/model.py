@@ -14,7 +14,7 @@ import numpy as np
 from scipy.stats import poisson
 
 from src.research.v3_pilot.model import (
-    canonical_hash, poisson_over, predict_corners,
+    canonical_hash, poisson_over, predict_corners as predict_v3_corners,
 )
 
 from .features import (
@@ -164,7 +164,7 @@ def predict_corners(rows: list[dict], fixture: dict, artifact: dict) -> dict:
         "home_id": str(fixture["home_id"]),
         "away_id": str(fixture["away_id"]),
     }
-    v3 = predict_corners(comp_rows, comp_rows, target)
+    v3 = predict_v3_corners(comp_rows, comp_rows, target)
     v3_total = float(v3["lambda_total"])
 
     probabilities = {}
