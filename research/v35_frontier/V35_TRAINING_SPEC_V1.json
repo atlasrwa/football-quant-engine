@@ -1,0 +1,83 @@
+{
+  "version": "QFE_V35_FRONTIER_TRAINING_1",
+  "registered_before_model_artifact": true,
+  "state": "FORWARD_PROSPECTIVE_SHADOW_CANDIDATE",
+  "parent_decision_commit": "fda999b",
+  "network": "FORBIDDEN_DURING_TRAINING",
+  "evidence_source": "research/evidence_v32/out/evidence_v2/evidence.jsonl",
+  "point_in_time": {
+    "feature_horizon_hours": 24,
+    "completion_buffer_hours": 4,
+    "timestamp_grouped_splits": true,
+    "purge_hours_between_segments": 28,
+    "missing_is_never_zero": true
+  },
+  "goals_over_under": {
+    "selected_model": "VENUE_DEEP_POISSON",
+    "markets": [2.5, 3.5],
+    "train_fraction": 0.80,
+    "count_calibration_fraction": 0.20,
+    "features": {
+      "deep": [
+        "shots", "sot", "box", "big", "blocked", "crosses", "entries",
+        "possession", "saves", "clearances", "corners",
+        "touches_box", "big_missed", "dispossessed", "fouled_final_third",
+        "ball_recoveries", "shots_off", "shots_outside", "passes",
+        "accurate_passes", "offsides"
+      ],
+      "venue_conditioned": [
+        "goals_for_against", "clean_sheet_rate", "failed_to_score_rate",
+        "btts_rate", "shots_for_against", "sot_for_against",
+        "box_shots_for_against", "big_chances_for_against"
+      ]
+    },
+    "distribution": "independent calibrated home/away Poisson means; total probabilities from Poisson(lambda_home+lambda_away)",
+    "excluded": ["mandatory_xg", "npxg", "V3_goals_ensemble"]
+  },
+  "corners_over_under": {
+    "reference_model": "QFE_CORNERS_V3_TSA_MEDIAN",
+    "pressure_model": "CORNERS_PRESSURE_POISSON",
+    "selected_model": "V35_CORNERS_V3_PRESSURE_STACK",
+    "markets": [8.5, 9.5, 10.5],
+    "pressure_train_fraction": 0.70,
+    "pressure_count_calibration_fraction": 0.15,
+    "stack_calibration_fraction": 0.15,
+    "pressure_features": [
+      "shots", "blocked", "crosses", "entries", "box",
+      "touches_box", "possession", "clearances", "shots_off"
+    ],
+    "stack": {
+      "transform": "logit convex blend",
+      "formula": "logit(p_stack)=(1-w)*logit(p_v3)+w*logit(p_pressure)",
+      "weight_bounds": [0.0, 1.0],
+      "weight_fit": "one fixed weight per line on stack-calibration segment only",
+      "objective": "binary log loss",
+      "test_or_future_outcomes_used": false
+    },
+    "excluded": [
+      "corner venue-pressure add-on",
+      "throw_ins", "accurate_long_balls", "offsides", "goal_kicks", "free_kicks"
+    ]
+  },
+  "runtime": {
+    "provider": "THESTATSAPI_ONLY",
+    "feature_state": "historical raw stats and outcomes strictly before target cutoff",
+    "unsupported_action": "ABSTAIN",
+    "market_used_inside_probability_model": false,
+    "market_comparison_after_probability_freeze": true,
+    "telegram_activation": false,
+    "production_activation": false
+  },
+  "artifact": {
+    "portable_linear_count_parameters": true,
+    "training_evidence_sha256_required": true,
+    "training_protocol_sha256_required": true,
+    "artifact_hash_required": true,
+    "future_predictions_must_record_artifact_hash": true
+  },
+  "scientific_status": {
+    "goals": "selected development challenger; prospective validation still required",
+    "corners": "selected stacked shadow challenger; development uncertainty still crosses zero",
+    "promotion_count": 0
+  }
+}
