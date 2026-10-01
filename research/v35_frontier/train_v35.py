@@ -189,8 +189,8 @@ def main() -> None:
         "created_from_spec_version": spec["version"],
         "training_spec_sha256": sha256(SPEC),
         "training_evidence_sha256": sha256(EVIDENCE),
-        "market_used_for_fit": false,
-        "production_activation": false,
+        "market_used_for_fit": False,
+        "production_activation": False,
         "goals": {
             "version": "V35_GOALS_VENUE_DEEP_POISSON",
             "lines": list(spec["goals_over_under"]["markets"]),
