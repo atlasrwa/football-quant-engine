@@ -15,3 +15,9 @@ def test_line_selection_is_market_only():
     }}}]}}
     line,pm,_,_=select_paired_line(control,challenger,odds,'goals')
     assert line==2.5 and abs(pm-.5)<1e-12
+
+def test_paired_results_respect_each_models_original_side():
+    from src.research.v38_paired50.pipeline import _paired_results
+    d={'line':9.5,'control':{'side':'UNDER'},'challenger':{'side':'OVER'}}
+    out=_paired_results(d,11)
+    assert out=={'control':'LOSS','challenger':'WIN'}

@@ -7,7 +7,8 @@ from .config import *
 from .provider import Provider,BudgetStop
 from .runtime import predict_pair,v38_freeze
 from .market import compare_family
-from .telegram import send,paired_message
+from .telegram import send,paired_message,paired_settlement
+from src.research.v37_future50.clv import closing_clv
 
 def iso(ts=None): return datetime.fromtimestamp(time.time() if ts is None else ts,timezone.utc).isoformat()
 def atomic(p,o):
@@ -151,6 +152,27 @@ def corner_total(payload):
         a=payload['data']['overview']['corner_kicks']['all']; return int(a['home'])+int(a['away'])
     except Exception:return None
 
+def _paired_declaration_record(s,mid,fam):
+    h=s.get('messages',{}).get(f"{mid}:{fam}")
+    if not h:return None
+    return next((r for r in reversed(readj(EVENTS)) if r.get('event_hash')==h),None)
+
+def _paired_clv(s,mid,fam):
+    d=_paired_declaration_record(s,mid,fam)
+    if not d:return {'control':{'status':'UNAVAILABLE','reason':'NO_DECLARATION'},'challenger':{'status':'UNAVAILABLE','reason':'NO_DECLARATION'}}
+    out={}
+    for name in ('control','challenger'):
+        arm=d[name]
+        out[name]=closing_clv(market_path=MARKET,cache=CACHE,fixture_id=mid,family=fam,line=d['line'],side=arm['side'],entry_market_p=arm['p_market'],model_p=arm['p_model'])
+    return out
+
+def _paired_results(d,value):
+    out={}
+    for name in ('control','challenger'):
+        side=d[name]['side']; won=value>d['line'] if side=='OVER' else value<d['line']
+        out[name]='PUSH' if value==d['line'] else ('WIN' if won else 'LOSS')
+    return out
+
 def settle(p,s):
     now=time.time(); n=0
     for mid in list(s['enrolled']):
@@ -161,15 +183,21 @@ def settle(p,s):
         stable=stable_regulation_score(cached_score_evidence(CACHE/'match_detail'/mid,kickoff_ts=fx['ts']))
         if not stable:continue
         if not st.get('goals'):
-            ev=event(s,'FAMILY_SETTLED',fixture_id=mid,family='goals',value=stable.home+stable.away,home=stable.home,away=stable.away,source='V32.1_STABLE_SCORE'); st['goals']=ev['event_hash']; n+=1
+            value=stable.home+stable.away; clv=_paired_clv(s,mid,'goals'); ev=event(s,'FAMILY_SETTLED',fixture_id=mid,family='goals',value=value,home=stable.home,away=stable.away,source='V32.1_STABLE_SCORE',clv=clv); st['goals']=ev['event_hash']; n+=1; _paired_settlement_telegram(s,fx,'goals',value,clv)
         if not st.get('corners'):
             try:stats,_,_=p.stats(mid)
             except BudgetStop:break
             ct=corner_total(stats or {})
             if ct is not None:
-                ev=event(s,'FAMILY_SETTLED',fixture_id=mid,family='corners',value=ct,source='V32.1_STABLE_SCORE_PLUS_PROVIDER_STATS'); st['corners']=ev['event_hash']; n+=1
+                clv=_paired_clv(s,mid,'corners'); ev=event(s,'FAMILY_SETTLED',fixture_id=mid,family='corners',value=ct,source='V32.1_STABLE_SCORE_PLUS_PROVIDER_STATS',clv=clv); st['corners']=ev['event_hash']; n+=1; _paired_settlement_telegram(s,fx,'corners',ct,clv)
         save(s)
     return n
+
+def _paired_settlement_telegram(s,fx,fam,value,clv):
+    d=_paired_declaration_record(s,fx['match_id'],fam)
+    if not d:return
+    e={'value':value,'clv':clv,'results':_paired_results(d,value)}
+    ok,detail=send(paired_settlement(e,d)); append(TELEGRAM,{'event_type':'PAIRED_SETTLEMENT_TELEGRAM','fixture_id':fx['match_id'],'family':fam,'ok':ok,'detail':detail,'clv':clv,'results':e['results'],'observed_at_utc':iso()})
 
 def tick(force=False):
     s=state(); p=Provider(); found=discover(p,s,force); o=observe(p,s); final=capture_final(p,s); settled=settle(p,s); save(s)
