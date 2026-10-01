@@ -1,0 +1,111 @@
+{
+  "version": "QFE_V36_CALIBRATION_DECISION_1",
+  "status": "DEVELOPMENT_ONLY",
+  "production_changed": false,
+  "promotion_count": 0,
+  "selection_thresholds": {
+    "min_selected_probability": 0.60,
+    "min_model_minus_market_novig": 0.05,
+    "must_beat_vig_loaded_break_even": true,
+    "changed": false
+  },
+  "chronology_repair": {
+    "status": "FIXED_IN_V36_RECONSTRUCTION",
+    "forecast_horizon_seconds": 86400,
+    "completion_buffer_seconds": 14400,
+    "purge": "strict at every fitted-stage boundary",
+    "old_v35_cached_replay": {
+      "prospective_evidence_status": "INVALID_FOR_PROMOTION",
+      "fixtures": 12,
+      "fit_label_unavailable_before_forecast": 10,
+      "artifact_point_in_time_provenance_established": false,
+      "action": "retain immutable files as diagnostic only; do not count toward prospective validation"
+    }
+  },
+  "goals": {
+    "selected_model": "VENUE_DEEP_POISSON_COUNT_SCALE",
+    "decision": "KEEP_UNCHANGED",
+    "evaluation_fixtures": 1518,
+    "evaluation_observations": 3036,
+    "count_scale": {
+      "log_loss": 0.6329314486752808,
+      "brier": 0.22133454305444103,
+      "calibration_intercept": 0.03246608028432204,
+      "calibration_slope": 1.0534919774197717
+    },
+    "shared_sigmoid": {
+      "log_loss": 0.6325718763206543,
+      "brier": 0.22114181715254203,
+      "calibration_intercept": 0.057025617027654754,
+      "calibration_slope": 1.0981673764808664,
+      "log_loss_gain_vs_count_scale": 0.00035957235462664587,
+      "week_block_95_interval": [-0.0017074934719190028, 0.002587960399676726]
+    },
+    "count_affine": {
+      "log_loss": 0.6327049178791481,
+      "brier": 0.22115706899873816,
+      "log_loss_gain_vs_count_scale": 0.00022653079613282377,
+      "week_block_95_interval": [-0.0010916011827338456, 0.0014993132831020244]
+    },
+    "minimum_worthwhile_log_loss_improvement": 0.005,
+    "calibration_challenger_promoted": false,
+    "reason": "gains are much smaller than preregistered worthwhile threshold and uncertainty intervals cross zero"
+  },
+  "corners": {
+    "production_reference": "QFE_CORNERS_V3_TSA_MEDIAN",
+    "research_reference": "CORNERS_PRESSURE_COUNT_SCALE",
+    "decision": "NO_PROMOTION; REPLACE_INCOHERENT_V35_LINE_SPECIFIC_STACK_WITH_COHERENT_SHARED_STACK_FOR_RESEARCH_ONLY",
+    "evaluation_fixtures": 1597,
+    "evaluation_observations": 4791,
+    "common_parent_fixtures": 1564,
+    "count_scale": {
+      "log_loss": 0.6697933119670926,
+      "brier": 0.2384829345077926,
+      "calibration_intercept": -0.0008796939567058391,
+      "calibration_slope": 0.8884311510462044
+    },
+    "shared_logit_stack": {
+      "log_loss": 0.6682968934386213,
+      "brier": 0.23780798403610756,
+      "calibration_intercept": 0.02187750288233767,
+      "calibration_slope": 0.9121556850890093,
+      "log_loss_gain_vs_count_scale": 0.0015096570337753304,
+      "week_block_95_interval": [-0.00408386854395432, 0.007463532155523081],
+      "fold_shared_pressure_weights": [0.1727724083691326, 0.17504026385592653],
+      "coherent_across_lines": true
+    },
+    "pmf_mixture": {
+      "log_loss": 0.6683231024356033,
+      "brier": 0.2378201308156789,
+      "log_loss_gain_vs_count_scale": 0.0014834480367932829,
+      "week_block_95_interval": [-0.004106531239194857, 0.007451099710725292],
+      "fold_shared_pressure_weights": [0.1729077719995711, 0.1731235092549932],
+      "coherent_across_lines": true
+    },
+    "minimum_worthwhile_log_loss_improvement": 0.005,
+    "challenger_promoted": false,
+    "reason": "directionally positive but gain is below preregistered threshold and interval crosses zero"
+  },
+  "market_combination": {
+    "status": "MARKET_UNTESTED",
+    "market_index_fixtures": 310,
+    "prediction_time_matched_line_observations": {
+      "goals": 0,
+      "corners": 0
+    },
+    "closing_line_observations": {
+      "goals": 8,
+      "corners": 4
+    },
+    "market_fit_minimum_fixtures": 100,
+    "action": "do not lower fit minimum after observing coverage; require additional timestamped market capture"
+  },
+  "integrity": {
+    "offline_only": true,
+    "new_provider_calls": 0,
+    "paid_calls": 0,
+    "ledger_mutation": false,
+    "telegram_publication": false,
+    "outcome_driven_retuning": false
+  }
+}
