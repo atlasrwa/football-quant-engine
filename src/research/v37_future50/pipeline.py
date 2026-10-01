@@ -8,6 +8,7 @@ from .model import predict_fixture,freeze as model_freeze
 from .market import goals as goal_comparisons,corners as corner_comparison
 from .provider import Provider,BudgetStop
 from .telegram import send,declaration as decl_msg,settlement as set_msg
+from .clv import closing_clv
 
 def iso(ts=None): return datetime.fromtimestamp(time.time() if ts is None else ts,timezone.utc).isoformat()
 def atomic(p,o):
@@ -108,6 +109,16 @@ def corner_total(payload):
         a=payload['data']['overview']['corner_kicks']['all']; return int(a['home'])+int(a['away'])
     except Exception:return None
 
+def _declaration_record(s,mid,fam):
+    h=s.get('declarations',{}).get(f"{mid}:{fam}")
+    if not h:return None
+    return next((r for r in reversed(readj(EVENTS)) if r.get('event_hash')==h),None)
+
+def _clv_for_declaration(s,mid,fam):
+    d=_declaration_record(s,mid,fam)
+    if not d:return {'status':'UNAVAILABLE','reason':'NO_DECLARATION'}
+    return closing_clv(market_path=MARKET,cache=CACHE,fixture_id=mid,family=fam,line=d['line'],side=d['side'],entry_market_p=d['p_market'],model_p=d['p_model'])
+
 def settle(p,s):
     now=time.time(); done=0
     for mid in list(s['enrolled']):
@@ -118,22 +129,20 @@ def settle(p,s):
         stable=stable_regulation_score(cached_score_evidence(CACHE/'match_detail'/mid,kickoff_ts=fx['ts']))
         if not stable:continue
         if not st.get('goals'):
-            total=stable.home+stable.away; ev=event(s,'FAMILY_SETTLED',fixture_id=mid,family='goals',value=total,home=stable.home,away=stable.away,source='V32.1_STABLE_SCORE'); st['goals']=ev['event_hash']; done+=1; _settlement_telegram(s,fx,'goals',total)
+            total=stable.home+stable.away; clv=_clv_for_declaration(s,mid,'goals'); ev=event(s,'FAMILY_SETTLED',fixture_id=mid,family='goals',value=total,home=stable.home,away=stable.away,source='V32.1_STABLE_SCORE',clv=clv); st['goals']=ev['event_hash']; done+=1; _settlement_telegram(s,fx,'goals',total,clv)
         if not st.get('corners'):
             try: stats,_,_=p.stats(mid)
             except BudgetStop:break
             ct=corner_total(stats or {})
             if ct is not None:
-                ev=event(s,'FAMILY_SETTLED',fixture_id=mid,family='corners',value=ct,source='V32.1_STABLE_SCORE_PLUS_PROVIDER_STATS'); st['corners']=ev['event_hash']; done+=1; _settlement_telegram(s,fx,'corners',ct)
+                clv=_clv_for_declaration(s,mid,'corners'); ev=event(s,'FAMILY_SETTLED',fixture_id=mid,family='corners',value=ct,source='V32.1_STABLE_SCORE_PLUS_PROVIDER_STATS',clv=clv); st['corners']=ev['event_hash']; done+=1; _settlement_telegram(s,fx,'corners',ct,clv)
         save(s)
     return done
 
-def _settlement_telegram(s,fx,fam,value):
-    key=f"{fx['match_id']}:{fam}"; h=s['declarations'].get(key)
-    if not h:return
-    d=next((r for r in reversed(readj(EVENTS)) if r.get('event_hash')==h),None)
+def _settlement_telegram(s,fx,fam,value,clv):
+    d=_declaration_record(s,fx['match_id'],fam)
     if not d:return
-    won=value>d['line'] if d['side']=='OVER' else value<d['line']; result='PUSH' if value==d['line'] else ('WIN' if won else 'LOSS'); e={'result':result,'value':value}; ok,detail=send(set_msg(e,d)); append(TELEGRAM,{'event_type':'SETTLEMENT_TELEGRAM','fixture_id':fx['match_id'],'family':fam,'ok':ok,'detail':detail,'observed_at_utc':iso()})
+    won=value>d['line'] if d['side']=='OVER' else value<d['line']; result='PUSH' if value==d['line'] else ('WIN' if won else 'LOSS'); e={'result':result,'value':value,'clv':clv}; ok,detail=send(set_msg(e,d)); append(TELEGRAM,{'event_type':'SETTLEMENT_TELEGRAM','fixture_id':fx['match_id'],'family':fam,'ok':ok,'detail':detail,'clv':clv,'observed_at_utc':iso()})
 
 def tick(force=False):
     s=state(); p=Provider(); found=discover(p,s,force); e=evaluate(p,s); final=capture_final(p,s); settled=settle(p,s); save(s); return {'discovered':found,'enrolled':len(s['enrolled']),'remaining':TARGET_FIXTURES-len(s['enrolled']),'declarations':len(s['declarations']),'final_captures':final,'settlement_events':settled,'requests':p.requests,**e}
