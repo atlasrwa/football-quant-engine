@@ -13,6 +13,13 @@ from src.research.dataset.foundation_report import (
     write_frozen_foundation_audit,
 )
 
+from src.research.dataset.multiseason import (
+    MULTISEASON_CORPUS_VERSION,
+    MultiSeasonCorpusManifest,
+    MultiSeasonPITCorpus,
+    build_multiseason_pit_corpus,
+)
+
 from src.research.dataset.manifest import (
     PITDatasetManifest,
     verify_immutable_dataset,
@@ -29,6 +36,10 @@ from src.research.dataset.pit import (
 )
 
 __all__ = [
+    "MULTISEASON_CORPUS_VERSION",
+    "MultiSeasonCorpusManifest",
+    "MultiSeasonPITCorpus",
+    "build_multiseason_pit_corpus",
     "CachedCorpusAuditReport",
     "CachedCorpusSpec",
     "CachedSeasonDiscovery",
