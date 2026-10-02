@@ -6,12 +6,24 @@ probability quality and calibration.
 """
 
 from src.research.models.calibration import IsotonicCalibrator, PlattScaler
+from src.research.models.dynamic_count_strength import (
+    CORNERS_TARGET,
+    GOALS_TARGET,
+    DynamicCountConfig,
+    DynamicHierarchicalCountBaseline,
+    HierarchicalCountForecast,
+)
 from src.research.models.count_regression import CountRegressionModel
 from src.research.models.dixon_coles import DixonColesModel
 from src.research.models.hierarchical_count import LeagueCountModel
 from src.research.models.latent_team_state import LatentTeamStateForecaster
 
 __all__ = [
+    "CORNERS_TARGET",
+    "GOALS_TARGET",
+    "DynamicCountConfig",
+    "DynamicHierarchicalCountBaseline",
+    "HierarchicalCountForecast",
     "IsotonicCalibrator",
     "PlattScaler",
     "CountRegressionModel",
