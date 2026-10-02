@@ -1,0 +1,129 @@
+{
+  "challenger": {
+    "corners": "V38_NEGATIVE_BINOMIAL_SHARED_LOGIT_WITH_PARENT_DISAGREEMENT_SHRINK",
+    "goals": "IDENTICAL_TO_V37_CONTROL"
+  },
+  "control": {
+    "corners": "V37_CORNERS_SHARED_LOGIT_STACK",
+    "goals": "V37_GOALS_COUNT_SCALE"
+  },
+  "corner_challenger": {
+    "competition_specific_routing": false,
+    "disagreement_shrink": {
+      "base_probability": "shared logit blend of NB parent probabilities using frozen V37 pressure weight",
+      "coherence": "same positive shrink divisor for every line in a fixture",
+      "fit_dataset": "same V36 fold-1 probability-calibration stage",
+      "fixture_disagreement": "abs(log(mu_v3/mu_pressure))",
+      "formula": "logit(p_final_line)=logit(p_base_line)/(1+k*fixture_disagreement)",
+      "k_bounds": [
+        0.0,
+        3.0
+      ],
+      "objective": "pooled binary log loss over registered corner lines",
+      "ridge": 0.02
+    },
+    "dispersion_fit": {
+      "alpha_bounds": [
+        1e-05,
+        2.0
+      ],
+      "dataset": "V36 fold-1 probability-calibration stage only",
+      "objective": "total-corner count negative log likelihood",
+      "separate_alpha": [
+        "v3_parent",
+        "pressure_parent"
+      ]
+    },
+    "distribution": "negative_binomial_mean_dispersion",
+    "pressure_weight": 0.17504026385592653,
+    "pressure_weight_refit": false,
+    "registered_lines": [
+      8.5,
+      9.5,
+      10.5
+    ],
+    "variance_parameterization": "Var(Y)=mu+alpha*mu^2"
+  },
+  "evaluation": {
+    "paired_analysis": true,
+    "primary": [
+      "paired_log_loss",
+      "paired_brier",
+      "calibration"
+    ],
+    "secondary": [
+      "market_no_vig_comparison",
+      "closing_line_movement",
+      "qualifying_selection_settlement"
+    ]
+  },
+  "historical_sanity_check": {
+    "allowed_after_spec_freeze": true,
+    "dataset": "V36 fold-1 untouched evaluation stage",
+    "may_change_challenger_after_results": false,
+    "purpose": "diagnostic only"
+  },
+  "market": {
+    "bookmaker": "Bet365",
+    "devig": "proportional_two_way",
+    "early_window_seconds": [
+      57600,
+      115200
+    ],
+    "final_window_seconds": [
+      300,
+      1200
+    ],
+    "mid_window_seconds": [
+      10800,
+      32400
+    ]
+  },
+  "no_betting_or_staking": true,
+  "paired_future_test": {
+    "control_and_challenger_frozen_before_shared_market_call": true,
+    "same_fixture": true,
+    "same_market_snapshot": true,
+    "same_settlement": true,
+    "separate_from_existing_v37_ledger": true,
+    "starts_after_v38_model_freeze": true,
+    "target_unique_fixtures": 50
+  },
+  "parent_runtime": "QFE_V38_PAIRED50_DISPERSION_1",
+  "production_champion_changed": false,
+  "provenance_repair": {
+    "canonical_observation_time": "response_received_at",
+    "clean_restart": true,
+    "consume_vintage_only_after_usable_snapshot": true,
+    "entry_snapshot_binding": [
+      "odds_payload_hash",
+      "market_observation_hash",
+      "request_started_at",
+      "response_received_at",
+      "entry_over_odds",
+      "entry_under_odds"
+    ],
+    "model_logic_changed": false,
+    "same_snapshot_pairing_changed": false,
+    "scope_changed": false,
+    "selection_logic_changed": false,
+    "top_level_market_probability_oriented_to_displayed_side": true
+  },
+  "purpose": "paired future comparison of frozen V3.7 control versus uncertainty-aware V3.8 corner challenger",
+  "selection": {
+    "changed_from_v37": false,
+    "min_model_minus_market_novig": 0.05,
+    "min_selected_probability": 0.6,
+    "must_beat_raw_break_even": true
+  },
+  "settlement": "V32.1 stable regulation score gate; corners additionally require provider-native final corner total",
+  "status": "PROSPECTIVE_PAIRED_SHADOW",
+  "telegram": {
+    "final_vintage": "closing benchmark only",
+    "format": "paired side-by-side control versus challenger",
+    "max_one_message_per_family_per_fixture": true,
+    "send_when": "either control or challenger qualifies"
+  },
+  "v37_runtime_changed": false,
+  "version": "QFE_V381_PAIRED50_PROVENANCE_1"
+}
