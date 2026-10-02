@@ -100,7 +100,7 @@ def maybe_message(s,fx,num,pair,odds,vintage,market_rec):
         rawpair=_entry_pair(odds,family,line)
         if not rawpair:continue
         market_side,market_price,market_p=_anchor_fields(c,h)
-        rec={'fixture_number':num,'fixture_id':fx['match_id'],'fixture':f"{fx['home_name']} vs {fx['away_name']}",'kickoff_utc':fx['utc_date'],'family':family,'line':line,'market_over_p':pm,'market_p':market_p,'market_side':market_side,'market_price':market_price,'vintage':vintage,'pair_freeze_hash':pair['pair_freeze_hash'],'bookmaker':'Bet365','provider':'thestatsapi','odds_payload_hash':market_rec['odds_payload_hash'],'market_observation_hash':market_rec['market_observation_hash'],'market_observed_at':market_rec['observed_at'],'market_observed_at_utc':market_rec['observed_at_utc'],'market_request_started_at':market_rec['request_started_at'],'market_request_started_at_utc':market_rec['request_started_at_utc'],'entry_over_odds':float(rawpair[0]),'entry_under_odds':float(rawpair[1]),'control':{k:c[k] for k in ['side','p_model','p_market','delta','price','raw_break_even','qualifies']},'challenger':{k:h[k] for k in ['side','p_model','p_market','delta','price','raw_break_even','qualifies']}}
+        rec={'disagreement_number':len(s['messages'])+1,'fixture_number':num,'fixture_id':fx['match_id'],'fixture':f"{fx['home_name']} vs {fx['away_name']}",'kickoff_utc':fx['utc_date'],'family':family,'line':line,'market_over_p':pm,'market_p':market_p,'market_side':market_side,'market_price':market_price,'vintage':vintage,'pair_freeze_hash':pair['pair_freeze_hash'],'bookmaker':'Bet365','provider':'thestatsapi','odds_payload_hash':market_rec['odds_payload_hash'],'market_observation_hash':market_rec['market_observation_hash'],'market_observed_at':market_rec['observed_at'],'market_observed_at_utc':market_rec['observed_at_utc'],'market_request_started_at':market_rec['request_started_at'],'market_request_started_at_utc':market_rec['request_started_at_utc'],'entry_over_odds':float(rawpair[0]),'entry_under_odds':float(rawpair[1]),'control':{k:c[k] for k in ['side','p_model','p_market','delta','price','raw_break_even','qualifies']},'challenger':{k:h[k] for k in ['side','p_model','p_market','delta','price','raw_break_even','qualifies']}}
         ev=event(s,'PAIRED_DECLARATION',**rec); s['messages'][key]=ev['event_hash']
         ok,detail=send(paired_message(rec)); append(TELEGRAM,{'event_type':'PAIRED_TELEGRAM','fixture_id':fx['match_id'],'family':family,'ok':ok,'detail':detail,'observed_at_utc':iso()}); made+=1
     return made
@@ -138,6 +138,12 @@ def _paired_declaration_record(s,mid,fam):
     h=s.get('messages',{}).get(f"{mid}:{fam}")
     if not h:return None
     return next((r for r in reversed(readj(EVENTS)) if r.get('event_hash')==h),None)
+def _disagreement_number(event_hash):
+    rows=[r for r in readj(EVENTS) if r.get('event_type')=='PAIRED_DECLARATION']
+    for i,r in enumerate(rows,1):
+        if r.get('event_hash')==event_hash:return i
+    return None
+
 def capture_final(p,s):
     now=time.time(); n=0
     for mid in list(s['enrolled']):
@@ -203,6 +209,7 @@ def settle(p,s):
 def _paired_settlement_telegram(s,fx,fam,value,clv):
     d=_paired_declaration_record(s,fx['match_id'],fam)
     if not d:return
+    d=dict(d); d.setdefault('disagreement_number',_disagreement_number(d.get('event_hash')))
     e={'value':value,'clv':clv,'results':_paired_results(d,value)}
     ok,detail=send(paired_settlement(e,d));append(TELEGRAM,{'event_type':'PAIRED_SETTLEMENT_TELEGRAM','fixture_id':fx['match_id'],'family':fam,'ok':ok,'detail':detail,'clv':clv,'results':e['results'],'observed_at_utc':iso()})
 def tick(force=False):
