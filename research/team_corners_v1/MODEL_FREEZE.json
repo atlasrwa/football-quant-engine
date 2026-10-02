@@ -1,0 +1,202 @@
+{
+  "calibration": {
+    "intercept": 0.12635567677797055,
+    "slope": 1.0422755151418917,
+    "type": "monotone_platt"
+  },
+  "ensemble_weights": {
+    "decay_profile": 0.1,
+    "hierarchical_attack_defence": 0.7,
+    "ridge_pressure": 0.2
+  },
+  "experiment": "QFE Team Corners V1",
+  "feature_builder_sha256": "ec8a338f09bd8568c19cf2b8510becf6185d215eee55c17120d12e6cba75e387",
+  "freeze_sha256": "b3a4491a0f57d776f991d01d270c086031b982263fd0ec39c641899908d2bca4",
+  "historical_corner_matches": 4487,
+  "historical_source": "THESTATSAPI_ONLY",
+  "lines": [
+    2.5,
+    3.5,
+    4.5,
+    5.5,
+    6.5,
+    7.5
+  ],
+  "model_version": "TCV1_NB_3COMP_ENSEMBLE_PLATT",
+  "negative_binomial_alpha": 0.08434871877790855,
+  "notes": [
+    "All feature rows are constructed point-in-time from prior completed matches only.",
+    "Ridge lambda, ensemble weights, NB dispersion and Platt calibration use no holdout outcomes.",
+    "The prospective experiment is the decisive validation; holdout evidence does not authorize CHAMPION promotion."
+  ],
+  "pit_side_rows": 7836,
+  "ridge": {
+    "coefficients": [
+      0.5647700084878825,
+      -0.1452789897412305,
+      0.6773200938613438,
+      0.07772165673562477,
+      0.055120930403308226,
+      0.1497865320581781,
+      -0.11010731471093853,
+      0.2603878483469278,
+      0.053459647559738345,
+      0.13515105415317194,
+      0.07269392696808384,
+      -0.002153874039422346,
+      0.3469634824430378,
+      9.963916044891795e-05,
+      0.17799274042414054
+    ],
+    "feature_names": [
+      "intercept",
+      "log_structural",
+      "log_decay",
+      "structural_minus_decay",
+      "own_shots",
+      "own_sot",
+      "own_crosses",
+      "own_possession",
+      "own_final3",
+      "opp_shots_against",
+      "opp_sot_against",
+      "opp_crosses_against",
+      "opp_possession_against",
+      "opp_final3_against",
+      "is_home"
+    ],
+    "lambda": 0.1,
+    "tuning_trials": [
+      {
+        "lambda": 0.1,
+        "poisson_nll": 2.3860469412342056
+      },
+      {
+        "lambda": 1.0,
+        "poisson_nll": 2.386197612764712
+      },
+      {
+        "lambda": 5.0,
+        "poisson_nll": 2.386351635524476
+      },
+      {
+        "lambda": 20.0,
+        "poisson_nll": 2.387122399537854
+      }
+    ]
+  },
+  "selection": {
+    "line_choice_within_team_side": "largest model_minus_market_novig among qualifying quoted lines",
+    "min_model_minus_market_novig": 0.05,
+    "min_selected_probability": 0.6,
+    "must_beat_raw_break_even": true
+  },
+  "source_evidence_sha256": "2310ccff4ee11491c093894820031611254f4172d2ea9056ce8cd6808e16bd7f",
+  "spec_sha256": "160819c70229407bf8558ca2ea75acba9cf6279f417f86a8cda496cd54a5bd3b",
+  "split": {
+    "holdout_side_rows": 1514,
+    "holdout_start_ts": 1775414700.0,
+    "train_side_rows": 4776,
+    "tune_side_rows": 1546,
+    "tune_start_ts": 1764878400.0
+  },
+  "training_max_match_ts": 1790697600.0,
+  "tuning": {
+    "binary_raw": {
+      "brier": 0.18694297489992448,
+      "ece_10bin": 0.023146620814675528,
+      "log_loss": 0.5549527873712716,
+      "n": 9276
+    },
+    "ensemble_poisson_nll": 2.3234206447552768
+  },
+  "untouched_holdout": {
+    "binary_calibrated": {
+      "brier": 0.19230688574768995,
+      "ece_10bin": 0.015534387105325067,
+      "log_loss": 0.5673503313992371,
+      "n": 9084
+    },
+    "binary_raw": {
+      "brier": 0.19265648600888055,
+      "ece_10bin": 0.022057545299995186,
+      "log_loss": 0.568178936599983,
+      "n": 9084
+    },
+    "by_line_calibrated": {
+      "2.5": {
+        "brier": 0.16153851129272312,
+        "ece_10bin": 0.02558363876945511,
+        "log_loss": 0.500765385556334,
+        "n": 1514
+      },
+      "3.5": {
+        "brier": 0.22209247257091388,
+        "ece_10bin": 0.022289801022724178,
+        "log_loss": 0.6355237156658369,
+        "n": 1514
+      },
+      "4.5": {
+        "brier": 0.24018270531312622,
+        "ece_10bin": 0.020057259630239598,
+        "log_loss": 0.6731077815824593,
+        "n": 1514
+      },
+      "5.5": {
+        "brier": 0.2212988121583522,
+        "ece_10bin": 0.01536823150128432,
+        "log_loss": 0.6329518538669241,
+        "n": 1514
+      },
+      "6.5": {
+        "brier": 0.18008481845899915,
+        "ece_10bin": 0.022427031647138537,
+        "log_loss": 0.5419769944518738,
+        "n": 1514
+      },
+      "7.5": {
+        "brier": 0.12864399469202506,
+        "ece_10bin": 0.016283582721832206,
+        "log_loss": 0.41977625727199447,
+        "n": 1514
+      }
+    },
+    "by_role_calibrated": {
+      "away": {
+        "brier": 0.18655612303061622,
+        "ece_10bin": 0.021991926967930363,
+        "log_loss": 0.5532173816590696,
+        "n": 4542
+      },
+      "home": {
+        "brier": 0.19805764846476367,
+        "ece_10bin": 0.023995907040549175,
+        "log_loss": 0.5814832811394045,
+        "n": 4542
+      }
+    },
+    "count_metrics": {
+      "decay": {
+        "mae": 2.1716562746819963,
+        "poisson_nll": 2.4337925873706814,
+        "rmse": 2.757811182150454
+      },
+      "ensemble": {
+        "mae": 2.1368784708971753,
+        "poisson_nll": 2.418099834513038,
+        "rmse": 2.7298278184664264
+      },
+      "ridge_pressure": {
+        "mae": 2.1442031154022754,
+        "poisson_nll": 2.4742250872215883,
+        "rmse": 2.8071990998226117
+      },
+      "structural": {
+        "mae": 2.159913318811949,
+        "poisson_nll": 2.422189975421558,
+        "rmse": 2.736531827158739
+      }
+    }
+  },
+  "version": "QFE_TEAM_CORNERS_V1"
+}

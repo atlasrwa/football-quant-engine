@@ -1,0 +1,69 @@
+{
+  "experiment": "QFE Team Corners V1",
+  "version": "QFE_TEAM_CORNERS_V1",
+  "status": "PREREGISTERED_PROSPECTIVE_RESEARCH",
+  "purpose": "Evaluate a deterministic ensemble for per-team corner counts against executable Bet365 team-corner markets.",
+  "independence": {
+    "v371_unchanged": true,
+    "v381_unchanged": true,
+    "champion_unchanged": true,
+    "llm_probability_path": false
+  },
+  "cohort": {
+    "target_fixtures": 50,
+    "eligibility": "first valid Bet365 team_corners observation with at least one modelled quoted side/line",
+    "max_declarations_per_fixture": 2,
+    "max_declarations_per_team_side": 1
+  },
+  "market": {
+    "provider": "thestatsapi",
+    "bookmaker": "Bet365",
+    "family": "team_corners",
+    "devig": "proportional_two_way",
+    "price_field": "last_seen",
+    "vintages_seconds_to_kickoff": {
+      "EARLY": [57600, 115200],
+      "MID": [10800, 32400],
+      "FINAL": [300, 1200]
+    },
+    "primary_lines": [2.5, 3.5, 4.5, 5.5, 6.5, 7.5],
+    "line_policy": "only provider-quoted lines are evaluated",
+    "final_capture_policy": "repeat inside FINAL window; closing benchmark is latest valid response-received snapshot before kickoff"
+  },
+  "selection": {
+    "min_selected_probability": 0.60,
+    "min_model_minus_market_novig": 0.05,
+    "must_beat_raw_break_even": true,
+    "line_choice_within_team_side": "largest model_minus_market_novig among qualifying quoted lines"
+  },
+  "model": {
+    "distribution": "negative_binomial",
+    "components": [
+      "hierarchical_attack_defence_count_mean",
+      "decay_weighted_profile_count_mean",
+      "ridge_pressure_count_mean"
+    ],
+    "ensemble": "nonnegative simplex weights learned on chronological tuning data",
+    "calibration": "single monotone Platt transform learned on chronological tuning data",
+    "standard_lines_for_calibration": [2.5, 3.5, 4.5, 5.5, 6.5, 7.5],
+    "historical_source": "TheStatsAPI provider-native completed-match evidence",
+    "training_split": [0.60, 0.20, 0.20],
+    "holdout_rule": "final 20 percent chronological matches untouched by weight, dispersion, ridge-hyperparameter, and calibration selection"
+  },
+  "settlement": {
+    "source": "TheStatsAPI match detail plus match stats",
+    "completion_buffer_seconds": 14400,
+    "minimum_stable_score_snapshots": 2,
+    "minimum_stable_span_seconds": 300,
+    "team_corner_basis": "overview.corner_kicks.all",
+    "append_only": true
+  },
+  "primary_metrics": [
+    "log_loss",
+    "brier",
+    "calibration_ece",
+    "count_negative_log_likelihood",
+    "closing_line_movement",
+    "prospective_settlement_pnl"
+  ]
+}
