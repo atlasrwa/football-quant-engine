@@ -62,7 +62,7 @@ Foundation evidence files:
 
 ## 3. Layer 2 — multi-season state and conservative baseline
 
-Status: **READY FOR MERGE on `feat/qfe-v2-layer2`**
+Status: **MERGED TO `main`**
 
 ### 3.1 Canonical multi-season PIT corpus
 
@@ -126,6 +126,11 @@ baseline rather than a final distributional claim.
 
 Important: current default hyperparameters are **benchmark defaults**, not
 promoted values. They must not be tuned on future protected/prospective data.
+
+Layer 2 merge record:
+- Feature commit: `e9eafabff`
+- PR: `#30` — QFE V2 Layer 2: multi-season PIT corpus and dynamic hierarchical baseline
+- Main merge commit: `477d7594e0fa042c28bb84430a681010d22acbf8`
 
 Frozen Layer 2 development evidence:
 - Evidence bundle: `evidence/layer2/QFE_LAYER2_DEVELOPMENT_SMOKE.json`
