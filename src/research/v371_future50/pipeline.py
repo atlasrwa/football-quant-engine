@@ -90,7 +90,7 @@ def maybe_declare(s,fx,num,bundle,comps,vintage,market_rec):
         if not q: continue
         c=sorted(q,key=lambda x:(-x['model_minus_market_novig'],x['line']))[0]
         over_odds,under_odds=_pair_from_comparison(c); dist=bundle[fam]
-        d={'fixture_number':num,'fixture_id':fx['match_id'],'fixture':f"{fx['home_name']} vs {fx['away_name']}",'kickoff_utc':fx['utc_date'],'family':fam,'side':c['side'],'line':float(c['line']),'price_decimal':float(c['price_decimal']),'p_model':float(c['p_model_selected']),'p_market':float(c['p_market_novig_selected']),'delta':float(c['model_minus_market_novig']),'raw_break_even':float(c['raw_break_even_selected']),'vintage':vintage,'model_version':dist['version'],'freeze_hash':bundle['freeze_hash'],'declared_at_utc':iso(),'bookmaker':'Bet365','provider':'thestatsapi','odds_payload_hash':market_rec['odds_payload_hash'],'market_observation_hash':market_rec['market_observation_hash'],'market_observed_at':market_rec['observed_at'],'market_observed_at_utc':market_rec['observed_at_utc'],'market_request_started_at':market_rec['request_started_at'],'market_request_started_at_utc':market_rec['request_started_at_utc'],'entry_over_odds':over_odds,'entry_under_odds':under_odds}
+        d={'disagreement_number':len(s['declarations'])+1,'fixture_number':num,'fixture_id':fx['match_id'],'fixture':f"{fx['home_name']} vs {fx['away_name']}",'kickoff_utc':fx['utc_date'],'family':fam,'side':c['side'],'line':float(c['line']),'price_decimal':float(c['price_decimal']),'p_model':float(c['p_model_selected']),'p_market':float(c['p_market_novig_selected']),'delta':float(c['model_minus_market_novig']),'raw_break_even':float(c['raw_break_even_selected']),'vintage':vintage,'model_version':dist['version'],'freeze_hash':bundle['freeze_hash'],'declared_at_utc':iso(),'bookmaker':'Bet365','provider':'thestatsapi','odds_payload_hash':market_rec['odds_payload_hash'],'market_observation_hash':market_rec['market_observation_hash'],'market_observed_at':market_rec['observed_at'],'market_observed_at_utc':market_rec['observed_at_utc'],'market_request_started_at':market_rec['request_started_at'],'market_request_started_at_utc':market_rec['request_started_at_utc'],'entry_over_odds':over_odds,'entry_under_odds':under_odds}
         ev=event(s,'DECLARATION',**d); s['declarations'][key]=ev['event_hash']
         ok,detail=send(decl_msg(d)); append(TELEGRAM,{'event_type':'DECLARATION_TELEGRAM','fixture_id':fx['match_id'],'family':fam,'ok':ok,'detail':detail,'observed_at_utc':iso()}); made.append(d)
     return made
@@ -124,6 +124,12 @@ def _declaration_record(s,mid,fam):
     h=s.get('declarations',{}).get(f"{mid}:{fam}")
     if not h:return None
     return next((r for r in reversed(readj(EVENTS)) if r.get('event_hash')==h),None)
+def _disagreement_number(event_hash):
+    rows=[r for r in readj(EVENTS) if r.get('event_type')=='DECLARATION']
+    for i,r in enumerate(rows,1):
+        if r.get('event_hash')==event_hash:return i
+    return None
+
 def capture_final(p,s):
     now=time.time(); n=0
     for mid in list(s['enrolled']):
@@ -177,6 +183,7 @@ def settle(p,s):
 def _settlement_telegram(s,fx,fam,value,clv):
     d=_declaration_record(s,fx['match_id'],fam)
     if not d:return
+    d=dict(d); d.setdefault('disagreement_number',_disagreement_number(d.get('event_hash')))
     won=value>d['line'] if d['side']=='OVER' else value<d['line']; result='PUSH' if value==d['line'] else ('WIN' if won else 'LOSS')
     e={'result':result,'value':value,'clv':clv}; ok,detail=send(set_msg(e,d)); append(TELEGRAM,{'event_type':'SETTLEMENT_TELEGRAM','fixture_id':fx['match_id'],'family':fam,'ok':ok,'detail':detail,'clv':clv,'observed_at_utc':iso()})
 def tick(force=False):
