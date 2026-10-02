@@ -622,6 +622,12 @@ def settle_due(provider: V3Provider, *, settle_delay_seconds: int = 2*3600) -> d
             )
     return {"settled": len(settled_events), "pilot_status": status, "requests": provider.requests}
 
+# Settlement v1 above is retained only as historical code for auditability.
+# All reachable V3 settlement paths are redirected to the stable v2 gate.
+def settle_due(provider: V3Provider, *, settle_delay_seconds: int = 2*3600) -> dict:
+    from .settlement_v2 import safe_settle_due
+    return safe_settle_due(provider)
+
 def tick(*, dry_run: bool = False, force_discovery: bool = False) -> dict:
     DATA_ROOT.mkdir(parents=True, exist_ok=True)
     provider = V3Provider()
