@@ -1,35 +1,25 @@
-"""Prospective research plane: MARKET PRIOR + INDEPENDENT FUNDAMENTAL + INFO DELTA.
+"""Prospective evidence and market-observation plane for QFE V2.
 
-This package builds *leakage-safe* infrastructure to answer a single research
-question:
+This package captures point-in-time provider/market evidence and computes
+research diagnostics such as genuine closing prices. It does not own, select,
+or wrap a production probability model. QFE V2 model outputs enter this plane
+only through explicit future versioned forecast artifacts after the offline
+probability stack is frozen.
 
-    Does the engine contain repeatable information that improves upon the
-    market prior, and can confirmed lineup / player-state information create
-    additional predictive value?
+Design invariants:
 
-It is a research / data-plane layer. It does NOT modify the champion model
-(``src/research/models/hierarchical_market_model.py``); it only *wraps* the
-champion's output as a neutral :class:`~src.research.prospective.fundamental.FundamentalForecast`.
+- QFE V2's independent ``p_model`` remains odds-blind.
+- Provider ``last_seen`` prices are not treated as genuine closing lines; only
+  QFE's own timestamped pre-kickoff snapshots can define a genuine close.
+- Missing is distinct from zero.
+- Evidence is usable only when its observation timestamp satisfies the
+  registered forecast cutoff.
+- Absence from a lineup never implies injury or suspension without explicit
+  provider evidence.
+- This plane must not reintroduce any deprecated legacy probability path.
 
-Design pillars (enforced across every module):
-
-- The MARKET is the prior. The statistical engine is the challenger.
-- Odds honesty: ``last_seen`` is NOT a genuine closing line. A genuine research
-  close is derived only from our OWN timestamped snapshots with
-  ``observed_at < kickoff``.
-- Missing != zero != None. We reuse the ``MISSING`` sentinel from the
-  observation layer and never coerce absence into a numeric zero.
-- Point-in-time: an observation is only consultable for a forecast when
-  ``observed_at <= forecast_cutoff``.  Observations lacking ``observed_at`` are
-  never consultable for a finite cutoff (fail closed).
-- No injury fabrication: absence from a starting XI is NEVER interpreted as an
-  injury. ``availability_reason`` defaults to ``UNKNOWN`` unless the provider
-  states a reason explicitly.
-- Residual shrinks toward the MARKET (not 0.5, not climatology) when evidence
-  is weak.
-
-All network access is guarded and fails closed when no API key is configured.
-The API key is never printed, logged, committed, or serialized.
+Network access is guarded, provider-scoped and fails closed when credentials or
+verified capability are unavailable. Secrets are never serialized.
 """
 
 from __future__ import annotations

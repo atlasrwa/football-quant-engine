@@ -24,6 +24,11 @@ reconfigured, restarted, stopped or repointed:
 
 The existing cron schedule is outside this cleanup and remains unchanged.
 
+As of Foundation V1, these isolated runtimes are **not active QFE products**.
+The legacy CHAMPION product is deprecated; QFE V2 on `main` is the sole forward
+product path. The runtimes above remain isolated only to preserve/settle their
+pre-existing prospective experiments.
+
 ## Retained reboot primitives
 
 The future main tree keeps only code with a direct path to Source of Truth V2:

@@ -484,15 +484,28 @@ A model can be scientifically improved without being commercially validated.
 
 Market disagreement alone is never proof of expected value.
 
-## 26. CHAMPION and historical protection
+## 26. Single-product policy and legacy CHAMPION deprecation
 
-Existing CHAMPION, old pilot ledgers, frozen experiments, LLM research and previous model artifacts remain historical evidence.
+**QFE V2 is the sole active product and sole forward development path on `main`.**
 
-Do not rewrite, delete, relabel or retroactively repair them to fit this architecture.
+The legacy CHAMPION is **deprecated**. It is not a second production product,
+not an alternative probability path, and not a fallback implementation for new
+QFE development. New code on `main` must not import, extend, deploy, publish,
+or route predictions through legacy CHAMPION modules or interfaces.
 
-The successor engine must be developed in an isolated research namespace.
+Old CHAMPION commits, pilot ledgers, frozen experiments, LLM research and
+previous model artifacts remain immutable historical evidence. They may be
+reproduced only from their frozen Git/runtime state for audit or settlement of
+already-running prospective experiments. Do not rewrite, relabel or
+retroactively repair them to fit QFE V2.
 
-Promotion to production requires a separately documented decision after:
+Isolated V3/V3.7/V3.8 pilot worktrees are therefore **experiment runtimes, not
+active products**. Their existence does not authorize any new CHAMPION feature,
+model, publishing path or production dependency on `main`. When those frozen
+experiments finish, their code remains archival evidence only.
+
+QFE V2 promotion to live production still requires a separately documented
+decision after:
 1. clean offline evidence;
 2. protected OOS evidence;
 3. calibration acceptance;
@@ -501,11 +514,11 @@ Promotion to production requires a separately documented decision after:
 
 ## 27. Initial implementation sequence
 
-1. Freeze and archive the present state; do not modify old experiment evidence.
-2. Audit TheStatsAPI field coverage and semantics for goals, corners and bookings.
-3. Define exact target/settlement contracts.
-4. Build the point-in-time historical feature table.
-5. Implement dynamic latent team/opponent strengths with shrinkage.
+1. Preserve frozen historical experiment evidence; legacy CHAMPION remains deprecated.
+2. Foundation V1: audit TheStatsAPI field coverage and semantics. **COMPLETED.**
+3. Foundation V1: define exact provider/target/bookmaker settlement contracts. **COMPLETED.**
+4. Foundation V1: build and audit the point-in-time historical feature foundation. **COMPLETED.**
+5. Build the multi-season PIT training corpus and implement dynamic latent team/opponent strengths with shrinkage.
 6. Implement the conservative baseline.
 7. Implement target-appropriate structured count models.
 8. Implement the nonlinear tabular model.

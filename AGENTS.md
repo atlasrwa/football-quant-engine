@@ -16,9 +16,13 @@ authorized prospective phase says otherwise. Do not call provider, bookmaker,
 exchange or LLM APIs merely to make a development test pass. Cache misses and
 unsupported provider semantics must fail or abstain explicitly.
 
-Keep the existing CHAMPION unchanged. Build the successor engine in an isolated
-research namespace. Optimize probability quality first (chronological OOS log loss,
-calibration, Brier, coverage), then evaluate a separately frozen deterministic
+QFE V2 is the sole active product on `main`. The legacy CHAMPION is deprecated:
+do not import, extend, deploy, publish, or recreate it as an alternative product
+path. Frozen V3/V3.7/V3.8 worktrees are historical/prospective experiment
+runtimes only and must remain isolated from QFE V2 development.
+
+Optimize probability quality first (chronological OOS log loss, calibration,
+Brier, coverage), then evaluate a separately frozen deterministic
 market-disagreement policy against timestamp-matched no-vig market probabilities.
 
 Do not maximize disagreement magnitude, hit rate, retrospective ROI or exposed

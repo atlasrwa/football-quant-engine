@@ -16,8 +16,9 @@ Consequences enforced here:
   interpreted as injury/suspension. An explicit reason may only come from the
   dedicated injuries-suspensions endpoint.
 - Confirmed-XI derived features (continuity, formation delta) are DELTAS versus
-  the team's prior-only expected state, never the raw squad quality (the
-  champion's team random effects already absorb the level).
+  the team's prior-only expected state, never an invented absolute squad-quality
+  score. Any future model must decide their value through chronological OOS
+  evidence.
 """
 
 from __future__ import annotations

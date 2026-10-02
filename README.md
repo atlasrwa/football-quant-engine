@@ -15,6 +15,14 @@ compares it with timestamp-matched no-vig market probability.
 The operational discovery target is **credible market disagreement**.
 Disagreement magnitude is not a model-training objective.
 
+## Single active product
+
+**QFE V2 is the only active product and forward development path on `main`.**
+The legacy CHAMPION is deprecated and is not a fallback, parallel product, or
+production probability path. Historical CHAMPION commits and isolated frozen
+pilot worktrees remain available only for audit, settlement, and preservation
+of already-running prospective evidence.
+
 ## Reboot core retained on main
 
 - TheStatsAPI provider, normalization and provenance primitives.
