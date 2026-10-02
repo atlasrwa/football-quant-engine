@@ -7,7 +7,8 @@ research/evaluation/prospective_adversarial_review.md).
 
 from __future__ import annotations
 
-import subprocess
+import re
+from pathlib import Path
 
 import pytest
 
@@ -38,17 +39,23 @@ def test_home_away_not_inverted():
     assert nl.away.team_id == "tm_A" and "pl_2" in nl.away.starter_ids
 
 
-def test_champion_untouched_vs_main():
-    """Check 18: no modification to champion model files vs main."""
-    out = subprocess.run(
-        ["git", "diff", "--stat", "main", "--",
-         "src/research/models/hierarchical_market_model.py",
-         "src/research/models/side_rows.py",
-         "src/research/models/market_family.py"],
-        capture_output=True, text=True, cwd="/home/ubuntu",
+def test_legacy_champion_cannot_reenter_active_main_tree():
+    """QFE V2 is the sole active product; known legacy CHAMPION paths stay absent."""
+    repo = Path(__file__).resolve().parents[3]
+    deprecated_paths = (
+        "src/research/models/hierarchical_market_model.py",
+        "src/research/models/side_rows.py",
+        "src/research/models/market_family.py",
+        "src/research/prospective/fundamental.py",
     )
-    assert out.stdout.strip() == "", f"champion changed:\n{out.stdout}"
+    assert all(not (repo / rel).exists() for rel in deprecated_paths)
 
+    champion_word = re.compile(r"\bchampion\b", re.IGNORECASE)
+    offenders = []
+    for path in (repo / "src").rglob("*.py"):
+        if champion_word.search(path.read_text()):
+            offenders.append(path.relative_to(repo).as_posix())
+    assert offenders == [], f"deprecated CHAMPION references in active source: {offenders}"
 
 def test_no_api_key_in_capture_serialization():
     """Check 19: a serialized capture never contains an auth key."""
