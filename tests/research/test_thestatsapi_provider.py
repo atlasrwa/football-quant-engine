@@ -41,6 +41,7 @@ def _stats():
                 "overview": {
                     "corner_kicks": {"all": {"home": 6, "away": 4}},
                     "yellow_cards": {"all": {"home": 1, "away": 2}},
+                    "red_cards": {"all": {"home": 0, "away": 0}},
                 },
             }
         }

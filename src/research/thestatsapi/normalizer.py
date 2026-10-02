@@ -190,7 +190,15 @@ class TheStatsAPINormalizer:
         away_team = fixture.get("away_team") or {}
         home_name = home_team.get("name") if isinstance(home_team, dict) else None
         away_name = away_team.get("name") if isinstance(away_team, dict) else None
-        if not home_name or not away_name:
+        home_ref = str(home_team.get("id", "")) if isinstance(home_team, dict) else ""
+        away_ref = str(away_team.get("id", "")) if isinstance(away_team, dict) else ""
+        if not home_name or not away_name or not home_ref or not away_ref:
+            self._skipped_count += 1
+            return None
+        try:
+            home_team_id = ids.parse_team_id(home_ref)
+            away_team_id = ids.parse_team_id(away_ref)
+        except ids.ProviderIdError:
             self._skipped_count += 1
             return None
 
@@ -208,13 +216,19 @@ class TheStatsAPINormalizer:
             self._skipped_count += 1
             return None
 
-        comp_ref = fixture.get("competition_id") or ""
+        comp_ref = str(fixture.get("competition_id") or "")
+        season_ref = str(fixture.get("season_id") or "")
+        if not comp_ref or not season_ref:
+            self._skipped_count += 1
+            return None
         try:
-            league_id = ids.parse_competition_id(comp_ref) if comp_ref else 0
+            league_id = ids.parse_competition_id(comp_ref)
+            ids.parse_season_id(season_ref)
         except ids.ProviderIdError:
-            league_id = 0
+            self._skipped_count += 1
+            return None
 
-        season = str(fixture.get("season_id", ""))
+        season = season_ref
 
         sd = (stats or {}).get("data", {}) if isinstance(stats, dict) else {}
 
@@ -246,10 +260,24 @@ class TheStatsAPINormalizer:
             season=season,
             home_team=str(home_name),
             away_team=str(away_name),
+            source_provider="THESTATSAPI",
+            source_match_ref=match_ref,
+            competition_ref=comp_ref,
+            season_ref=season_ref,
+            home_team_ref=home_ref,
+            away_team_ref=away_ref,
+            home_team_id=home_team_id,
+            away_team_id=away_team_id,
             # Results
             home_goals=home_goals,
             away_goals=away_goals,
             total_goals=home_goals + away_goals,
+            ht_home_goals=_safe_int(score.get("ht_home")),
+            ht_away_goals=_safe_int(score.get("ht_away")),
+            extra_time_home_goals=_safe_int(score.get("et_home")),
+            extra_time_away_goals=_safe_int(score.get("et_away")),
+            penalties_home=_safe_int(score.get("pens_home")),
+            penalties_away=_safe_int(score.get("pens_away")),
             # Shots
             shots_home=_safe_int(ov("total_shots", "home")),
             shots_away=_safe_int(ov("total_shots", "away")),
@@ -342,25 +370,20 @@ class TheStatsAPINormalizer:
         red_home: Optional[int],
         red_away: Optional[int],
     ) -> Optional[int]:
-        """Compute total cards, or None if the total cannot be trusted.
+        """Sum explicitly observed yellow+red counts, otherwise return None.
 
-        NULL != ZERO, and a total must not be fabricated from partial data.
-        We require BOTH sides' yellow cards to be present (mirroring
-        ``total_corners``): a total built from only one team's cards would be a
-        misleading aggregate, not a genuine match total. Red cards contribute
-        only when present -- their absence (TheStatsAPI often reports red_cards
-        as null) does not void the total and is never invented as a value.
+        The provider contract distinguishes a missing stat row (null) from a
+        genuine zero ({home: 0, away: 0}). Therefore a missing red-card row
+        cannot be silently interpreted as no red cards. All four side/type
+        components must be observed before a combined raw card total exists.
 
-        Returns None when either yellow side is missing.
+        This raw total is still NOT a sportsbook bookings target; bookmaker
+        card weighting and second-yellow settlement remain a separate contract.
         """
-        if yellow_home is None or yellow_away is None:
+        values = (yellow_home, yellow_away, red_home, red_away)
+        if any(value is None for value in values):
             return None
-        total = yellow_home + yellow_away
-        if red_home is not None:
-            total += red_home
-        if red_away is not None:
-            total += red_away
-        return total
+        return sum(int(value) for value in values)
 
     def _track_field_availability(self, match: ResearchMatch) -> None:
         for key, val in match.to_dict().items():

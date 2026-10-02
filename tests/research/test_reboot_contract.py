@@ -4,7 +4,10 @@ from dataclasses import fields
 
 from src.research.data_source import ResearchMatch
 from src.research.forward.odds import OddsSelection
-from src.research.prospective.api_contract import OVER_UNDER_MARKET_KEYS
+from src.research.prospective.api_contract import (
+    OVER_UNDER_MARKET_KEYS,
+    TEAM_OVER_UNDER_MARKET_KEYS,
+)
 from src.research.prospective.vintages import (
     ProspectiveVintage,
     compute_cutoff,
@@ -52,4 +55,11 @@ def test_early_vintage_cannot_consult_confirmed_lineup() -> None:
         concept="confirmed_lineup",
         observed_at=early.cutoff_ts - 1,
         cutoff=early,
+    )
+
+
+def test_verified_team_market_contract_is_explicit() -> None:
+    assert TEAM_OVER_UNDER_MARKET_KEYS == (
+        "team_total_goals",
+        "team_corners",
     )
