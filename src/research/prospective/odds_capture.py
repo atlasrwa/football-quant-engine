@@ -23,7 +23,10 @@ from dataclasses import dataclass
 from enum import Enum
 from typing import Any, Iterable, Mapping, Optional
 
-from src.research.prospective.api_contract import OVER_UNDER_MARKET_KEYS
+from src.research.prospective.api_contract import (
+    OVER_UNDER_MARKET_KEYS,
+    TEAM_OVER_UNDER_MARKET_KEYS,
+)
 from src.research.reconciliation.devig import DevigResult, devig
 
 
@@ -137,13 +140,15 @@ def extract_prices(
     semantics: OddsSemantics = OddsSemantics.API_LAST_SEEN,
     observed_at: Optional[float] = None,
     markets: Iterable[str] = OVER_UNDER_MARKET_KEYS,
+    team_markets: Iterable[str] = TEAM_OVER_UNDER_MARKET_KEYS,
 ) -> list[CapturedPrice]:
     """Extract per-selection prices from a verified ``/odds`` payload.
 
-    Stores each bookmaker/market/selection/line separately. Only the over/under
-    markets are extracted by default (goals/corners/cards), which is the
-    registered target scope for the QFE V2 reboot. The extraction is defensive: unknown
-    or absent shapes are skipped, never guessed.
+    Stores each bookmaker/market/selection/line separately. Flat full-match
+    markets use their provider key directly. Nested team markets are stored as
+    ``<market>:home`` / ``<market>:away`` so target contracts can bind to an
+    exact side without changing the core price key shape. Unknown or absent
+    payload shapes are skipped, never guessed.
     """
     data = odds_payload.get("data", odds_payload)
     out: list[CapturedPrice] = []
@@ -171,6 +176,26 @@ def extract_prices(
                     observed_at=observed_at,
                 )
             )
+
+        for market in team_markets:
+            sided = market_obj.get(market)
+            if not isinstance(sided, Mapping):
+                continue
+            for side in ("home", "away"):
+                lines = sided.get(side)
+                if not isinstance(lines, Mapping):
+                    continue
+                out.extend(
+                    iter_over_under_prices(
+                        name,
+                        f"{market}:{side}",
+                        lines,
+                        payload_hash=payload_hash,
+                        field=field,
+                        semantics=semantics,
+                        observed_at=observed_at,
+                    )
+                )
     return out
 
 

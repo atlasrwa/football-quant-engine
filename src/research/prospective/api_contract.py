@@ -5,14 +5,12 @@ cross-checked while building this package). This module does NOT invent
 endpoints or fields. Every endpoint / field referenced by the prospective
 capture layer is declared here and traced to the live docs.
 
-Where the repository's existing client
-(``src/research/thestatsapi/client.py``) disagrees with the live docs, the
-discrepancy is documented in :data:`KNOWN_DISCREPANCIES`, backward
-compatibility is preserved (the legacy client is untouched), and the
-prospective plane fails closed rather than guessing.
+This module is the single live HTTP semantic contract for the reboot. Legacy
+endpoint/auth variants were removed from main; new live code must use these
+verified paths and fail closed when a capability is absent.
 
-Nothing here performs I/O. It is a declarative contract plus a small
-read-only, key-redacting request helper used by the collector.
+Nothing here performs I/O. It is a declarative contract consumed by the
+read-only prospective client.
 """
 
 from __future__ import annotations
@@ -79,6 +77,9 @@ class Endpoint(str, Enum):
     # --- discovery -------------------------------------------------------
     MATCHES = "/football/matches"
     MATCH_DETAIL = "/football/matches/{match_id}"
+    MATCH_STATS = "/football/matches/{match_id}/stats"
+    MATCH_TIMELINE = "/football/matches/{match_id}/timeline"
+    MATCH_SHOTMAP = "/football/matches/{match_id}/shotmap"
     COVERAGE_LEAGUES = "/coverage/leagues"
     COMPETITION_SEASONS = "/football/competitions/{competition_id}/seasons"
 
@@ -120,6 +121,12 @@ OVER_UNDER_MARKET_KEYS: Final = (
     "total_cards",
 )
 
+#: Verified nested team O/U structures. Shape: market -> home/away -> line.
+TEAM_OVER_UNDER_MARKET_KEYS: Final = (
+    "team_total_goals",
+    "team_corners",
+)
+
 
 # ---------------------------------------------------------------------------
 # Field-level semantics we DEPEND ON (verified quotes paraphrased from docs)
@@ -149,86 +156,6 @@ LINEUP_HAS_CAPTURE_TIMESTAMP: Final = False
 #: returned as ``null`` "so clients never see a fabricated 0". Reinforces
 #: NULL != ZERO.
 STATS_NULL_IS_MISSING_NOT_ZERO: Final = True
-
-
-# ---------------------------------------------------------------------------
-# Discrepancies vs the repository's legacy client
-# ---------------------------------------------------------------------------
-
-
-@dataclass(frozen=True)
-class Discrepancy:
-    """A single documented gap between the legacy client and the live docs."""
-
-    topic: str
-    live_docs: str
-    repo_impl: str
-    resolution: str
-
-
-#: Discrepancies discovered by cross-checking ``llms.txt`` against
-#: ``src/research/thestatsapi/client.py``. The legacy client is preserved for
-#: backward compatibility (its cached-data flows still work); the prospective
-#: plane uses the corrected, live-accurate settings in this module.
-KNOWN_DISCREPANCIES: Final = (
-    Discrepancy(
-        topic="base_url",
-        live_docs="https://api.thestatsapi.com/api",
-        repo_impl='client._DEFAULT_BASE_URL = "https://api.thestatsapi.com" (no /api)',
-        resolution=(
-            "Prospective plane uses LIVE_BASE_URL (with /api). Legacy client "
-            "untouched to preserve backward compat with existing cache keys."
-        ),
-    ),
-    Discrepancy(
-        topic="authentication",
-        live_docs="Authorization: Bearer <key> header",
-        repo_impl="api_key sent as a query parameter",
-        resolution=(
-            "Prospective read-only client sends the Bearer header. Legacy "
-            "query-param client is left as-is; both are key-redacting."
-        ),
-    ),
-    Discrepancy(
-        topic="rate_limit_headers",
-        live_docs=(
-            "X-RateLimit-{Limit,Remaining,Reset} (per-minute) and "
-            "X-Monthly-Quota-{Limit,Remaining,Reset} (monthly); 429 with "
-            "Retry-After and code RATE_LIMITED / USAGE_LIMIT_EXCEEDED"
-        ),
-        repo_impl="Only Retry-After is parsed on 429.",
-        resolution=(
-            "Collector surfaces both budgets for scheduler back-off; still "
-            "honours Retry-After. Documented; not a blocker for capture."
-        ),
-    ),
-    Discrepancy(
-        topic="endpoint_naming",
-        live_docs="/football/matches, /football/matches/{id}/odds, .../lineups, ...",
-        repo_impl=(
-            "Legacy fixture/odds providers use their own endpoint strings "
-            "(e.g. /fixtures) that predate this verification."
-        ),
-        resolution=(
-            "Prospective plane references ONLY the verified Endpoint enum. "
-            "Any legacy path that differs is out of scope for this PR and is "
-            "left untouched; new capture never calls unverified endpoints."
-        ),
-    ),
-    Discrepancy(
-        topic="injury_endpoints_exist",
-        live_docs=(
-            "/football/teams/{id}/injuries-suspensions and "
-            "/football/players/{id}/injuries-suspensions exist with explicit "
-            "reason/status/active fields."
-        ),
-        repo_impl="Not previously wired.",
-        resolution=(
-            "availability_reason may be set from these EXPLICIT records only. "
-            "Absence from an XI is still never interpreted as an injury."
-        ),
-    ),
-)
 
 
 # ---------------------------------------------------------------------------

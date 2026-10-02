@@ -10,8 +10,7 @@ from __future__ import annotations
 import hashlib
 import json
 from abc import ABC, abstractmethod
-from dataclasses import dataclass, field
-from datetime import datetime
+from dataclasses import dataclass
 from typing import Any, Optional
 
 
@@ -32,12 +31,29 @@ class ResearchMatch:
     home_team: str
     away_team: str
 
+    # Stable source identity (metadata, never a predictive feature)
+    source_provider: str = ""
+    source_match_ref: Optional[str] = None
+    competition_ref: Optional[str] = None
+    season_ref: Optional[str] = None
+    home_team_ref: Optional[str] = None
+    away_team_ref: Optional[str] = None
+    home_team_id: Optional[int] = None
+    away_team_id: Optional[int] = None
+
     # Results (POST-MATCH ONLY)
     home_goals: Optional[int] = None
     away_goals: Optional[int] = None
     total_goals: Optional[int] = None
     ht_home_goals: Optional[int] = None
     ht_away_goals: Optional[int] = None
+    # Presence of extra-time / shootout fields is used to fail closed for
+    # regulation-time target labels. Their numeric interpretation is never
+    # inferred beyond what the provider explicitly exposes.
+    extra_time_home_goals: Optional[int] = None
+    extra_time_away_goals: Optional[int] = None
+    penalties_home: Optional[int] = None
+    penalties_away: Optional[int] = None
 
     # Shots (POST-MATCH ONLY)
     shots_home: Optional[int] = None
@@ -77,12 +93,9 @@ class ResearchMatch:
     home_xg: Optional[float] = None
     away_xg: Optional[float] = None
 
-    # --- Rich per-side fields (POST-MATCH ONLY; TheStatsAPI Rich_Corpus) --------
-    # Optional, default None: backward-compatible additive extension used by the
-    # asymmetric-matchup-engine Team_Profiler to derive the previously
-    # unpopulated / partially-populated profile dimensions from cached rich
-    # stats. NULL != ZERO is preserved: a field absent from the source (or absent
-    # on either side of the match) stays None; a genuine 0 is kept as 0.
+    # --- Rich per-side fields (POST-MATCH ONLY) -------------------------------
+    # Optional provider evidence. NULL != ZERO is preserved: an absent field
+    # stays None while a genuine zero remains zero.
 
     # Shots detail (shots group)
     shots_inside_box_home: Optional[int] = None
@@ -136,6 +149,27 @@ class ResearchMatch:
         """Serialize to dict (None values included for schema completeness)."""
         from dataclasses import asdict
         return asdict(self)
+
+
+    @property
+    def stable_fixture_key(self) -> Optional[str]:
+        """Provider-scoped stable fixture key, or None when identity is incomplete."""
+        if not self.source_provider or not self.source_match_ref:
+            return None
+        return f"{self.source_provider}:{self.source_match_ref}"
+
+    @property
+    def has_extra_time_or_shootout_metadata(self) -> bool:
+        """Whether provider outcome metadata indicates ET/shootout involvement."""
+        return any(
+            value is not None
+            for value in (
+                self.extra_time_home_goals,
+                self.extra_time_away_goals,
+                self.penalties_home,
+                self.penalties_away,
+            )
+        )
 
     @property
     def available_fields(self) -> list[str]:

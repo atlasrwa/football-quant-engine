@@ -76,6 +76,36 @@ class TestNormalize:
         assert m.total_corners is None
         assert m.home_xg is None
 
+
+    def test_stable_provider_identity_is_preserved(self):
+        n = TheStatsAPINormalizer()
+        m = n.normalize(_fixture(), stats=None)
+        assert m.source_provider == "THESTATSAPI"
+        assert m.source_match_ref == "mt_010243001"
+        assert m.competition_ref == "comp_3039"
+        assert m.season_ref == "sn_3057848"
+        assert m.home_team_ref == "tm_1"
+        assert m.away_team_ref == "tm_2"
+        assert m.home_team_id == 1
+        assert m.away_team_id == 2
+        assert m.stable_fixture_key == "THESTATSAPI:mt_010243001"
+
+    def test_extra_time_metadata_is_preserved_for_target_guarding(self):
+        n = TheStatsAPINormalizer()
+        m = n.normalize(_fixture(score={
+            "home": 3, "away": 2, "ht_home": 1, "ht_away": 1,
+            "et_home": 1, "et_away": 0, "pens_home": None, "pens_away": None,
+        }), stats=None)
+        assert m.ht_home_goals == 1
+        assert m.ht_away_goals == 1
+        assert m.extra_time_home_goals == 1
+        assert m.extra_time_away_goals == 0
+        assert m.has_extra_time_or_shootout_metadata is True
+
+    def test_invalid_team_provider_id_fails_closed(self):
+        n = TheStatsAPINormalizer()
+        assert n.normalize(_fixture(home_team={"id": "bad", "name": "Home FC"})) is None
+
     def test_null_red_cards_not_coerced_to_zero(self):
         stats = _stats(
             yellow_cards={"all": {"home": 1, "away": 3}},
@@ -84,11 +114,12 @@ class TestNormalize:
         )
         n = TheStatsAPINormalizer()
         m = n.normalize(_fixture(), stats)
-        # Yellow present, red null -> red stays None, not 0
+        # Yellow present, red null -> red stays None, not 0. The combined
+        # total is therefore unknown rather than silently treating missing reds
+        # as zero.
         assert m.yellow_cards_home == 1 and m.yellow_cards_away == 3
         assert m.red_cards_home is None and m.red_cards_away is None
-        # total_cards sums only the present components (1+3), not inventing reds
-        assert m.total_cards == 4
+        assert m.total_cards is None
         assert m.total_corners == 14
 
     def test_genuine_zero_corner_preserved(self):
@@ -110,13 +141,20 @@ class TestNormalize:
         assert m.yellow_cards_home == 2 and m.yellow_cards_away is None
         assert m.total_cards is None  # not 2
 
-    def test_total_cards_both_yellows_present_reds_null(self):
+    def test_total_cards_both_yellows_present_reds_null_is_unknown(self):
         n = TheStatsAPINormalizer()
         m = n.normalize(_fixture(), _stats(
             yellow_cards={"all": {"home": 2, "away": 1}},
             red_cards={"all": None},
         ))
-        # both yellows present; reds null contribute nothing (not invented)
+        assert m.total_cards is None
+
+    def test_total_cards_requires_explicit_red_zeroes(self):
+        n = TheStatsAPINormalizer()
+        m = n.normalize(_fixture(), _stats(
+            yellow_cards={"all": {"home": 2, "away": 1}},
+            red_cards={"all": {"home": 0, "away": 0}},
+        ))
         assert m.total_cards == 3
 
     def test_non_finished_skipped(self):
