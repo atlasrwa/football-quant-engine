@@ -47,11 +47,18 @@ def declarations() -> list[dict]:
         and r.get("hypothesis_id")
     ]
 
-def settlements() -> dict[str, dict]:
-    out = {}
-    for r in _rows():
-        if r.get("event_type") == "SETTLEMENT_RECORDED" and r.get("hypothesis_id"):
-            out[str(r["hypothesis_id"])] = r
+def settlements(rows: list[dict] | None = None) -> dict[str, dict]:
+    out: dict[str, dict] = {}
+    source = _rows() if rows is None else rows
+    for r in source:
+        hid = r.get("hypothesis_id")
+        if not hid:
+            continue
+        key = str(hid)
+        if r.get("event_type") == "SETTLEMENT_RECORDED":
+            out[key] = r
+        elif r.get("event_type") == "SETTLEMENT_INVALIDATED":
+            out.pop(key, None)
     return out
 
 def pilot_status() -> dict:
@@ -187,6 +194,23 @@ def append_settlement(hypothesis_id: str, settlement: dict[str, Any]) -> dict | 
         ),
         "closing_benchmark": settlement.get("closing_benchmark"),
         "source_payload_hashes": settlement.get("source_payload_hashes", {}),
+        "recorded_at_utc": _now_iso(),
+    }
+    return _append_locked(event)
+
+def invalidate_settlement(hypothesis_id: str, *, reason: str,
+                          source_payload_hashes: dict[str, Any] | None = None,
+                          note: str | None = None) -> dict | None:
+    current = settlements().get(str(hypothesis_id))
+    if current is None:
+        return None
+    event = {
+        "event_type": "SETTLEMENT_INVALIDATED",
+        "hypothesis_id": str(hypothesis_id),
+        "invalidated_v3_event_hash": current.get("v3_event_hash"),
+        "reason": str(reason),
+        "source_payload_hashes": source_payload_hashes or {},
+        "note": note,
         "recorded_at_utc": _now_iso(),
     }
     return _append_locked(event)

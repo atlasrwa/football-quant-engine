@@ -272,10 +272,7 @@ def _adjudicate(primary: dict, integrity: dict) -> str:
 def build_map(rows: list[dict] | None = None) -> dict:
     rows = _read_rows() if rows is None else rows
     rel = _related(rows)
-    settlements = {
-        str(r["hypothesis_id"]): r for r in rows
-        if r.get("event_type") == "SETTLEMENT_RECORDED" and r.get("hypothesis_id")
-    }
+    settlements = ledger.settlements(rows)
     declarations = [
         r for r in rows
         if r.get("event_type") == "HYPOTHESIS_DECLARED"
