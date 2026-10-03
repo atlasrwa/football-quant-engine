@@ -318,18 +318,43 @@ Layer 4 completion gates:
 
 ### Layer 5 — market-relative research
 
-- [ ] Freeze the Layer 5 market/disagreement protocol **before opening PROTECTED**.
+Status: **PROTOCOL PREREGISTERED / PROTECTED SEALED / IMPLEMENTATION NOT YET VALIDATED**
+
+Frozen protocol:
+- Protocol version: `qfe-layer5-market-surface-disagreement-v1`.
+- Protocol hash: `783050b0c6b66f8cc8540944fc629165f3c84c8e517b8554c888e20266d17216`.
+- Frozen Layer 4 model binding: `e33af913f4c27ce33355c78792419ad8cee73e3f16ce7c685781a010d386b3ea`.
+- Layer 4 integrity-audit binding: `78f5925fc6cc1821e35724663da28a91a82390eab02c87cfdb03a0e07ed8b9e2`.
+- Registered decision horizon: **T-6h**.
+- No protected outcome or protected market-relative score was opened to design this policy.
+
+Key frozen policy choices:
+- Primary no-vig: **multiplicative/proportional**; Shin is sensitivity-only and cannot be selected because it enlarges disagreement.
+- Same-bookmaker/timestamp-proven market bundles only; max age 30 minutes, max intra-surface skew 120 seconds.
+- Corner surfaces require at least 3 adjacent quoted lines and bounded equal-weight monotone isotonic repair; max repair 3 pp / mean repair 1 pp.
+- Goals remain total **2.5 only** in Layer 5 V1; no unsupported goal ladder is invented.
+- Disagreement requires at least **5 pp** selected-line gap and at least **2 pp** after the empirical calibration-reliability penalty.
+- Corner surfaces require at least 2 adjacent corroborating lines at ≥3 pp, with one ≥5 pp, and no opposite strong gap.
+- **Maximum gap is never a selection criterion or tie-breaker.** The selected line is the central corroborated line whose cleaned market probability is closest to 0.50.
+- Calibration support, dynamic support, OOD/component-dispersion and cross-line consistency can force abstention.
+- The reliability-adjusted gap is an eligibility diagnostic, **not** an individual-fixture confidence bound.
+- Primary market benchmark remains the unmodified preregistered no-vig probability; any market-only calibration is a diagnostic benchmark and cannot replace `p_market` for eligibility.
+
+Layer 5 gates:
+- [x] Freeze the Layer 5 market/disagreement protocol **before opening PROTECTED**.
+- [ ] Execute protocol regression tests on the compute host and bind an exact protocol commit.
 - [ ] Horizon-matched timestamped same-bookmaker market snapshots.
-- [ ] Preregister primary no-vig method and bounded sensitivity methods.
+- [ ] Implement primary no-vig and sensitivity diagnostics exactly as preregistered.
 - [ ] Market Surface Engine: reconstruct coherent market CDFs from quoted line ladders when temporal/coverage requirements are satisfied.
-- [ ] Fail closed on incomplete, stale or materially time-incoherent ladders.
-- [ ] Preserve raw quotes/timestamps alongside any deterministic monotonic market-surface cleanup.
-- [ ] QFE CDF vs market CDF diagnostics: location/mean shift, dispersion/tail shape, broad-vs-local disagreement.
-- [ ] Cross-line robustness: adjacent-line sign consistency, corroborating-line count, signed CDF gap and local smoothness.
+- [ ] Fail closed on incomplete, stale, cross-book or materially time-incoherent ladders.
+- [ ] Preserve raw quotes/timestamps alongside bounded deterministic monotonic cleanup.
+- [ ] QFE CDF vs market CDF diagnostics: broad signed gap, absolute gap, sign consistency and median-crossing displacement; no implied mean claim without proven tail coverage.
+- [ ] Cross-line robustness and deterministic non-max-gap line selection.
 - [ ] Market-only calibrated comparator and separate market+QFE incremental-information arm.
-- [ ] Disagreement eligibility uses calibration-region support, historical support, OOD, component dispersion/consensus and adjacent-line robustness.
-- [ ] Freeze line-selection and abstention policy before any protected outcome is opened.
-- [ ] After all above are frozen, score global and disagreement-subset PROTECTED results separately.
+- [ ] Implement disagreement eligibility/abstention using calibration support, historical support, OOD, component dispersion/consensus, reliability penalty and adjacent-line robustness.
+- [ ] Freeze matched-market manifest plus implementation/integrity audit.
+- [ ] Freeze line-selection and abstention implementation before any protected outcome is opened.
+- [ ] Only after every above gate passes, score global and disagreement-subset PROTECTED results separately.
 
 ### Layer 6 — prospective commercial evidence
 
@@ -365,4 +390,4 @@ Layer 4 merge gate:
 8. [x] Prove Layer 4 evidence regeneration/idempotence and code/source bindings. Full raw CALIBRATION → calibrator selection/refit → model-freeze rebuild reproduced hashes `94d29f3d...20c4`, `f3770a8b...92f2`, and `e33af913...6b3ea` exactly.
 9. [x] Run complete repository tests/import sweep and verify Foundation/Layers 2–3.1 plus prospective evidence unchanged: 298 tests passed; 82 research modules imported; 0 failures; prior evidence unchanged; active legacy-product refs = 0.
 10. [x] Commit, PR and merge Layer 4 if every gate remains green. Merged via PR #36 at `4858281f9e7dc3613fa7b0bb12b939521ce3b87c`.
-11. [ ] Build/freeze Layer 5 market-surface and disagreement policy; **do not open the 317 protected outcomes before that freeze**.
+11. [x] Preregister Layer 5 market-surface/disagreement policy hash `783050b0...7216`; protected remains sealed. Next: execute protocol tests and freeze the complete Layer 5 implementation/matched-market manifest before any protected outcome is opened.
