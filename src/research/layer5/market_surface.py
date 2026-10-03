@@ -168,6 +168,68 @@ def devig_quote(quote: TwoWayQuote) -> MarketPoint:
     )
 
 
+def select_latest_complete_bundle(
+    quotes: Iterable[TwoWayQuote],
+    *,
+    prediction_cutoff: float,
+    bookmaker: str,
+    market_key: str,
+    minimum_adjacent_lines: int,
+) -> tuple[TwoWayQuote, ...]:
+    """Select the latest structurally complete preregistered bookmaker bundle.
+
+    Future and stale bundles are ineligible. Among structurally complete
+    in-window bundles, only recency decides. Price attractiveness, overround,
+    model disagreement and outcomes never participate in bundle selection.
+    Once selected, price/overround/coherence quality is evaluated by the
+    surface builder; we do not fall back to an older bundle because the latest
+    complete one produces an inconvenient disagreement.
+    """
+    h = protocol_v1()["market_horizon"]
+    eligible = [
+        q for q in quotes
+        if q.bookmaker == bookmaker
+        and q.market_key == market_key
+        and q.observed_at <= prediction_cutoff
+        and prediction_cutoff - q.observed_at <= h["max_snapshot_age_seconds"]
+    ]
+    by_bundle: dict[str, list[TwoWayQuote]] = {}
+    for quote in eligible:
+        by_bundle.setdefault(quote.bundle_id, []).append(quote)
+
+    candidates: list[tuple[float, str, tuple[TwoWayQuote, ...]]] = []
+    for bundle_id, rows in by_bundle.items():
+        if not rows:
+            continue
+        observed = [q.observed_at for q in rows]
+        if max(observed) - min(observed) > h["max_intra_surface_skew_seconds"]:
+            continue
+        # Structural completeness only: unique lines and a sufficiently long
+        # adjacent run. Do not inspect prices beyond their presence here.
+        lines = sorted({float(q.line) for q in rows})
+        if len(lines) != len(rows):
+            continue
+        longest = 0
+        current = 0
+        previous = None
+        for line in lines:
+            if previous is None or abs(line - previous - 1.0) <= 1e-9:
+                current += 1
+            else:
+                current = 1
+            longest = max(longest, current)
+            previous = line
+        if longest < minimum_adjacent_lines:
+            continue
+        candidates.append((max(observed), bundle_id, tuple(rows)))
+
+    if not candidates:
+        return ()
+    # Latest observation wins; deterministic bundle-id tie break only.
+    _, _, selected = max(candidates, key=lambda row: (row[0], row[1]))
+    return tuple(sorted(selected, key=lambda q: q.line))
+
+
 def build_market_point(
     quote: TwoWayQuote,
     *,
