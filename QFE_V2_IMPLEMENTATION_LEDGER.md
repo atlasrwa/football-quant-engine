@@ -342,16 +342,16 @@ Key frozen policy choices:
 
 Layer 5 gates:
 - [x] Freeze the Layer 5 market/disagreement protocol **before opening PROTECTED**.
-- [ ] Execute protocol regression tests on the compute host and bind an exact protocol commit.
+- [x] Execute protocol regression tests on the compute host and bind the exact implementation audit `e317cd9eadbfb236e516b859be38bbf35582ad799d03e11d7509550ca6cf00c3`: 319 repo tests, 86 imports, 21 focused Layer 5 tests, and adversarial property gates all PASS.
 - [ ] Horizon-matched timestamped same-bookmaker market snapshots.
 - [ ] Implement primary no-vig and sensitivity diagnostics exactly as preregistered.
 - [ ] Market Surface Engine: reconstruct coherent market CDFs from quoted line ladders when temporal/coverage requirements are satisfied.
 - [ ] Fail closed on incomplete, stale, cross-book or materially time-incoherent ladders.
 - [ ] Preserve raw quotes/timestamps alongside bounded deterministic monotonic cleanup.
 - [ ] QFE CDF vs market CDF diagnostics: broad signed gap, absolute gap, sign consistency and median-crossing displacement; no implied mean claim without proven tail coverage.
-- [ ] Cross-line robustness and deterministic non-max-gap line selection.
+- [x] Cross-line robustness and deterministic non-max-gap line selection implemented and adversarially validated; maximum-gap selection is structurally excluded.
 - [ ] Market-only calibrated comparator and separate market+QFE incremental-information arm.
-- [ ] Implement disagreement eligibility/abstention using calibration support, historical support, OOD, component dispersion/consensus, reliability penalty and adjacent-line robustness.
+- [x] Implement disagreement eligibility/abstention using calibration support, dynamic support, OOD/component dispersion, reliability penalty and adjacent-line robustness.
 - [ ] Freeze matched-market manifest plus implementation/integrity audit.
 - [ ] Freeze line-selection and abstention implementation before any protected outcome is opened.
 - [ ] Only after every above gate passes, score global and disagreement-subset PROTECTED results separately.
