@@ -145,3 +145,54 @@ def test_surface_requires_adjacent_corroboration():
     d = evaluate_surface(market, models)
     assert not d.eligible
     assert d.reason == "CROSS_LINE_NOT_CORROBORATED"
+
+
+def test_bundle_selector_uses_latest_complete_bundle_not_best_price():
+    from src.research.layer5.market_surface import select_latest_complete_bundle
+
+    rows = [
+        _quote(8.5, 3.0, 1.4, ts=900, bundle="old"),
+        _quote(9.5, 3.0, 1.4, ts=900, bundle="old"),
+        _quote(10.5, 3.0, 1.4, ts=900, bundle="old"),
+        # Newer complete bundle has deliberately less attractive OVER prices.
+        _quote(8.5, 1.8, 2.1, ts=1000, bundle="new"),
+        _quote(9.5, 1.8, 2.1, ts=1000, bundle="new"),
+        _quote(10.5, 1.8, 2.1, ts=1000, bundle="new"),
+        # Future bundle must never enter selection.
+        _quote(8.5, 4.0, 1.3, ts=1300, bundle="future"),
+        _quote(9.5, 4.0, 1.3, ts=1300, bundle="future"),
+        _quote(10.5, 4.0, 1.3, ts=1300, bundle="future"),
+    ]
+    chosen = select_latest_complete_bundle(
+        rows,
+        prediction_cutoff=1200,
+        bookmaker="bet365",
+        market_key="CORNERS_TOTAL",
+        minimum_adjacent_lines=3,
+    )
+    assert chosen
+    assert {q.bundle_id for q in chosen} == {"new"}
+
+
+def test_bundle_selector_does_not_fall_back_based_on_price_quality():
+    from src.research.layer5.market_surface import select_latest_complete_bundle
+
+    rows = [
+        _quote(8.5, 2.0, 2.0, ts=900, bundle="old"),
+        _quote(9.5, 2.0, 2.0, ts=900, bundle="old"),
+        _quote(10.5, 2.0, 2.0, ts=900, bundle="old"),
+        # Structurally complete but invalid odds; selector still chooses it.
+        # build_market_surface must then abstain rather than cherry-pick old.
+        _quote(8.5, 1.0, 2.0, ts=1000, bundle="new"),
+        _quote(9.5, 1.0, 2.0, ts=1000, bundle="new"),
+        _quote(10.5, 1.0, 2.0, ts=1000, bundle="new"),
+    ]
+    chosen = select_latest_complete_bundle(
+        rows,
+        prediction_cutoff=1200,
+        bookmaker="bet365",
+        market_key="CORNERS_TOTAL",
+        minimum_adjacent_lines=3,
+    )
+    assert {q.bundle_id for q in chosen} == {"new"}
+    assert build_market_surface(chosen, prediction_cutoff=1200).status == "ABSTAIN"
