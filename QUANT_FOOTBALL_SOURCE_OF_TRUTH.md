@@ -57,9 +57,9 @@ Historical football evidence from verified providers
 → regularized ensemble
 → dedicated calibration layer
 → frozen independent `p_model`
-→ timestamp-matched sportsbook prices
-→ no-vig market probability
-→ deterministic market-disagreement detector
+→ timestamp-matched sportsbook price ladders
+→ no-vig market probabilities / coherent market CDF where coverage supports it
+→ deterministic distribution-aware market-disagreement detector
 → support / uncertainty / domain gates
 → prospective immutable prediction
 → genuine closing-line comparison
@@ -102,6 +102,8 @@ The detector must not rank opportunities by disagreement magnitude alone. Eligib
 - calibration quality in the relevant probability region;
 - historical OOS support;
 - component-model consensus / dispersion;
+- prediction-level support / empirical reliability metadata;
+- adjacent-line / distribution-level consistency where a market ladder exists;
 - training-domain similarity;
 - sample depth;
 - missingness;
@@ -330,7 +332,9 @@ At minimum compare, where sample support allows:
 
 Isotonic must not be used automatically on sparse samples.
 
-Evaluate pooled or partially pooled calibration when per-league/per-line samples are too small.
+Evaluate pooled or partially pooled calibration when per-league/per-line samples are too small. Preferred structured challengers may include a global calibration relationship plus regularized home/away-role and competition deviations. Line-specific flexibility requires explicit support and shrinkage.
+
+For a coherent count distribution, calibration across multiple thresholds must preserve CDF monotonicity. Independent line-by-line mappings that can create impossible orderings are not acceptable production outputs.
 
 Never calibrate on the protected outcomes used to judge the calibrator.
 ## 17. Calibration diagnostics
@@ -361,7 +365,10 @@ Potential deterministic diagnostics include:
 - missing-feature rate;
 - component-model dispersion;
 - provider capability gaps;
-- calibration-region sample support.
+- calibration-region sample support;
+- empirical reliability/support bands for the relevant role, competition, line and probability region where estimable.
+
+These are support/uncertainty diagnostics, not automatically valid confidence intervals around an individual fixture probability. Do not publish artificial precision without a defensible uncertainty model.
 
 OOD controls should primarily affect **eligibility/abstention**, not silently distort `p_model`.
 
@@ -372,6 +379,16 @@ Preserve raw offered prices and all quote timestamps.
 The primary no-vig method must be preregistered before protected evaluation. Any alternative transformation is a bounded sensitivity analysis and cannot be selected after seeing which makes QFE look best.
 
 The market comparator must be constructed independently from QFE.
+
+When a bookmaker provides multiple coherent lines for the same count family/side, QFE should treat that ladder as a noisy observation of a market-implied CDF rather than as unrelated bets. The market layer should, where coverage supports it:
+- bind all quotes to the same bookmaker and registered decision horizon;
+- no-vig each quoted two-way line under the preregistered method;
+- fail closed on materially stale, incomplete or time-incoherent ladders;
+- deterministically enforce/diagnose monotonic CDF coherence rather than cherry-picking the largest local gap;
+- distinguish broad location/mean disagreement, dispersion/tail disagreement and isolated local quote anomalies;
+- preserve the original raw lines/prices/timestamps alongside any cleaned market surface.
+
+Cross-line robustness is a first-class disagreement diagnostic. A single large line gap surrounded by small/opposite adjacent gaps is weaker evidence than a coherent signed gap across neighboring lines.
 
 The independent football probability must not use odds as an input, feature, calibration target or shrinkage anchor.
 
@@ -418,9 +435,15 @@ A design defect discovered after freeze requires abort/version/new experiment.
 
 Previously exposed data remain development data.
 
+A protected cohort must remain unopened until all material choices that could respond to its outcomes are frozen: component set, ensemble method/weights procedure, calibration architecture, support/uncertainty policy, market-surface reconstruction, disagreement eligibility and line-selection policy.
+
+External prospective experiments are immutable research evidence by default, not automatic training data. Moving any such observations into model development requires a separately versioned and frozen training-cohort decision.
+
 ## 22. Dependency and uncertainty discipline
 
 Multiple lines, team sides and totals from one fixture are dependent observations.
+
+Do not create pseudo-replication by treating every quoted/scored line from one fixture as an independent primary observation. Multi-line evaluations should aggregate at fixture/family level before paired time-block uncertainty unless a preregistered alternative dependence model is justified.
 
 Keep fixture rows in the same fold and the same uncertainty block.
 
