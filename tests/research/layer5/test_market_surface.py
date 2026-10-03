@@ -196,3 +196,17 @@ def test_bundle_selector_does_not_fall_back_based_on_price_quality():
     )
     assert {q.bundle_id for q in chosen} == {"new"}
     assert build_market_surface(chosen, prediction_cutoff=1200).status == "ABSTAIN"
+
+
+def test_surface_never_selects_central_line_below_five_pp_gate():
+    market = _manual_surface([(8.5, 0.70), (9.5, 0.50), (10.5, 0.30)])
+    models = [
+        _model(8.5, 0.76),  # +6 pp strong
+        _model(9.5, 0.54),  # +4 pp support-only, most market-central
+        _model(10.5, 0.36), # +6 pp strong
+    ]
+    d = evaluate_surface(market, models)
+    assert d.eligible
+    assert d.absolute_gap >= 0.05
+    assert d.line in (8.5, 10.5)
+    assert d.line != 9.5
