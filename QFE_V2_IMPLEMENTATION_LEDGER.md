@@ -201,6 +201,64 @@ Development conclusions:
 
 Scientific state: **DEVELOPMENT_OOF_ONLY**. No calibration, ensemble fitting, market comparison, or protected scoring has occurred.
 
+### Layer 3.1 — multi-line / team-side corner market-event coverage
+
+Status: **IMPLEMENTED / PRE-REGISTERED DEVELOPMENT EVIDENCE; NOT YET MERGED**
+
+Preregistration was committed before scoring:
+- Protocol commit: `b4311cf72`
+- Protocol hash: `565aaf432f64b8b1110cf94aa8f702dfb128d07fe578a54c69e13c0b92aa4f69`
+- SIDE lines: 2.5, 3.5, 4.5, 5.5, 6.5, 7.5.
+- TOTAL lines: 7.5, 8.5, 9.5, 10.5, 11.5, 12.5.
+- Roles: HOME and AWAY.
+- Primary hypotheses are pooled SIDE and pooled TOTAL; no best-line search is permitted.
+- Per-line, role and competition slices are diagnostic only.
+- Market odds, CALIBRATION outcomes and PROTECTED outcomes are forbidden.
+
+Implementation/evidence:
+- [x] Reuse the frozen Layer 3 corner dynamic-intensity configuration.
+- [x] Refit NB2 dispersion inside each earlier-only DEVELOPMENT OOF fold.
+- [x] Assert refitted fold alphas exactly match frozen Layer 3 fold values.
+- [x] Generate coherent Poisson and side-NB2 probability ladders.
+- [x] Enforce monotonic decreasing P(OVER) with increasing line.
+- [x] Pool all preregistered lines rather than selecting the best line.
+- [x] Weekly-block paired uncertainty for Log Loss and Brier.
+- [x] Missing corner labels excluded, never imputed.
+
+Preregistered DEVELOPMENT result (94,752 candidate rows / 47,376 paired market-event cells):
+- **SIDE_CORNERS: `NB2_DEVELOPMENT_CANDIDATE`.** 31,584 paired fixture-role-line cells. Binary Log Loss improvement `+0.00473845`, 95% weekly-block CI `+0.00349661` to `+0.00606511`; Brier improvement `+0.00142206`, CI `+0.00101278` to `+0.00183213`.
+- HOME role: Log Loss improvement `+0.00567222`, CI `+0.00350617` to `+0.00788121`.
+- AWAY role: Log Loss improvement `+0.00380469`, CI `+0.00249668` to `+0.00517553`.
+- **TOTAL_CORNERS: `NB2_WEAK_OR_INCONCLUSIVE`.** 15,792 paired fixture-line cells. Log Loss improvement `+0.00154705`, CI `-0.00014111` to `+0.00315432`; Brier improvement `+0.00041332`, CI `-0.00023313` to `+0.00102977`.
+- Full scientific artifact hash before storage compaction: `5ce882ec18bf40dbe3d7d29d43a79c21e1885c6a64046c0d70bb5fe8b9769e75`. Storage compaction does not alter this scientific artifact hash.
+- Compact summary file SHA256: `4419d2fe579a51131515556e338bc01a26017dee80dbb186e53e054c1f6e27f0`.
+- Deterministic compressed OOF rows SHA256: `57579cb15c7ea497d57f9b3ceb7037874f74e8cdd3543a419cbf01e5e76f476e`; semantic rows hash `2828d67342cd0a6a06400acb8ff2fe336fdd6483b2bf075456b86bf6a09231ba`.
+- Compact verifier reconstructs the complete 94,752-row scientific artifact and reproduces `5ce882ec18bf40dbe3d7d29d43a79c21e1885c6a64046c0d70bb5fe8b9769e75`; canonical JSONL and deterministic gzip encoding are verified.
+
+Interpretation: side-specific NB2 is eligible for the Layer 4 corners component set. Match-total NB2 is not promoted by Layer 3.1 and remains weak/inconclusive. This does not authorize calibration, market comparison, protected scoring or commercial claims.
+
+### Prospective experiment evidence warehouse
+
+Status: **SNAPSHOT V1 FROZEN / EXTERNAL EVIDENCE ONLY**
+
+The implementation ledger tracks code progress; this warehouse separately snapshots real prospective research evidence. It is explicitly **not V2 training data**.
+
+Snapshot V1:
+- Frozen at: `2026-10-03T03:34:04Z`.
+- Snapshot semantic hash: `afb62230b658aa74fce6feba5f7f0912c53817e526fcac6d07122aa02aec44e1`.
+- Snapshot JSON SHA256: `6c3e77bc776bed004c1d3934913e8e8bc02929dfeeea774d97e4ea933808ce73`; normalized declaration JSONL SHA256: `0c6435b742327bbdce934b243a80a8e71b21cc06b2c879a8f7dc70f691e1b0bb`.
+- 30 normalized declaration-arm records; 12 settled; 18 open at the frozen timestamp.
+- Source event hash chains, chain heads and market-observation hashes verified before normalization.
+- Every source ledger, fixture ledger, market ledger, prediction freeze, experiment model freeze and experiment spec is SHA256 fingerprinted in the snapshot.
+- Snapshot builder aborts if an actively-running source bundle changes during ingest.
+
+Source bundles:
+- V3.7.1 Future-50: 5 normalized declarations / 1 settled; source bundle `4d0a7670d6d5348baf0cfc6410519065659c50c8e247a097eb45d10b3337f344`.
+- V3.8.1 Paired-50: 6 normalized arm records / 2 settled; source bundle `3f31cbf902cbdbb185233177eecf80772bb6f3f2630d0a8fd9eac72e572b6caa`.
+- Team Corners V1: 19 declarations / 9 settled; source bundle `4060c6b1c4322998913f584e4abc127df0dbe6c36627b5620dc079be342b87e0`.
+
+The normalized records preserve source event/freeze hashes, entry model/market probabilities, offered price, disagreement, relevant market vintages, settlement, proper scores, unit P&L and CLV/closing probability when source evidence supports it. No unsettled record is assigned an outcome.
+
 ### Layer 4 — ensemble and calibration
 
 - [ ] Fit constrained non-negative ensemble on earlier OOF predictions only.
@@ -243,14 +301,16 @@ defect discovered after freeze requires abort/version/new experiment.
 
 ## 6. Current immediate gate
 
-Layer 3 merge gate status:
+Layer 3.1 / evidence-warehouse merge gate:
 
-1. [x] Freeze calendar chronology before candidate scoring.
-2. [x] Freeze development OOF folds and ensure one shared fold manifest across structured, tabular and similar-context candidates.
-3. [x] Score candidate selection on DEVELOPMENT only; calibration rows scored = 0; protected rows scored = 0.
-4. [x] Generate immutable structured/tabular/similar-context OOF artifacts.
-5. [x] Reconcile side-joint likelihood diagnostics vs total-count OOF metrics explicitly.
-6. [x] Generate final component-evaluation bundle with paired weekly-block uncertainty.
-7. [x] Rerun complete repository test suite and research import sweep on the exact frozen state: 271 tests passed; 71 research modules; 0 import failures.
-8. [x] Verify evidence regeneration/idempotence, Git integrity and Foundation/Layer 2 evidence unchanged. Structured/tabular/similar OOF and final component bundle are idempotent; `git diff --check` passes.
-9. [x] Commit, PR and merge Layer 3 only if every gate remains green. Merged via PR #32 at `34edf14550b301987db4c1d60eaf266aecf4a9dd`.
+1. [x] Freeze Layer 3.1 protocol in Git before scoring.
+2. [x] Score only DEVELOPMENT OOF; CALIBRATION/PROTECTED outcomes and market odds remain inaccessible.
+3. [x] Preserve whole-ladder/role aggregation and no-best-line multiplicity policy.
+4. [x] Build read-only prospective evidence warehouse from the three authoritative versioned experiment stores.
+5. [x] Verify all source ledger chains and market observation hashes.
+6. [x] Regenerate compact Layer 3.1 evidence from scratch; reproduce the same scientific artifact hash and verify lossless deterministic compact storage.
+7. [x] Run full repository suite, import sweep, Git integrity and prior-layer hash checks: 283 tests passed; 75 research modules imported; 0 failures; prior tracked evidence unchanged.
+8. [x] Exact staged-state validation passed; branch authorized for PR/merge.
+9. [ ] Commit, PR and merge; record final main merge commit in a ledger-only follow-up.
+
+The 959 CALIBRATION fixtures and 317 PROTECTED fixtures remain unopened for Layer 4 selection/protected scoring respectively.
