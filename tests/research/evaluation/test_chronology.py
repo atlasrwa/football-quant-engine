@@ -13,6 +13,8 @@ from src.research.evaluation.chronology import (
     build_chronology_manifest,
     partition_for_kickoff,
     write_chronology_manifest,
+    DEVELOPMENT_OOF_FOLDS,
+    development_fold_for_kickoff,
 )
 
 
@@ -110,3 +112,12 @@ def test_chronology_writer_is_immutable(tmp_path) -> None:
         pass
     else:
         raise AssertionError("mutated chronology must not be overwritten")
+
+
+def test_development_oof_folds_are_contiguous_and_stop_at_calibration() -> None:
+    for left, right in zip(DEVELOPMENT_OOF_FOLDS, DEVELOPMENT_OOF_FOLDS[1:]):
+        assert left.validation_end_ts == right.validation_start_ts
+    assert DEVELOPMENT_OOF_FOLDS[-1].validation_end_ts == DEVELOPMENT_END_TS
+    assert development_fold_for_kickoff(DEVELOPMENT_OOF_FOLDS[0].validation_start_ts + 10).fold_id == "D1"
+    assert development_fold_for_kickoff(DEVELOPMENT_END_TS + 10) is None
+    assert development_fold_for_kickoff(CALIBRATION_END_TS + 10) is None

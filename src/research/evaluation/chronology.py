@@ -210,3 +210,116 @@ def write_chronology_manifest(path, manifest: ChronologyManifest) -> None:
         return
     output.parent.mkdir(parents=True, exist_ok=True)
     output.write_text(payload)
+
+# Compatibility names for downstream evaluation modules. The underlying
+# partition boundaries remain the frozen constants above.
+DEVELOPMENT_START_TS = WARMUP_END_TS
+CALIBRATION_START_TS = DEVELOPMENT_END_TS
+PROTECTED_START_TS = CALIBRATION_END_TS
+
+
+def filter_partition(
+    matches: Iterable[ResearchMatch],
+    partition: EvaluationPartition,
+) -> tuple[ResearchMatch, ...]:
+    return tuple(
+        match
+        for match in matches
+        if partition_for_kickoff(match.date_unix) == partition
+    )
+
+
+@dataclass(frozen=True, slots=True)
+class DevelopmentOOFFold:
+    fold_id: str
+    validation_start_ts: int
+    validation_end_ts: int
+
+    def contains_validation(self, kickoff_ts: int) -> bool:
+        return self.validation_start_ts <= kickoff_ts < self.validation_end_ts
+
+
+DEVELOPMENT_OOF_FOLDS: tuple[DevelopmentOOFFold, ...] = (
+    DevelopmentOOFFold(
+        "D1",
+        _utc_ts(2025, 1, 1),
+        _utc_ts(2025, 4, 1),
+    ),
+    DevelopmentOOFFold(
+        "D2",
+        _utc_ts(2025, 4, 1),
+        _utc_ts(2025, 8, 1),
+    ),
+    DevelopmentOOFFold(
+        "D3",
+        _utc_ts(2025, 8, 1),
+        _utc_ts(2025, 11, 1),
+    ),
+    DevelopmentOOFFold(
+        "D4",
+        _utc_ts(2025, 11, 1),
+        DEVELOPMENT_END_TS,
+    ),
+)
+
+
+def development_fold_for_kickoff(
+    kickoff_ts: int,
+) -> DevelopmentOOFFold | None:
+    if partition_for_kickoff(kickoff_ts) != EvaluationPartition.DEVELOPMENT:
+        return None
+    for fold in DEVELOPMENT_OOF_FOLDS:
+        if fold.contains_validation(kickoff_ts):
+            return fold
+    return None
+
+
+def development_fold_manifest(
+    matches: Iterable[ResearchMatch],
+) -> dict[str, Any]:
+    rows = tuple(matches)
+    folds: list[dict[str, Any]] = []
+    for fold in DEVELOPMENT_OOF_FOLDS:
+        valid = sorted(
+            (
+                match
+                for match in rows
+                if fold.contains_validation(match.date_unix)
+            ),
+            key=lambda match: (
+                match.date_unix,
+                match.stable_fixture_key or "",
+            ),
+        )
+        train = [
+            match
+            for match in rows
+            if match.date_unix < fold.validation_start_ts
+        ]
+        if not valid:
+            raise ValueError(
+                f"development fold {fold.fold_id} has no validation rows"
+            )
+        if any(
+            partition_for_kickoff(match.date_unix)
+            != EvaluationPartition.DEVELOPMENT
+            for match in valid
+        ):
+            raise ValueError("development fold escaped DEVELOPMENT partition")
+        folds.append(
+            {
+                "fold_id": fold.fold_id,
+                "validation_start_ts": fold.validation_start_ts,
+                "validation_end_ts": fold.validation_end_ts,
+                "n_training_matches": len(train),
+                "n_validation_matches": len(valid),
+                "validation_fixture_keys_sha256": sha256_json(
+                    [match.stable_fixture_key for match in valid]
+                ),
+            }
+        )
+    return {
+        "version": "qfe-development-oof-v1",
+        "folds": folds,
+        "manifest_hash": sha256_json(folds),
+    }
