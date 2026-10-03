@@ -287,3 +287,89 @@ def test_poisson_nll_is_finite_and_prefers_rate_near_observation() -> None:
     bad = poisson_count_nll(2, 8.0)
     assert math.isfinite(good)
     assert good < bad
+
+
+def test_walk_forward_respects_prediction_cutoff_and_result_embargo() -> None:
+    # Source result is only 8h before the target kickoff. Under the registered
+    # 6h prediction horizon + 6h availability embargo it is NOT yet available
+    # at the target prediction cutoff and must not influence the forecast.
+    source = _match(
+        ref=201,
+        kickoff=BASE,
+        home=1,
+        away=2,
+        goals=(8, 0),
+    )
+    target = _match(
+        ref=202,
+        kickoff=BASE + 8 * 3600,
+        home=1,
+        away=2,
+        goals=(0, 0),
+    )
+    forecasts = DynamicHierarchicalCountBaseline(GOALS_TARGET).walk_forward(
+        [source, target],
+        decision_horizon_seconds=6 * 3600,
+        availability_embargo_seconds=6 * 3600,
+    )
+    assert forecasts[1].lambda_home == pytest.approx(
+        GOALS_TARGET.initial_home_rate
+    )
+    assert forecasts[1].effective_support == 0.0
+
+
+def test_walk_forward_admits_result_at_exact_availability_cutoff_equality() -> None:
+    # Source kickoff + 6h == target kickoff - 6h when kickoffs are 12h apart.
+    # Foundation PIT uses <= cutoff, so the result must be admitted exactly here.
+    source = _match(
+        ref=211,
+        kickoff=BASE,
+        home=1,
+        away=2,
+        goals=(8, 0),
+    )
+    target = _match(
+        ref=212,
+        kickoff=BASE + 12 * 3600,
+        home=1,
+        away=2,
+        goals=(0, 0),
+    )
+    forecasts = DynamicHierarchicalCountBaseline(GOALS_TARGET).walk_forward(
+        [source, target],
+        decision_horizon_seconds=6 * 3600,
+        availability_embargo_seconds=6 * 3600,
+    )
+    assert forecasts[1].lambda_home > GOALS_TARGET.initial_home_rate
+    assert forecasts[1].effective_support > 0.0
+
+
+def test_pit_walk_forward_is_deterministic_for_reordered_input() -> None:
+    rows = [
+        _match(ref=221, kickoff=BASE, home=1, away=2, goals=(2, 0)),
+        _match(ref=222, kickoff=BASE + DAY, home=2, away=3, goals=(1, 1)),
+        _match(ref=223, kickoff=BASE + 2 * DAY, home=1, away=3, goals=(3, 1)),
+    ]
+    a = DynamicHierarchicalCountBaseline(GOALS_TARGET).walk_forward(rows)
+    b = DynamicHierarchicalCountBaseline(GOALS_TARGET).walk_forward(
+        list(reversed(rows))
+    )
+    assert [
+        (x.fixture_key, x.lambda_home, x.lambda_away)
+        for x in a
+    ] == [
+        (x.fixture_key, x.lambda_home, x.lambda_away)
+        for x in b
+    ]
+
+
+def test_pit_walk_forward_rejects_invalid_horizon_contract() -> None:
+    row = _match(ref=231, kickoff=BASE, home=1, away=2)
+    with pytest.raises(ValueError, match="decision_horizon_seconds"):
+        DynamicHierarchicalCountBaseline(GOALS_TARGET).walk_forward(
+            [row], decision_horizon_seconds=0
+        )
+    with pytest.raises(ValueError, match="availability_embargo_seconds"):
+        DynamicHierarchicalCountBaseline(GOALS_TARGET).walk_forward(
+            [row], availability_embargo_seconds=-1
+        )
