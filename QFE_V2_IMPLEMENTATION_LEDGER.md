@@ -267,6 +267,17 @@ The normalized records preserve source event/freeze hashes, entry model/market p
 
 ### Layer 4 — ensemble and calibration
 
+Status: **PROTOCOL + DEVELOPMENT ENSEMBLE FROZEN; CALIBRATION NOT YET OPENED**
+
+Frozen pre-calibration artifacts:
+- Protocol commit: `7a73e1ac2`; protocol hash `80f3f0c61fbd9e707a28376fc9745a16df468cb04fb34e4e3191ee391cb7d1ee`.
+- Protocol audit hash: `cb919516908b7b3e57b48e787fb71d7f61ba741af5a8956c52f360f4805c0800`.
+- DEVELOPMENT ensemble selection hash: `3cf13c8e2e4c625ab8798a7f633fee58dd2ac8e1dd14e718b755c5fae47ef41f`.
+- Goals similar-context weight: **0.20** (maximum preregistered eligible grid point; grid is not expanded after seeing this result).
+- Corners coherent side-NB2 mixture weight: **0.75**.
+- Execution contract: `evidence/layer4/QFE_LAYER4_EXECUTION_CONTRACT_V1.json` (frozen before CALIBRATION outcomes are opened).
+
+
 - [ ] Fit constrained non-negative ensemble on earlier OOF predictions only.
 - [ ] Compare equal-weight / best-single / conservative anchor.
 - [ ] Platt calibration.
