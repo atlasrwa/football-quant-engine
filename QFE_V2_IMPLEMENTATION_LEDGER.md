@@ -153,15 +153,47 @@ market-event probability evidence, or commercial validation.
 
 ### Layer 3 — chronological component evaluation
 
-- [ ] Freeze development/calibration/protected chronological folds.
-- [ ] Conservative climatology baseline.
-- [ ] Dynamic hierarchical baseline evaluation.
-- [ ] Structured goals model comparison.
-- [ ] Structured corners model comparison.
-- [ ] Nonlinear tabular candidate with leakage-safe preprocessing.
-- [ ] Deterministic similar-opponent candidate.
-- [ ] Immutable component OOF prediction artifacts.
-- [ ] Paired LL/Brier/count-distribution comparisons with fixture/time blocks.
+Status: **READY FOR MERGE on `feat/qfe-v2-layer3`**
+
+- [x] Freeze development/calibration/protected chronological folds.
+- [x] Conservative dynamic-Poisson anchor.
+- [x] Dynamic hierarchical baseline evaluation.
+- [x] Structured goals comparison: Poisson, NB2, rho correction, full competition Dixon-Coles.
+- [x] Structured corners comparison: Poisson vs NB2 dispersion.
+- [x] BTTS dependence comparison for Dixon-Coles.
+- [x] Nonlinear PIT-only HistGradientBoosting Poisson benchmark.
+- [x] Deterministic same-competition similar-context benchmark.
+- [x] Immutable component OOF prediction artifacts.
+- [x] Paired LL/Brier/count-NLL comparisons with weekly-block bootstrap uncertainty.
+- [x] Calibration outcomes remain unscored.
+- [x] Protected 2026/27 outcomes remain unscored.
+
+Frozen chronology:
+- Warm-up: 552 fixtures.
+- Development: 3,812 fixtures.
+- Calibration: 959 fixtures.
+- Protected: 317 fixtures from 2026-08-01 onward across all six competitions.
+- Chronology manifest: `9cf5e680174b78b639a80bd85498ed04f3f79482634ced8194ae5c9192495269`.
+
+Frozen Layer 3 evidence:
+- Final component-evaluation bundle: `bc7ca4aa57577cd15902062718125537afacc6aaa04092322ffb3d27be28ee5c`.
+- Structured-development diagnostic bundle V2: `709c1daf0eea03fb439460d41cd4f3f3152009963bad69a77a2cf28c72f26c62`.
+- Structured OOF semantic hash: `c41dcacca9ccb47b5bbeb2f732b8398ff0a2ba7fbf6430bd430132e79385400d`.
+- Tabular OOF semantic hash: `c9fd3c986ee5bbcfe9b00aef242a2929ccec04d08a53bdeb63df3a68744f3e4f`.
+- Similar-context OOF semantic hash: `8388c6604750ea1f8cfe9435ecf26dd20fd5a044bc6af553f2c75dab65896c23`.
+- Development fold manifest: `b019226b8ff7ff278cb334909becc847642838ca9fe3fca269a5332565123e1a`.
+- Provenance repair: preliminary structured evidence V1 (`5a0eef3917312c775ac0e7cfe8588ba42a5848ac977f46905b6be02f24fc9b1d`) was superseded before merge because `chronology.py` gained the frozen OOF-fold definitions after that report was generated. The tournament scientific payload/decisions were asserted identical; V2 rebinds the same results to the final implementation fingerprints.
+- `evidence/layer3/QFE_LAYER3_COMPONENT_EVALUATION.json`
+- `evidence/layer3/QFE_LAYER3_COMPONENT_EVALUATION.md`
+
+Development conclusions:
+- **Corners side-NB2 = BINARY_MARKET_CANDIDATE_MIXED_TOTAL_DISTRIBUTION.** On fold OOF it improves fixed-line binary Log Loss by `+0.002443` (95% weekly-block CI `+0.000771` to `+0.004025`) and Brier by `+0.001134` (CI `+0.000336` to `+0.001881`), but worsens total-count NLL by `-0.011440` (CI `-0.021534` to `-0.000997`). The earlier full-development side-joint likelihood diagnostic is positive; these are different scoring objects and are preserved separately.
+- **Goals similar-context = WEAK_MIXED_SIGNAL_CIS_CROSS_ZERO.** Mean total-count NLL, binary LL and Brier improvements are positive, but all paired CIs cross zero; retain only as a possible ensemble diversifier.
+- Goals dynamic Dixon-Coles / goal NB2 / full competition Dixon-Coles: not supported or inconclusive as standalone replacements.
+- Nonlinear HistGradientBoosting: materially worse on both goals and corners; rejected as standalone.
+- Similar-context corners: weak/inconclusive as standalone.
+
+Scientific state: **DEVELOPMENT_OOF_ONLY**. No calibration, ensemble fitting, market comparison, or protected scoring has occurred.
 
 ### Layer 4 — ensemble and calibration
 
@@ -205,12 +237,14 @@ defect discovered after freeze requires abort/version/new experiment.
 
 ## 6. Current immediate gate
 
-Layer 2 merge gate status:
+Layer 3 merge gate status:
 
-1. [x] Run canonical multi-season builder over the complete cached corpus.
-2. [x] Verify 5,640 fixture identity and exact source lineage.
-3. [x] Generate goals and corners walk-forward baseline forecasts.
-4. [x] Inspect support/cold-start/competition-transition and competition slices.
-5. [x] Final full repository tests and import sweep on the exact staged state: 235 tests / 61 research modules / 0 import failures.
-6. [x] Freeze Layer 2 implementation/development evidence.
-7. [x] Final review passed; branch authorized for PR/merge. Post-merge commit is recorded in a ledger-only follow-up.
+1. [x] Freeze calendar chronology before candidate scoring.
+2. [x] Freeze development OOF folds and ensure one shared fold manifest across structured, tabular and similar-context candidates.
+3. [x] Score candidate selection on DEVELOPMENT only; calibration rows scored = 0; protected rows scored = 0.
+4. [x] Generate immutable structured/tabular/similar-context OOF artifacts.
+5. [x] Reconcile side-joint likelihood diagnostics vs total-count OOF metrics explicitly.
+6. [x] Generate final component-evaluation bundle with paired weekly-block uncertainty.
+7. [x] Rerun complete repository test suite and research import sweep on the exact frozen state: 271 tests passed; 71 research modules; 0 import failures.
+8. [x] Verify evidence regeneration/idempotence, Git integrity and Foundation/Layer 2 evidence unchanged. Structured/tabular/similar OOF and final component bundle are idempotent; `git diff --check` passes.
+9. [ ] Commit, PR and merge Layer 3 only if every gate remains green.
