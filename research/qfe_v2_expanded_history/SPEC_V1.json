@@ -1,0 +1,61 @@
+{
+  "version": "QFE_V2_EXPANDED_HISTORY_CHALLENGER_V1",
+  "status": "PREREGISTERED_RETROSPECTIVE_CHALLENGER",
+  "reference_model": "qfe-v2-layer4-standalone-pmodel-v1",
+  "reference_model_freeze_hash": "e33af913f4c27ce33355c78792419ad8cee73e3f16ce7c685781a010d386b3ea",
+  "historical_candidate_manifest": "QFE_V2_HISTORICAL_CANDIDATE_V1",
+  "scientific_boundaries": {
+    "market_odds_used": false,
+    "protected_outcomes_scored": 0,
+    "protected_start": "2026-08-01T00:00:00Z",
+    "primary_evaluation_provider": "THESTATSAPI_ONLY",
+    "auxiliary_provider": "FOOTYSTATS_CACHED",
+    "llm_numeric_feature": false,
+    "champion_changed": false,
+    "layer4_reference_changed": false
+  },
+  "challenger_change": {
+    "only_change": "augment pre-fixture hierarchical count-state updates with provider-scoped cached FootyStats goals/corners from extension competitions",
+    "auxiliary_fields": ["goals_home", "goals_away", "corners_home", "corners_away"],
+    "forbidden_auxiliary_fields": ["shots", "shots_on_target", "possession", "fouls", "yellow_cards", "xg", "odds", "potential"],
+    "team_identity": "provider-scoped FootyStats team refs; no cross-provider team mapping",
+    "competition_identity": "frozen deployment competition refs from candidate manifest",
+    "same_kickoff_rule": "forecast all fixtures at a kickoff before any outcome update",
+    "goal_similar_context": "unchanged TheStatsAPI-only component",
+    "corner_dispersion": "unchanged frozen Layer4 alpha",
+    "ensemble_weights": {
+      "goals_similar_context": 0.2,
+      "corners_nb2_joint_mixture": 0.75
+    },
+    "calibration": "unchanged frozen Layer4 calibrator mappings applied to both arms; no refit"
+  },
+  "evaluation": {
+    "descriptive_window": "CALIBRATION_FIT",
+    "primary_window": "CALIBRATION_SELECT",
+    "primary_fixture_count_expected": 204,
+    "groups": ["GOALS_TOTAL", "CORNERS_SIDE", "CORNERS_TOTAL"],
+    "metrics": ["fixture_balanced_log_loss", "fixture_balanced_brier", "weighted_ece_10", "weekly_block_paired_improvement"],
+    "corner_primary_composite": "50% CORNERS_SIDE + 50% CORNERS_TOTAL, each group using frozen Layer4 sample weights",
+    "corner_role_guards": ["HOME", "AWAY"],
+    "comparison_surfaces": ["RAW", "FROZEN_CALIBRATED"]
+  },
+  "advance_gate": {
+    "scope": "family_specific",
+    "goals": [
+      "CALIBRATION_SELECT raw log loss challenger < reference",
+      "CALIBRATION_SELECT raw brier challenger <= reference",
+      "CALIBRATION_SELECT frozen-calibrated log loss challenger < reference",
+      "CALIBRATION_SELECT frozen-calibrated brier challenger <= reference",
+      "weekly-block 95% CI lower bound for raw log-loss improvement > 0"
+    ],
+    "corners": [
+      "CALIBRATION_SELECT raw composite log loss challenger < reference",
+      "CALIBRATION_SELECT raw composite brier challenger <= reference",
+      "CALIBRATION_SELECT frozen-calibrated composite log loss challenger < reference",
+      "CALIBRATION_SELECT frozen-calibrated composite brier challenger <= reference",
+      "weekly-block 95% CI lower bound for raw composite log-loss improvement > 0",
+      "HOME and AWAY raw side log-loss point estimates are each non-worse"
+    ],
+    "promotion": "No promotion from this experiment. Passing only authorizes a separately frozen protected/prospective evaluation."
+  }
+}
