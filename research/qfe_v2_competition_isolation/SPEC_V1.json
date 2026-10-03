@@ -1,0 +1,78 @@
+{
+  "version": "QFE_V2_COMPETITION_ISOLATION_V1",
+  "status": "PREREGISTERED_MECHANISM_TEST",
+  "question": "Did the expanded-history challenger fail because auxiliary competitions contaminated the universal global prior too strongly?",
+  "reference": {
+    "model_freeze_hash": "e33af913f4c27ce33355c78792419ad8cee73e3f16ce7c685781a010d386b3ea",
+    "competition_prior_weight": 40.0,
+    "provider_history": "THESTATSAPI_ONLY"
+  },
+  "challenger": {
+    "provider_history": "THESTATSAPI_PLUS_FOOTYSTATS_CACHED_COUNT_EXTENSION",
+    "only_tuned_parameter": "competition_prior_weight",
+    "candidate_grid": [4.0, 10.0, 20.0, 40.0],
+    "all_other_dynamic_parameters": "frozen Layer3/Layer4 values",
+    "goals_similar_context_weight": 0.2,
+    "corners_nb2_weight": 0.75,
+    "corner_dispersion": "fold-specific Layer3.1 OOF alpha for DEVELOPMENT; frozen Layer4 alpha for CALIBRATION",
+    "forbidden_changes": [
+      "team identity remapping across providers",
+      "team_global_prior_weight",
+      "global_prior_weight",
+      "team_comp_prior_weight",
+      "half_life_days",
+      "distribution family",
+      "ensemble weights",
+      "market data",
+      "protected outcomes"
+    ]
+  },
+  "selection": {
+    "period": "DEVELOPMENT D1-D3 only",
+    "family_specific": true,
+    "primary_metric": "fixture-balanced log loss",
+    "brier_guard": "candidate brier <= TSA-only reference brier",
+    "rule": "among candidates passing brier guard, choose lowest log loss; ties within 1e-12 choose larger prior weight",
+    "reference_is_not_in_candidate_grid_selection": true
+  },
+  "confirmation": {
+    "period": "DEVELOPMENT D4",
+    "requirements": [
+      "selected challenger log loss < TSA-only reference",
+      "selected challenger brier <= TSA-only reference",
+      "weekly-block paired log-loss improvement mean > 0"
+    ],
+    "confidence_interval": "reported, not required for D4 continuation"
+  },
+  "calibration": {
+    "fit_period": "CALIBRATION_FIT",
+    "select_period": "CALIBRATION_SELECT",
+    "family_locked_to_reference": {
+      "GOALS_TOTAL": "ISOTONIC_GLOBAL",
+      "CORNERS_SIDE": "PLATT_GLOBAL",
+      "CORNERS_TOTAL": "PLATT_ROLE_COMP_RIDGE"
+    },
+    "challenger_calibrator_parameters": "refit on challenger CALIBRATION_FIT only",
+    "reference_calibration": "frozen Layer4 p_model"
+  },
+  "advance_gate": {
+    "requires_d4_confirmation": true,
+    "calibration_select": [
+      "raw log loss challenger < reference",
+      "raw brier challenger <= reference",
+      "calibrated log loss challenger < reference",
+      "calibrated brier challenger <= reference",
+      "weekly-block raw log-loss improvement 95% CI lower bound > 0"
+    ],
+    "corners_extra_guard": "HOME and AWAY side raw log-loss point estimates each non-worse",
+    "promotion": "No direct promotion. Passing authorizes a separately frozen protected/prospective evaluation only."
+  },
+  "boundaries": {
+    "network_calls": 0,
+    "market_odds_used": false,
+    "protected_outcomes_scored": 0,
+    "champion_changed": false,
+    "layer4_reference_changed": false,
+    "llm_numeric_feature": false
+  }
+}
