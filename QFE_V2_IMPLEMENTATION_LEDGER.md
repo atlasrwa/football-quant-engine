@@ -276,6 +276,10 @@ Frozen pre-calibration artifacts:
 - Goals similar-context weight: **0.20** (maximum preregistered eligible grid point; grid is not expanded after seeing this result).
 - Corners coherent side-NB2 mixture weight: **0.75**.
 - Execution contract: `evidence/layer4/QFE_LAYER4_EXECUTION_CONTRACT_V1.json` (frozen before CALIBRATION outcomes are opened).
+- Raw CALIBRATION substrate hash: `94d29f3d396f802049e45b58b45c4115e926ba40d0e715ff27864939a4ec20c4`; **959 fixtures / 18,203 event cells / 0 protected / 0 market inputs**.
+- CALIBRATION split actually materialized under the frozen dates: **755 FIT fixtures / 204 SELECT fixtures**.
+- Pre-calibration common corner NB2 alpha: **0.0998810331361972** from 8,668 eligible side observations strictly before CALIBRATION.
+- Calibrator execution implementation is frozen before SELECT scoring; no post-result method/code change is permitted under V1.
 
 
 - [ ] Fit constrained non-negative ensemble on earlier OOF predictions only.
