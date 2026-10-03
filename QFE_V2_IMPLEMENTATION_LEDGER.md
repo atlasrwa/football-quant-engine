@@ -318,18 +318,45 @@ Layer 4 completion gates:
 
 ### Layer 5 — market-relative research
 
-- [ ] Freeze the Layer 5 market/disagreement protocol **before opening PROTECTED**.
-- [ ] Horizon-matched timestamped same-bookmaker market snapshots.
-- [ ] Preregister primary no-vig method and bounded sensitivity methods.
-- [ ] Market Surface Engine: reconstruct coherent market CDFs from quoted line ladders when temporal/coverage requirements are satisfied.
-- [ ] Fail closed on incomplete, stale or materially time-incoherent ladders.
-- [ ] Preserve raw quotes/timestamps alongside any deterministic monotonic market-surface cleanup.
-- [ ] QFE CDF vs market CDF diagnostics: location/mean shift, dispersion/tail shape, broad-vs-local disagreement.
-- [ ] Cross-line robustness: adjacent-line sign consistency, corroborating-line count, signed CDF gap and local smoothness.
+Status: **V1.1 PREREGISTERED / PROTECTED SEALED / IMPLEMENTATION REVALIDATION IN PROGRESS**
+
+Frozen protocol:
+- Protocol version: `qfe-layer5-market-surface-disagreement-v1`.
+- Layer 5 V1 hash: `ecb72d508f421fbbcd45e4623acc50df882c178af83743365ed4be4e2dcebf65` — **ABORTED PRE-PROTECTED** because bookmaker selection among multiple same-bookmaker candidates was underspecified; no protected outcome/score had been opened.
+- Active Layer 5 V1.1 hash: `0e3928354f7da00e74c9bacd43b02cdace1556d0d8e11544f9ae0bb49fab2fe5` — repairs bookmaker/source selection while preserving every outcome-independent disagreement threshold.
+- V1.1 bookmaker hierarchy: `pinnacle → bet365 → betmgm-uk → paddy-power`; structural availability only, with no price-driven fallback.
+- Frozen Layer 4 model binding: `e33af913f4c27ce33355c78792419ad8cee73e3f16ce7c685781a010d386b3ea`.
+- Layer 4 integrity-audit binding: `78f5925fc6cc1821e35724663da28a91a82390eab02c87cfdb03a0e07ed8b9e2`.
+- Registered decision horizon: **T-6h**.
+- No protected outcome or protected market-relative score was opened to design this policy.
+
+Key frozen policy choices:
+- Primary no-vig: **multiplicative/proportional**; Shin is sensitivity-only and cannot be selected because it enlarges disagreement.
+- Same-bookmaker/timestamp-proven market bundles only; max age 30 minutes, max intra-surface skew 120 seconds.
+- Corner surfaces require at least 3 adjacent quoted lines and bounded equal-weight monotone isotonic repair; max repair 3 pp / mean repair 1 pp.
+- Goals remain total **2.5 only** in Layer 5 V1; no unsupported goal ladder is invented.
+- Disagreement requires at least **5 pp** selected-line gap and at least **2 pp** after the empirical calibration-reliability penalty.
+- Corner surfaces require at least 2 adjacent corroborating lines at ≥3 pp, with one ≥5 pp, and no opposite strong gap.
+- **Maximum gap is never a selection criterion or tie-breaker.** The selected line is the central corroborated line whose cleaned market probability is closest to 0.50.
+- Calibration support, dynamic support, OOD/component-dispersion and cross-line consistency can force abstention.
+- The reliability-adjusted gap is an eligibility diagnostic, **not** an individual-fixture confidence bound.
+- Primary market benchmark remains the unmodified preregistered no-vig probability; any market-only calibration is a diagnostic benchmark and cannot replace `p_market` for eligibility.
+
+Layer 5 gates:
+- [x] Freeze the Layer 5 market/disagreement protocol **before opening PROTECTED**.
+- [x] Execute protocol regression tests on the compute host and bind the exact implementation audit `e317cd9eadbfb236e516b859be38bbf35582ad799d03e11d7509550ca6cf00c3`: 319 repo tests, 86 imports, 21 focused Layer 5 tests, and adversarial property gates all PASS.
+- [x] Freeze horizon-matched timestamped same-bookmaker market manifest `6f43bd3cc224cc9e42515d6c187b1de7bfff822324aa5cbc4a4b0cbfcb74b54f` from the exact QFE prospective-capture prefix; 3 goals and 3 match-corner protected comparators qualify at T-6h.
+- [x] Implement primary proportional no-vig and Shin sensitivity diagnostics exactly as preregistered.
+- [x] Market Surface Engine implemented: same-bookmaker line ladders, bounded monotone CDF repair, raw quote preservation and fail-closed semantics.
+- [x] Fail closed on incomplete, stale, cross-book or materially time-incoherent ladders; selected-book price/coherence failure cannot fall through to another book.
+- [x] Preserve raw quotes/timestamps alongside bounded deterministic monotonic cleanup.
+- [ ] QFE CDF vs market CDF diagnostics: broad signed gap, absolute gap, sign consistency and median-crossing displacement; no implied mean claim without proven tail coverage.
+- [x] Cross-line robustness and deterministic non-max-gap line selection implemented and adversarially validated; maximum-gap selection is structurally excluded.
 - [ ] Market-only calibrated comparator and separate market+QFE incremental-information arm.
-- [ ] Disagreement eligibility uses calibration-region support, historical support, OOD, component dispersion/consensus and adjacent-line robustness.
-- [ ] Freeze line-selection and abstention policy before any protected outcome is opened.
-- [ ] After all above are frozen, score global and disagreement-subset PROTECTED results separately.
+- [x] Implement disagreement eligibility/abstention using calibration support, dynamic support, OOD/component dispersion, reliability penalty and adjacent-line robustness.
+- [x] Freeze final V1.1 implementation integrity audit `3a93b1954e66515275d5965dbf833c502b5fc5849fcd1eda32c333934ebb856b` and matched-market manifest `6f43bd3cc224cc9e42515d6c187b1de7bfff822324aa5cbc4a4b0cbfcb74b54f`. Coverage remains intentionally sparse: 3 goals / 3 corner surfaces / 0 team corners.
+- [x] Freeze bookmaker, line-selection and abstention implementation before any protected outcome is opened.
+- [ ] **NEXT:** after merging the frozen V1.1 apparatus, score the standalone 317-fixture protected p_model globally; market-relative/disagreement scoring is limited to the frozen matched-market subset and must be labeled extremely underpowered.
 
 ### Layer 6 — prospective commercial evidence
 
@@ -365,4 +392,4 @@ Layer 4 merge gate:
 8. [x] Prove Layer 4 evidence regeneration/idempotence and code/source bindings. Full raw CALIBRATION → calibrator selection/refit → model-freeze rebuild reproduced hashes `94d29f3d...20c4`, `f3770a8b...92f2`, and `e33af913...6b3ea` exactly.
 9. [x] Run complete repository tests/import sweep and verify Foundation/Layers 2–3.1 plus prospective evidence unchanged: 298 tests passed; 82 research modules imported; 0 failures; prior evidence unchanged; active legacy-product refs = 0.
 10. [x] Commit, PR and merge Layer 4 if every gate remains green. Merged via PR #36 at `4858281f9e7dc3613fa7b0bb12b939521ce3b87c`.
-11. [ ] Build/freeze Layer 5 market-surface and disagreement policy; **do not open the 317 protected outcomes before that freeze**.
+11. [x] Preregister Layer 5 market-surface/disagreement policy hash `ecb72d50...bf65`; protected remains sealed. Next: execute protocol tests and freeze the complete Layer 5 implementation/matched-market manifest before any protected outcome is opened.
