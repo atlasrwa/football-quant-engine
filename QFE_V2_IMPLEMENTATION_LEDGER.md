@@ -153,7 +153,7 @@ market-event probability evidence, or commercial validation.
 
 ### Layer 3 — chronological component evaluation
 
-Status: **READY FOR MERGE on `feat/qfe-v2-layer3`**
+Status: **MERGED TO `main`**
 
 - [x] Freeze development/calibration/protected chronological folds.
 - [x] Conservative dynamic-Poisson anchor.
@@ -167,6 +167,12 @@ Status: **READY FOR MERGE on `feat/qfe-v2-layer3`**
 - [x] Paired LL/Brier/count-NLL comparisons with weekly-block bootstrap uncertainty.
 - [x] Calibration outcomes remain unscored.
 - [x] Protected 2026/27 outcomes remain unscored.
+
+Layer 3 merge record:
+- Chronology commit: `da2f072c4`
+- Component-evaluation commit: `f7dcbbfe7`
+- PR: `#32` — QFE V2 Layer 3: frozen chronology and component OOF evaluation
+- Main merge commit: `34edf14550b301987db4c1d60eaf266aecf4a9dd`
 
 Frozen chronology:
 - Warm-up: 552 fixtures.
@@ -247,4 +253,4 @@ Layer 3 merge gate status:
 6. [x] Generate final component-evaluation bundle with paired weekly-block uncertainty.
 7. [x] Rerun complete repository test suite and research import sweep on the exact frozen state: 271 tests passed; 71 research modules; 0 import failures.
 8. [x] Verify evidence regeneration/idempotence, Git integrity and Foundation/Layer 2 evidence unchanged. Structured/tabular/similar OOF and final component bundle are idempotent; `git diff --check` passes.
-9. [ ] Commit, PR and merge Layer 3 only if every gate remains green.
+9. [x] Commit, PR and merge Layer 3 only if every gate remains green. Merged via PR #32 at `34edf14550b301987db4c1d60eaf266aecf4a9dd`.
