@@ -203,7 +203,13 @@ Scientific state: **DEVELOPMENT_OOF_ONLY**. No calibration, ensemble fitting, ma
 
 ### Layer 3.1 — multi-line / team-side corner market-event coverage
 
-Status: **IMPLEMENTED / PRE-REGISTERED DEVELOPMENT EVIDENCE; NOT YET MERGED**
+Status: **MERGED TO `main`**
+
+Layer 3.1 merge record:
+- Protocol commit: `b4311cf72`
+- Implementation/evidence commit: `54088a373`
+- PR: `#34` — QFE V2 Layer 3.1: multi-line team corners and prospective evidence warehouse
+- Main merge commit: `5dc01b60930ff62ac2aa9f443962c8f59c384b0f`
 
 Preregistration was committed before scoring:
 - Protocol commit: `b4311cf72`
@@ -311,6 +317,6 @@ Layer 3.1 / evidence-warehouse merge gate:
 6. [x] Regenerate compact Layer 3.1 evidence from scratch; reproduce the same scientific artifact hash and verify lossless deterministic compact storage.
 7. [x] Run full repository suite, import sweep, Git integrity and prior-layer hash checks: 283 tests passed; 75 research modules imported; 0 failures; prior tracked evidence unchanged.
 8. [x] Exact staged-state validation passed; branch authorized for PR/merge.
-9. [ ] Commit, PR and merge; record final main merge commit in a ledger-only follow-up.
+9. [x] Commit and merge via PR #34 at `5dc01b60930ff62ac2aa9f443962c8f59c384b0f`; merge record added in this docs-only follow-up.
 
 The 959 CALIBRATION fixtures and 317 PROTECTED fixtures remain unopened for Layer 4 selection/protected scoring respectively.
