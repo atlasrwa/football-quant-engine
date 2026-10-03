@@ -10,7 +10,7 @@ from math import isfinite
 from statistics import mean
 from typing import Iterable, Optional
 
-from src.research.layer5.protocol import protocol_v1
+from src.research.layer5.protocol import protocol_active
 from src.research.reconciliation.devig import devig_multiplicative, devig_shin
 
 
@@ -141,7 +141,7 @@ def _longest_adjacent_segment(points: list[MarketPoint]) -> list[MarketPoint]:
 
 
 def devig_quote(quote: TwoWayQuote) -> MarketPoint:
-    protocol = protocol_v1()
+    protocol = protocol_active()
     nv = protocol["no_vig"]
     if not (
         quote.over_odds > nv["decimal_odds_strictly_greater_than"]
@@ -185,7 +185,7 @@ def select_latest_complete_bundle(
     surface builder; we do not fall back to an older bundle because the latest
     complete one produces an inconvenient disagreement.
     """
-    h = protocol_v1()["market_horizon"]
+    h = protocol_active()["market_horizon"]
     eligible = [
         q for q in quotes
         if q.bookmaker == bookmaker
@@ -230,13 +230,41 @@ def select_latest_complete_bundle(
     return tuple(sorted(selected, key=lambda q: q.line))
 
 
+def select_benchmark_bundle(
+    quotes: Iterable[TwoWayQuote],
+    *,
+    prediction_cutoff: float,
+    market_key: str,
+    minimum_adjacent_lines: int,
+) -> tuple[TwoWayQuote, ...]:
+    """Select bookmaker then bundle without inspecting price attractiveness.
+
+    The first hierarchy bookmaker with a structurally complete in-window bundle
+    wins. Once chosen, callers MUST evaluate that exact bundle and abstain on
+    price/coherence failure; they may not fall through to another bookmaker.
+    """
+    hierarchy = tuple(protocol_active()["bookmaker_selection"]["hierarchy"])
+    rows = list(quotes)
+    for bookmaker in hierarchy:
+        chosen = select_latest_complete_bundle(
+            rows,
+            prediction_cutoff=prediction_cutoff,
+            bookmaker=bookmaker,
+            market_key=market_key,
+            minimum_adjacent_lines=minimum_adjacent_lines,
+        )
+        if chosen:
+            return chosen
+    return ()
+
+
 def build_market_point(
     quote: TwoWayQuote,
     *,
     prediction_cutoff: float,
 ) -> MarketSurface:
     """Build a single-line market comparator (goals total 2.5 in V1)."""
-    p = protocol_v1()
+    p = protocol_active()
     h = p["market_horizon"]
     if quote.observed_at > prediction_cutoff:
         return _abstain(
@@ -300,7 +328,7 @@ def build_market_surface(
     prediction_cutoff: float,
 ) -> MarketSurface:
     """Build one same-bookmaker, same-bundle coherent multi-line market CDF."""
-    protocol = protocol_v1()
+    protocol = protocol_active()
     h = protocol["market_horizon"]
     s = protocol["market_surface"]
     rows = list(quotes)

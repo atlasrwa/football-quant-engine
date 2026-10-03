@@ -10,7 +10,7 @@ from statistics import mean, median
 from typing import Iterable, Optional
 
 from src.research.layer5.market_surface import MarketPoint, MarketSurface
-from src.research.layer5.protocol import protocol_v1
+from src.research.layer5.protocol import protocol_active
 
 
 @dataclass(frozen=True, slots=True)
@@ -62,7 +62,7 @@ def _reject(reason: str) -> DisagreementDecision:
 
 
 def _support_reason(model: ModelMarketPoint) -> Optional[str]:
-    p = protocol_v1()["model_support_gate"]
+    p = protocol_active()["model_support_gate"]
     if p["dynamic_support_required"] and not model.dynamic_supported:
         return "MODEL_DYNAMIC_SUPPORT_INSUFFICIENT"
     if model.calibration_bin_unique_fixtures < p["calibration_bin_min_unique_fixtures"]:
@@ -83,7 +83,7 @@ def _reliability_penalty(model: ModelMarketPoint) -> float:
 
 
 def _devig_stable(model_p_over: float, market: MarketPoint) -> bool:
-    p = protocol_v1()["no_vig"]["sensitivity"]
+    p = protocol_active()["no_vig"]["sensitivity"]
     primary_gap = model_p_over - market.p_over_clean
     shin_gap = model_p_over - market.p_over_shin
     # A direction change across de-vig methods is unstable unless both gaps are
@@ -97,7 +97,7 @@ def evaluate_single_line(
     market: MarketSurface,
     model: ModelMarketPoint,
 ) -> DisagreementDecision:
-    protocol = protocol_v1()
+    protocol = protocol_active()
     if not market.is_ok or len(market.points) != 1:
         return _reject(market.reason or "TARGET_UNSUPPORTED")
     point = market.points[0]
@@ -161,7 +161,7 @@ def evaluate_surface(
 ) -> DisagreementDecision:
     if not market.is_ok:
         return _reject(market.reason or "TARGET_UNSUPPORTED")
-    protocol = protocol_v1()
+    protocol = protocol_active()
     dp = protocol["disagreement_policy"]
     support = protocol["model_support_gate"]
     model_by_line = {m.line: m for m in models}

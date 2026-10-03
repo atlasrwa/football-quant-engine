@@ -318,11 +318,13 @@ Layer 4 completion gates:
 
 ### Layer 5 — market-relative research
 
-Status: **PROTOCOL PREREGISTERED / PROTECTED SEALED / IMPLEMENTATION NOT YET VALIDATED**
+Status: **V1.1 PREREGISTERED / PROTECTED SEALED / IMPLEMENTATION REVALIDATION IN PROGRESS**
 
 Frozen protocol:
 - Protocol version: `qfe-layer5-market-surface-disagreement-v1`.
-- Protocol hash: `ecb72d508f421fbbcd45e4623acc50df882c178af83743365ed4be4e2dcebf65`.
+- Layer 5 V1 hash: `ecb72d508f421fbbcd45e4623acc50df882c178af83743365ed4be4e2dcebf65` — **ABORTED PRE-PROTECTED** because bookmaker selection among multiple same-bookmaker candidates was underspecified; no protected outcome/score had been opened.
+- Active Layer 5 V1.1 hash: `0e3928354f7da00e74c9bacd43b02cdace1556d0d8e11544f9ae0bb49fab2fe5` — repairs bookmaker/source selection while preserving every outcome-independent disagreement threshold.
+- V1.1 bookmaker hierarchy: `pinnacle → bet365 → betmgm-uk → paddy-power`; structural availability only, with no price-driven fallback.
 - Frozen Layer 4 model binding: `e33af913f4c27ce33355c78792419ad8cee73e3f16ce7c685781a010d386b3ea`.
 - Layer 4 integrity-audit binding: `78f5925fc6cc1821e35724663da28a91a82390eab02c87cfdb03a0e07ed8b9e2`.
 - Registered decision horizon: **T-6h**.

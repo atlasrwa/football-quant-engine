@@ -104,3 +104,28 @@ def test_protected_open_requires_full_layer5_freeze():
     assert "disagreement/abstention/line-selection implementation freeze committed" in requirements
     assert "matched-market manifest frozen" in requirements
     assert "exact-state repository integrity audit passes" in requirements
+
+
+def test_v1_1_repairs_bookmaker_selection_without_opening_protected():
+    from src.research.layer5.protocol import (
+        LAYER5_PROTOCOL_V1_1_HASH,
+        protocol_active,
+        protocol_v1_1,
+    )
+    d = protocol_v1_1()
+    assert d == protocol_active()
+    assert sha256_json(d) == LAYER5_PROTOCOL_V1_1_HASH
+    assert d["supersedes"]["status"] == "ABORTED_PRE_PROTECTED_DESIGN_DEFECT"
+    assert d["bookmaker_selection"]["hierarchy"] == [
+        "pinnacle", "bet365", "betmgm-uk", "paddy-power"
+    ]
+    assert "never fall through" in d["bookmaker_selection"]["algorithm"][-1]
+    assert d["market_source"]["fallback_sources_allowed"] is False
+    assert d["market_source"]["registered_concept_mapping"]["CORNERS_SIDE"].startswith("UNSUPPORTED")
+
+
+def test_v1_1_evidence_matches_active_protocol():
+    from src.research.layer5.protocol import LAYER5_PROTOCOL_V1_1_HASH, protocol_v1_1
+    artifact = json.loads(Path("evidence/layer5/QFE_LAYER5_PROTOCOL_V1_1.json").read_text())
+    assert artifact["protocol_hash"] == LAYER5_PROTOCOL_V1_1_HASH
+    assert {k: v for k, v in artifact.items() if k != "protocol_hash"} == protocol_v1_1()

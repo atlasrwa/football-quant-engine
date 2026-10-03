@@ -210,3 +210,38 @@ def test_surface_never_selects_central_line_below_five_pp_gate():
     assert d.absolute_gap >= 0.05
     assert d.line in (8.5, 10.5)
     assert d.line != 9.5
+
+
+def test_benchmark_bookmaker_selection_uses_frozen_hierarchy_not_best_price():
+    from src.research.layer5.market_surface import select_benchmark_bundle
+    rows = []
+    # Bet365 has dramatically more attractive prices, but Pinnacle is first and
+    # structurally complete; price attractiveness may not choose the book.
+    for line in (8.5, 9.5, 10.5):
+        rows.append(_quote(line, 4.0, 1.3, book="bet365", bundle="b365"))
+        rows.append(_quote(line, 1.9, 1.9, book="pinnacle", bundle="pin"))
+    chosen = select_benchmark_bundle(
+        rows,
+        prediction_cutoff=1200,
+        market_key="CORNERS_TOTAL",
+        minimum_adjacent_lines=3,
+    )
+    assert chosen
+    assert {q.bookmaker for q in chosen} == {"pinnacle"}
+
+
+def test_selected_book_price_failure_does_not_authorize_fallback():
+    from src.research.layer5.market_surface import select_benchmark_bundle
+    rows = []
+    for line in (8.5, 9.5, 10.5):
+        # Pinnacle structurally complete but invalid decimal odds.
+        rows.append(_quote(line, 1.0, 2.0, book="pinnacle", bundle="pin"))
+        rows.append(_quote(line, 2.0, 2.0, book="bet365", bundle="b365"))
+    chosen = select_benchmark_bundle(
+        rows,
+        prediction_cutoff=1200,
+        market_key="CORNERS_TOTAL",
+        minimum_adjacent_lines=3,
+    )
+    assert {q.bookmaker for q in chosen} == {"pinnacle"}
+    assert build_market_surface(chosen, prediction_cutoff=1200).status == "ABSTAIN"

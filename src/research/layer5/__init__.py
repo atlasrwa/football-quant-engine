@@ -14,18 +14,26 @@ from src.research.layer5.market_surface import (
     build_market_surface,
     isotonic_nonincreasing,
     select_latest_complete_bundle,
+    select_benchmark_bundle,
 )
 from src.research.layer5.protocol import (
     LAYER5_PROTOCOL_HASH,
     LAYER5_PROTOCOL_VERSION,
+    LAYER5_PROTOCOL_V1_1_HASH,
+    LAYER5_PROTOCOL_V1_1_VERSION,
+    active_protocol_hash,
+    protocol_active,
     protocol_hash,
     protocol_v1,
+    protocol_v1_1,
 )
 
 __all__ = [
     "DisagreementDecision",
     "LAYER5_PROTOCOL_HASH",
     "LAYER5_PROTOCOL_VERSION",
+    "LAYER5_PROTOCOL_V1_1_HASH",
+    "LAYER5_PROTOCOL_V1_1_VERSION",
     "MarketPoint",
     "MarketSurface",
     "ModelMarketPoint",
@@ -35,7 +43,11 @@ __all__ = [
     "evaluate_single_line",
     "evaluate_surface",
     "isotonic_nonincreasing",
+    "active_protocol_hash",
+    "protocol_active",
     "protocol_hash",
     "protocol_v1",
+    "protocol_v1_1",
     "select_latest_complete_bundle",
+    "select_benchmark_bundle",
 ]
