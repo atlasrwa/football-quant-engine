@@ -291,6 +291,7 @@ Frozen artifacts and sequence:
 - Calibrator selector implementation commit: `2c020913d`; frozen before SELECT outcomes were scored.
 - Calibration run hash: `f3770a8bc5fe80c36cb3dcf52d3dc56671bcdfcea3097be5ef17debe278192f2`.
 - Standalone model freeze hash: `e33af913f4c27ce33355c78792419ad8cee73e3f16ce7c685781a010d386b3ea`.
+- Independent Layer 4 integrity-audit hash: `78f5925fc6cc1821e35724663da28a91a82390eab02c87cfdb03a0e07ed8b9e2`; selector recomputation, monotonicity, full artifact regeneration and code/source bindings all PASS.
 
 Frozen model stack:
 - **Goals total 2.5:** dynamic hierarchical Poisson + 0.20 similar-context expected-total diversifier → **ISOTONIC_GLOBAL** calibration. SELECT LL: `0.677879` identity → `0.671208` isotonic.
@@ -313,7 +314,7 @@ Layer 4 completion gates:
 - [x] Enforce calibrated cross-line monotonicity.
 - [x] Attach component-dispersion, history support, OOD and calibration-region support metadata.
 - [x] Freeze the standalone candidate `p_model` stack.
-- [ ] Complete exact-state repository validation and merge Layer 4.
+- [x] Complete exact-state repository validation and merge Layer 4. Independent integrity audit: selector/monotonicity/regeneration/code-binding PASS; merged via PR #36.
 
 ### Layer 5 — market-relative research
 
