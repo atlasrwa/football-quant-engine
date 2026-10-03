@@ -345,18 +345,18 @@ Key frozen policy choices:
 Layer 5 gates:
 - [x] Freeze the Layer 5 market/disagreement protocol **before opening PROTECTED**.
 - [x] Execute protocol regression tests on the compute host and bind the exact implementation audit `e317cd9eadbfb236e516b859be38bbf35582ad799d03e11d7509550ca6cf00c3`: 319 repo tests, 86 imports, 21 focused Layer 5 tests, and adversarial property gates all PASS.
-- [ ] Horizon-matched timestamped same-bookmaker market snapshots.
-- [ ] Implement primary no-vig and sensitivity diagnostics exactly as preregistered.
-- [ ] Market Surface Engine: reconstruct coherent market CDFs from quoted line ladders when temporal/coverage requirements are satisfied.
-- [ ] Fail closed on incomplete, stale, cross-book or materially time-incoherent ladders.
-- [ ] Preserve raw quotes/timestamps alongside bounded deterministic monotonic cleanup.
+- [x] Freeze horizon-matched timestamped same-bookmaker market manifest `6f43bd3cc224cc9e42515d6c187b1de7bfff822324aa5cbc4a4b0cbfcb74b54f` from the exact QFE prospective-capture prefix; 3 goals and 3 match-corner protected comparators qualify at T-6h.
+- [x] Implement primary proportional no-vig and Shin sensitivity diagnostics exactly as preregistered.
+- [x] Market Surface Engine implemented: same-bookmaker line ladders, bounded monotone CDF repair, raw quote preservation and fail-closed semantics.
+- [x] Fail closed on incomplete, stale, cross-book or materially time-incoherent ladders; selected-book price/coherence failure cannot fall through to another book.
+- [x] Preserve raw quotes/timestamps alongside bounded deterministic monotonic cleanup.
 - [ ] QFE CDF vs market CDF diagnostics: broad signed gap, absolute gap, sign consistency and median-crossing displacement; no implied mean claim without proven tail coverage.
 - [x] Cross-line robustness and deterministic non-max-gap line selection implemented and adversarially validated; maximum-gap selection is structurally excluded.
 - [ ] Market-only calibrated comparator and separate market+QFE incremental-information arm.
 - [x] Implement disagreement eligibility/abstention using calibration support, dynamic support, OOD/component dispersion, reliability penalty and adjacent-line robustness.
-- [ ] Freeze matched-market manifest plus implementation/integrity audit.
-- [ ] Freeze line-selection and abstention implementation before any protected outcome is opened.
-- [ ] Only after every above gate passes, score global and disagreement-subset PROTECTED results separately.
+- [x] Freeze final V1.1 implementation integrity audit `3a93b1954e66515275d5965dbf833c502b5fc5849fcd1eda32c333934ebb856b` and matched-market manifest `6f43bd3cc224cc9e42515d6c187b1de7bfff822324aa5cbc4a4b0cbfcb74b54f`. Coverage remains intentionally sparse: 3 goals / 3 corner surfaces / 0 team corners.
+- [x] Freeze bookmaker, line-selection and abstention implementation before any protected outcome is opened.
+- [ ] **NEXT:** after merging the frozen V1.1 apparatus, score the standalone 317-fixture protected p_model globally; market-relative/disagreement scoring is limited to the frozen matched-market subset and must be labeled extremely underpowered.
 
 ### Layer 6 — prospective commercial evidence
 

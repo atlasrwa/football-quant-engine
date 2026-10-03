@@ -6,6 +6,12 @@ from src.research.layer5.disagreement import (
     evaluate_single_line,
     evaluate_surface,
 )
+from src.research.layer5.market_manifest import (
+    CapturePrefix,
+    build_matched_market_manifest,
+    snapshot_capture_prefix,
+    write_matched_market_manifest,
+)
 from src.research.layer5.market_surface import (
     MarketPoint,
     MarketSurface,
@@ -29,6 +35,7 @@ from src.research.layer5.protocol import (
 )
 
 __all__ = [
+    "CapturePrefix",
     "DisagreementDecision",
     "LAYER5_PROTOCOL_HASH",
     "LAYER5_PROTOCOL_VERSION",
@@ -38,6 +45,7 @@ __all__ = [
     "MarketSurface",
     "ModelMarketPoint",
     "TwoWayQuote",
+    "build_matched_market_manifest",
     "build_market_point",
     "build_market_surface",
     "evaluate_single_line",
@@ -50,4 +58,6 @@ __all__ = [
     "protocol_v1_1",
     "select_latest_complete_bundle",
     "select_benchmark_bundle",
+    "snapshot_capture_prefix",
+    "write_matched_market_manifest",
 ]
