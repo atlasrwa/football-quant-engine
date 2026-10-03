@@ -267,38 +267,59 @@ The normalized records preserve source event/freeze hashes, entry model/market p
 
 ### Layer 4 — ensemble and calibration
 
-Status: **PROTOCOL + DEVELOPMENT ENSEMBLE FROZEN; CALIBRATION NOT YET OPENED**
+Status: **STANDALONE `p_model` FROZEN / PROTECTED UNOPENED**
 
-Frozen pre-calibration artifacts:
+Frozen artifacts and sequence:
 - Protocol commit: `7a73e1ac2`; protocol hash `80f3f0c61fbd9e707a28376fc9745a16df468cb04fb34e4e3191ee391cb7d1ee`.
 - Protocol audit hash: `cb919516908b7b3e57b48e787fb71d7f61ba741af5a8956c52f360f4805c0800`.
 - DEVELOPMENT ensemble selection hash: `3cf13c8e2e4c625ab8798a7f633fee58dd2ac8e1dd14e718b755c5fae47ef41f`.
-- Goals similar-context weight: **0.20** (maximum preregistered eligible grid point; grid is not expanded after seeing this result).
-- Corners coherent side-NB2 mixture weight: **0.75**.
-- Execution contract: `evidence/layer4/QFE_LAYER4_EXECUTION_CONTRACT_V1.json` (frozen before CALIBRATION outcomes are opened).
+- Goals similar-context weight: **0.20**; the preregistered grid is not expanded after observing that the maximum grid point won.
+- Corners coherent Poisson/NB2 joint-mixture weight: **0.75**.
+- Execution contract hash: `a09ec9b617507654ad390f1edb4e980b6d4a5049e46049bb23f0f61cb29f5d95`.
 - Raw CALIBRATION substrate hash: `94d29f3d396f802049e45b58b45c4115e926ba40d0e715ff27864939a4ec20c4`; **959 fixtures / 18,203 event cells / 0 protected / 0 market inputs**.
-- CALIBRATION split actually materialized under the frozen dates: **755 FIT fixtures / 204 SELECT fixtures**.
+- CALIBRATION split: **755 FIT fixtures / 204 SELECT fixtures**.
 - Pre-calibration common corner NB2 alpha: **0.0998810331361972** from 8,668 eligible side observations strictly before CALIBRATION.
-- Calibrator execution implementation is frozen before SELECT scoring; no post-result method/code change is permitted under V1.
+- Calibrator selector implementation commit: `2c020913d`; frozen before SELECT outcomes were scored.
+- Calibration run hash: `f3770a8bc5fe80c36cb3dcf52d3dc56671bcdfcea3097be5ef17debe278192f2`.
+- Standalone model freeze hash: `e33af913f4c27ce33355c78792419ad8cee73e3f16ce7c685781a010d386b3ea`.
 
+Frozen model stack:
+- **Goals total 2.5:** dynamic hierarchical Poisson + 0.20 similar-context expected-total diversifier → **ISOTONIC_GLOBAL** calibration. SELECT LL: `0.677879` identity → `0.671208` isotonic.
+- **Corner sides 2.5–7.5:** coherent 0.75 NB2/0.25 Poisson mixture → **PLATT_GLOBAL** calibration. SELECT LL: `0.579224` identity → `0.578956` Platt. Ridge L1 had slightly lower LL but was inside the frozen `0.0005` tie tolerance, so the simpler Platt mapping correctly won.
+- **Corner totals 7.5–12.5:** same coherent 0.75 NB2/0.25 Poisson joint mixture → **PLATT_ROLE_COMP_RIDGE_L1** calibration. SELECT LL: `0.618977` identity → `0.613974` ridge.
 
-- [ ] Fit constrained non-negative ensemble on earlier OOF predictions only.
-- [ ] Compare equal-weight / best-single / conservative anchor.
-- [ ] Platt calibration.
-- [ ] Beta calibration.
-- [ ] Isotonic only where support is sufficient.
-- [ ] Calibration intercept/slope/reliability/probability-region support.
-- [ ] Freeze candidate standalone `p_model` stack.
+Prediction-support boundary:
+- Goals raw-probability support is strongest in `0.30–0.60`; the `0.60–0.70` bin has only 29 unique fixtures and remains unsupported.
+- Corner-side calibration has ≥30 unique fixtures in every frozen raw-probability bin.
+- Corner-total extremes `<0.10` and `>=0.80` remain unsupported.
+- Reliability intervals are empirical calibration-support bands, **not individual-fixture confidence intervals**.
+- OOD/support metadata remain diagnostics in Layer 4; Layer 5 must preregister any abstention/eligibility policy.
+
+Layer 4 completion gates:
+- [x] Fit constrained ensemble weights on DEVELOPMENT OOF only.
+- [x] Preserve coherent count distributions across corner side/total lines.
+- [x] Materialize odds-blind CALIBRATION raw predictions with protected rows structurally excluded.
+- [x] Fit Platt, beta, isotonic and partially pooled role/competition ridge challengers under frozen fixture-balanced weights.
+- [x] Select calibrators on CALIBRATION_SELECT only; refit the selected method on all CALIBRATION only after selection.
+- [x] Enforce calibrated cross-line monotonicity.
+- [x] Attach component-dispersion, history support, OOD and calibration-region support metadata.
+- [x] Freeze the standalone candidate `p_model` stack.
+- [ ] Complete exact-state repository validation and merge Layer 4.
 
 ### Layer 5 — market-relative research
 
-- [ ] Horizon-matched timestamped market snapshots.
-- [ ] Preregister primary no-vig method.
-- [ ] Market-only calibrated comparator.
-- [ ] QFE-vs-market incremental information analysis.
-- [ ] OOD/support/component-consensus diagnostics.
-- [ ] Freeze disagreement eligibility policy.
-- [ ] Separate global and disagreement-subset scorecards.
+- [ ] Freeze the Layer 5 market/disagreement protocol **before opening PROTECTED**.
+- [ ] Horizon-matched timestamped same-bookmaker market snapshots.
+- [ ] Preregister primary no-vig method and bounded sensitivity methods.
+- [ ] Market Surface Engine: reconstruct coherent market CDFs from quoted line ladders when temporal/coverage requirements are satisfied.
+- [ ] Fail closed on incomplete, stale or materially time-incoherent ladders.
+- [ ] Preserve raw quotes/timestamps alongside any deterministic monotonic market-surface cleanup.
+- [ ] QFE CDF vs market CDF diagnostics: location/mean shift, dispersion/tail shape, broad-vs-local disagreement.
+- [ ] Cross-line robustness: adjacent-line sign consistency, corroborating-line count, signed CDF gap and local smoothness.
+- [ ] Market-only calibrated comparator and separate market+QFE incremental-information arm.
+- [ ] Disagreement eligibility uses calibration-region support, historical support, OOD, component dispersion/consensus and adjacent-line robustness.
+- [ ] Freeze line-selection and abstention policy before any protected outcome is opened.
+- [ ] After all above are frozen, score global and disagreement-subset PROTECTED results separately.
 
 ### Layer 6 — prospective commercial evidence
 
@@ -322,16 +343,16 @@ defect discovered after freeze requires abort/version/new experiment.
 
 ## 6. Current immediate gate
 
-Layer 3.1 / evidence-warehouse merge gate:
+Layer 4 merge gate:
 
-1. [x] Freeze Layer 3.1 protocol in Git before scoring.
-2. [x] Score only DEVELOPMENT OOF; CALIBRATION/PROTECTED outcomes and market odds remain inaccessible.
-3. [x] Preserve whole-ladder/role aggregation and no-best-line multiplicity policy.
-4. [x] Build read-only prospective evidence warehouse from the three authoritative versioned experiment stores.
-5. [x] Verify all source ledger chains and market observation hashes.
-6. [x] Regenerate compact Layer 3.1 evidence from scratch; reproduce the same scientific artifact hash and verify lossless deterministic compact storage.
-7. [x] Run full repository suite, import sweep, Git integrity and prior-layer hash checks: 283 tests passed; 75 research modules imported; 0 failures; prior tracked evidence unchanged.
-8. [x] Exact staged-state validation passed; branch authorized for PR/merge.
-9. [x] Commit and merge via PR #34 at `5dc01b60930ff62ac2aa9f443962c8f59c384b0f`; merge record added in this docs-only follow-up.
-
-The 959 CALIBRATION fixtures and 317 PROTECTED fixtures remain unopened for Layer 4 selection/protected scoring respectively.
+1. [x] Freeze protocol before CALIBRATION (`7a73e1ac2`).
+2. [x] Audit protocol against partial pooling, coherence, support metadata and protected-data rules.
+3. [x] Freeze DEVELOPMENT ensemble selection before CALIBRATION.
+4. [x] Freeze raw CALIBRATION substrate and calibrator execution implementation before SELECT scoring (`2c020913d`).
+5. [x] Run FIT/SELECT calibrator selection exactly once under V1; no post-result candidate/grid changes.
+6. [x] Refit selected calibrators on all CALIBRATION after selection and freeze standalone `p_model`.
+7. [x] Confirm protected rows scored = 0 and market inputs used = 0.
+8. [x] Prove Layer 4 evidence regeneration/idempotence and code/source bindings. Full raw CALIBRATION → calibrator selection/refit → model-freeze rebuild reproduced hashes `94d29f3d...20c4`, `f3770a8b...92f2`, and `e33af913...6b3ea` exactly.
+9. [x] Run complete repository tests/import sweep and verify Foundation/Layers 2–3.1 plus prospective evidence unchanged: 298 tests passed; 82 research modules imported; 0 failures; prior evidence unchanged; active legacy-product refs = 0.
+10. [ ] Commit, PR and merge Layer 4 if every gate remains green.
+11. [ ] Build/freeze Layer 5 market-surface and disagreement policy; **do not open the 317 protected outcomes before that freeze**.
