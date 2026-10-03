@@ -322,7 +322,7 @@ Status: **PROTOCOL PREREGISTERED / PROTECTED SEALED / IMPLEMENTATION NOT YET VAL
 
 Frozen protocol:
 - Protocol version: `qfe-layer5-market-surface-disagreement-v1`.
-- Protocol hash: `783050b0c6b66f8cc8540944fc629165f3c84c8e517b8554c888e20266d17216`.
+- Protocol hash: `ecb72d508f421fbbcd45e4623acc50df882c178af83743365ed4be4e2dcebf65`.
 - Frozen Layer 4 model binding: `e33af913f4c27ce33355c78792419ad8cee73e3f16ce7c685781a010d386b3ea`.
 - Layer 4 integrity-audit binding: `78f5925fc6cc1821e35724663da28a91a82390eab02c87cfdb03a0e07ed8b9e2`.
 - Registered decision horizon: **T-6h**.
@@ -390,4 +390,4 @@ Layer 4 merge gate:
 8. [x] Prove Layer 4 evidence regeneration/idempotence and code/source bindings. Full raw CALIBRATION → calibrator selection/refit → model-freeze rebuild reproduced hashes `94d29f3d...20c4`, `f3770a8b...92f2`, and `e33af913...6b3ea` exactly.
 9. [x] Run complete repository tests/import sweep and verify Foundation/Layers 2–3.1 plus prospective evidence unchanged: 298 tests passed; 82 research modules imported; 0 failures; prior evidence unchanged; active legacy-product refs = 0.
 10. [x] Commit, PR and merge Layer 4 if every gate remains green. Merged via PR #36 at `4858281f9e7dc3613fa7b0bb12b939521ce3b87c`.
-11. [x] Preregister Layer 5 market-surface/disagreement policy hash `783050b0...7216`; protected remains sealed. Next: execute protocol tests and freeze the complete Layer 5 implementation/matched-market manifest before any protected outcome is opened.
+11. [x] Preregister Layer 5 market-surface/disagreement policy hash `ecb72d50...bf65`; protected remains sealed. Next: execute protocol tests and freeze the complete Layer 5 implementation/matched-market manifest before any protected outcome is opened.
