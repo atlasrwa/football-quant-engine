@@ -267,7 +267,16 @@ The normalized records preserve source event/freeze hashes, entry model/market p
 
 ### Layer 4 — ensemble and calibration
 
-Status: **STANDALONE `p_model` FROZEN / PROTECTED UNOPENED**
+Status: **MERGED TO `main` / STANDALONE `p_model` FROZEN / PROTECTED UNOPENED**
+
+Layer 4 merge record:
+- Protocol commit: `7a73e1ac2`.
+- Audit/governance commit: `9a628a286`.
+- DEVELOPMENT ensemble commit: `f528f7a6e`.
+- Raw CALIBRATION + selector commit: `2c020913d`.
+- Final model-freeze commit: `5ab2380e7`.
+- PR: `#36` — QFE V2 Layer 4: ensemble, calibration and standalone p_model freeze.
+- Main merge commit: `4858281f9e7dc3613fa7b0bb12b939521ce3b87c`.
 
 Frozen artifacts and sequence:
 - Protocol commit: `7a73e1ac2`; protocol hash `80f3f0c61fbd9e707a28376fc9745a16df468cb04fb34e4e3191ee391cb7d1ee`.
@@ -354,5 +363,5 @@ Layer 4 merge gate:
 7. [x] Confirm protected rows scored = 0 and market inputs used = 0.
 8. [x] Prove Layer 4 evidence regeneration/idempotence and code/source bindings. Full raw CALIBRATION → calibrator selection/refit → model-freeze rebuild reproduced hashes `94d29f3d...20c4`, `f3770a8b...92f2`, and `e33af913...6b3ea` exactly.
 9. [x] Run complete repository tests/import sweep and verify Foundation/Layers 2–3.1 plus prospective evidence unchanged: 298 tests passed; 82 research modules imported; 0 failures; prior evidence unchanged; active legacy-product refs = 0.
-10. [ ] Commit, PR and merge Layer 4 if every gate remains green.
+10. [x] Commit, PR and merge Layer 4 if every gate remains green. Merged via PR #36 at `4858281f9e7dc3613fa7b0bb12b939521ce3b87c`.
 11. [ ] Build/freeze Layer 5 market-surface and disagreement policy; **do not open the 317 protected outcomes before that freeze**.
