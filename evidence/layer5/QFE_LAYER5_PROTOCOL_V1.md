@@ -1,6 +1,6 @@
 # QFE V2 Layer 5 — Market Surface / Disagreement Protocol V1
 
-Protocol hash: `783050b0c6b66f8cc8540944fc629165f3c84c8e517b8554c888e20266d17216`
+Protocol hash: `ecb72d508f421fbbcd45e4623acc50df882c178af83743365ed4be4e2dcebf65`
 
 Status: **PREREGISTERED — PROTECTED SEALED**
 
