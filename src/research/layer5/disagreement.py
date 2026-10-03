@@ -212,8 +212,16 @@ def evaluate_surface(
 
     chosen_run = min(eligible_runs, key=run_key)
     run_median = median([row[0].line for row in chosen_run])
+    strong_in_run = [
+        row for row in chosen_run
+        if abs(row[2]) >= dp["minimum_selected_line_absolute_gap"]
+    ]
+    if not strong_in_run:
+        # Defensive assertion: eligible-run construction above should make this
+        # unreachable, but never emit a sub-threshold selected line.
+        return _reject("DISAGREEMENT_TOO_SMALL")
     selected = min(
-        chosen_run,
+        strong_in_run,
         key=lambda row: (
             abs(market_side_probability(row) - 0.5),
             abs(row[0].line - run_median),
