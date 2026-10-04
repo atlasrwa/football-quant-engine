@@ -154,3 +154,49 @@ def test_same_match_outcome_cannot_enter_its_own_forecast():
     fb = model_b.process_batch([b])[0]
     assert fa.lambda_home == pytest.approx(fb.lambda_home, abs=1e-12)
     assert fa.lambda_away == pytest.approx(fb.lambda_away, abs=1e-12)
+
+
+def test_competition_local_mode_disables_cross_comp_team_global_state():
+    config = HierarchicalStateSpaceConfig(
+        global_state=StateDynamics(720.0, 0.20),
+        competition_state=StateDynamics(360.0, 0.142),
+        team_global_state=StateDynamics(360.0, 0.20),
+        team_comp_state=StateDynamics(360.0, 0.431),
+        team_influence=1.0,
+        min_effective_team_support=1.0,
+        use_team_global_transfer=False,
+        intensity_point="posterior_median",
+    )
+    model = HierarchicalLogStateSpaceModel(GOALS_TARGET, config)
+    model.process_batch([_match(1, 1000, comp="a", home="x", away="y", hg=3, ag=1)])
+    f = model.forecast(_match(2, 2000, comp="b", home="x", away="z", hg=0, ag=0))
+    assert f.trace.home_attack.team_global_effect_mean == 0.0
+    assert f.trace.home_attack.team_global_effect_variance == 0.0
+    assert f.trace.home_attack.team_global_support == 0.0
+    # New-competition local state has no support and therefore does not carry
+    # the old competition's local residual across the boundary.
+    assert f.trace.home_attack.team_comp_support == 0.0
+    assert f.supported is False
+
+
+def test_posterior_median_mode_does_not_jensen_inflate_stage1_intensity():
+    mean_cfg = _config()
+    median_cfg = HierarchicalStateSpaceConfig(
+        global_state=mean_cfg.global_state,
+        competition_state=mean_cfg.competition_state,
+        team_global_state=mean_cfg.team_global_state,
+        team_comp_state=mean_cfg.team_comp_state,
+        team_influence=mean_cfg.team_influence,
+        min_effective_team_support=mean_cfg.min_effective_team_support,
+        use_team_global_transfer=True,
+        intensity_point="posterior_median",
+    )
+    mean_model = HierarchicalLogStateSpaceModel(GOALS_TARGET, mean_cfg)
+    median_model = HierarchicalLogStateSpaceModel(GOALS_TARGET, median_cfg)
+    match = _match(1, 1000)
+    fm = mean_model.forecast(match)
+    fd = median_model.forecast(match)
+    assert fm.lambda_home > fd.lambda_home
+    assert fm.lambda_away > fd.lambda_away
+    assert fd.lambda_home == pytest.approx(fd.median_lambda_home)
+    assert fd.lambda_away == pytest.approx(fd.median_lambda_away)

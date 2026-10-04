@@ -35,7 +35,7 @@ from scipy.stats import poisson
 from src.research.data_source import ResearchMatch
 from src.research.models.dynamic_count_strength import CountTargetSpec, Role
 
-STATE_SPACE_VERSION = "qfe-v21-hierarchical-log-state-space-v1"
+STATE_SPACE_VERSION = "qfe-v21-hierarchical-log-state-space-v2-capable"
 Side = Literal["home", "away"]
 
 
@@ -68,6 +68,8 @@ class HierarchicalStateSpaceConfig:
     team_influence: float = 1.0
     min_effective_team_support: float = 3.0
     interval_z: float = 1.6448536269514722
+    use_team_global_transfer: bool = True
+    intensity_point: Literal["posterior_mean", "posterior_median"] = "posterior_mean"
 
     def __post_init__(self) -> None:
         if not 0.0 <= self.team_influence <= 1.0:
@@ -76,6 +78,8 @@ class HierarchicalStateSpaceConfig:
             raise ValueError("min_effective_team_support must be non-negative")
         if self.interval_z <= 0:
             raise ValueError("interval_z must be positive")
+        if self.intensity_point not in ("posterior_mean", "posterior_median"):
+            raise ValueError("unsupported intensity_point")
 
     @property
     def identity_hash(self) -> str:
@@ -382,14 +386,22 @@ class HierarchicalLogStateSpaceModel:
         role: Role,
         timestamp: int,
     ) -> RoleStateTrace:
-        global_team = self._state(
-            self._team_global,
-            (team_ref, role),
-        ).view(
-            timestamp=timestamp,
-            dynamics=self.config.team_global_state,
-            center=0.0,
-        )
+        if self.config.use_team_global_transfer:
+            global_team = self._state(
+                self._team_global,
+                (team_ref, role),
+            ).view(
+                timestamp=timestamp,
+                dynamics=self.config.team_global_state,
+                center=0.0,
+            )
+        else:
+            global_team = GaussianStateView(
+                mean=0.0,
+                variance=0.0,
+                effective_observations=0.0,
+                raw_updates=0,
+            )
         local_team = self._state(
             self._team_comp,
             (team_ref, competition_ref, role),
@@ -489,10 +501,14 @@ class HierarchicalLogStateSpaceModel:
         log_var_home = comp_home_var + w * w * home_effect_variance
         log_var_away = comp_away_var + w * w * away_effect_variance
 
-        lambda_home = _safe_exp(log_median_home + 0.5 * log_var_home)
-        lambda_away = _safe_exp(log_median_away + 0.5 * log_var_away)
         median_home = _safe_exp(log_median_home)
         median_away = _safe_exp(log_median_away)
+        if self.config.intensity_point == "posterior_mean":
+            lambda_home = _safe_exp(log_median_home + 0.5 * log_var_home)
+            lambda_away = _safe_exp(log_median_away + 0.5 * log_var_away)
+        else:
+            lambda_home = median_home
+            lambda_away = median_away
         sd_home = sqrt(max(log_var_home, 0.0))
         sd_away = sqrt(max(log_var_away, 0.0))
         z = self.config.interval_z
@@ -505,13 +521,21 @@ class HierarchicalLogStateSpaceModel:
             _safe_exp(log_median_away + z * sd_away),
         )
 
-        global_supports = (
-            home_attack.team_global_support,
-            away_defence.team_global_support,
-            away_attack.team_global_support,
-            home_defence.team_global_support,
-        )
-        effective_support = min(global_supports)
+        if self.config.use_team_global_transfer:
+            support_values = (
+                home_attack.team_global_support,
+                away_defence.team_global_support,
+                away_attack.team_global_support,
+                home_defence.team_global_support,
+            )
+        else:
+            support_values = (
+                home_attack.team_comp_support,
+                away_defence.team_comp_support,
+                away_attack.team_comp_support,
+                home_defence.team_comp_support,
+            )
+        effective_support = min(support_values)
         supported = (
             effective_support >= self.config.min_effective_team_support
         )
@@ -648,12 +672,15 @@ class HierarchicalLogStateSpaceModel:
                 (home_team, "HOME_DEFENCE"): context.forecast.trace.home_defence,
             }
             for team_ref, role, count, comp_log_rate in role_rows:
-                team_global_obs.setdefault((team_ref, role), []).append(
-                    (count, comp_log_rate)
-                )
-                team_global_effect = trace_by_role[
-                    (team_ref, role)
-                ].team_global_effect_mean
+                if self.config.use_team_global_transfer:
+                    team_global_obs.setdefault((team_ref, role), []).append(
+                        (count, comp_log_rate)
+                    )
+                    team_global_effect = trace_by_role[
+                        (team_ref, role)
+                    ].team_global_effect_mean
+                else:
+                    team_global_effect = 0.0
                 team_comp_obs.setdefault(
                     (team_ref, competition_ref, role),
                     [],
