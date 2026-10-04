@@ -9,12 +9,18 @@ from src.research.evaluation.chronology import (
     WARMUP_END_TS,
     build_chronology_manifest,
 )
+from src.research.evaluation import model_tournament
 from src.research.evaluation.model_tournament import (
     ANCHOR_CANDIDATE_ID,
     predefined_intensity_grid,
+    run_distribution_tournament,
     run_layer3_development_tournament,
 )
-from src.research.models.dynamic_count_strength import GOALS_TARGET
+from src.research.models.dynamic_count_strength import (
+    GOALS_TARGET,
+    DynamicCountConfig,
+    DynamicHierarchicalCountBaseline,
+)
 
 
 def _match(
@@ -172,3 +178,70 @@ def test_tournament_is_deterministic() -> None:
         key: [row.to_dict() for row in value]
         for key, value in boof.items()
     }
+
+def test_distribution_tournament_never_uses_immediate_process_batch(monkeypatch) -> None:
+    rows = _rows()
+
+    def forbidden_process_batch(self, matches):
+        raise AssertionError("scientific tournament must use horizon-gated walk_forward")
+
+    monkeypatch.setattr(
+        DynamicHierarchicalCountBaseline,
+        "process_batch",
+        forbidden_process_batch,
+    )
+    report, oof = run_distribution_tournament(
+        matches=rows,
+        target=GOALS_TARGET,
+        selected_config=DynamicCountConfig(),
+    )
+    assert report.n_scored == len(oof) == 40
+
+
+def test_distribution_selector_obeys_t6h_availability_boundary(monkeypatch) -> None:
+    selection_observations = []
+
+    class SpySelector:
+        def __init__(self, grid, min_observations=20):
+            self.grid = tuple(grid)
+            self.observations = 0
+
+        @property
+        def selected(self):
+            selection_observations.append(self.observations)
+            return self.grid[0]
+
+        def update(self, loss_by_parameter):
+            # Exercise every registered parameter so this spy preserves the
+            # selector's loss-evaluation side effects.
+            for value in self.grid:
+                float(loss_by_parameter(value))
+            self.observations += 1
+
+    monkeypatch.setattr(model_tournament, "OnlineGridSelector", SpySelector)
+
+    t0 = WARMUP_END_TS - 2 * 86400
+    t1 = WARMUP_END_TS - 1 * 86400
+    t2 = WARMUP_END_TS + 1 * 3600
+    t3 = t2 + 6 * 3600
+    t4 = t2 + 12 * 3600
+
+    rows = [
+        _match(1001, t0, 1, 5, goals=(1, 0)),
+        _match(1002, t1, 1, 5, goals=(2, 0)),
+        _match(1003, t2, 1, 5, goals=(3, 0)),
+        _match(1004, t3, 1, 5, goals=(4, 0)),
+        _match(1005, t4, 1, 5, goals=(5, 0)),
+    ]
+
+    _, oof = run_distribution_tournament(
+        matches=rows,
+        target=GOALS_TARGET,
+        selected_config=DynamicCountConfig(),
+    )
+
+    # t0 is available for t1 (24h gap); t1 for t2 (25h gap).
+    # t2 is NOT available for t3 (6h gap), because source+6h > target-6h.
+    # At t4 the equality source(t2)+6h == target(t4)-6h is admissible.
+    assert selection_observations == [0, 1, 2, 2, 3]
+    assert [row.kickoff_ts for row in oof] == [t2, t3, t4]

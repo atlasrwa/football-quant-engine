@@ -25,6 +25,8 @@ from src.research.evaluation.similar_oof import (
 from src.research.models.dynamic_count_strength import (
     CORNERS_TARGET,
     GOALS_TARGET,
+    DEFAULT_AVAILABILITY_EMBARGO_SECONDS,
+    DEFAULT_DECISION_HORIZON_SECONDS,
     DynamicCountConfig,
     DynamicHierarchicalCountBaseline,
 )
@@ -42,7 +44,7 @@ from src.research.layer4.protocol import (
     protocol_v1,
 )
 
-RAW_CALIBRATION_VERSION="qfe-layer4-raw-calibration-v1"
+RAW_CALIBRATION_VERSION="qfe-layer4-raw-calibration-v2-pit-horizon"
 
 
 @dataclass(frozen=True,slots=True)
@@ -148,7 +150,18 @@ def _similar_goal_predictions(corpus:MultiSeasonPITCorpus,config:SimilarContextC
         for i,row in enumerate(comp_rows):
             ts=int(row.kickoff_ts)
             if ts<CALIBRATION_START_TS or ts>=PROTECTED_START_TS: continue
-            eligible=np.where(np.isfinite(y[:i]))[0]
+            cutoff = ts - DEFAULT_DECISION_HORIZON_SECONDS
+            source_kickoffs = np.asarray(
+                [int(r.kickoff_ts) for r in comp_rows[:i]],
+                dtype=np.int64,
+            )
+            eligible=np.where(
+                np.isfinite(y[:i])
+                & (
+                    source_kickoffs + DEFAULT_AVAILABILITY_EMBARGO_SECONDS
+                    <= cutoff
+                )
+            )[0]
             if len(eligible)==0: continue
             tx=raw_x[eligible]; ty=y[:i][eligible]; mu,sd=_fit_scaler(tx); prior=float(np.mean(ty))
             pred,k,_=_predict_one(tx,ty,raw_x[i],mu,sd,config,prior)

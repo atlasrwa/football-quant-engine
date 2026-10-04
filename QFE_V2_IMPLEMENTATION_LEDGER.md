@@ -265,9 +265,30 @@ Source bundles:
 
 The normalized records preserve source event/freeze hashes, entry model/market probabilities, offered price, disagreement, relevant market vintages, settlement, proper scores, unit P&L and CLV/closing probability when source evidence supports it. No unsettled record is assigned an outcome.
 
+## PIT horizon repair — scientific abort/version event
+
+Status: **ACTIVE REPAIR / PROTECTED STILL UNOPENED**
+
+A pre-protected Layer 5 audit discovered that `DynamicHierarchicalCountBaseline.walk_forward()` updated historical state immediately after earlier kickoffs, while the registered Foundation PIT contract admits a result only when `source kickoff + 6h embargo <= target kickoff - 6h prediction horizon`. Foundation PIT features were correct; the dynamic walker was not.
+
+- Defect report: `evidence/pit_horizon_repair/QFE_PIT_HORIZON_DEFECT_V1.json`.
+- Protected outcomes opened/scored at discovery: **0**.
+- Corrected dynamic model version: `qfe-conservative-dynamic-count-v2-pit-horizon`.
+- Goals DEVELOPMENT rows changed under identical config: **2021/2650 (76.3%)**; mean absolute probability movement **0.018 pp**, max **0.323 pp**.
+- Corners rows changed: **2013/2632 (76.5%)**; mean absolute movement **0.027 pp**, max **0.360 pp**.
+- Aggregate DEVELOPMENT LL differences are tiny, but the old evidence is still point-in-time invalid.
+
+Scientific consequence:
+- Foundation V1 and frozen chronology remain valid.
+- Dynamic-derived Layer 2, Layer 3 structured/component evidence, Layer 3.1, and Layer 4 V1 model freeze are **SUPERSEDED / NOT ELIGIBLE FOR PROTECTED SCORING**.
+- Old artifacts remain immutable for audit; they are not rewritten or deleted.
+- The 959 previously called CALIBRATION are now acknowledged as **exposed pre-protected repair data**.
+- The 317 PROTECTED fixtures remain the clean final test.
+- Layer 5 protected evaluation is paused until repaired Layers 2–4 and Layer 5 policy are frozen.
+
 ### Layer 4 — ensemble and calibration
 
-Status: **MERGED TO `main` / STANDALONE `p_model` FROZEN / PROTECTED UNOPENED**
+Status: **V1 MERGED BUT SUPERSEDED BY PIT-HORIZON REPAIR / PROTECTED UNOPENED**
 
 Layer 4 merge record:
 - Protocol commit: `7a73e1ac2`.

@@ -17,14 +17,19 @@ Examples for home goals:
 - the final expected count is a conservative log-space blend of those states
   and the competition baseline.
 
-All state updates are point-in-time and same-kickoff batched: forecasts for a
-kickoff are emitted from one frozen pre-kickoff state, then outcomes update the
-states. Market prices are never inputs.
+Research walk-forward state updates are point-in-time and availability-gated.
+For a target fixture, the default prediction cutoff is six hours before kickoff;
+an earlier result becomes admissible only six hours after its own kickoff.
+Same-kickoff forecasts are emitted from one frozen state. Market prices are
+never inputs. `process_batch` remains a low-level immediate-update primitive for
+unit tests/manual state construction; scientific walk-forward code must use
+`walk_forward`.
 """
 
 from __future__ import annotations
 
 import hashlib
+import heapq
 import json
 from dataclasses import asdict, dataclass
 from math import exp, isfinite, log
@@ -35,7 +40,9 @@ from scipy.stats import poisson
 from src.research.data_source import ResearchMatch
 
 
-MODEL_VERSION = "qfe-conservative-dynamic-count-v1"
+MODEL_VERSION = "qfe-conservative-dynamic-count-v2-pit-horizon"
+DEFAULT_DECISION_HORIZON_SECONDS = 6 * 3600
+DEFAULT_AVAILABILITY_EMBARGO_SECONDS = 6 * 3600
 Role = Literal[
     "HOME_ATTACK",
     "HOME_DEFENCE",
@@ -579,8 +586,26 @@ class DynamicHierarchicalCountBaseline:
     def walk_forward(
         self,
         matches: Iterable[ResearchMatch],
+        *,
+        decision_horizon_seconds: int = DEFAULT_DECISION_HORIZON_SECONDS,
+        availability_embargo_seconds: int = DEFAULT_AVAILABILITY_EMBARGO_SECONDS,
     ) -> tuple[HierarchicalCountForecast, ...]:
-        """Generate one-step-ahead forecasts over a chronologically sorted corpus."""
+        """Generate PIT-safe forecasts under an explicit information horizon.
+
+        A source match is allowed to update state for target fixture F only when::
+
+            source_kickoff + availability_embargo_seconds
+                <= F.kickoff - decision_horizon_seconds
+
+        This mirrors the Foundation PIT dataset contract. Outcomes from target
+        fixtures are queued after forecasting and become state evidence only
+        when their declared availability timestamp is reached by a later target.
+        """
+        if decision_horizon_seconds <= 0:
+            raise ValueError("decision_horizon_seconds must be positive")
+        if availability_embargo_seconds < 0:
+            raise ValueError("availability_embargo_seconds must be non-negative")
+
         ordered = sorted(
             matches,
             key=lambda match: (
@@ -589,18 +614,33 @@ class DynamicHierarchicalCountBaseline:
             ),
         )
         forecasts: list[HierarchicalCountForecast] = []
-        batch: list[ResearchMatch] = []
-        current_kickoff: int | None = None
-        for match in ordered:
-            if current_kickoff is None:
-                current_kickoff = match.date_unix
-            if match.date_unix != current_kickoff:
-                forecasts.extend(self.process_batch(batch))
-                batch = []
-                current_kickoff = match.date_unix
-            batch.append(match)
-        if batch:
-            forecasts.extend(self.process_batch(batch))
+        # (available_at, stable_key, match) gives deterministic heap ordering.
+        pending: list[tuple[int, str, ResearchMatch]] = []
+
+        index = 0
+        while index < len(ordered):
+            kickoff = int(ordered[index].date_unix)
+            cutoff = kickoff - decision_horizon_seconds
+
+            while pending and pending[0][0] <= cutoff:
+                _, _, source_match = heapq.heappop(pending)
+                self._update_match(source_match)
+
+            batch: list[ResearchMatch] = []
+            while index < len(ordered) and int(ordered[index].date_unix) == kickoff:
+                batch.append(ordered[index])
+                index += 1
+
+            # Freeze state across every fixture at the same kickoff.
+            forecasts.extend(self.forecast(match) for match in batch)
+
+            for match in batch:
+                fixture_key = match.stable_fixture_key
+                if not fixture_key:
+                    raise ValueError("stable fixture identity required")
+                available_at = int(match.date_unix) + availability_embargo_seconds
+                heapq.heappush(pending, (available_at, fixture_key, match))
+
         return tuple(forecasts)
 
 
