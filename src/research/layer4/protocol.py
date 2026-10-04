@@ -135,3 +135,8 @@ class Layer4Protocol:
 
 
 def protocol_v1()->Layer4Protocol: return Layer4Protocol()
+
+
+def protocol_v2()->Layer4Protocol:
+    """Same frozen scientific policy, rebound for deterministic PIT repair replay."""
+    return Layer4Protocol(version="qfe-layer4-ensemble-calibration-v2-pit-horizon", frozen_on="2026-10-03")
