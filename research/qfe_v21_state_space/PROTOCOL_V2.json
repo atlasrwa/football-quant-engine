@@ -1,0 +1,181 @@
+{
+  "anti_drift": {
+    "calibration_and_protected_remain_sealed": true,
+    "distribution_family_change_in_stage1": false,
+    "v1_result_may_not_be_rewritten": true,
+    "v2_grid_may_not_expand_after_scoring": true
+  },
+  "candidate_profiles": {
+    "EB_COMP_STRONG": {
+      "corners": {
+        "half_life_days": {
+          "competition": 180.0,
+          "global": 360.0,
+          "team_comp": 180.0
+        },
+        "stationary_sd": {
+          "competition": 0.051,
+          "global": 0.101,
+          "team_comp": 0.224
+        }
+      },
+      "derivation": "competition state variance reduced approximately by sqrt(2), corresponding to the exploratory signal from stronger competition shrinkage",
+      "goals": {
+        "half_life_days": {
+          "competition": 360.0,
+          "global": 720.0,
+          "team_comp": 360.0
+        },
+        "stationary_sd": {
+          "competition": 0.1,
+          "global": 0.2,
+          "team_comp": 0.431
+        }
+      },
+      "team_influence": 1.0
+    },
+    "EB_LOCAL": {
+      "corners": {
+        "half_life_days": {
+          "competition": 180.0,
+          "global": 360.0,
+          "team_comp": 180.0
+        },
+        "stationary_sd": {
+          "competition": 0.072,
+          "global": 0.101,
+          "team_comp": 0.224
+        }
+      },
+      "derivation": "stationary log-SD approximately matches the frozen V2 Gamma-Poisson prior effective sample sizes at target-average count scale",
+      "goals": {
+        "half_life_days": {
+          "competition": 360.0,
+          "global": 720.0,
+          "team_comp": 360.0
+        },
+        "stationary_sd": {
+          "competition": 0.142,
+          "global": 0.2,
+          "team_comp": 0.431
+        }
+      },
+      "team_influence": 1.0
+    },
+    "EB_LOCAL_SLOW": {
+      "corners": {
+        "half_life_days": {
+          "competition": 270.0,
+          "global": 360.0,
+          "team_comp": 270.0
+        },
+        "stationary_sd": {
+          "competition": 0.072,
+          "global": 0.101,
+          "team_comp": 0.224
+        }
+      },
+      "derivation": "slower local evolution because the exploratory half-life-shortening mechanism worsened both targets",
+      "goals": {
+        "half_life_days": {
+          "competition": 540.0,
+          "global": 720.0,
+          "team_comp": 540.0
+        },
+        "stationary_sd": {
+          "competition": 0.142,
+          "global": 0.2,
+          "team_comp": 0.431
+        }
+      },
+      "team_influence": 1.0
+    }
+  },
+  "challenger_architecture": {
+    "central_intensity_for_stage1": "posterior median exp(log-location); latent variance is not collapsed into a Poisson mean",
+    "competition_state": "environment residual relative to global",
+    "cross_competition_team_transfer": "NONE",
+    "global_state": "absolute log-rate",
+    "odds_blind": true,
+    "same_kickoff_contract": "frozen priors and forecasts before batch-aggregated updates",
+    "state_space": "Gaussian log-intensity assumed-density filter with Poisson likelihood and Laplace posterior update",
+    "team_comp_state": "competition-local attack/defence residual only",
+    "team_global_state": "DISABLED",
+    "uncertainty": "posterior variance retained separately for later distributional integration"
+  },
+  "evaluation": {
+    "development_folds": [
+      "D1",
+      "D2",
+      "D3",
+      "D4"
+    ],
+    "fixed_total_lines": {
+      "corners": 9.5,
+      "goals": 2.5
+    },
+    "primary_metric": "fixture_mean_side_poisson_nll",
+    "selection_rule": "Within each target choose the candidate with lowest pooled DEVELOPMENT primary metric only if it also wins primary metric in at least 3 of 4 chronological folds and does not worsen pooled fixed-line binary log loss by more than 0.001 versus reference. Otherwise no Stage1 candidate advances.",
+    "supporting_metrics": [
+      "fixture_mean_side_mae",
+      "fixed_total_line_binary_log_loss",
+      "fixed_total_line_brier",
+      "mean_latent_log_sd",
+      "mean_90pct_latent_expected_rate_interval_log_width"
+    ],
+    "targets": [
+      "goals",
+      "corners"
+    ],
+    "ties": "If pooled primary metrics differ by <=0.0005, choose lower-complexity order EB_COMP_STRONG < EB_LOCAL < EB_LOCAL_SLOW.",
+    "uncertainty_interpretation": "latent expected-rate intervals are state-estimation uncertainty diagnostics only; predictive count uncertainty is deferred to a separately frozen distributional stage"
+  },
+  "evidence_motivating_new_version": {
+    "diagnostic_signal": "NO_TEAM_GLOBAL_TRANSFER ranked first for goals and corners composite; this motivates a new version but is not promotion evidence",
+    "exploratory_hierarchy_diagnostic_hash": "7270b6d63f831730480c10ace97b6bb2f9c64b068062823d9cbdcc6c16e67fd8",
+    "v1_decision": "NO_ADVANCEMENT_FOR_GOALS_AND_CORNERS",
+    "v1_result_hash": "af1436d134dc01d709ca14a967cc4efce2ad5fecb564d076047b8d6ae363e749"
+  },
+  "next_stage": "Only a Stage1-advancing target may enter a separately preregistered distribution/calibration Stage2.",
+  "purpose": "Test a competition-local uncertainty-aware log-rate state-space estimator after V1 rejected cross-competition team-global residual transfer.",
+  "reference": {
+    "corners_config": {
+      "competition_prior_weight": 40.0,
+      "global_prior_weight": 20.0,
+      "half_life_days": 180.0,
+      "min_effective_team_support": 3.0,
+      "team_comp_prior_weight": 4.0,
+      "team_global_prior_weight": 16.0,
+      "team_influence": 1.0,
+      "transfer_factor_ceiling": 1.67,
+      "transfer_factor_floor": 0.6
+    },
+    "goals_config": {
+      "competition_prior_weight": 40.0,
+      "global_prior_weight": 20.0,
+      "half_life_days": 360.0,
+      "min_effective_team_support": 3.0,
+      "team_comp_prior_weight": 4.0,
+      "team_global_prior_weight": 16.0,
+      "team_influence": 1.0,
+      "transfer_factor_ceiling": 1.67,
+      "transfer_factor_floor": 0.6
+    },
+    "model": "DynamicHierarchicalCountBaseline"
+  },
+  "scientific_boundary": {
+    "calibration_outcomes_allowed": false,
+    "candidate_selection_partition": "DEVELOPMENT_D1_D4_ONLY",
+    "data_provider": "THESTATSAPI_ONLY_CACHED_CANONICAL_CORPUS",
+    "development_outcomes_may_be_scored": true,
+    "llm_allowed": false,
+    "market_odds_allowed": false,
+    "network_calls_allowed": false,
+    "post_result_grid_expansion": "FORBIDDEN_WITHIN_V1",
+    "promotion_from_stage1": "FORBIDDEN_STAGE1_IS_COMPONENT_SCREEN_ONLY",
+    "protected_outcomes_allowed": false,
+    "warmup_outcomes_may_update_state": true
+  },
+  "status": "PREREGISTERED_DEVELOPMENT_ONLY_CHALLENGER_ACTIVE",
+  "version": "QFE_V21_LOCAL_STATE_SPACE_STAGE1_V2"
+}
