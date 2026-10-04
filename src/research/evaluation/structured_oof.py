@@ -40,7 +40,7 @@ from src.research.evaluation.chronology import (
     development_fold_manifest,
 )
 
-STRUCTURED_OOF_VERSION = "qfe-layer3-structured-oof-v2"
+STRUCTURED_OOF_VERSION = "qfe-layer3-structured-oof-v3-pit-horizon"
 
 
 @dataclass(frozen=True, slots=True)
