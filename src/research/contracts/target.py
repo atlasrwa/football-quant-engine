@@ -87,11 +87,32 @@ class TargetContract:
     notes: str = ""
 
     @property
-    def provider_market_mapped(self) -> bool:
+    def provider_market_available(self) -> bool:
+        """Whether the provider exposes a verified market key for this contract.
+
+        This is deliberately weaker than QFE market-comparison eligibility.
+        A provider can expose a market even when QFE does not yet have accepted
+        realized-target settlement semantics for comparing model probabilities
+        against that market.
+        """
         return (
             self.provider_market_status == ProviderMarketStatus.VERIFIED
             and self.provider_market_key is not None
         )
+
+    @property
+    def market_comparison_eligible(self) -> bool:
+        """Whether QFE may compare this modeled target with the provider market."""
+        return self.model_eligible and self.provider_market_available
+
+    @property
+    def provider_market_mapped(self) -> bool:
+        """Backward-compatible alias for provider market availability.
+
+        New scientific code must use market_comparison_eligible when deciding
+        whether model-vs-market comparison is permitted.
+        """
+        return self.provider_market_available
 
     @property
     def captured_market_key(self) -> Optional[str]:
@@ -163,8 +184,15 @@ class TargetRegistry:
         return tuple(c.target_id for c in self.contracts if c.model_eligible)
 
     def provider_market_mapped_ids(self) -> tuple[str, ...]:
+        """Provider markets with verified capture mappings, regardless of target eligibility."""
         return tuple(
-            c.target_id for c in self.contracts if c.provider_market_mapped
+            c.target_id for c in self.contracts if c.provider_market_available
+        )
+
+    def market_comparison_eligible_ids(self) -> tuple[str, ...]:
+        """Targets whose realized semantics and provider market are both accepted."""
+        return tuple(
+            c.target_id for c in self.contracts if c.market_comparison_eligible
         )
 
 
@@ -378,9 +406,10 @@ TARGET_REGISTRY_V1 = TargetRegistry(
             ("corners_home",),
             "Home provider all-period corner count; ET matches rejected.",
             model_eligible=True,
-            market_status=ProviderMarketStatus.VERIFIED,
+            market_status=ProviderMarketStatus.UNVERIFIED,
             market_key="team_corners",
             market_side_key="home",
+            notes="Modelable provider corner count; bookmaker settlement equivalence remains unverified.",
         ),
         _contract(
             TargetFamily.CORNERS,
@@ -388,9 +417,10 @@ TARGET_REGISTRY_V1 = TargetRegistry(
             ("corners_away",),
             "Away provider all-period corner count; ET matches rejected.",
             model_eligible=True,
-            market_status=ProviderMarketStatus.VERIFIED,
+            market_status=ProviderMarketStatus.UNVERIFIED,
             market_key="team_corners",
             market_side_key="away",
+            notes="Modelable provider corner count; bookmaker settlement equivalence remains unverified.",
         ),
         _contract(
             TargetFamily.CORNERS,
@@ -398,8 +428,9 @@ TARGET_REGISTRY_V1 = TargetRegistry(
             ("corners_home", "corners_away"),
             "Sum of provider all-period corner counts; ET matches rejected.",
             model_eligible=True,
-            market_status=ProviderMarketStatus.VERIFIED,
+            market_status=ProviderMarketStatus.UNVERIFIED,
             market_key="match_corners",
+            notes="Modelable provider corner count; bookmaker settlement equivalence remains unverified.",
         ),
         _contract(
             TargetFamily.BOOKINGS,
