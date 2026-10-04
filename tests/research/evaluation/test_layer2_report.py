@@ -70,6 +70,7 @@ def test_layer2_bundle_is_deterministic(tmp_path: Path) -> None:
     a = build_layer2_evidence(**kwargs)
     b = build_layer2_evidence(**kwargs)
     assert a.bundle_hash == b.bundle_hash
+    assert a.version == "qfe-layer2-development-smoke-v2-pit-horizon"
     assert a.corpus_manifest.n_matches == 2
     assert {r.target for r in a.target_reports} == {"goals", "corners"}
     assert all(r.predictions == 2 for r in a.target_reports)

@@ -36,8 +36,8 @@ from src.research.models.dynamic_count_strength import (
 )
 
 
-LAYER2_EVIDENCE_VERSION = "qfe-layer2-development-smoke-v1"
-LAYER2_FROZEN_ON = "2026-10-02"
+LAYER2_EVIDENCE_VERSION = "qfe-layer2-development-smoke-v2-pit-horizon"
+LAYER2_FROZEN_ON = "2026-10-03"
 
 _IMPLEMENTATION_FILES = (
     "src/research/dataset/multiseason.py",
@@ -377,7 +377,8 @@ def render_layer2_markdown(bundle: Layer2EvidenceBundle) -> str:
         "",
         "The dynamic hierarchy is compared with a competition-only dynamic",
         "climatology using the same decay/prior settings but `team_influence=0`.",
-        "Both are one-step-ahead and same-kickoff batched. No odds are inputs.",
+        "Both are availability-gated at the registered T-6h horizon with a 6h",
+        "reconstructed post-match embargo, and same-kickoff batched. No odds are inputs.",
         "",
         "The current distribution is independent Poisson and exists only as the",
         "first conservative benchmark. Goals dependence and corners",
