@@ -195,8 +195,14 @@ def _unique_source_bundle(reports: Iterable[CachedCorpusAuditReport]) -> dict[st
 def _contract_readiness() -> dict[str, Any]:
     return {
         "model_eligible_targets": list(TARGET_REGISTRY_V1.model_eligible_ids()),
+        "provider_market_available_targets": list(
+            TARGET_REGISTRY_V1.provider_market_available_ids()
+        ),
         "provider_market_mapped_targets": list(
             TARGET_REGISTRY_V1.provider_market_mapped_ids()
+        ),
+        "market_comparison_eligible_targets": list(
+            TARGET_REGISTRY_V1.market_comparison_eligible_ids()
         ),
         "bet365_commercially_comparable_targets": list(
             BOOKMAKER_SETTLEMENT_REGISTRY_V1.eligible_target_ids(

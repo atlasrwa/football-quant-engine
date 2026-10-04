@@ -120,13 +120,13 @@ class BookmakerSettlementRegistry:
                 contract=contract,
             )
 
-        if not target.provider_market_mapped:
+        if not target.provider_market_available:
             return SettlementEligibility(
                 bookmaker=slug,
                 target_id=target.target_id,
                 status=SettlementCompatibility.UNVERIFIED,
                 eligible=False,
-                reason="Target has no verified provider market mapping.",
+                reason="Target has no provider market capture key.",
                 contract=contract,
             )
 
@@ -149,6 +149,25 @@ class BookmakerSettlementRegistry:
                 reason=(
                     "Bookmaker contract market key does not match provider "
                     "target-market mapping."
+                ),
+                contract=contract,
+            )
+
+        if not target.provider_market_mapping_verified:
+            status = (
+                contract.status
+                if contract.status != SettlementCompatibility.VERIFIED
+                else SettlementCompatibility.UNVERIFIED
+            )
+            return SettlementEligibility(
+                bookmaker=slug,
+                target_id=target.target_id,
+                status=status,
+                eligible=False,
+                reason=(
+                    contract.unresolved_reason
+                    or target.notes
+                    or "Provider-to-target market mapping is not verified."
                 ),
                 contract=contract,
             )
