@@ -1,6 +1,6 @@
 # QFE V2 Implementation Ledger
 
-Last updated: 2026-10-02 (America/Bogota)
+Last updated: 2026-10-04 (America/Bogota)
 
 Status: **ACTIVE GOVERNANCE / IMPLEMENTATION TRACKER**
 
@@ -12,6 +12,23 @@ merged, rejected, or remains open.
 The ledger must be updated in the same PR as a material architecture milestone.
 A checkbox means code/evidence exists and passed the stated gate; it does not
 mean commercial validation.
+
+## Current certified state — 2026-10-04
+
+- **Certified repaired foundation:** PR #40 merge `651b98fb82e3cf3cc0a47da13f95cebe5fb1862a`.
+- **PIT contract:** source kickoff + 6h reconstructed availability embargo <= target kickoff - 6h decision horizon.
+- **Foundation validation:** 334 repository tests passed at the exact PR #40 merge; focused PIT call-path audit passed.
+- **PR #41 Layer 2 replay:** merged, but pending independent post-repair certification.
+- **PR #42 Layer 3 replay:** merged, but pending independent post-repair certification.
+- **PR #43 Layer 3.1 replay:** merged, but pending independent post-repair certification.
+- **Layer 4 repaired replay:** HOLD; generated scratch outputs are not certified or promotion-eligible.
+- **PROTECTED:** SEALED; 0 protected outcomes/scores opened for the repaired chain.
+- **Goals market comparison:** eligible under the accepted regulation-time contract.
+- **Corners:** modelable, but bookmaker comparison remains fail-closed until provider corner settlement equivalence is independently proven and frozen.
+- **Bookings:** model/market comparison blocked; provider market availability must not be confused with QFE target-comparison eligibility.
+- **Operational gate:** repository hygiene + target-contract remediation, then Foundation Certification V2, then audit PR #41.
+
+Historical sections below remain audit evidence. Where an older status conflicts with this current-state block, this block governs operational sequencing.
 
 ## 1. Product status
 
@@ -33,7 +50,7 @@ Status: **MERGED / FROZEN**
 - [x] Stable provider fixture/team/competition/season identity.
 - [x] Provider-scoped semantic capability registry.
 - [x] Regulation-time goals/corners/bookings target contracts.
-- [x] Bookmaker-specific settlement compatibility contracts.
+- [x] Goals bookmaker settlement compatibility verified; corners comparison remains unverified; bookings comparison remains blocked.
 - [x] Missing != zero enforcement.
 - [x] Extra-time/shootout fail-closed target handling.
 - [x] Integer/half/quarter Asian settlement states.
@@ -399,7 +416,9 @@ A Layer 2+ model is not promoted because it:
 Promotion requires chronological OOS probability evidence. Any protected-design
 defect discovered after freeze requires abort/version/new experiment.
 
-## 6. Current immediate gate
+## 6. Historical pre-repair gate — superseded operationally
+
+This section records the sequence that produced the original Layer 4/Layer 5 state before the T-6h PIT repair. It is preserved as historical evidence and is not the current operational gate.
 
 Layer 4 merge gate:
 
@@ -413,4 +432,16 @@ Layer 4 merge gate:
 8. [x] Prove Layer 4 evidence regeneration/idempotence and code/source bindings. Full raw CALIBRATION → calibrator selection/refit → model-freeze rebuild reproduced hashes `94d29f3d...20c4`, `f3770a8b...92f2`, and `e33af913...6b3ea` exactly.
 9. [x] Run complete repository tests/import sweep and verify Foundation/Layers 2–3.1 plus prospective evidence unchanged: 298 tests passed; 82 research modules imported; 0 failures; prior evidence unchanged; active legacy-product refs = 0.
 10. [x] Commit, PR and merge Layer 4 if every gate remains green. Merged via PR #36 at `4858281f9e7dc3613fa7b0bb12b939521ce3b87c`.
-11. [x] Preregister Layer 5 market-surface/disagreement policy hash `ecb72d50...bf65`; protected remains sealed. Next: execute protocol tests and freeze the complete Layer 5 implementation/matched-market manifest before any protected outcome is opened.
+11. [x] Preregister Layer 5 market-surface/disagreement policy hash `ecb72d50...bf65`; protected remains sealed. Historical next step was to execute protocol tests and freeze the Layer 5 implementation/matched-market manifest.
+
+## 7. Current immediate gate
+
+1. [x] Repair and merge the T-6h PIT horizon defect (PR #40).
+2. [x] Independently certify the repaired scientific foundation for offline replay.
+3. [ ] Complete repository/worktree hygiene remediation on the compute host.
+4. [ ] Separate provider-market availability from QFE market-comparison eligibility in target contracts and keep corners fail-closed pending settlement-equivalence proof.
+5. [ ] Rerun foundation-focused tests and the complete repository suite from a clean canonical checkout.
+6. [ ] Freeze Foundation Certification V2 with exact code/test/environment bindings.
+7. [ ] Audit merged PR #41 Layer 2 replay against the certified foundation and preregistered replay contract.
+8. [ ] Only after Layer 2 certification, audit PR #42 Layer 3 and PR #43 Layer 3.1 in order.
+9. [ ] Keep Layer 4 replay and all PROTECTED scoring on HOLD until upstream repaired layers are independently certified.
