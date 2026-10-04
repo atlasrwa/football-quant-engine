@@ -26,7 +26,7 @@ mean commercial validation.
 - **Goals market comparison:** eligible under the accepted regulation-time contract.
 - **Corners:** modelable, but bookmaker comparison remains fail-closed until provider corner settlement equivalence is independently proven and frozen.
 - **Bookings:** model/market comparison blocked; provider market availability must not be confused with QFE target-comparison eligibility.
-- **Operational gate:** PR #41 audit is ABORT; next is preregistered Layer 2 V3 with WARMUP state + DEVELOPMENT-only scoring and CALIBRATION/PROTECTED absent from input.
+- **Operational gate:** Layer 2 V3 is certified as true DEVELOPMENT-only evidence; next is independent audit of merged PR #42 Layer 3.
 
 Historical sections below remain audit evidence. Where an older status conflicts with this current-state block, this block governs operational sequencing.
 
@@ -443,5 +443,6 @@ Layer 4 merge gate:
 5. [x] Clean canonical checkout validation: 71 focused foundation tests passed; 337 full repository tests passed; 86 research modules imported with 0 failures; git diff --check PASS.
 6. [x] Freeze Foundation Certification V2 in evidence/foundation_v2/QFE_REPAIRED_FOUNDATION_CERTIFICATION_V2.{json,md}. PROTECTED remains sealed; old Protected Protocol V1 is explicitly superseded for repaired T-6h update semantics while its 317-fixture membership remains frozen.
 7. [x] Audit merged PR #41 Layer 2 replay: **ABORT** because the claimed DEVELOPMENT-only report scored all 5,640 fixtures, including 959 CALIBRATION and 317 later-designated PROTECTED fixtures.
-8. [ ] Freeze and run Layer 2 V3 under true DEVELOPMENT-only scoring. Only after Layer 2 V3 certification, audit PR #42 Layer 3 and PR #43 Layer 3.1 in order.
-9. [ ] Keep Layer 4 replay and all PROTECTED scoring on HOLD until upstream repaired layers are independently certified.
+8. [x] Freeze and run Layer 2 V3 under true DEVELOPMENT-only scoring: 552 WARMUP state-only, 3,812 DEVELOPMENT scored, 959 CALIBRATION + 317 exposed former-PROTECTED excluded from model input; exact rebuild PASS.
+9. [ ] Independently audit merged PR #42 Layer 3, then PR #43 Layer 3.1 in order.
+10. [ ] Keep Layer 4 replay and any final-holdout scoring on HOLD until upstream repaired layers are independently certified and a new future prospective holdout is frozen.
