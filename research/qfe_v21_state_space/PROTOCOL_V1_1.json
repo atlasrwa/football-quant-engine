@@ -1,0 +1,153 @@
+{
+  "candidate_profiles": {
+    "BALANCED": {
+      "corners_half_life_days": {
+        "competition": 180.0,
+        "global": 365.0,
+        "team_comp": 60.0,
+        "team_global": 120.0
+      },
+      "goals_half_life_days": {
+        "competition": 270.0,
+        "global": 540.0,
+        "team_comp": 90.0,
+        "team_global": 180.0
+      },
+      "stationary_sd": {
+        "competition": 0.2,
+        "global": 0.12,
+        "team_comp": 0.2,
+        "team_global": 0.28
+      },
+      "team_influence": 1.0
+    },
+    "CONSERVATIVE": {
+      "corners_half_life_days": {
+        "competition": 270.0,
+        "global": 540.0,
+        "team_comp": 90.0,
+        "team_global": 180.0
+      },
+      "goals_half_life_days": {
+        "competition": 365.0,
+        "global": 720.0,
+        "team_comp": 120.0,
+        "team_global": 240.0
+      },
+      "stationary_sd": {
+        "competition": 0.15,
+        "global": 0.1,
+        "team_comp": 0.15,
+        "team_global": 0.2
+      },
+      "team_influence": 1.0
+    },
+    "RESPONSIVE": {
+      "corners_half_life_days": {
+        "competition": 120.0,
+        "global": 270.0,
+        "team_comp": 45.0,
+        "team_global": 90.0
+      },
+      "goals_half_life_days": {
+        "competition": 180.0,
+        "global": 365.0,
+        "team_comp": 60.0,
+        "team_global": 120.0
+      },
+      "stationary_sd": {
+        "competition": 0.25,
+        "global": 0.15,
+        "team_comp": 0.28,
+        "team_global": 0.35
+      },
+      "team_influence": 1.0
+    }
+  },
+  "challenger_architecture": {
+    "competition_state": "log-rate residual relative to the pre-match global environment",
+    "forecast_team_effect": "team_global_residual + team_comp_residual",
+    "global_state": "absolute log-rate, mean reverting to target initial home/away log-rate",
+    "odds_blind": true,
+    "same_kickoff_contract": "all forecasts and prior states frozen before any same-kickoff outcome update; node likelihoods aggregated within batch",
+    "state_space": "Gaussian log-intensity assumed-density filter with Poisson likelihood and Laplace posterior update",
+    "team_comp_state": "local competition-specific residual measured relative to pre-match competition plus team-global effect",
+    "team_global_state": "cross-competition log-strength residual measured relative to the pre-match competition environment, never normalized to the universal global rate",
+    "uncertainty": "posterior log-state variance propagated approximately into latent log-intensity variance and expected-rate intervals"
+  },
+  "evaluation": {
+    "development_folds": [
+      "D1",
+      "D2",
+      "D3",
+      "D4"
+    ],
+    "fixed_total_lines": {
+      "corners": 9.5,
+      "goals": 2.5
+    },
+    "primary_metric": "fixture_mean_side_poisson_nll",
+    "selection_rule": "Within each target choose the candidate with lowest pooled DEVELOPMENT primary metric only if it also wins primary metric in at least 3 of 4 chronological folds and does not worsen pooled fixed-line binary log loss by more than 0.001 versus reference. Otherwise no Stage1 candidate advances.",
+    "supporting_metrics": [
+      "fixture_mean_side_mae",
+      "fixed_total_line_binary_log_loss",
+      "fixed_total_line_brier",
+      "mean_latent_log_sd",
+      "mean_90pct_latent_expected_rate_interval_log_width"
+    ],
+    "targets": [
+      "goals",
+      "corners"
+    ],
+    "ties": "If pooled primary metrics differ by <= 0.0005, choose lower-complexity order CONSERVATIVE < BALANCED < RESPONSIVE.",
+    "uncertainty_interpretation": "latent expected-rate intervals are state-estimation uncertainty diagnostics only; they are not predictive count intervals and are not scored against realized counts"
+  },
+  "next_stage": "A Stage1 advancing profile must receive a separate frozen V2.1 Stage2 protocol before any CALIBRATION outcome is read. Stage2 may test distributional integration of latent uncertainty and calibration, but cannot reuse V2 PROTECTED outcomes for design.",
+  "purpose": "Test whether an uncertainty-aware hierarchical log-rate state-space estimator improves the frozen QFE V2 dynamic count-state representation before any calibration, market comparison, or protected evaluation.",
+  "reference": {
+    "corners_config": {
+      "competition_prior_weight": 40.0,
+      "global_prior_weight": 20.0,
+      "half_life_days": 180.0,
+      "min_effective_team_support": 3.0,
+      "team_comp_prior_weight": 4.0,
+      "team_global_prior_weight": 16.0,
+      "team_influence": 1.0,
+      "transfer_factor_ceiling": 1.67,
+      "transfer_factor_floor": 0.6
+    },
+    "goals_config": {
+      "competition_prior_weight": 40.0,
+      "global_prior_weight": 20.0,
+      "half_life_days": 360.0,
+      "min_effective_team_support": 3.0,
+      "team_comp_prior_weight": 4.0,
+      "team_global_prior_weight": 16.0,
+      "team_influence": 1.0,
+      "transfer_factor_ceiling": 1.67,
+      "transfer_factor_floor": 0.6
+    },
+    "model": "DynamicHierarchicalCountBaseline"
+  },
+  "scientific_boundary": {
+    "calibration_outcomes_allowed": false,
+    "candidate_selection_partition": "DEVELOPMENT_D1_D4_ONLY",
+    "data_provider": "THESTATSAPI_ONLY_CACHED_CANONICAL_CORPUS",
+    "development_outcomes_may_be_scored": true,
+    "llm_allowed": false,
+    "market_odds_allowed": false,
+    "network_calls_allowed": false,
+    "post_result_grid_expansion": "FORBIDDEN_WITHIN_V1",
+    "promotion_from_stage1": "FORBIDDEN_STAGE1_IS_COMPONENT_SCREEN_ONLY",
+    "protected_outcomes_allowed": false,
+    "warmup_outcomes_may_update_state": true
+  },
+  "status": "PREREGISTERED_DEVELOPMENT_ONLY_CHALLENGER_ACTIVE",
+  "supersedes": {
+    "protocol_hash": "96939d1b10277cd00da7a2a66b13b11eed832814f5128d86a8f60a9283618744",
+    "reason": "realized count cannot validate an interval for latent expected-rate uncertainty; predictive-count uncertainty is a later distributional layer",
+    "status": "ABORTED_PRE_SCORE_DESIGN_DEFECT",
+    "version": "QFE_V21_STATE_SPACE_STAGE1_V1"
+  },
+  "version": "QFE_V21_STATE_SPACE_STAGE1_V1_1"
+}
