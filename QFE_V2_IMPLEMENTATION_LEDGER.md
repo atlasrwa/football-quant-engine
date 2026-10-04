@@ -350,13 +350,15 @@ Layer 5 gates:
 - [x] Market Surface Engine implemented: same-bookmaker line ladders, bounded monotone CDF repair, raw quote preservation and fail-closed semantics.
 - [x] Fail closed on incomplete, stale, cross-book or materially time-incoherent ladders; selected-book price/coherence failure cannot fall through to another book.
 - [x] Preserve raw quotes/timestamps alongside bounded deterministic monotonic cleanup.
-- [ ] QFE CDF vs market CDF diagnostics: broad signed gap, absolute gap, sign consistency and median-crossing displacement; no implied mean claim without proven tail coverage.
+- [x] QFE CDF vs market CDF diagnostics implemented outcome-blind: broad signed gap, absolute gap, sign consistency and within-support median-crossing displacement; no tail extrapolation and no implied mean claim without proven tail coverage.
 - [x] Cross-line robustness and deterministic non-max-gap line selection implemented and adversarially validated; maximum-gap selection is structurally excluded.
-- [ ] Market-only calibrated comparator and separate market+QFE incremental-information arm.
+- [x] Market-only calibrated comparator and separate market+QFE incremental-information **implementation** complete. The secondary stack is regularized toward market-only (market coefficient anchor 1, QFE coefficient anchor 0) and cannot modify standalone `p_model`.
+- [x] Point-in-time support audit `9d5ea20d7505e1dcadcdf75a1bb19997656e29274a9c9fc26c7b15d2280f4f22` proves the current QFE-owned market archive is **INELIGIBLE for fitting** that arm: earliest `observed_at=1788936009.8045986` (2026-09-09) is after the frozen Layer 4 CALIBRATION end `1785542400` (2026-08-01). Minimum support remains 250 matched unique fixtures; retrospective odds backfill is forbidden. Therefore no market-only calibrator or market+QFE stack has been empirically fit or selected.
 - [x] Implement disagreement eligibility/abstention using calibration support, dynamic support, OOD/component dispersion, reliability penalty and adjacent-line robustness.
 - [x] Freeze final V1.1 implementation integrity audit `3a93b1954e66515275d5965dbf833c502b5fc5849fcd1eda32c333934ebb856b` and matched-market manifest `6f43bd3cc224cc9e42515d6c187b1de7bfff822324aa5cbc4a4b0cbfcb74b54f`. Coverage remains intentionally sparse: 3 goals / 3 corner surfaces / 0 team corners.
 - [x] Freeze bookmaker, line-selection and abstention implementation before any protected outcome is opened.
-- [ ] **NEXT:** after merging the frozen V1.1 apparatus, score the standalone 317-fixture protected p_model globally; market-relative/disagreement scoring is limited to the frozen matched-market subset and must be labeled extremely underpowered.
+- [x] Freeze additive exact-state Layer 5 completion audit `f0f015e62ea8dc7cf983f93eb982a875fa3545faf540df5a2ed0abb0f03f881c`: 334 repository tests passed, 32 focused Layer 5 tests passed, 76 research modules imported with 0 failures, protected outcomes remain unopened, and Layer 4 `p_model` remains unchanged.
+- [ ] **NEXT:** merge this additive completion freeze, then score the standalone 317-fixture protected `p_model` globally under the already-frozen Layer 4 stack. Market-relative/disagreement scoring remains limited to the frozen 3-goals/3-corner matched subset and must be labeled extremely underpowered. The unfitted market+QFE arm remains ineligible until genuine point-in-time pre-fit history reaches its frozen support gate.
 
 ### Layer 6 — prospective commercial evidence
 
