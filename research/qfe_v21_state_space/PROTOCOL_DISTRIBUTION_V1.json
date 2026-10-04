@@ -1,0 +1,102 @@
+{
+  "anti_drift": {
+    "no_line_search": true,
+    "no_post_result_metric_change": true,
+    "no_team_specific_dispersion_after_result_within_v1": true,
+    "nu_grid_frozen_before_scoring": true
+  },
+  "challenger": {
+    "dispersion_parameter": "one global nu per target per fold",
+    "family": "independent side Conway-Maxwell-Poisson with each side parameterized to preserve the frozen V2 expected side count",
+    "fold_fit_objective": "mean joint side negative log probability on training fixtures strictly before validation start",
+    "mean_parameterization": "solve CMP lambda so predictive mean matches frozen V2 side expected count",
+    "normalization": "deterministic finite-support log-weight normalization with adaptive support checks",
+    "nu_grid": [
+      0.6,
+      0.75,
+      0.9,
+      1.0,
+      1.1,
+      1.25,
+      1.5
+    ],
+    "poisson_nested_at_nu": 1.0,
+    "team_or_competition_specific_dispersion": "NOT_TESTED_UNTIL_POOLED_CMP_EARNS_FOLLOWUP",
+    "tie_rule": "choose nu closest to 1.0; remaining tie choose lower nu",
+    "tie_tolerance": 0.0001
+  },
+  "evaluation": {
+    "advance_gate": "pooled joint side LogS improves, joint side LogS wins at least 3/4 folds, pooled total RPS does not worsen, and fixed-line binary Log Loss does not worsen by more than 0.001",
+    "development_folds": [
+      "D1",
+      "D2",
+      "D3",
+      "D4"
+    ],
+    "fixed_total_lines": {
+      "corners": 9.5,
+      "goals": 2.5
+    },
+    "primary_metric": "fixture_joint_side_log_score",
+    "supporting_metrics": [
+      "total_count_log_score",
+      "side_mean_discrete_RPS",
+      "total_discrete_RPS",
+      "fixed_total_line_binary_log_loss",
+      "fixed_total_line_brier"
+    ],
+    "targets": [
+      "goals",
+      "corners"
+    ],
+    "uncertainty": "weekly-block paired uncertainty is required before any later component promotion; Stage1 point estimates alone cannot promote"
+  },
+  "means": {
+    "corners_config": {
+      "competition_prior_weight": 40.0,
+      "global_prior_weight": 20.0,
+      "half_life_days": 180.0,
+      "min_effective_team_support": 3.0,
+      "team_comp_prior_weight": 4.0,
+      "team_global_prior_weight": 16.0,
+      "team_influence": 1.0,
+      "transfer_factor_ceiling": 1.67,
+      "transfer_factor_floor": 0.6
+    },
+    "goals_config": {
+      "competition_prior_weight": 40.0,
+      "global_prior_weight": 20.0,
+      "half_life_days": 360.0,
+      "min_effective_team_support": 3.0,
+      "team_comp_prior_weight": 4.0,
+      "team_global_prior_weight": 16.0,
+      "team_influence": 1.0,
+      "transfer_factor_ceiling": 1.67,
+      "transfer_factor_floor": 0.6
+    },
+    "source": "frozen V2 DynamicHierarchicalCountBaseline DEVELOPMENT walk-forward means"
+  },
+  "next_stage": "Only if pooled CMP passes Stage1 may a separately preregistered hierarchical dispersion model be tested. Otherwise retain current target-specific distributions.",
+  "purpose": "Test Conway-Maxwell-Poisson as a flexible side-count distribution around frozen V2 dynamic means, with Poisson nested at nu=1 and the current corners Poisson/NB2 mixture as the corners reference.",
+  "reference_distributions": {
+    "corners": "fixture-level 0.25 independent Poisson joint + 0.75 independent side-NB2 joint; common NB2 alpha refit on training history strictly before each DEVELOPMENT fold",
+    "goals": "independent Poisson sides"
+  },
+  "research_context": {
+    "external_direction": "2026 football research reports predictive benefit from CMP dispersion modeling and team-level dispersion heterogeneity; QFE tests the simpler pooled nested family first",
+    "qfe_evidence": "goals NB2 was near-Poisson/inconclusive; corners NB2 improved binary markets but worsened total-count NLL, motivating a distribution family that permits both over- and under-dispersion"
+  },
+  "scientific_boundary": {
+    "calibration_outcomes_allowed": false,
+    "existing_v2_protected_outcomes_forbidden_for_design": true,
+    "llm_allowed": false,
+    "market_odds_allowed": false,
+    "network_calls_allowed": false,
+    "promotion_from_stage1": "FORBIDDEN_COMPONENT_RESEARCH_ONLY",
+    "protected_outcomes_allowed": false,
+    "provider": "THESTATSAPI_ONLY_CACHED_CANONICAL_CORPUS",
+    "selection_and_scoring_partition": "DEVELOPMENT_D1_D4_ONLY"
+  },
+  "status": "PREREGISTERED_DEVELOPMENT_RESEARCH_ACTIVE",
+  "version": "QFE_V21_DISTRIBUTION_STAGE1_CMP_V1"
+}
