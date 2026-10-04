@@ -1,0 +1,87 @@
+{
+  "candidate": {
+    "alpha_isotonic": 0.25,
+    "alpha_platt": 0.75,
+    "exploratory_result_hash": "a0d0df5d4b262855526ded949164b4017894bd063f5b092b813a68afb9201798",
+    "group": "CORNERS_SIDE",
+    "method": "PLATT_ISOTONIC_BLEND",
+    "old_select_effect_is_not_confirmation": true,
+    "selection_origin": "QFE_V21_CALIBRATION_EXPLORATORY_V1"
+  },
+  "evaluation": {
+    "automatic_production_promotion": false,
+    "bootstrap_replicates": 4000,
+    "bootstrap_seed": 20261003,
+    "calibration_diagnostics": [
+      "intercept",
+      "slope",
+      "reliability_by_probability_region"
+    ],
+    "coherence_gate": "all challenger probability ladders must remain nonincreasing in OVER probability as line increases",
+    "primary": "fixture-balanced binary Log Loss",
+    "promotion_evidence_gate": "95% paired bootstrap lower bound >0 for BOTH Log Loss and Brier",
+    "role_harm_gate": "neither HOME nor AWAY may have mean Log Loss regression worse than 0.001",
+    "secondary": "fixture-balanced Brier",
+    "uncertainty": "paired UTC-calendar-week block bootstrap reference minus challenger"
+  },
+  "fit_contract": {
+    "candidate_components_refit": "fit Platt and isotonic once on all historical Layer4 CALIBRATION rows for CORNERS_SIDE, then freeze the convex blend at alpha 0.25",
+    "future_refitting_before_stop": false,
+    "market_odds_used": false,
+    "reference_spec": "reuse exact frozen Layer4 final-refit CORNERS_SIDE calibrator spec"
+  },
+  "prospective_record_contract": {
+    "all_model_features_and_state_must_be_as_of_or_before_prediction_cutoff": true,
+    "complete_fixture_surface_required_for_primary_scorecard": true,
+    "decision_horizon_seconds": 21600,
+    "eligible_lines": [
+      2.5,
+      3.5,
+      4.5,
+      5.5,
+      6.5,
+      7.5
+    ],
+    "eligible_roles": [
+      "HOME",
+      "AWAY"
+    ],
+    "late_discovery_after_cutoff": "ABSTAIN_NO_SHADOW_RECORD",
+    "market_prices_forbidden": true,
+    "outcomes_forbidden_at_prediction_time": true,
+    "prediction_cutoff_definition": "kickoff_ts - 21600 exactly",
+    "prediction_must_be_created_strictly_before_kickoff": true,
+    "raw_probability_must_come_from_same_frozen_QFE_V2_precalibration_stack": true,
+    "record_is_append_only_hash_chained": true,
+    "retrospective_backfill_before_shadow_freeze": false,
+    "same_raw_probability_must_feed_reference_and_challenger": true
+  },
+  "reference": {
+    "group": "CORNERS_SIDE",
+    "method": "frozen QFE V2 Layer4 final-refit PLATT_GLOBAL",
+    "model_freeze_hash": "e33af913f4c27ce33355c78792419ad8cee73e3f16ce7c685781a010d386b3ea"
+  },
+  "scientific_boundary": {
+    "LLM_allowed": false,
+    "candidate_changes_after_first_shadow_record": "FORBIDDEN; material defect requires abort and new version",
+    "market_disagreement_policy_unchanged": true,
+    "network_calls_required_by_calibrator": false,
+    "production_p_model_unchanged": true,
+    "protected_V2_outcomes_forbidden_for_design": true
+  },
+  "status": "PREREGISTERED_PROSPECTIVE_SHADOW_ACTIVE",
+  "stopping_rule": {
+    "minimum_distinct_utc_calendar_weeks": 8,
+    "minimum_settled_event_cells": 500,
+    "minimum_unique_settled_fixtures": 250,
+    "no_extension_after_results_to_seek_significance": true,
+    "stop_at_first_evaluation_snapshot_meeting_all_minima": true
+  },
+  "supersedes": {
+    "protocol_hash": "b1fcf8bf8a236fa63200a2e2a66a00a4a3564feaea788f6793a8ba0781893084",
+    "reason": "decision horizon / feature cutoff was not bound; zero shadow prediction records existed",
+    "status": "ABORTED_PRE_SHADOW_DESIGN_DEFECT",
+    "version": "QFE_V21_CORNERS_SIDE_CALIBRATION_SHADOW_V1"
+  },
+  "version": "QFE_V21_CORNERS_SIDE_CALIBRATION_SHADOW_V1_1"
+}
