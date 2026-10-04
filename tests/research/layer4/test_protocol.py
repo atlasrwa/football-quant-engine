@@ -35,3 +35,12 @@ def test_uncertainty_contract_does_not_claim_fixture_confidence_interval():
     d=protocol_v1().to_dict()['prediction_support_metadata']
     assert 'NOT an individual-fixture probability confidence interval' in d['reliability_band']
     assert 'diagnostic metadata only' in d['ood_policy']
+
+def test_protocol_v2_is_fixed_repair_replay_of_v1():
+    a=protocol_v1().to_dict()
+    b=protocol_v2().to_dict()
+    assert b["version"] == "qfe-layer4-ensemble-calibration-v2-pit-horizon"
+    assert b["frozen_on"] == "2026-10-03"
+    for key in a:
+        if key not in {"version","frozen_on"}:
+            assert b[key] == a[key]
