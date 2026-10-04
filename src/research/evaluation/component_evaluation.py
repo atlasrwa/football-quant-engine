@@ -22,8 +22,8 @@ from src.research.dataset.manifest import canonical_json, sha256_json
 from src.research.evaluation.chronology import CALIBRATION_END_TS, DEVELOPMENT_END_TS
 from src.research.evaluation.paired_uncertainty import paired_block_bootstrap
 
-COMPONENT_EVALUATION_VERSION = "qfe-layer3-component-evaluation-v1"
-FROZEN_ON = "2026-10-02"
+COMPONENT_EVALUATION_VERSION = "qfe-layer3-component-evaluation-v2-pit-horizon"
+FROZEN_ON = "2026-10-03"
 
 
 @dataclass(frozen=True, slots=True)
@@ -123,14 +123,22 @@ def _decision(metrics: dict[str, Any]) -> str:
     return "NOT_SUPPORTED_OR_INCONCLUSIVE"
 
 
-def build_component_evaluation(*, repo_root: Path) -> dict[str, Any]:
+def build_component_evaluation(
+    *,
+    repo_root: Path,
+    chronology_name: str = "QFE_LAYER3_CHRONOLOGY_V1.json",
+    structured_dev_name: str = "QFE_LAYER3_STRUCTURED_DEVELOPMENT.json",
+    structured_name: str = "STRUCTURED_DEVELOPMENT_OOF.json",
+    tabular_name: str = "TABULAR_DEVELOPMENT_OOF.json",
+    similar_name: str = "SIMILAR_CONTEXT_DEVELOPMENT_OOF.json",
+) -> dict[str, Any]:
     root = Path(repo_root)
     evidence = root / "evidence/layer3"
-    chronology = _read(evidence / "QFE_LAYER3_CHRONOLOGY_V1.json")
-    structured_dev = _read(evidence / "QFE_LAYER3_STRUCTURED_DEVELOPMENT.json")
-    structured = _read(evidence / "STRUCTURED_DEVELOPMENT_OOF.json")
-    tabular = _read(evidence / "TABULAR_DEVELOPMENT_OOF.json")
-    similar = _read(evidence / "SIMILAR_CONTEXT_DEVELOPMENT_OOF.json")
+    chronology = _read(evidence / chronology_name)
+    structured_dev = _read(evidence / structured_dev_name)
+    structured = _read(evidence / structured_name)
+    tabular = _read(evidence / tabular_name)
+    similar = _read(evidence / similar_name)
 
     chronology_hash = sha256_json(chronology)
     corpus_hashes = {
@@ -194,11 +202,11 @@ def build_component_evaluation(*, repo_root: Path) -> dict[str, Any]:
     refs = tuple(
         _ref(root, evidence / name)
         for name in (
-            "QFE_LAYER3_CHRONOLOGY_V1.json",
-            "QFE_LAYER3_STRUCTURED_DEVELOPMENT.json",
-            "STRUCTURED_DEVELOPMENT_OOF.json",
-            "TABULAR_DEVELOPMENT_OOF.json",
-            "SIMILAR_CONTEXT_DEVELOPMENT_OOF.json",
+            chronology_name,
+            structured_dev_name,
+            structured_name,
+            tabular_name,
+            similar_name,
         )
     )
     bundle = {

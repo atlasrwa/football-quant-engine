@@ -7,7 +7,7 @@ from src.research.models.structured_distributions import (
 
 
 def test_structured_oof_version_is_explicit():
-    assert STRUCTURED_OOF_VERSION == "qfe-layer3-structured-oof-v2"
+    assert STRUCTURED_OOF_VERSION == "qfe-layer3-structured-oof-v3-pit-horizon"
 
 
 def test_selected_target_configs_are_distinct_by_contract():

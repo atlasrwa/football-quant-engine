@@ -20,8 +20,8 @@ from src.research.evaluation.model_tournament import (
     write_oof_rows,
 )
 
-LAYER3_EVIDENCE_VERSION = "qfe-layer3-structured-development-v2"
-LAYER3_FROZEN_ON = "2026-10-02"
+LAYER3_EVIDENCE_VERSION = "qfe-layer3-structured-development-v3-pit-horizon"
+LAYER3_FROZEN_ON = "2026-10-03"
 
 _IMPLEMENTATION_FILES = (
     "src/research/evaluation/chronology.py",
