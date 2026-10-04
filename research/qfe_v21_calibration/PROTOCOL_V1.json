@@ -1,0 +1,59 @@
+{
+  "version": "QFE_V21_CALIBRATION_EXPLORATORY_V1",
+  "status": "PREREGISTERED_EXPLORATORY_ONLY_CALIBRATION_SELECT_PREVIOUSLY_EXPOSED",
+  "purpose": "Test smoother monotone post-hoc calibration families that can capture nonlinear reliability structure while reducing the small-sample variance of unconstrained isotonic regression.",
+  "scientific_boundary": {
+    "inputs": "immutable QFE V2 Layer4 raw CALIBRATION rows only",
+    "calibration_fit_outcomes_allowed": true,
+    "calibration_select_outcomes_allowed": true,
+    "calibration_select_is_confirmatory": false,
+    "reason_select_is_not_confirmatory": "the same CALIBRATION_SELECT outcomes were already exposed by QFE Layer4 V1 and may be used only as exploratory development evidence for V2.1",
+    "protected_outcomes_allowed": false,
+    "market_odds_allowed": false,
+    "network_calls_allowed": false,
+    "llm_allowed": false,
+    "production_p_model_modification_allowed": false,
+    "post_result_candidate_expansion": "FORBIDDEN_WITHIN_V1"
+  },
+  "groups": ["GOALS_TOTAL", "CORNERS_SIDE", "CORNERS_TOTAL"],
+  "reference": {
+    "GOALS_TOTAL": "frozen QFE V2 selected ISOTONIC_GLOBAL",
+    "CORNERS_SIDE": "frozen QFE V2 selected PLATT_GLOBAL",
+    "CORNERS_TOTAL": "frozen QFE V2 selected PLATT_ROLE_COMP_RIDGE_L1"
+  },
+  "candidate_families": {
+    "PLATT_ISOTONIC_BLEND": {
+      "definition": "q=(1-alpha)*q_platt + alpha*q_isotonic; both component maps fit on CALIBRATION_FIT only",
+      "alpha_grid": [0.25, 0.5, 0.75, 1.0],
+      "monotonicity": "guaranteed because convex mixtures of nondecreasing maps are nondecreasing"
+    },
+    "PLATT_CENTERED_MONOTONE_LOGIT_SPLINE": {
+      "definition": "piecewise-linear map in logit space with fitted knot output logits constrained strictly increasing; nonlinear deviations are L2-shrunk toward the fitted Platt map and penalized for second-difference curvature",
+      "input_knots": "weighted CALIBRATION_FIT raw-logit quantiles at [0.0,0.2,0.4,0.6,0.8,1.0]",
+      "ridge_grid": [0.1, 1.0, 10.0, 100.0],
+      "curvature_multiplier": 1.0,
+      "minimum_logit_increment": 0.000001,
+      "tail_behavior": "linear extrapolation using the positive first/last fitted segment slopes",
+      "identity_containment": "the fitted Platt map is exactly reachable as zero nonlinear deviation"
+    }
+  },
+  "comparators": ["FROZEN_V2_SELECTED", "IDENTITY", "PLATT_GLOBAL", "BETA_GLOBAL", "ISOTONIC_GLOBAL"],
+  "evaluation": {
+    "fit_window": "existing CALIBRATION_FIT only",
+    "score_window": "existing CALIBRATION_SELECT only",
+    "primary_metric": "fixture-balanced binary Log Loss",
+    "secondary_metric": "fixture-balanced Brier score",
+    "brier_noninferiority_tolerance": 0.001,
+    "paired_uncertainty": "UTC-calendar-week block bootstrap of reference minus challenger",
+    "bootstrap_replicates": 4000,
+    "bootstrap_seed": 20261003,
+    "coherence_gate": "candidate transform must be nondecreasing on a dense probability grid and calibrated fixture ladders must remain nonincreasing in OVER probability as line increases",
+    "selection_for_research_summary": "within each candidate family report lowest SELECT Log Loss subject to Brier <= frozen reference Brier + 0.001; ties within 0.0005 choose stronger regularization / smaller alpha",
+    "promotion_rule": "NONE. No candidate can be promoted from this exposed exploratory comparison. A promising candidate must be frozen and tested on a new untouched future holdout or prospective cohort."
+  },
+  "literature_rationale": {
+    "beta_calibration": "retained as comparator because it is a flexible monotone parametric family that contains identity-like behavior",
+    "isotonic_risk": "unconstrained isotonic is high variance on limited calibration sets",
+    "recent_evidence": "recent large-scale calibration benchmarks show Platt and isotonic can worsen log loss and motivate explicit method comparison rather than automatic recalibration"
+  }
+}
