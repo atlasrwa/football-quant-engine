@@ -76,9 +76,29 @@ def test_goals_are_market_comparison_eligible_but_corners_fail_closed() -> None:
     corners = TARGET_REGISTRY_V1.contract("corners_away_regulation")
     assert corners.model_eligible is True
     assert corners.provider_market_status == ProviderMarketStatus.UNVERIFIED
-    assert corners.provider_market_available is False
+    assert corners.provider_market_available is True
+    assert corners.provider_market_mapping_verified is False
+    assert corners.provider_market_mapped is False
     assert corners.market_comparison_eligible is False
     assert corners.provider_market_side_key == "away"
+
+
+def test_market_availability_mapping_and_comparison_are_distinct() -> None:
+    available = set(TARGET_REGISTRY_V1.provider_market_available_ids())
+    mapped = set(TARGET_REGISTRY_V1.provider_market_mapped_ids())
+    comparable = set(TARGET_REGISTRY_V1.market_comparison_eligible_ids())
+
+    assert "corners_total_regulation" in available
+    assert "corners_total_regulation" not in mapped
+    assert "corners_total_regulation" not in comparable
+
+    assert "bookings_total_regulation" in available
+    assert "bookings_total_regulation" in mapped
+    assert "bookings_total_regulation" not in comparable
+
+    assert "goals_total_regulation" in available
+    assert "goals_total_regulation" in mapped
+    assert "goals_total_regulation" in comparable
 
 
 def test_bookings_remain_fail_closed() -> None:
@@ -90,6 +110,7 @@ def test_bookings_remain_fail_closed() -> None:
     # the same thing as an accepted QFE model-vs-market comparison contract.
     assert contract.provider_market_status == ProviderMarketStatus.VERIFIED
     assert contract.provider_market_available is True
+    assert contract.provider_market_mapping_verified is True
     assert contract.provider_market_mapped is True  # compatibility alias
     assert contract.model_eligible is False
     assert contract.market_comparison_eligible is False
