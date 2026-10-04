@@ -26,7 +26,7 @@ mean commercial validation.
 - **Goals market comparison:** eligible under the accepted regulation-time contract.
 - **Corners:** modelable, but bookmaker comparison remains fail-closed until provider corner settlement equivalence is independently proven and frozen.
 - **Bookings:** model/market comparison blocked; provider market availability must not be confused with QFE target-comparison eligibility.
-- **Operational gate:** Layer 3 is independently certified as DEVELOPMENT-only and exactly reproducible; next is independent audit of merged PR #43 Layer 3.1.
+- **Operational gate:** Layers 2 V3, 3 and 3.1 are independently certified; next is Layer 4 audit/rebuild against the corrected chain. The former 317-fixture cohort is exposed and cannot serve as final holdout.
 
 Historical sections below remain audit evidence. Where an older status conflicts with this current-state block, this block governs operational sequencing.
 
@@ -445,5 +445,5 @@ Layer 4 merge gate:
 7. [x] Audit merged PR #41 Layer 2 replay: **ABORT** because the claimed DEVELOPMENT-only report scored all 5,640 fixtures, including 959 CALIBRATION and 317 later-designated PROTECTED fixtures.
 8. [x] Freeze and run Layer 2 V3 under true DEVELOPMENT-only scoring: 552 WARMUP state-only, 3,812 DEVELOPMENT scored, 959 CALIBRATION + 317 exposed former-PROTECTED excluded from model input; exact rebuild PASS.
 9. [x] Independently audit merged PR #42 Layer 3: exact regeneration of chronology, tournament, 3,812 goals OOF rows, 3,783 corners OOF rows, structured fold OOF and component evaluation; 0 CALIBRATION / 0 exposed former-PROTECTED rows scored.
-10. [ ] Independently audit merged PR #43 Layer 3.1.
-11. [ ] Keep Layer 4 replay and any final-holdout scoring on HOLD until upstream repaired layers are independently certified and a new future prospective holdout is frozen.
+10. [x] Independently audit merged PR #43 Layer 3.1: protocol preregistration confirmed; 94,752 event cells regenerated exactly; SIDE NB2 passes the preregistered DEVELOPMENT gate, TOTAL NB2 remains weak/inconclusive; no CALIBRATION, exposed former-PROTECTED or market inputs.
+11. [ ] Audit/rebuild Layer 4 from the certified corrected chain; keep any final-holdout scoring on HOLD and create a new future prospective holdout only after the complete repaired stack is frozen.
