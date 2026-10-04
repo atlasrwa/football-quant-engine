@@ -26,7 +26,7 @@ mean commercial validation.
 - **Goals market comparison:** eligible under the accepted regulation-time contract.
 - **Corners:** modelable, but bookmaker comparison remains fail-closed until provider corner settlement equivalence is independently proven and frozen.
 - **Bookings:** model/market comparison blocked; provider market availability must not be confused with QFE target-comparison eligibility.
-- **Operational gate:** repository hygiene + target-contract remediation, then Foundation Certification V2, then audit PR #41.
+- **Operational gate:** Foundation Certification V2 is complete; next is independent audit of merged PR #41 Layer 2 replay.
 
 Historical sections below remain audit evidence. Where an older status conflicts with this current-state block, this block governs operational sequencing.
 
@@ -438,10 +438,10 @@ Layer 4 merge gate:
 
 1. [x] Repair and merge the T-6h PIT horizon defect (PR #40).
 2. [x] Independently certify the repaired scientific foundation for offline replay.
-3. [ ] Complete repository/worktree hygiene remediation on the compute host.
-4. [ ] Separate provider-market availability from QFE market-comparison eligibility in target contracts and keep corners fail-closed pending settlement-equivalence proof.
-5. [ ] Rerun foundation-focused tests and the complete repository suite from a clean canonical checkout.
-6. [ ] Freeze Foundation Certification V2 with exact code/test/environment bindings.
+3. [x] Complete repository/worktree hygiene remediation on the compute host: standalone canonical clone at /srv/qfe/football-quant-engine; 5 dead registrations pruned; 38 historical linked worktrees classified/quarantined; 5 legacy project cron jobs paused.
+4. [x] Separate provider-market availability, verified mapping and QFE market-comparison eligibility; corners remain modelable but comparison-fail-closed pending settlement-equivalence proof; bookings remain blocked.
+5. [x] Clean canonical checkout validation: 71 focused foundation tests passed; 337 full repository tests passed; 86 research modules imported with 0 failures; git diff --check PASS.
+6. [x] Freeze Foundation Certification V2 in evidence/foundation_v2/QFE_REPAIRED_FOUNDATION_CERTIFICATION_V2.{json,md}. PROTECTED remains sealed; old Protected Protocol V1 is explicitly superseded for repaired T-6h update semantics while its 317-fixture membership remains frozen.
 7. [ ] Audit merged PR #41 Layer 2 replay against the certified foundation and preregistered replay contract.
 8. [ ] Only after Layer 2 certification, audit PR #42 Layer 3 and PR #43 Layer 3.1 in order.
 9. [ ] Keep Layer 4 replay and all PROTECTED scoring on HOLD until upstream repaired layers are independently certified.
