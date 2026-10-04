@@ -18,15 +18,15 @@ mean commercial validation.
 - **Certified repaired foundation:** PR #40 merge `651b98fb82e3cf3cc0a47da13f95cebe5fb1862a`.
 - **PIT contract:** source kickoff + 6h reconstructed availability embargo <= target kickoff - 6h decision horizon.
 - **Foundation validation:** 334 repository tests passed at the exact PR #40 merge; focused PIT call-path audit passed.
-- **PR #41 Layer 2 replay:** merged, but pending independent post-repair certification.
+- **PR #41 Layer 2 replay:** **ABORTED on independent audit** — all-corpus scoring included 959 CALIBRATION + 317 later-designated PROTECTED fixtures; V3 successor required.
 - **PR #42 Layer 3 replay:** merged, but pending independent post-repair certification.
 - **PR #43 Layer 3.1 replay:** merged, but pending independent post-repair certification.
 - **Layer 4 repaired replay:** HOLD; generated scratch outputs are not certified or promotion-eligible.
-- **PROTECTED:** SEALED; 0 protected outcomes/scores opened for the repaired chain.
+- **Former 317-fixture PROTECTED cohort:** **EXPOSED PRE-FREEZE / NOT VALID AS FINAL HOLDOUT**. Membership remains immutable for diagnostics; a new future prospective holdout is required.
 - **Goals market comparison:** eligible under the accepted regulation-time contract.
 - **Corners:** modelable, but bookmaker comparison remains fail-closed until provider corner settlement equivalence is independently proven and frozen.
 - **Bookings:** model/market comparison blocked; provider market availability must not be confused with QFE target-comparison eligibility.
-- **Operational gate:** Foundation Certification V2 is complete; next is independent audit of merged PR #41 Layer 2 replay.
+- **Operational gate:** Layer 2 V3 is certified as true DEVELOPMENT-only evidence; next is independent audit of merged PR #42 Layer 3.
 
 Historical sections below remain audit evidence. Where an older status conflicts with this current-state block, this block governs operational sequencing.
 
@@ -442,6 +442,7 @@ Layer 4 merge gate:
 4. [x] Separate provider-market availability, verified mapping and QFE market-comparison eligibility; corners remain modelable but comparison-fail-closed pending settlement-equivalence proof; bookings remain blocked.
 5. [x] Clean canonical checkout validation: 71 focused foundation tests passed; 337 full repository tests passed; 86 research modules imported with 0 failures; git diff --check PASS.
 6. [x] Freeze Foundation Certification V2 in evidence/foundation_v2/QFE_REPAIRED_FOUNDATION_CERTIFICATION_V2.{json,md}. PROTECTED remains sealed; old Protected Protocol V1 is explicitly superseded for repaired T-6h update semantics while its 317-fixture membership remains frozen.
-7. [ ] Audit merged PR #41 Layer 2 replay against the certified foundation and preregistered replay contract.
-8. [ ] Only after Layer 2 certification, audit PR #42 Layer 3 and PR #43 Layer 3.1 in order.
-9. [ ] Keep Layer 4 replay and all PROTECTED scoring on HOLD until upstream repaired layers are independently certified.
+7. [x] Audit merged PR #41 Layer 2 replay: **ABORT** because the claimed DEVELOPMENT-only report scored all 5,640 fixtures, including 959 CALIBRATION and 317 later-designated PROTECTED fixtures.
+8. [x] Freeze and run Layer 2 V3 under true DEVELOPMENT-only scoring: 552 WARMUP state-only, 3,812 DEVELOPMENT scored, 959 CALIBRATION + 317 exposed former-PROTECTED excluded from model input; exact rebuild PASS.
+9. [ ] Independently audit merged PR #42 Layer 3, then PR #43 Layer 3.1 in order.
+10. [ ] Keep Layer 4 replay and any final-holdout scoring on HOLD until upstream repaired layers are independently certified and a new future prospective holdout is frozen.

@@ -8,6 +8,8 @@ from pathlib import Path
 import pytest
 
 from src.research.dataset.pit import PITDatasetSpec
+from src.research.evaluation.chronology import DEVELOPMENT_END_TS
+import src.research.evaluation.layer2_report as layer2_report
 from src.research.evaluation.layer2_report import (
     build_layer2_evidence,
     write_layer2_evidence,
@@ -70,11 +72,61 @@ def test_layer2_bundle_is_deterministic(tmp_path: Path) -> None:
     a = build_layer2_evidence(**kwargs)
     b = build_layer2_evidence(**kwargs)
     assert a.bundle_hash == b.bundle_hash
-    assert a.version == "qfe-layer2-development-smoke-v2-pit-horizon"
+    assert a.version == "qfe-layer2-development-smoke-v3-development-boundary"
     assert a.corpus_manifest.n_matches == 2
     assert {r.target for r in a.target_reports} == {"goals", "corners"}
     assert all(r.predictions == 2 for r in a.target_reports)
     assert all(r.usable_outcomes == 2 for r in a.target_reports)
+    assert a.warmup_state_matches == 0
+    assert a.development_scored_matches == 2
+    assert a.calibration_excluded_matches == 0
+    assert a.protected_excluded_matches == 0
+
+
+def test_layer2_v3_excludes_calibration_and_protected_from_model_input(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    fixtures = [
+        _fixture("mt_10", "2024-07-20T15:00:00.000Z", "tm_1", "tm_2"),
+        _fixture("mt_20", "2025-01-08T15:00:00.000Z", "tm_2", "tm_1"),
+        _fixture("mt_30", "2026-03-08T15:00:00.000Z", "tm_1", "tm_2"),
+        _fixture("mt_40", "2026-09-08T15:00:00.000Z", "tm_2", "tm_1"),
+    ]
+    _write(tmp_path / "_all_fixtures_epl_sn_1.json", {"fixtures": fixtures})
+    for ref in ("mt_10", "mt_20", "mt_30", "mt_40"):
+        _write(tmp_path / f"epl_stats_{ref}.json", _stats(ref))
+
+    original = layer2_report.DynamicHierarchicalCountBaseline.walk_forward
+    calls: list[tuple[int, ...]] = []
+
+    def checked_walk_forward(self, matches, *args, **kwargs):
+        rows = tuple(matches)
+        calls.append(tuple(int(row.date_unix) for row in rows))
+        assert rows
+        assert all(int(row.date_unix) < DEVELOPMENT_END_TS for row in rows)
+        assert {row.source_match_ref for row in rows} == {"mt_10", "mt_20"}
+        return original(self, rows, *args, **kwargs)
+
+    monkeypatch.setattr(
+        layer2_report.DynamicHierarchicalCountBaseline,
+        "walk_forward",
+        checked_walk_forward,
+    )
+
+    bundle = layer2_report.build_layer2_evidence(
+        base_dir=tmp_path,
+        repo_root=Path(__file__).resolve().parents[3],
+        pit_spec=PITDatasetSpec(decision_horizon_seconds=6 * 3600),
+    )
+
+    assert len(calls) == 4  # dynamic + climatology for goals and corners
+    assert bundle.warmup_state_matches == 1
+    assert bundle.development_scored_matches == 1
+    assert bundle.calibration_excluded_matches == 1
+    assert bundle.protected_excluded_matches == 1
+    assert all(report.predictions == 1 for report in bundle.target_reports)
+    assert all(report.usable_outcomes == 1 for report in bundle.target_reports)
 
 
 def test_layer2_writer_refuses_mutation(tmp_path: Path) -> None:
