@@ -26,6 +26,12 @@ from src.research.dataset.multiseason import (
     build_multiseason_pit_corpus,
 )
 from src.research.dataset.pit import PITDatasetSpec
+from src.research.evaluation.chronology import (
+    DEVELOPMENT_END_TS,
+    EvaluationPartition,
+    assert_selection_partition_allowed,
+    partition_for_kickoff,
+)
 from src.research.models.dynamic_count_strength import (
     CORNERS_TARGET,
     GOALS_TARGET,
@@ -36,8 +42,8 @@ from src.research.models.dynamic_count_strength import (
 )
 
 
-LAYER2_EVIDENCE_VERSION = "qfe-layer2-development-smoke-v2-pit-horizon"
-LAYER2_FROZEN_ON = "2026-10-03"
+LAYER2_EVIDENCE_VERSION = "qfe-layer2-development-smoke-v3-development-boundary"
+LAYER2_FROZEN_ON = "2026-10-04"
 
 _IMPLEMENTATION_FILES = (
     "src/research/dataset/multiseason.py",
@@ -135,6 +141,10 @@ class Layer2EvidenceBundle:
     frozen_on: str
     scientific_status: str
     corpus_manifest: MultiSeasonCorpusManifest
+    warmup_state_matches: int
+    development_scored_matches: int
+    calibration_excluded_matches: int
+    protected_excluded_matches: int
     implementation_files: tuple[FileFingerprint, ...]
     target_reports: tuple[TargetDevelopmentReport, ...]
 
@@ -144,6 +154,10 @@ class Layer2EvidenceBundle:
             "frozen_on": self.frozen_on,
             "scientific_status": self.scientific_status,
             "corpus_manifest": self.corpus_manifest.to_dict(),
+            "warmup_state_matches": self.warmup_state_matches,
+            "development_scored_matches": self.development_scored_matches,
+            "calibration_excluded_matches": self.calibration_excluded_matches,
+            "protected_excluded_matches": self.protected_excluded_matches,
             "implementation_files": [
                 row.to_dict() for row in self.implementation_files
             ],
@@ -233,6 +247,15 @@ def _target_report(
         strict=True,
     ):
         match = by_fixture[dp.fixture_key]
+        partition = partition_for_kickoff(match.date_unix)
+        if partition == EvaluationPartition.WARMUP:
+            continue
+        assert_selection_partition_allowed(partition)
+        if partition != EvaluationPartition.DEVELOPMENT:
+            raise AssertionError(
+                f"Layer 2 V3 received forbidden partition {partition.value}"
+            )
+
         supports.append(dp.effective_support)
         counts = target.observed_counts(match)
         if counts is None:
@@ -268,11 +291,16 @@ def _target_report(
         by_season[match.season_ref or "<missing>"].append(row)
         by_support[_support_bucket(dp.effective_support)].append(row)
 
-    supported_count = sum(p.supported for p in dynamic_predictions)
+    development_predictions = [
+        p
+        for p in dynamic_predictions
+        if partition_for_kickoff(p.kickoff_ts) == EvaluationPartition.DEVELOPMENT
+    ]
+    supported_count = sum(p.supported for p in development_predictions)
     first_supported = next(
         (
             p.kickoff_ts
-            for p in dynamic_predictions
+            for p in development_predictions
             if p.supported
         ),
         None,
@@ -286,13 +314,13 @@ def _target_report(
         dynamic_config_hash=config.identity_hash,
         climatology_config=asdict(climatology_config),
         climatology_config_hash=climatology_config.identity_hash,
-        predictions=len(dynamic_predictions),
+        predictions=len(development_predictions),
         usable_outcomes=len(all_rows),
         missing_or_excluded_outcomes=missing,
         supported_predictions=supported_count,
         supported_fraction=(
-            supported_count / len(dynamic_predictions)
-            if dynamic_predictions else 0.0
+            supported_count / len(development_predictions)
+            if development_predictions else 0.0
         ),
         first_supported_kickoff_ts=first_supported,
         effective_support_mean=mean(supports) if supports else 0.0,
@@ -330,9 +358,25 @@ def build_layer2_evidence(
         base_dir=base_dir,
         pit_spec=pit_spec,
     )
+
+    partition_counts = {partition: 0 for partition in EvaluationPartition}
+    for match in corpus.matches:
+        partition_counts[partition_for_kickoff(match.date_unix)] += 1
+
+    replay_matches = tuple(
+        match
+        for match in corpus.matches
+        if match.date_unix < DEVELOPMENT_END_TS
+    )
+    if len(replay_matches) != (
+        partition_counts[EvaluationPartition.WARMUP]
+        + partition_counts[EvaluationPartition.DEVELOPMENT]
+    ):
+        raise AssertionError("Layer 2 V3 replay partition accounting mismatch")
+
     reports = tuple(
         _target_report(
-            matches=corpus.matches,
+            matches=replay_matches,
             target=target,
             config=config,
         )
@@ -346,6 +390,10 @@ def build_layer2_evidence(
             "NO_MARKET_COMPARISON"
         ),
         corpus_manifest=corpus.manifest,
+        warmup_state_matches=partition_counts[EvaluationPartition.WARMUP],
+        development_scored_matches=partition_counts[EvaluationPartition.DEVELOPMENT],
+        calibration_excluded_matches=partition_counts[EvaluationPartition.CALIBRATION],
+        protected_excluded_matches=partition_counts[EvaluationPartition.PROTECTED],
         implementation_files=tuple(
             _fingerprint(Path(repo_root), relative)
             for relative in _IMPLEMENTATION_FILES
@@ -370,15 +418,22 @@ def render_layer2_markdown(bundle: Layer2EvidenceBundle) -> str:
         f"- Competitions: **{len(bundle.corpus_manifest.competition_refs)}**",
         f"- Seasons: **{len(bundle.corpus_manifest.season_refs)}**",
         f"- Source files: **{bundle.corpus_manifest.unique_source_files}**",
-        f"- Corpus manifest: `{bundle.corpus_manifest.manifest_hash}`",
-        f"- PIT manifest: `{bundle.corpus_manifest.pit_manifest_hash}`",
+        f"- Corpus manifest: {bundle.corpus_manifest.manifest_hash}",
+        f"- PIT manifest: {bundle.corpus_manifest.pit_manifest_hash}",
+        f"- WARMUP state-only matches: **{bundle.warmup_state_matches}**",
+        f"- DEVELOPMENT scored matches: **{bundle.development_scored_matches}**",
+        f"- CALIBRATION excluded from replay input: **{bundle.calibration_excluded_matches}**",
+        f"- EXPOSED former-PROTECTED excluded from replay input: **{bundle.protected_excluded_matches}**",
         "",
         "## Benchmark design",
         "",
         "The dynamic hierarchy is compared with a competition-only dynamic",
         "climatology using the same decay/prior settings but `team_influence=0`.",
         "Both are availability-gated at the registered T-6h horizon with a 6h",
-        "reconstructed post-match embargo, and same-kickoff batched. No odds are inputs.",
+        "reconstructed post-match embargo, and same-kickoff batched. WARMUP may",
+        "update state, only DEVELOPMENT outcomes are scored, and CALIBRATION plus",
+        "the exposed former-PROTECTED cohort are absent from the replay input.",
+        "No odds are inputs.",
         "",
         "The current distribution is independent Poisson and exists only as the",
         "first conservative benchmark. Goals dependence and corners",
