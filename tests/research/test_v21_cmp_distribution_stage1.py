@@ -1,4 +1,12 @@
-from src.research.evaluation.v21_cmp_distribution_stage1 import _decision
+import numpy as np
+import pytest
+
+from src.research.evaluation.v21_cmp_distribution_stage1 import (
+    CORNERS_NB2_WEIGHT,
+    _decision,
+    _mixture,
+)
+from src.research.models.cmp_distribution import convolve_count_pmfs
 
 
 def _metrics(joint, total_rps=1.0, binary=0.60):
@@ -43,3 +51,21 @@ def test_cmp_gate_rejects_rps_or_binary_regression():
         4,
     )
     assert binary_bad["passes_stage1_gate"] is False
+
+
+
+def test_fixture_level_mixture_total_is_mixture_of_total_marginals():
+    pois_h = np.array([0.7, 0.3])
+    pois_a = np.array([0.6, 0.4])
+    nb_h = np.array([0.4, 0.6])
+    nb_a = np.array([0.3, 0.7])
+    correct = _mixture(
+        convolve_count_pmfs(pois_h, pois_a),
+        convolve_count_pmfs(nb_h, nb_a),
+        CORNERS_NB2_WEIGHT,
+    )
+    marginal_h = _mixture(pois_h, nb_h, CORNERS_NB2_WEIGHT)
+    marginal_a = _mixture(pois_a, nb_a, CORNERS_NB2_WEIGHT)
+    wrong_cross_mixture = convolve_count_pmfs(marginal_h, marginal_a)
+    assert correct.sum() == pytest.approx(1.0)
+    assert not np.allclose(correct, wrong_cross_mixture)

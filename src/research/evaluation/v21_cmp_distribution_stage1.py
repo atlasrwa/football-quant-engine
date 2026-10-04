@@ -107,9 +107,15 @@ def _score_fixture(
     home_pmf: np.ndarray,
     away_pmf: np.ndarray,
     joint_observed_probability: float,
+    total_pmf: np.ndarray | None = None,
 ) -> DistributionScores:
     total_observed = home_observed + away_observed
-    total_pmf = convolve_count_pmfs(home_pmf, away_pmf)
+    if total_pmf is None:
+        total_pmf = convolve_count_pmfs(home_pmf, away_pmf)
+    else:
+        total_pmf = np.asarray(total_pmf, dtype=float)
+        if abs(float(total_pmf.sum()) - 1.0) > 1e-8:
+            raise ValueError("explicit total PMF must be normalized")
     p_total = _observed_probability(total_pmf, total_observed)
     p_over = probability_over(total_pmf, line)
     outcome_over = total_observed > line
@@ -356,6 +362,17 @@ def build_cmp_stage1(
                         (1.0 - CORNERS_NB2_WEIGHT) * pois_joint
                         + CORNERS_NB2_WEIGHT * nb_joint
                     )
+                    # The frozen corners reference is a fixture-level mixture
+                    # of two complete independent-side joint distributions.
+                    # Its total marginal must therefore be the same mixture of
+                    # the two total marginals. Convolving marginal mixtures
+                    # would introduce invalid Poisson/NB2 cross-component
+                    # terms and is scientifically a different model.
+                    reference_total_pmf = _mixture(
+                        convolve_count_pmfs(pois_h, pois_a),
+                        convolve_count_pmfs(nb_h, nb_a),
+                        CORNERS_NB2_WEIGHT,
+                    )
 
                 cmp_h = cmp_pmf_vector(forecast.lambda_home, selected_nu)
                 cmp_a = cmp_pmf_vector(forecast.lambda_away, selected_nu)
@@ -370,6 +387,11 @@ def build_cmp_stage1(
                     home_pmf=reference_home,
                     away_pmf=reference_away,
                     joint_observed_probability=reference_joint,
+                    total_pmf=(
+                        reference_total_pmf
+                        if target_name == "corners"
+                        else None
+                    ),
                 )
                 cmp_scores = _score_fixture(
                     home_observed=home_obs,
