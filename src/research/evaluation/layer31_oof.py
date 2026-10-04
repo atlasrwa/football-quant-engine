@@ -15,7 +15,7 @@ from scipy.stats import poisson
 from src.research.dataset.manifest import canonical_json, sha256_json
 from src.research.dataset.multiseason import MultiSeasonPITCorpus
 from src.research.evaluation.chronology import CALIBRATION_START_TS, DEVELOPMENT_OOF_FOLDS
-from src.research.evaluation.layer31_protocol import Layer31Protocol, protocol_v1
+from src.research.evaluation.layer31_protocol import Layer31Protocol, protocol_v2
 from src.research.evaluation.paired_uncertainty import PairedBlockResult, paired_block_bootstrap
 from src.research.models.dynamic_count_strength import (
     CORNERS_TARGET,
@@ -30,7 +30,7 @@ from src.research.models.structured_distributions import (
     nb2_total_under_probability_from_sides,
 )
 
-LAYER31_OOF_VERSION = "qfe-layer3.1-corners-multiline-oof-v1"
+LAYER31_OOF_VERSION = "qfe-layer3.1-corners-multiline-oof-v2-pit-horizon"
 
 
 @dataclass(frozen=True, slots=True)
@@ -166,7 +166,7 @@ def _primary_decision(primary: ComparisonSlice, *, role_slices: tuple[Comparison
 
 
 def build_layer31_oof(*, corpus: MultiSeasonPITCorpus, corner_config: DynamicCountConfig, frozen_fold_alphas: dict[str,float], source_structured_oof_hash: str, protocol: Layer31Protocol | None=None) -> Layer31Artifact:
-    protocol=protocol or protocol_v1()
+    protocol=protocol or protocol_v2()
     if protocol.market_odds_allowed or protocol.calibration_outcomes_allowed or protocol.protected_outcomes_allowed:
         raise ValueError("Layer3.1 protocol boundary violated")
     dev=tuple(m for m in corpus.matches if m.date_unix<CALIBRATION_START_TS)
