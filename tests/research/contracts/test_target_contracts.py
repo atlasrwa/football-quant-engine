@@ -55,24 +55,30 @@ def test_goals_and_corners_have_model_contracts() -> None:
     } <= ids
 
 
-def test_team_and_total_goals_corners_have_verified_market_mapping() -> None:
-    market_ids = set(TARGET_REGISTRY_V1.provider_market_mapped_ids())
+def test_goals_are_market_comparison_eligible_but_corners_fail_closed() -> None:
+    comparison_ids = set(TARGET_REGISTRY_V1.market_comparison_eligible_ids())
     assert {
         "goals_home_regulation",
         "goals_away_regulation",
         "goals_total_regulation",
+    } <= comparison_ids
+    assert {
         "corners_home_regulation",
         "corners_away_regulation",
         "corners_total_regulation",
-    } <= market_ids
-    assert (
-        TARGET_REGISTRY_V1.contract("goals_home_regulation").provider_market_key
-        == "team_total_goals"
-    )
-    assert (
-        TARGET_REGISTRY_V1.contract("corners_away_regulation").provider_market_side_key
-        == "away"
-    )
+    }.isdisjoint(comparison_ids)
+
+    goals = TARGET_REGISTRY_V1.contract("goals_home_regulation")
+    assert goals.provider_market_available is True
+    assert goals.market_comparison_eligible is True
+    assert goals.provider_market_key == "team_total_goals"
+
+    corners = TARGET_REGISTRY_V1.contract("corners_away_regulation")
+    assert corners.model_eligible is True
+    assert corners.provider_market_status == ProviderMarketStatus.UNVERIFIED
+    assert corners.provider_market_available is False
+    assert corners.market_comparison_eligible is False
+    assert corners.provider_market_side_key == "away"
 
 
 def test_bookings_remain_fail_closed() -> None:
@@ -80,11 +86,16 @@ def test_bookings_remain_fail_closed() -> None:
     assert obs.status == TargetStatus.CONTRACT_UNRESOLVED
     assert obs.count is None
     contract = TARGET_REGISTRY_V1.contract("bookings_total_regulation")
-    # TheStatsAPI exposes total_cards, but that does not make QFE's raw card
-    # aggregate a bookmaker-compatible bookings target.
+    # TheStatsAPI exposes total_cards, but provider market availability is not
+    # the same thing as an accepted QFE model-vs-market comparison contract.
     assert contract.provider_market_status == ProviderMarketStatus.VERIFIED
-    assert contract.provider_market_mapped is True
+    assert contract.provider_market_available is True
+    assert contract.provider_market_mapped is True  # compatibility alias
     assert contract.model_eligible is False
+    assert contract.market_comparison_eligible is False
+    assert "bookings_total_regulation" not in set(
+        TARGET_REGISTRY_V1.market_comparison_eligible_ids()
+    )
 
 
 def test_extra_time_metadata_blocks_regulation_targets() -> None:
