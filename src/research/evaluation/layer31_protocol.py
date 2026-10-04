@@ -91,3 +91,11 @@ class Layer31Protocol:
 
 def protocol_v1() -> Layer31Protocol:
     return Layer31Protocol()
+
+
+def protocol_v2() -> Layer31Protocol:
+    """Identical hypotheses and gates, rebound to repaired PIT evidence."""
+    return Layer31Protocol(
+        version="qfe-layer3.1-market-event-coverage-v2-pit-horizon",
+        frozen_on="2026-10-03",
+    )

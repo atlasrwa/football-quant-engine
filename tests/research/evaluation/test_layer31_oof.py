@@ -1,4 +1,4 @@
-from src.research.evaluation.layer31_oof import MarketEventRow,_assert_monotone,_primary_decision,ComparisonSlice
+from src.research.evaluation.layer31_oof import LAYER31_OOF_VERSION,MarketEventRow,_assert_monotone,_primary_decision,ComparisonSlice
 
 
 def _row(line,p):
@@ -41,3 +41,6 @@ def test_compact_artifact_verifier_detects_tampering(tmp_path):
     try: verify_layer31_artifact(jp,rp)
     except Exception: pass
     else: raise AssertionError('tampered gzip must fail verification')
+
+def test_layer31_oof_version_is_pit_successor():
+    assert LAYER31_OOF_VERSION == "qfe-layer3.1-corners-multiline-oof-v2-pit-horizon"
