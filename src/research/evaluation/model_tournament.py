@@ -20,6 +20,7 @@ Every prediction is one-step-ahead and same-kickoff batched.
 from __future__ import annotations
 
 from collections import Counter, defaultdict
+import heapq
 from dataclasses import asdict, dataclass
 from datetime import datetime, timezone
 from math import isfinite
@@ -55,13 +56,15 @@ from src.research.models.dynamic_count_strength import (
     CORNERS_TARGET,
     GOALS_TARGET,
     CountTargetSpec,
+    DEFAULT_AVAILABILITY_EMBARGO_SECONDS,
+    DEFAULT_DECISION_HORIZON_SECONDS,
     DynamicCountConfig,
     DynamicHierarchicalCountBaseline,
     HierarchicalCountForecast,
 )
 
 
-TOURNAMENT_VERSION = "qfe-layer3-development-tournament-v1"
+TOURNAMENT_VERSION = "qfe-layer3-development-tournament-v2-pit-horizon"
 BOOTSTRAP_SEED = 20261002
 BOOTSTRAP_REPS = 5000
 
@@ -594,8 +597,24 @@ def run_distribution_tournament(
     target: CountTargetSpec,
     selected_config: DynamicCountConfig,
 ) -> tuple[DistributionTournamentResult, tuple[DevelopmentOOFRow, ...]]:
+    """Run distribution selection under the same PIT horizon as intensity state.
+
+    Dynamic intensities use walk_forward. Distribution-parameter outcomes are
+    separately queued and become selector evidence only when source kickoff plus
+    the availability embargo is no later than target kickoff minus the decision
+    horizon. This prevents the distribution layer from reintroducing information
+    excluded by the repaired dynamic model.
+    """
     stream = _development_stream(matches)
     model = DynamicHierarchicalCountBaseline(target, selected_config)
+    forecasts = {
+        forecast.fixture_key: forecast
+        for forecast in model.walk_forward(
+            stream,
+            decision_horizon_seconds=DEFAULT_DECISION_HORIZON_SECONDS,
+            availability_embargo_seconds=DEFAULT_AVAILABILITY_EMBARGO_SECONDS,
+        )
+    }
 
     if target.name == "goals":
         selector = OnlineGridSelector(GOALS_RHO_GRID, min_observations=100)
@@ -611,20 +630,63 @@ def run_distribution_tournament(
     by_comp_joint: dict[str, list[float]] = defaultdict(list)
     by_comp_event: dict[str, list[float]] = defaultdict(list)
 
-    batch: list[ResearchMatch] = []
-    current_kickoff: int | None = None
+    pending_selector_updates: list[
+        tuple[int, str, HierarchicalCountForecast, int, int]
+    ] = []
 
-    def process_batch(items: Sequence[ResearchMatch]) -> None:
-        if not items:
-            return
+    def update_selector(
+        forecast: HierarchicalCountForecast,
+        home: int,
+        away: int,
+    ) -> None:
+        if target.name == "goals":
+            selector.update(
+                lambda rho, f=forecast, h=home, a=away: (
+                    dixon_coles_joint_nll(
+                        h,
+                        a,
+                        f.lambda_home,
+                        f.lambda_away,
+                        rho,
+                    )
+                )
+            )
+        else:
+            selector.update(
+                lambda alpha, f=forecast, h=home, a=away: (
+                    nb2_side_nll(
+                        h,
+                        a,
+                        f.lambda_home,
+                        f.lambda_away,
+                        alpha,
+                    )
+                )
+            )
+
+    index = 0
+    while index < len(stream):
+        kickoff = int(stream[index].date_unix)
+        cutoff = kickoff - DEFAULT_DECISION_HORIZON_SECONDS
+
+        while pending_selector_updates and pending_selector_updates[0][0] <= cutoff:
+            _, _, prior_forecast, prior_home, prior_away = heapq.heappop(
+                pending_selector_updates
+            )
+            update_selector(prior_forecast, prior_home, prior_away)
+
+        batch: list[ResearchMatch] = []
+        while index < len(stream) and int(stream[index].date_unix) == kickoff:
+            batch.append(stream[index])
+            index += 1
+
         selected_parameter = selector.selected
-        forecasts = model.process_batch(items)
 
-        pending_selector_updates: list[
-            tuple[HierarchicalCountForecast, int, int]
-        ] = []
-
-        for match, forecast in zip(items, forecasts, strict=True):
+        for match in batch:
+            fixture_key = match.stable_fixture_key
+            if not fixture_key:
+                raise ValueError("stable fixture identity required")
+            forecast = forecasts[fixture_key]
             observed = target.observed_counts(match)
             if observed is None:
                 continue
@@ -714,45 +776,13 @@ def run_distribution_tournament(
                     "distribution tournament accessed non-development outcome"
                 )
 
-            pending_selector_updates.append((forecast, home, away))
-
-        # Update all parameter scores only after the same-kickoff predictions
-        # were emitted. Thus no fixture at the same kickoff can affect another.
-        for forecast, home, away in pending_selector_updates:
-            if target.name == "goals":
-                selector.update(
-                    lambda rho, f=forecast, h=home, a=away: (
-                        dixon_coles_joint_nll(
-                            h,
-                            a,
-                            f.lambda_home,
-                            f.lambda_away,
-                            rho,
-                        )
-                    )
-                )
-            else:
-                selector.update(
-                    lambda alpha, f=forecast, h=home, a=away: (
-                        nb2_side_nll(
-                            h,
-                            a,
-                            f.lambda_home,
-                            f.lambda_away,
-                            alpha,
-                        )
-                    )
-                )
-
-    for match in stream:
-        if current_kickoff is None:
-            current_kickoff = match.date_unix
-        if match.date_unix != current_kickoff:
-            process_batch(batch)
-            batch = []
-            current_kickoff = match.date_unix
-        batch.append(match)
-    process_batch(batch)
+            available_at = (
+                int(match.date_unix) + DEFAULT_AVAILABILITY_EMBARGO_SECONDS
+            )
+            heapq.heappush(
+                pending_selector_updates,
+                (available_at, fixture_key, forecast, home, away),
+            )
 
     if not rows:
         raise ValueError("distribution tournament produced no development rows")
@@ -791,14 +821,14 @@ def run_distribution_tournament(
         ),
         event_log_loss_improvement=_paired_block_interval(event_paired),
         by_competition_joint_nll_delta={
-            competition: mean(values)
-            for competition, values in sorted(by_comp_joint.items())
+            comp: mean(values)
+            for comp, values in sorted(by_comp_joint.items())
         },
         by_competition_event_log_loss_delta={
-            competition: mean(values)
-            for competition, values in sorted(by_comp_event.items())
+            comp: mean(values)
+            for comp, values in sorted(by_comp_event.items())
         },
-        oof_rows_hash=rows_digest([row.to_dict() for row in rows]),
+        oof_rows_hash=rows_digest(row.to_dict() for row in rows),
     )
     return report, tuple(rows)
 
