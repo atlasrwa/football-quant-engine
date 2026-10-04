@@ -1,0 +1,63 @@
+{
+  "version": "QFE_V21_CORNERS_SIDE_CALIBRATION_SHADOW_V1",
+  "status": "PREREGISTERED_PROSPECTIVE_SHADOW",
+  "candidate": {
+    "group": "CORNERS_SIDE",
+    "method": "PLATT_ISOTONIC_BLEND",
+    "alpha_isotonic": 0.25,
+    "alpha_platt": 0.75,
+    "selection_origin": "QFE_V21_CALIBRATION_EXPLORATORY_V1",
+    "exploratory_result_hash": "a0d0df5d4b262855526ded949164b4017894bd063f5b092b813a68afb9201798",
+    "old_select_effect_is_not_confirmation": true
+  },
+  "reference": {
+    "group": "CORNERS_SIDE",
+    "method": "frozen QFE V2 Layer4 final-refit PLATT_GLOBAL",
+    "model_freeze_hash": "e33af913f4c27ce33355c78792419ad8cee73e3f16ce7c685781a010d386b3ea"
+  },
+  "fit_contract": {
+    "candidate_components_refit": "fit Platt and isotonic once on all historical Layer4 CALIBRATION rows for CORNERS_SIDE, then freeze the convex blend at alpha 0.25",
+    "reference_spec": "reuse exact frozen Layer4 final-refit CORNERS_SIDE calibrator spec",
+    "future_refitting_before_stop": false,
+    "market_odds_used": false
+  },
+  "prospective_record_contract": {
+    "prediction_must_be_created_strictly_before_kickoff": true,
+    "raw_probability_must_come_from_same_frozen_QFE_V2_precalibration_stack": true,
+    "eligible_roles": ["HOME", "AWAY"],
+    "eligible_lines": [2.5,3.5,4.5,5.5,6.5,7.5],
+    "complete_fixture_surface_required_for_primary_scorecard": true,
+    "same_raw_probability_must_feed_reference_and_challenger": true,
+    "market_prices_forbidden": true,
+    "outcomes_forbidden_at_prediction_time": true,
+    "record_is_append_only_hash_chained": true,
+    "retrospective_backfill_before_shadow_freeze": false
+  },
+  "stopping_rule": {
+    "minimum_unique_settled_fixtures": 250,
+    "minimum_settled_event_cells": 500,
+    "minimum_distinct_utc_calendar_weeks": 8,
+    "stop_at_first_evaluation_snapshot_meeting_all_minima": true,
+    "no_extension_after_results_to_seek_significance": true
+  },
+  "evaluation": {
+    "primary": "fixture-balanced binary Log Loss",
+    "secondary": "fixture-balanced Brier",
+    "uncertainty": "paired UTC-calendar-week block bootstrap reference minus challenger",
+    "bootstrap_replicates": 4000,
+    "bootstrap_seed": 20261003,
+    "promotion_evidence_gate": "95% paired bootstrap lower bound >0 for BOTH Log Loss and Brier",
+    "role_harm_gate": "neither HOME nor AWAY may have mean Log Loss regression worse than 0.001",
+    "coherence_gate": "all challenger probability ladders must remain nonincreasing in OVER probability as line increases",
+    "calibration_diagnostics": ["intercept","slope","reliability_by_probability_region"],
+    "automatic_production_promotion": false
+  },
+  "scientific_boundary": {
+    "production_p_model_unchanged": true,
+    "market_disagreement_policy_unchanged": true,
+    "protected_V2_outcomes_forbidden_for_design": true,
+    "LLM_allowed": false,
+    "network_calls_required_by_calibrator": false,
+    "candidate_changes_after_first_shadow_record": "FORBIDDEN; material defect requires abort and new version"
+  }
+}
