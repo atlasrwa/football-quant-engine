@@ -1,0 +1,98 @@
+{
+  "anti_drift": {
+    "components_frozen_before_scoring": true,
+    "no_calibration_data_for_weight_selection": true,
+    "no_weight_constraints_changed_after_results": true,
+    "ridge_grid_frozen_before_scoring": true
+  },
+  "component_status": {
+    "cmp": "excluded because Distribution Stage1 V1 did not advance",
+    "competition_local": "not a Layer2 replacement; retained only as an ensemble diversity candidate because its fixed-line binary LL improved across D1-D4 in V3",
+    "side_nb2_corners": "validated binary-market component already selected in V2",
+    "similar_context_goals": "weak mixed Layer3 signal but already selected as V2 ensemble diversifier"
+  },
+  "evaluation": {
+    "advance_gate": "selected regularized pool must improve Log Loss and Brier versus frozen V2 anchor with both 95% paired CI lower bounds >0, win Log Loss in at least 2/3 chronological validation folds, and have no fold Log Loss regression worse than 0.002",
+    "bootstrap_replicates": 4000,
+    "bootstrap_seed": 20261003,
+    "comparators": [
+      "FROZEN_V2_ANCHOR",
+      "EQUAL_WEIGHT",
+      "BEST_SINGLE_COMPONENT"
+    ],
+    "larger_new_component_weight_is_not_a_goal": true,
+    "primary": "fixture-balanced binary Log Loss on chronological D2-D4 validation predictions",
+    "secondary": "fixture-balanced Brier",
+    "uncertainty": "paired UTC-calendar-week block bootstrap versus frozen V2 anchor"
+  },
+  "families": {
+    "corners": {
+      "anchor_weights": [
+        0.25,
+        0.75,
+        0.0
+      ],
+      "components": [
+        "DYNAMIC_POISSON",
+        "SIDE_NB2",
+        "COMP_LOCAL_POISSON"
+      ],
+      "equal_weights": [
+        0.3333333333333333,
+        0.3333333333333333,
+        0.3333333333333333
+      ],
+      "fixture_objective": "50% SIDE and 50% TOTAL; SIDE gives HOME/AWAY equal weight; lines equal within scope",
+      "scope": "coherent side lines 2.5-7.5 plus total lines 7.5-12.5"
+    },
+    "goals": {
+      "anchor_weights": [
+        0.8,
+        0.2,
+        0.0
+      ],
+      "components": [
+        "DYNAMIC_POISSON",
+        "SIMILAR_CONTEXT_POISSON",
+        "COMP_LOCAL_POISSON"
+      ],
+      "equal_weights": [
+        0.3333333333333333,
+        0.3333333333333333,
+        0.3333333333333333
+      ],
+      "scope": "total goals 2.5"
+    }
+  },
+  "optimizer": {
+    "constraints": "weights >=0 and sum(weights)=1",
+    "final_refit": "after ridge selection, fit weights on all D1-D4 for later CALIBRATION stage; final-refit metrics are descriptive only",
+    "objective": "fixture-balanced binary Log Loss + ridge_lambda * squared Euclidean distance from frozen V2 anchor weights",
+    "pool": "linear probability/distribution pool",
+    "ridge_grid": [
+      0.0,
+      0.001,
+      0.01,
+      0.1,
+      1.0
+    ],
+    "ridge_selection_metric": "pooled chronological validation Log Loss over D2-D4",
+    "ridge_tie_rule": "choose larger ridge_lambda",
+    "ridge_tie_tolerance": 0.0002,
+    "selection": "chronological expanding validation: fit D1 score D2; fit D1-D2 score D3; fit D1-D3 score D4",
+    "solver": "deterministic SLSQP initialized at frozen V2 anchor"
+  },
+  "purpose": "Test a continuous regularized convex linear pool of validated/diversifying OOF components using chronological expanding-fold selection rather than coarse hand weight grids.",
+  "scientific_boundary": {
+    "calibration_outcomes_allowed": false,
+    "existing_v2_protected_outcomes_forbidden_for_design": true,
+    "inputs": "immutable DEVELOPMENT OOF/component artifacts plus frozen V2.1 competition-local DEVELOPMENT rows",
+    "llm_allowed": false,
+    "market_odds_allowed": false,
+    "network_calls_allowed": false,
+    "promotion_from_stage1": "FORBIDDEN_ENSEMBLE_RESEARCH_ONLY",
+    "protected_outcomes_allowed": false
+  },
+  "status": "PREREGISTERED_DEVELOPMENT_RESEARCH_ACTIVE",
+  "version": "QFE_V21_REGULARIZED_LINEAR_POOL_STAGE1_V1"
+}
