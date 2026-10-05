@@ -1,6 +1,6 @@
 # QFE V2 Implementation Ledger
 
-Last updated: 2026-10-04 (America/Bogota)
+Last updated: 2026-10-05 (America/Bogota)
 
 Status: **ACTIVE GOVERNANCE / IMPLEMENTATION TRACKER**
 
@@ -13,20 +13,20 @@ The ledger must be updated in the same PR as a material architecture milestone.
 A checkbox means code/evidence exists and passed the stated gate; it does not
 mean commercial validation.
 
-## Current certified state — 2026-10-04
+## Current certified state — 2026-10-05
 
 - **Certified repaired foundation:** PR #40 merge `651b98fb82e3cf3cc0a47da13f95cebe5fb1862a`.
 - **PIT contract:** source kickoff + 6h reconstructed availability embargo <= target kickoff - 6h decision horizon.
 - **Foundation validation:** 334 repository tests passed at the exact PR #40 merge; focused PIT call-path audit passed.
 - **PR #41 Layer 2 replay:** **ABORTED on independent audit** — all-corpus scoring included 959 CALIBRATION + 317 later-designated PROTECTED fixtures; V3 successor required.
 - **PR #42 Layer 3 replay / PR #47 certification:** **INDEPENDENT AUDIT PASS WITH RESEARCH CAVEATS** — valid DEVELOPMENT candidate-selection evidence only; no final-model or holdout claim.
-- **PR #43 Layer 3.1 replay / PR #48 certification:** merged, but **pending independent audit in the current sequence**.
+- **PR #43 Layer 3.1 replay / PR #48 certification:** **INDEPENDENT AUDIT PASS WITH RESEARCH CAVEATS** — valid DEVELOPMENT component-eligibility evidence only; SIDE NB2 eligible for Layer 4, TOTAL NB2 not promoted.
 - **Layer 4 repaired replay:** HOLD; generated scratch outputs are not certified or promotion-eligible.
 - **Former 317-fixture PROTECTED cohort:** **EXPOSED PRE-FREEZE / NOT VALID AS FINAL HOLDOUT**. Membership remains immutable for diagnostics; a new future prospective holdout is required.
 - **Goals market comparison:** eligible under the accepted regulation-time contract.
 - **Corners:** modelable, but bookmaker comparison remains fail-closed until provider corner settlement equivalence is independently proven and frozen.
 - **Bookings:** model/market comparison blocked; provider market availability must not be confused with QFE target-comparison eligibility.
-- **Operational gate:** Layer 2 V3 and Layer 3 are independently certified at DEVELOPMENT scope. Next is independent audit of PR #48 / Layer 3.1 before Layer 4 is accepted. The former 317-fixture cohort is exposed and cannot serve as final holdout.
+- **Operational gate:** Layer 2 V3, Layer 3 and Layer 3.1 are independently certified at DEVELOPMENT scope. Next is independent audit or clean rebuild of Layer 4 against that corrected chain. The former 317-fixture cohort is exposed and cannot serve as final holdout.
 
 Historical sections below remain audit evidence. Where an older status conflicts with this current-state block, this block governs operational sequencing.
 
@@ -266,6 +266,14 @@ Preregistered DEVELOPMENT result (94,752 candidate rows / 47,376 paired market-e
 - Compact verifier reconstructs the complete 94,752-row scientific artifact and reproduces `5ce882ec18bf40dbe3d7d29d43a79c21e1885c6a64046c0d70bb5fe8b9769e75`; canonical JSONL and deterministic gzip encoding are verified.
 
 Interpretation: side-specific NB2 is eligible for the Layer 4 corners component set. Match-total NB2 is not promoted by Layer 3.1 and remains weak/inconclusive. This does not authorize calibration, market comparison, protected scoring or commercial claims.
+
+Independent PR #48 audit:
+- Audit evidence: evidence/layer31/QFE_PR48_INDEPENDENT_AUDIT_V1.json and .md.
+- Audit hash: c0d33ba10991aae66100e2186781c6c0100657db1fea882aa9f5488d2cdba7fc.
+- Byte-exact regeneration passed for the compact summary, Markdown and deterministic 94,752-row gzip evidence; full artifact verifier reproduced the scientific artifact hash.
+- Exact-SHA validation: 42 focused tests passed; 338 full repository tests passed; 86 research modules imported; diff check passed.
+- Scope: DEVELOPMENT component eligibility only. Important caveats: same-era reuse of the Layer 3-selected NB2 candidate, non-nested intensity selection, correlated multi-line cells summarized through 49 time blocks, and an imprecise UTC_CALENDAR_WEEK label for epoch-aligned 7-day blocks. Audit-only ISO-week sensitivity leaves both frozen decisions unchanged.
+- Provider-to-bookmaker corner settlement equivalence remains unverified; no bookmaker corner comparison is authorized.
 
 ### Prospective experiment evidence warehouse
 
