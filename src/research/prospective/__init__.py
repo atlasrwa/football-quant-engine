@@ -40,3 +40,10 @@ from src.research.prospective.prediction_freeze import (
     build_prospective_prediction_bundle,
     write_prospective_prediction_bundle,
 )
+
+from src.research.prospective.incremental_history import (
+    PROTOCOL_HASH as INCREMENTAL_HISTORY_PROTOCOL_HASH,
+    SNAPSHOT_VERSION as INCREMENTAL_HISTORY_SNAPSHOT_VERSION,
+    build_incremental_history_snapshot,
+    load_incremental_history_snapshot,
+)
