@@ -1,0 +1,92 @@
+{
+  "bindings": {
+    "base_main": "dd52f7759c9d3038e8dfb8adecc2f8b6bfd85552",
+    "execution_protocol_hash": "bf5b1ba2b15be8db74618754028a34c9568dc281e2fb26a9d0e174552681ca4c",
+    "incremental_history_certification_hash": "ab908c4ecddc38e397c885602d92d2076662a29c61e258d8b931615939c68ef6",
+    "incremental_history_snapshot_hash": "2fe64b6004e6bf2f3348a765ee4d08640bbedb39694206c52f5ce908a7cd56d0",
+    "layer4_v3_model_freeze_hash": "bce2cbdb6fd3ecf1d664439116d1666b9fc4b4172c2838bf29428d07d2713bd2",
+    "layer5_v1_2_protocol_hash": "ae39008016b66f27c279bd2d47093e679ff46458fb44226d2b373983d42bb46a",
+    "prediction_writer_certification_hash": "f5e1fb54bbdd6f78be9d27c720a37cc61f46042189d3d9afaaabae6d27121648"
+  },
+  "competition_seasons": {
+    "comp_0256": "sn_3011424",
+    "comp_0976": "sn_1368511",
+    "comp_3039": "sn_8406098",
+    "comp_8321": "sn_3014533",
+    "comp_8814": "sn_8407970",
+    "comp_9777": "sn_7255696"
+  },
+  "discovery": {
+    "all_pages_required": true,
+    "endpoint": "/football/matches",
+    "fresh_live_discovery_required": true,
+    "method": "GET",
+    "params_template": {
+      "competition_id": "<frozen competition>",
+      "page": "1..provider total_pages",
+      "per_page": 100,
+      "season_id": "<frozen season>",
+      "status": "scheduled"
+    },
+    "raw_payload_hashes_required": true,
+    "retrieval_timestamps_required": true
+  },
+  "freeze_rule": {
+    "cohort_frozen_at": "actual completion time after all discovery pages are captured",
+    "cohort_hash": "SHA256 of exact version/status/frozen_at/fixture rows",
+    "every_fixture_requires": "cohort_frozen_at <= event_time - 21600",
+    "if_any_included_fixture_is_already_inside_t6": "ABORT WHOLE COHORT V1; do not silently drop it",
+    "kickoff_change_after_freeze": "retain fixture identity; mark schedule-change condition and fail closed for prediction unless a separately preregistered schedule-amendment rule exists",
+    "membership_mutation_after_freeze_forbidden": true,
+    "replacement_after_postponement_cancellation_abstention_or_bad_prediction_forbidden": true
+  },
+  "frozen_on": "2026-10-05",
+  "market_rule": {
+    "BOOKINGS": "blocked",
+    "CORNERS": "model prediction allowed but bookmaker comparison fail-closed",
+    "GOALS_TOTAL_2_5": "Layer5 V1.2 comparison eligible",
+    "market_availability_never_affects_cohort_membership": true
+  },
+  "membership_rule": {
+    "bookmaker_filter_forbidden": true,
+    "competition_balancing_or_subsampling_forbidden": true,
+    "fixture_schema_exactly": [
+      "fixture_id",
+      "event_time"
+    ],
+    "include": "EVERY provider-scheduled fixture whose frozen competition/season matches and whose kickoff is >= window start and < window end",
+    "market_availability_filter_forbidden": true,
+    "maximum_cohort_size": null,
+    "minimum_cohort_size": 1,
+    "model_support_filter_forbidden": true,
+    "odds_filter_forbidden": true,
+    "result_or_performance_filter_forbidden": true,
+    "sort_order": [
+      "event_time",
+      "fixture_id"
+    ],
+    "team_history_filter_forbidden": true
+  },
+  "next_gate": "IMPLEMENT/TEST THE COHORT FREEZER AGAINST THIS EXACT RULE, THEN EXECUTE ONE FRESH SIX-COMPETITION SCHEDULE DISCOVERY AND FREEZE MEMBERSHIP",
+  "prediction_rule": {
+    "global_scorecard_includes_every_frozen_fixture_with_a_settleable registered target and frozen p_model, regardless of disagreement eligibility": true,
+    "no_model_or_threshold_changes_after_cohort_freeze": true,
+    "prediction_time": "T-6h registered cutoff",
+    "rolling_history_refresh": "allowed and required when new finished football evidence becomes available after the Oct-5 snapshot; must use the already-certified immutable history snapshot mechanism and complete no later than that fixture cutoff"
+  },
+  "protocol_hash": "8bb6425442713834990b4419f4bcfd799ef75db61d8129b59bd2d635c4c6893e",
+  "scientific_boundary": {
+    "future_outcomes_read": false,
+    "market_prices_read_for_membership": false,
+    "model_predictions_read_for_membership": false,
+    "schedule_not_queried_before_this_protocol": true
+  },
+  "status": "FROZEN_BEFORE_UPCOMING_FIXTURE_DISCOVERY",
+  "version": "qfe-prospective-cohort-selection-v1",
+  "window": {
+    "kickoff_end_utc_exclusive": "2026-10-21T00:00:00+00:00",
+    "kickoff_start_utc": "2026-10-07T00:00:00+00:00",
+    "reason": "fixed prospective window chosen before schedule discovery; provides operational buffer after the Oct-5 history freeze and spans two football weeks",
+    "window_days": 14
+  }
+}
