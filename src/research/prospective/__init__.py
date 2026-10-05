@@ -47,3 +47,11 @@ from src.research.prospective.incremental_history import (
     build_incremental_history_snapshot,
     load_incremental_history_snapshot,
 )
+
+from src.research.prospective.cohort_freeze import (
+    COHORT_PROTOCOL_HASH,
+    DISCOVERY_VERSION as COHORT_DISCOVERY_VERSION,
+    FrozenFixtureIdentity,
+    build_future_cohort,
+    load_frozen_cohort,
+)
