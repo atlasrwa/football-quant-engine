@@ -31,7 +31,8 @@ mean commercial validation.
 - **Prospective incremental history V1:** **CERTIFIED / PREDICTION-ELIGIBLE** — 92 new finished fixtures across all six frozen competitions, 92/92 stats captured, 0 base overlap, combined 5,732-row PIT rebuild PASS.
 - **Prospective Cohort V1:** **FROZEN / CERTIFIED** — 135 fixtures, all scheduled fixtures in the preregistered Oct 7–21 UTC window, no cap or model/market filter; earliest T-6h cutoff is Oct 9 12:00 UTC.
 - **Prospective T-6h runner:** **CERTIFIED / TIMER-READY** — 5-minute cadence, complete pre-cutoff history refresh, all p_model bundles frozen before odds, late backfill forbidden, schedule-change abstention immutable.
-- **Operational gate:** merge/deploy the certified runner from canonical main and verify the systemd timer. Earliest registered T-6h cutoff remains **2026-10-09 12:00 UTC**. No live prospective prediction, market capture, or outcome score has been opened yet.
+- **Prospective T-6h deployment:** **ACTIVE** — systemd service/timer installed from canonical main; 5-minute timer enabled; manual and first automatic zero-due runs both exited 0 with no history/prediction/market side effects.
+- **Operational gate:** **freeze the stack now**. Earliest registered T-6h cutoff is **2026-10-09 12:00 UTC**. The deployed timer will refresh history, freeze p_model bundles, then append goals O/U 2.5 snapshots in the registered pre-cutoff window. No live prediction, market comparator, or outcome score exists yet.
 
 Historical sections below remain audit evidence. Where an older status conflicts with this current-state block, this block governs operational sequencing.
 
