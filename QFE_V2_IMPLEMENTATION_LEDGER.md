@@ -28,7 +28,8 @@ mean commercial validation.
 - **Bookings:** model/market comparison blocked; provider market availability must not be confused with QFE target-comparison eligibility.
 - **Layer 5 V1.2:** **CERTIFIED / ACTIVE** — bound to Layer 4 V3; V1.1 numerical market policy unchanged; former 317 cohort diagnostic-only; corners bookmaker comparison fail-closed; new future cohort machinery outcome-blind and pre-T6 enforced.
 - **Prospective V1 writer:** **CERTIFIED** — exact historical counterfactual replay reproduces 19/19 frozen Layer 4 probabilities with zero drift; target outcome/stat leakage, stale history, post-T6 capture and non-cohort targets fail closed.
-- **Operational gate:** build and freeze an immutable **live incremental football-history snapshot across all six frozen model competitions**. The audited base corpus ends 2026-09-14, so no October cohort may be predicted from the base corpus alone. No genuine future cohort/outcome has been opened.
+- **Prospective incremental history V1:** **CERTIFIED / PREDICTION-ELIGIBLE** — 92 new finished fixtures across all six frozen competitions, 92/92 stats captured, 0 base overlap, combined 5,732-row PIT rebuild PASS.
+- **Operational gate:** preregister the future-cohort window/inclusion rule, then discover and freeze genuinely future membership before each fixture's T-6h cutoff. No future cohort/outcome has been opened.
 
 Historical sections below remain audit evidence. Where an older status conflicts with this current-state block, this block governs operational sequencing.
 
@@ -489,7 +490,9 @@ Layer 5 gates:
 - [x] V1.2 exact-implementation validation: 40 focused tests, 354 repository tests, 88 imports, 19,000 adversarial cases / 0 violations.
 - [x] Freeze Prospective Execution V1 before live cohort selection.
 - [x] Certify the outcome-blind/odds-blind V3 p_model writer by exact historical counterfactual replay.
-- [ ] **NEXT:** build and freeze the live incremental football-history snapshot across all six frozen model competitions; only then select/freeze the new future cohort before each fixture's T-6h cutoff.
+- [x] Build/freeze live incremental history across all six frozen model competitions: 92 fixtures / 92 stats / 0 missing / snapshot hash 2fe64b6004e6bf2f3348a765ee4d08640bbedb39694206c52f5ce908a7cd56d0.
+- [x] Verify zero base overlap and rebuild the combined 5,732-row PIT dataset.
+- [ ] **NEXT:** preregister a deterministic future-cohort time window/inclusion rule, then discover and freeze membership before every fixture's T-6h cutoff.
 
 ### Layer 6 — prospective commercial evidence
 
@@ -544,4 +547,5 @@ Layer 4 merge gate:
 11. [x] Audit/rebuild Layer 4 from the certified corrected chain; V3 bounded calibrated p_model frozen.
 12. [x] Rebind/certify Layer 5 V1.2 without changing the frozen numerical market policy; former 317 cohort retired as final holdout and corners comparison fail-closed.
 13. [x] Freeze Prospective Execution V1 and certify the p_model writer by exact historical counterfactual replay.
-14. [ ] Build/freeze live incremental history across the six frozen model competitions, then freeze the genuinely future cohort before T-6h.
+14. [x] Build/freeze live incremental history across all six frozen model competitions; 92 normalized matches, 0 missing stats, combined PIT PASS.
+15. [ ] Preregister the future-cohort window/inclusion rule, discover scheduled fixtures, and freeze membership before every fixture T-6h.
