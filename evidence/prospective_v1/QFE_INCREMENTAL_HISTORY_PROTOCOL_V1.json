@@ -1,0 +1,115 @@
+{
+  "bindings": {
+    "base_main": "56246bab2958488975c765e3cc9566012a6c1e0f",
+    "canonical_base_corpus_manifest_hash": "bde8a51688674f0ca5d7b17426327cc55d5d44ce4106443eb1a2f5b780419e22",
+    "prospective_execution_protocol_hash": "bf5b1ba2b15be8db74618754028a34c9568dc281e2fb26a9d0e174552681ca4c",
+    "prospective_writer_certification_hash": "f5e1fb54bbdd6f78be9d27c720a37cc61f46042189d3d9afaaabae6d27121648",
+    "provider": "thestatsapi",
+    "provider_contract": "src/research/prospective/api_contract.py"
+  },
+  "competition_seasons": {
+    "comp_0256": {
+      "base_last_kickoff_ts": 1789325100,
+      "base_source_bundle_hash": "e84d528ba6c2b28b119803093aa68ec4ec8e04b265fb5a30e74d0da05a8eae46",
+      "season_id": "sn_3011424"
+    },
+    "comp_0976": {
+      "base_last_kickoff_ts": 1789410600,
+      "base_source_bundle_hash": "6bdce64bd3764a64be0e606beb90d6a940164aca044740236c1d978873b6b523",
+      "season_id": "sn_1368511"
+    },
+    "comp_3039": {
+      "base_last_kickoff_ts": 1789412400,
+      "base_source_bundle_hash": "2140ab122c44a8025aacdb6f73f644dc913423dc7e8b2a2d743ea59313c028da",
+      "season_id": "sn_8406098"
+    },
+    "comp_8321": {
+      "base_last_kickoff_ts": 1789297200,
+      "base_source_bundle_hash": "07cdcc1d1ba9fdd5562b9f89c322830948b4a9976f6a1eafa1f84a6885a38896",
+      "season_id": "sn_3014533"
+    },
+    "comp_8814": {
+      "base_last_kickoff_ts": 1789412400,
+      "base_source_bundle_hash": "a0214e61025dde237c8094b55d64a6cc157cf96f54efd3fe60bc18051e8aa69e",
+      "season_id": "sn_8407970"
+    },
+    "comp_9777": {
+      "base_last_kickoff_ts": 1789411500,
+      "base_source_bundle_hash": "54a11c599c4c9091998a922b3a7c7452bcc039fa0fcaab6e95f90c256e829f81",
+      "season_id": "sn_7255696"
+    }
+  },
+  "discovery": {
+    "all_pages_required": true,
+    "endpoint": "/football/matches",
+    "fixture_selection_rule": "retain every returned finished fixture with kickoff > that competition's frozen base_last_kickoff_ts and kickoff <= snapshot_captured_at",
+    "fresh_live_discovery_required": true,
+    "method": "GET",
+    "params_template": {
+      "competition_id": "<frozen competition>",
+      "page": "1..provider total_pages",
+      "per_page": 100,
+      "season_id": "<frozen season>",
+      "stage": "regular",
+      "status": "finished"
+    },
+    "result_or_model_performance_based_filter_forbidden": true,
+    "target_fixture_filter_forbidden": true
+  },
+  "frozen_on": "2026-10-05",
+  "next_gate": "IMPLEMENT_AND TEST THE IMMUTABLE INCREMENTAL SNAPSHOT BUILDER; THEN EXECUTE ONE COMPLETE SIX-COMPETITION LIVE SNAPSHOT BEFORE SELECTING A FUTURE COHORT",
+  "normalization": {
+    "extra_time_or_shootout": "preserve metadata so target-specific history exclusion remains fail-closed",
+    "finished_fixture_score_required_for_goals_history": true,
+    "null_not_zero": true,
+    "reuse": "TheStatsAPIDataSource/TheStatsAPICorpusLoader semantics",
+    "stable_fixture_team_competition_season_identity_required": true,
+    "stats_required_for_corner_history": true
+  },
+  "protocol_hash": "3cb61328740d2d9bc3af93a097c2f04358fda2f9878ad1eb3da04d6c38ab663a",
+  "quota_safety": {
+    "abort_if_monthly_remaining_insufficient_for_planned_complete_snapshot": true,
+    "hard_live_request_cap": 500,
+    "initial_live_quota_probe": "first frozen discovery request response headers",
+    "key_source": "existing host private THESTATS_API_KEY only; never serialized/logged",
+    "no_partial_snapshot_promoted_on_budget_exhaustion": true,
+    "read_only_requests": true
+  },
+  "scientific_boundary": {
+    "incremental_history_is_football_evidence_only": true,
+    "market_odds_read": false,
+    "model_parameters_changed": false,
+    "new_future_cohort_selected": false,
+    "new_future_outcomes_read": false,
+    "new_future_predictions_written": false,
+    "post_snapshot_backfill_for_same_prediction_after_t6_forbidden": true
+  },
+  "snapshot": {
+    "append_or_immutable": "IMMUTABLE_PER_SNAPSHOT_ID",
+    "complete_coverage_required_for_all_six_competitions": true,
+    "incomplete_competition_or_stats": "SNAPSHOT_NOT_PREDICTION_ELIGIBLE",
+    "manifest_records_all_discovery_pages_and_stats_attempts": true,
+    "market_data_forbidden": true,
+    "raw_root": "/home/ubuntu/data/thestatsapi/prospective_history_v1/<snapshot_id>",
+    "snapshot_hash": "SHA256 canonical manifest including every raw payload SHA256 and retrieval timestamp",
+    "snapshot_id_rule": "UTC capture start timestamp"
+  },
+  "stats_capture": {
+    "actual_retrieval_time_recorded": true,
+    "allow_http_status": [
+      200,
+      404
+    ],
+    "endpoint_template": "/football/matches/{match_id}/stats",
+    "http_404_or_missing_payload": "EXPLICIT_INCOMPLETE_FIXTURE",
+    "method": "GET",
+    "no_lineup_calls": true,
+    "no_market_calls": true,
+    "no_odds_calls": true,
+    "one_call_per_retained_fixture": true,
+    "raw_payload_retained_unmodified": true,
+    "raw_payload_sha256_recorded": true
+  },
+  "status": "FROZEN_BEFORE_LIVE_INCREMENTAL_HISTORY_CALLS",
+  "version": "qfe-prospective-incremental-history-v1"
+}
