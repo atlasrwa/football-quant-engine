@@ -19,14 +19,14 @@ mean commercial validation.
 - **PIT contract:** source kickoff + 6h reconstructed availability embargo <= target kickoff - 6h decision horizon.
 - **Foundation validation:** 334 repository tests passed at the exact PR #40 merge; focused PIT call-path audit passed.
 - **PR #41 Layer 2 replay:** **ABORTED on independent audit** — all-corpus scoring included 959 CALIBRATION + 317 later-designated PROTECTED fixtures; V3 successor required.
-- **PR #42 Layer 3 replay:** merged, but pending independent post-repair certification.
-- **PR #43 Layer 3.1 replay:** merged, but pending independent post-repair certification.
+- **PR #42 Layer 3 replay / PR #47 certification:** **INDEPENDENT AUDIT PASS WITH RESEARCH CAVEATS** — valid DEVELOPMENT candidate-selection evidence only; no final-model or holdout claim.
+- **PR #43 Layer 3.1 replay / PR #48 certification:** merged, but **pending independent audit in the current sequence**.
 - **Layer 4 repaired replay:** HOLD; generated scratch outputs are not certified or promotion-eligible.
 - **Former 317-fixture PROTECTED cohort:** **EXPOSED PRE-FREEZE / NOT VALID AS FINAL HOLDOUT**. Membership remains immutable for diagnostics; a new future prospective holdout is required.
 - **Goals market comparison:** eligible under the accepted regulation-time contract.
 - **Corners:** modelable, but bookmaker comparison remains fail-closed until provider corner settlement equivalence is independently proven and frozen.
 - **Bookings:** model/market comparison blocked; provider market availability must not be confused with QFE target-comparison eligibility.
-- **Operational gate:** Layers 2 V3, 3 and 3.1 are independently certified; next is Layer 4 audit/rebuild against the corrected chain. The former 317-fixture cohort is exposed and cannot serve as final holdout.
+- **Operational gate:** Layer 2 V3 and Layer 3 are independently certified at DEVELOPMENT scope. Next is independent audit of PR #48 / Layer 3.1 before Layer 4 is accepted. The former 317-fixture cohort is exposed and cannot serve as final holdout.
 
 Historical sections below remain audit evidence. Where an older status conflicts with this current-state block, this block governs operational sequencing.
 
@@ -217,6 +217,13 @@ Development conclusions:
 - Similar-context corners: weak/inconclusive as standalone.
 
 Scientific state: **DEVELOPMENT_OOF_ONLY**. No calibration, ensemble fitting, market comparison, or protected scoring has occurred.
+
+Independent PR #47 audit:
+- Audit evidence: evidence/layer3/QFE_PR47_INDEPENDENT_AUDIT_V1.json and .md.
+- Audit hash: 90f427a82bf215ac7ee0884e04fe78fe40502562dc362747c615868bb20da3b7.
+- Exact independent regeneration passed for chronology, tournament, goals/corners OOF, structured fold OOF and component evaluation.
+- Exact-SHA validation: 35 focused tests passed; 338 full repository tests passed; 86 research modules imported; diff check passed.
+- Scope: DEVELOPMENT selection only. Research caveats include non-selection-adjusted winner uncertainty, edge-of-grid selected intensities, near-tied top configurations and non-nested intensity hyperparameter selection.
 
 ### Layer 3.1 — multi-line / team-side corner market-event coverage
 

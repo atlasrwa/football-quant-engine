@@ -1,0 +1,188 @@
+{
+  "audit_hash": "90f427a82bf215ac7ee0884e04fe78fe40502562dc362747c615868bb20da3b7",
+  "audited_certification_head": "b165ef445662b13a96f3ce7a12e78204b9539b80",
+  "audited_merge": "88351e9374e1e6d76023cdd4aeb277164067096e",
+  "audited_pr": 47,
+  "chronology_freeze_commit": "da2f072c4e74d9646bf8c405d058cdb80f6f144c",
+  "date": "2026-10-04",
+  "distribution_findings": {
+    "corners_nb2": {
+      "development_role": "MIXED_BINARY_MARKET_CANDIDATE",
+      "event_ll_ci95": [
+        0.0018506157540267756,
+        0.004679660354592582
+      ],
+      "event_ll_delta": 0.0032045471687845565,
+      "fold_total_count_nll_delta": -0.011473,
+      "online_alpha_frequency": {
+        "0.1": 3783
+      },
+      "side_joint_ci95": [
+        0.06599779878742411,
+        0.11334412289287978
+      ],
+      "side_joint_nll_delta": 0.08866423229426956
+    },
+    "goals_dixon_coles": {
+      "decision": "REJECT_CURRENT_CANDIDATE",
+      "event_ll_delta": -4.7817473388534284e-05,
+      "joint_ci95": [
+        -0.0007722388738237943,
+        0.0005208412814593124
+      ],
+      "joint_nll_delta": -0.00017081625298896947
+    }
+  },
+  "independent_regeneration": {
+    "chronology": {
+      "exact": true,
+      "sha256": "930b9de9ad88c6fc2aaf21f4a069917e48476817b5466752e0991d6336e25ac5"
+    },
+    "component_evaluation": {
+      "bundle_hash": "b4c7566577a15d5f6b007ad41a5d4de62c3ee54f7026df804260620465e0602e",
+      "exact": true,
+      "sha256": "ea838de168b9ca2b325d03697a4326867f658f83ca60128a6c91ce6d6663d009"
+    },
+    "corners_development_oof": {
+      "exact": true,
+      "rows": 3783,
+      "sha256": "a531eb05d98f9df4742c885911ae52e37e90c0abce95119ea6ebcebe82ffb7a2"
+    },
+    "corpus_manifest_hash": "bde8a51688674f0ca5d7b17426327cc55d5d44ce4106443eb1a2f5b780419e22",
+    "goals_development_oof": {
+      "exact": true,
+      "rows": 3812,
+      "sha256": "42a26db4e633b8744eaa2fbb6422a1e4e7113405cdd58f7282f5ae748f34d740"
+    },
+    "independent_boundary_assertions": "PASS",
+    "pit_manifest_hash": "6aeb680aa82e1a9468a44396eab41e33bc7e3daefab8ace6ad17aa11ca8085e8",
+    "status": "PASS_BYTE_EXACT",
+    "structured_development": {
+      "bundle_hash": "3e34c31438082d2845b8bfcaf1781b7ac0b6f7794e088fbd759341f83c0b2b01",
+      "exact": true,
+      "sha256": "a223d392b65fbe85176b67ef24ad84132f4f80f3afcb1e987a8f5b0482f0fe29"
+    },
+    "structured_fold_oof": {
+      "artifact_hash": "028a25e6b1adb56ab5989241dac7d857c4f57ad56eecd77f7ac5261962261744",
+      "binary_rows": 7950,
+      "exact": true,
+      "rows": 15864,
+      "sha256": "47884bdf216e21647544b4dbd44279434bbd9aac07ee824804b7519c88e740a3"
+    },
+    "tournament_hash": "c3de90dcf4ed4d3689018367112456f394b451fe9ba408899ecf114b5aeea98f"
+  },
+  "layer2_v3_merge": "d4b1e02df893db82284e06ab590d834179d24419",
+  "original_layer3_component_commit": "f7dcbbfe79a74d4e0058893eb23fdaea60d25318",
+  "pit_integrity": {
+    "distribution_selector_t6h_horizon": true,
+    "dynamic_walk_forward_t6h_horizon": true,
+    "exact_availability_equality_tested": true,
+    "immediate_process_batch_bypass_forbidden": true,
+    "same_kickoff_batch_frozen": true
+  },
+  "research_caveats": [
+    {
+      "finding": "27-way winner selection is not selection-adjusted; bootstrap intervals are candidate-vs-anchor, not post-selection winner intervals.",
+      "id": "C1",
+      "severity": "MEDIUM"
+    },
+    {
+      "finding": "Selected configs hit grid edges: influence=1.0 and team_comp_prior=4 for both targets; goals also uses the 360-day maximum half-life.",
+      "id": "C2",
+      "severity": "MEDIUM"
+    },
+    {
+      "finding": "Top-two intensity NLL margins are very small: goals about 0.000488 and corners about 0.000341.",
+      "id": "C3",
+      "severity": "MEDIUM"
+    },
+    {
+      "finding": "Structured DEVELOPMENT OOF uses intensity hyperparameters selected on the full DEVELOPMENT window, so it is not nested hyperparameter OOF.",
+      "id": "C4",
+      "severity": "MEDIUM"
+    },
+    {
+      "finding": "Corners NB2 improves side-joint likelihood and binary scores but worsens fold total-count NLL; it is a mixed binary-market candidate, not a universal count-distribution winner.",
+      "id": "C5",
+      "severity": "LOW"
+    }
+  ],
+  "scientific_boundary": {
+    "calibration_scored": 0,
+    "exposed_former_protected_scored": 0,
+    "layer2_artifact_consumed": false,
+    "market_inputs_used": false,
+    "model_input": "WARMUP_PLUS_DEVELOPMENT_ONLY",
+    "network_calls_used": false,
+    "scored_partition": "DEVELOPMENT_ONLY",
+    "source_loader_may_deserialize_full_frozen_corpus": true
+  },
+  "selected_intensity": {
+    "corners": {
+      "candidate": "hl180_inf100_tcp04",
+      "config_hash": "ae4462b7b35b2fb071e9ad0b52c7566988837a1a73d6fb72d5dbae0008e01632",
+      "mean_nll": 2.389049454415304,
+      "runner_up": "hl360_inf100_tcp04",
+      "runner_up_nll": 2.3893908517914815,
+      "winner_margin": 0.0003413973761775
+    },
+    "goals": {
+      "candidate": "hl360_inf100_tcp04",
+      "config_hash": "5d00fdc418b6b66e29253a15acaa091b0e20f4e021a5884d2b75764820bc9e9b",
+      "mean_nll": 1.446763528012834,
+      "runner_up": "hl180_inf100_tcp04",
+      "runner_up_nll": 1.447251883605683,
+      "winner_margin": 0.000488355592849
+    }
+  },
+  "selection_freeze": {
+    "anchor_candidate_id": "hl180_inf075_tcp08",
+    "bootstrap_reps": 5000,
+    "bootstrap_seed": 20261002,
+    "candidate_grid_changed_by_pit_repair": false,
+    "candidate_grid_committed_before_repaired_replay": true,
+    "chronology_frozen_before_original_layer3_results": true,
+    "corners_alpha_grid": [
+      0.0,
+      0.05,
+      0.1,
+      0.2,
+      0.35,
+      0.5,
+      0.75
+    ],
+    "distribution_grids_changed_by_pit_repair": false,
+    "goals_rho_grid": [
+      0.0,
+      -0.05,
+      -0.1,
+      -0.15,
+      0.05
+    ],
+    "intensity_candidates_per_target": 27,
+    "selection_objective_changed_by_pit_repair": false
+  },
+  "status": "PASS_WITH_RESEARCH_CAVEATS_DEVELOPMENT_SELECTION_ONLY",
+  "underlying_repaired_replay_commit": "669a6a6e5b498858033b505f7e6dfd36af448309",
+  "underlying_repaired_replay_merge": "dadb74a96c686d544e7c82dd1bc5bff83839e9f9",
+  "validation": {
+    "audited_tree": "fdc6c789ac73414317a1bf57d78406bd9b195af1",
+    "focused_tests_failed": 0,
+    "focused_tests_passed": 35,
+    "full_repo_tests_failed": 0,
+    "full_repo_tests_passed": 338,
+    "git_diff_check": "PASS",
+    "import_failures": 0,
+    "research_modules_imported": 86
+  },
+  "verdict": {
+    "calibration_authorized_by_this_audit": false,
+    "final_model_promoted": false,
+    "former_317_restored_as_holdout": false,
+    "market_edge_claim_authorized": false,
+    "next_gate": "INDEPENDENT_AUDIT_OF_PR48_LAYER3_1_BEFORE_LAYER4",
+    "pr47_certified": true,
+    "scope": "VALID_DEVELOPMENT_SELECTION_EVIDENCE_ONLY"
+  },
+  "version": "qfe-pr47-independent-audit-v1"
+}
