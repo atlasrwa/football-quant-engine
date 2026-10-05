@@ -21,12 +21,12 @@ mean commercial validation.
 - **PR #41 Layer 2 replay:** **ABORTED on independent audit** — all-corpus scoring included 959 CALIBRATION + 317 later-designated PROTECTED fixtures; V3 successor required.
 - **PR #42 Layer 3 replay / PR #47 certification:** **INDEPENDENT AUDIT PASS WITH RESEARCH CAVEATS** — valid DEVELOPMENT candidate-selection evidence only; no final-model or holdout claim.
 - **PR #43 Layer 3.1 replay / PR #48 certification:** **INDEPENDENT AUDIT PASS WITH RESEARCH CAVEATS** — valid DEVELOPMENT component-eligibility evidence only; SIDE NB2 eligible for Layer 4, TOTAL NB2 not promoted.
-- **Layer 4 repaired replay:** HOLD; generated scratch outputs are not certified or promotion-eligible.
+- **Layer 4 repaired replay:** **V2 model freeze ABORTED** for exact-boundary probability output; **V3 bounded calibrated p_model CERTIFIED operationally** as repair evidence, not fresh OOS validation.
 - **Former 317-fixture PROTECTED cohort:** **EXPOSED PRE-FREEZE / NOT VALID AS FINAL HOLDOUT**. Membership remains immutable for diagnostics; a new future prospective holdout is required.
 - **Goals market comparison:** eligible under the accepted regulation-time contract.
 - **Corners:** modelable, but bookmaker comparison remains fail-closed until provider corner settlement equivalence is independently proven and frozen.
 - **Bookings:** model/market comparison blocked; provider market availability must not be confused with QFE target-comparison eligibility.
-- **Operational gate:** Layer 2 V3, Layer 3 and Layer 3.1 are independently certified at DEVELOPMENT scope. Next is independent audit or clean rebuild of Layer 4 against that corrected chain. The former 317-fixture cohort is exposed and cannot serve as final holdout.
+- **Operational gate:** Layer 4 V3 calibrated odds-blind p_model is operationally frozen. Next: rebind/revalidate Layer 5 to the V3 model freeze, keep corners bookmaker comparison fail-closed, then create a **new future prospective outcome-blind cohort** for genuine validation.
 
 Historical sections below remain audit evidence. Where an older status conflicts with this current-state block, this block governs operational sequencing.
 
@@ -315,7 +315,7 @@ Scientific consequence:
 - Dynamic-derived Layer 2, Layer 3 structured/component evidence, Layer 3.1, and Layer 4 V1 model freeze are **SUPERSEDED / NOT ELIGIBLE FOR PROTECTED SCORING**.
 - Old artifacts remain immutable for audit; they are not rewritten or deleted.
 - The 959 previously called CALIBRATION are now acknowledged as **exposed pre-protected repair data**.
-- The 317 PROTECTED fixtures remain the clean final test.
+- Historical note at the time: the 317 fixtures were then treated as the final protected test. **Current correction:** later audit proved this cohort had already been consumed by Layer 2 V1 before protected designation; it is exposed and not eligible as a final holdout.
 - Layer 5 protected evaluation is paused until repaired Layers 2–4 and Layer 5 policy are frozen.
 
 ### Layer 4 — ensemble and calibration
@@ -369,6 +369,54 @@ Layer 4 completion gates:
 - [x] Freeze the standalone candidate `p_model` stack.
 - [x] Complete exact-state repository validation and merge Layer 4. Independent integrity audit: selector/monotonicity/regeneration/code-binding PASS; merged via PR #36.
 
+#### Current repaired Layer 4 successor — V3
+
+Status: **OPERATIONAL CALIBRATED p_model CERTIFIED AS REPAIR EVIDENCE / NOT FRESH VALIDATION**
+
+The historical V1 record above remains immutable. After the repaired PIT chain and independent Layer 2/3/3.1 audits:
+
+- V2 repaired protocol commit on the certified chain: `c9866caaeea1f928e6cbd04b8e9ccaed11a6c7b0`.
+- V2 protocol hash: `be4f49babfb3e345d457bfe1ca87542888cfc0c6078e0a2427c3d7c18014f7e3`.
+- Repaired DEVELOPMENT ensemble selection hash: `3ab75a1be4a0193b3b0f47ef46201c966b4555b3a3573531fd7cd666d9897213`.
+- Repaired goals similar-context weight: **0.20**.
+- Repaired coherent corner Poisson/NB2 mixture weight: **0.75**.
+- Raw CALIBRATION repair substrate: **959 fixtures / 18,203 event cells / 755 FIT / 204 SELECT / 0 market / 0 former-PROTECTED rows**.
+- Raw calibration hash: `ac4e24650f7f138db89306d74f4ea0d8010e369f8e64951f8aad9dba8b5050c5`.
+- Common pre-CALIBRATION corner NB2 alpha: **0.0999085576** from 8,668 side observations.
+- V2 calibration run hash: `d6a0b7f6b98acbccc54033371c2c2cad785bc18575a651296aed8913370e7346`.
+
+V2 calibrator selection on the frozen CALIBRATION FIT/SELECT policy:
+
+- **GOALS_TOTAL:** IDENTITY LL `0.677835` / Brier `0.242427` → `ISOTONIC_GLOBAL` LL `0.671897` / Brier `0.240025`.
+- **CORNERS_SIDE:** IDENTITY LL `0.579235` / Brier `0.197500` → `PLATT_GLOBAL` LL `0.578967` / Brier `0.197404`. Ridge L1 had lower LL but fell within the frozen `0.0005` tie tolerance, so the simpler global Platt mapping correctly won.
+- **CORNERS_TOTAL:** IDENTITY LL `0.619012` / Brier `0.214717` → `PLATT_ROLE_COMP_RIDGE_L1` LL `0.613997` / Brier `0.212549`.
+
+**V2 standalone p_model freeze was ABORTED** after audit found the goals isotonic mapping emitted exact `p_model=1.0` on three rows. The protocol already declared `probability_clip=1e-6`, but the implementation did not enforce that bound on emitted isotonic probabilities. V2 abort hash: `7bbab3206446421f3a6166c975fe224f14ac2fbf46744bf53acc5d7156b8438b`.
+
+V3 output-bound repair:
+
+- V3 preregistration commit: `6245413ca95377be61973c4f5a1356399eb917aa`.
+- V3 repair protocol hash: `61aa74a54086ba99bd34110f377d157dc11fea5027e7df0d7b01acb1aa89202a`.
+- No calibration search was reopened; methods, refit specs, weights, FIT/SELECT chronology and thresholds are identical to V2.
+- Deterministic output contract: `p_model = clip(calibrator(raw_probability), 1e-6, 1-1e-6)`.
+- Only **3 / 18,203** probabilities changed versus V2, all goals rows, each by at most ~`1e-6`.
+- V3 calibration run hash: `6d5da381803d60000ae8cc52477e66f06644910f8271d155f6401784a330fc5c`.
+- V3 standalone model-freeze hash: `bce2cbdb6fd3ecf1d664439116d1666b9fc4b4172c2838bf29428d07d2713bd2`.
+- V3 certification hash: `1a0e34e1473b22088b9d9340393034a2e2f829ad93790afbbd5f66bb7c560503`.
+- Final validation: **343 repository tests passed; 87 research modules imported; diff check and exact V3 regeneration PASS**.
+
+Scientific interpretation:
+
+- DEVELOPMENT selection passed.
+- Calibration was required: IDENTITY did not win any of the three groups.
+- The operational odds-blind calibrated `p_model` is now frozen.
+- The 959 CALIBRATION fixtures were historically exposed under V1, so the repaired calibration metrics are **not fresh confirmatory OOS evidence**.
+- The former 317-fixture cohort was exposed before its protected designation and remains **ineligible as a final holdout**.
+- Genuine pass/fail for the complete calibrated model requires a **new future prospective cohort frozen after the Layer 5 successor policy is frozen**.
+- Goals market comparison may proceed under the accepted settlement contract.
+- Corners bookmaker comparison remains fail-closed until provider-to-bookmaker corner settlement equivalence is independently proven and frozen.
+- Bookings market comparison remains blocked.
+
 ### Layer 5 — market-relative research
 
 Status: **V1.1 PREREGISTERED / PROTECTED SEALED / IMPLEMENTATION REVALIDATION IN PROGRESS**
@@ -409,7 +457,7 @@ Layer 5 gates:
 - [x] Implement disagreement eligibility/abstention using calibration support, dynamic support, OOD/component dispersion, reliability penalty and adjacent-line robustness.
 - [x] Freeze final V1.1 implementation integrity audit `3a93b1954e66515275d5965dbf833c502b5fc5849fcd1eda32c333934ebb856b` and matched-market manifest `6f43bd3cc224cc9e42515d6c187b1de7bfff822324aa5cbc4a4b0cbfcb74b54f`. Coverage remains intentionally sparse: 3 goals / 3 corner surfaces / 0 team corners.
 - [x] Freeze bookmaker, line-selection and abstention implementation before any protected outcome is opened.
-- [ ] **NEXT:** after merging the frozen V1.1 apparatus, score the standalone 317-fixture protected p_model globally; market-relative/disagreement scoring is limited to the frozen matched-market subset and must be labeled extremely underpowered.
+- [ ] **HISTORICAL NEXT — SUPERSEDED:** the old plan was to score the 317-fixture cohort. Current governance forbids that as final validation because the cohort is exposed. Layer 5 must first be rebound to Layer 4 V3, and genuine validation must use a newly frozen future prospective cohort.
 
 ### Layer 6 — prospective commercial evidence
 

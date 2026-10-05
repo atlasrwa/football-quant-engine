@@ -117,7 +117,16 @@ def write_v3(repo_root:Path,result,rows,freeze):
     raw="".join(canonical_json(r)+"\n" for r in rows).encode()
     gz=gzip.compress(raw,compresslevel=9,mtime=0)
     summary={**result,"rows_file":"QFE_LAYER4_CALIBRATED_ROWS_V3_BOUND.jsonl.gz","rows_file_sha256":hashlib.sha256(gz).hexdigest(),"rows_encoding":"canonical-jsonl+gzip(mtime=0)"}
-    (e/"QFE_LAYER4_CALIBRATION_V3_BOUND.json").write_text(canonical_json(summary)+"\n")
-    (e/"QFE_LAYER4_CALIBRATED_ROWS_V3_BOUND.jsonl.gz").write_bytes(gz)
-    (e/"QFE_LAYER4_MODEL_FREEZE_V3_BOUND.json").write_text(canonical_json(freeze)+"\n")
+    payloads=(
+        (e/"QFE_LAYER4_CALIBRATION_V3_BOUND.json",(canonical_json(summary)+"\n").encode()),
+        (e/"QFE_LAYER4_CALIBRATED_ROWS_V3_BOUND.jsonl.gz",gz),
+        (e/"QFE_LAYER4_MODEL_FREEZE_V3_BOUND.json",(canonical_json(freeze)+"\n").encode()),
+    )
+    for path,payload in payloads:
+        if path.exists():
+            if path.read_bytes()!=payload:
+                raise FileExistsError(f"Layer4 V3 artifact differs: {path}")
+        else:
+            path.parent.mkdir(parents=True,exist_ok=True)
+            path.write_bytes(payload)
     return summary
