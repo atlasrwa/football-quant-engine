@@ -31,9 +31,9 @@ mean commercial validation.
 - **Prospective incremental history V1:** **CERTIFIED / PREDICTION-ELIGIBLE** — 92 new finished fixtures across all six frozen competitions, 92/92 stats captured, 0 base overlap, combined 5,732-row PIT rebuild PASS.
 - **Prospective Cohort V1:** **FROZEN / CERTIFIED** — 135 fixtures, all scheduled fixtures in the preregistered Oct 7–21 UTC window, no cap or model/market filter; earliest T-6h cutoff is Oct 9 12:00 UTC.
 - **Prospective T-6h runner:** **CERTIFIED / TIMER-READY** — 5-minute cadence, complete pre-cutoff history refresh, all p_model bundles frozen before odds, late backfill forbidden, schedule-change abstention immutable.
-- **Prospective T-6h deployment:** **CERTIFIED / DEPLOYED** — prediction runner validated from canonical main; temporarily paused only during scanner branch work and must be re-enabled after scanner deployment.
-- **Odds price movement scanner V1:** **CERTIFIED / DEPLOYMENT-READY** — passive Goals O/U 2.5 capture every 5 minutes from T-6 to kickoff; operational close uses latest valid pre-kickoff quote within 600s under fixed bookmaker hierarchy; no post-kickoff provider call, no price-shopping, no p_model feedback.
-- **Operational gate:** merge/deploy the scanner as a separate timer and re-enable both services from canonical main. Then freeze the stack. Earliest registered T-6h cutoff remains **2026-10-09 12:00 UTC**. No live prediction, price path, closing line, or outcome score exists yet.
+- **Prospective T-6h deployment:** **ACTIVE** — certified prediction runner is enabled from canonical main on a 5-minute timer.
+- **Odds price movement scanner V1:** **CERTIFIED / DEPLOYED / ACTIVE** — separate 5-minute passive Goals O/U 2.5 scanner; fixed bookmaker hierarchy, latest valid pre-kickoff close within 600s, schedule-change abstention, no post-kickoff provider call, no price-shopping and no p_model feedback.
+- **Operational gate:** **STACK FROZEN FOR PROSPECTIVE V1.** Both timers are enabled from canonical main. Earliest registered T-6h cutoff remains **2026-10-09 12:00 UTC**. No live prediction, post-T6 price path, closing line, or outcome score exists yet.
 
 Historical sections below remain audit evidence. Where an older status conflicts with this current-state block, this block governs operational sequencing.
 
@@ -557,4 +557,5 @@ Layer 4 merge gate:
 15. [x] Preregister and freeze Prospective Cohort V1: 135 scheduled fixtures, no cap/subsampling/model/market filter, all frozen before T-6h.
 16. [x] Freeze/certify/deploy the T-6h execution runner without altering cohort membership or model/market thresholds.
 17. [x] Preregister/certify the passive odds price-movement scanner and operational-close rule; no live price path observed before freeze.
-18. [ ] Deploy the scanner alongside the T-6h runner from canonical main, verify zero-eligible operation, then make no further model/policy changes during the cohort.
+18. [x] Deploy the scanner alongside the T-6h runner from canonical main; both 5-minute timers active; manual and automatic scanner zero-eligible runs PASS.
+19. [ ] **LIVE PROSPECTIVE V1:** make no further model/calibration/threshold/cohort changes; allow frozen predictions, T-6 entry prices, price paths and closes to accumulate before outcomes are opened.
