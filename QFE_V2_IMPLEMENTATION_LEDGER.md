@@ -29,7 +29,8 @@ mean commercial validation.
 - **Layer 5 V1.2:** **CERTIFIED / ACTIVE** — bound to Layer 4 V3; V1.1 numerical market policy unchanged; former 317 cohort diagnostic-only; corners bookmaker comparison fail-closed; new future cohort machinery outcome-blind and pre-T6 enforced.
 - **Prospective V1 writer:** **CERTIFIED** — exact historical counterfactual replay reproduces 19/19 frozen Layer 4 probabilities with zero drift; target outcome/stat leakage, stale history, post-T6 capture and non-cohort targets fail closed.
 - **Prospective incremental history V1:** **CERTIFIED / PREDICTION-ELIGIBLE** — 92 new finished fixtures across all six frozen competitions, 92/92 stats captured, 0 base overlap, combined 5,732-row PIT rebuild PASS.
-- **Operational gate:** preregister the future-cohort window/inclusion rule, then discover and freeze genuinely future membership before each fixture's T-6h cutoff. No future cohort/outcome has been opened.
+- **Prospective Cohort V1:** **FROZEN / CERTIFIED** — 135 fixtures, all scheduled fixtures in the preregistered Oct 7–21 UTC window, no cap or model/market filter; earliest T-6h cutoff is Oct 9 12:00 UTC.
+- **Operational gate:** freeze/certify the T-6h execution runner against this immutable cohort. No prospective prediction or outcome has been opened yet.
 
 Historical sections below remain audit evidence. Where an older status conflicts with this current-state block, this block governs operational sequencing.
 
@@ -492,7 +493,9 @@ Layer 5 gates:
 - [x] Certify the outcome-blind/odds-blind V3 p_model writer by exact historical counterfactual replay.
 - [x] Build/freeze live incremental history across all six frozen model competitions: 92 fixtures / 92 stats / 0 missing / snapshot hash 2fe64b6004e6bf2f3348a765ee4d08640bbedb39694206c52f5ce908a7cd56d0.
 - [x] Verify zero base overlap and rebuild the combined 5,732-row PIT dataset.
-- [ ] **NEXT:** preregister a deterministic future-cohort time window/inclusion rule, then discover and freeze membership before every fixture's T-6h cutoff.
+- [x] Preregister fixed Oct 7–21 UTC cohort window with all scheduled fixtures included and no sample cap/model/market filter.
+- [x] Freeze Cohort V1: 135 unique fixtures; cohort hash f3d5bb667f8849b33baf29fb9666400427a17c4cf02f47e9dc0e0a098af6f8f0; all members frozen before T-6h.
+- [ ] **NEXT:** freeze/certify the T-6h execution runner; membership and numerical policies are now immutable.
 
 ### Layer 6 — prospective commercial evidence
 
@@ -548,4 +551,5 @@ Layer 4 merge gate:
 12. [x] Rebind/certify Layer 5 V1.2 without changing the frozen numerical market policy; former 317 cohort retired as final holdout and corners comparison fail-closed.
 13. [x] Freeze Prospective Execution V1 and certify the p_model writer by exact historical counterfactual replay.
 14. [x] Build/freeze live incremental history across all six frozen model competitions; 92 normalized matches, 0 missing stats, combined PIT PASS.
-15. [ ] Preregister the future-cohort window/inclusion rule, discover scheduled fixtures, and freeze membership before every fixture T-6h.
+15. [x] Preregister and freeze Prospective Cohort V1: 135 scheduled fixtures, no cap/subsampling/model/market filter, all frozen before T-6h.
+16. [ ] Freeze/certify the T-6h execution runner and operational schedule without altering cohort membership or model/market thresholds.
