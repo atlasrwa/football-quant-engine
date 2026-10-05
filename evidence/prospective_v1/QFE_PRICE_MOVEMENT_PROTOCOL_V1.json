@@ -1,0 +1,129 @@
+{
+  "artifacts": {
+    "capture_store": "captures.jsonl.gz",
+    "close_artifact_immutable": true,
+    "close_subdir": "close",
+    "movement_artifact_immutable": true,
+    "movement_subdir": "movement",
+    "raw_subdir": "raw",
+    "root": "/home/ubuntu/data/qfe_prospective_v1/cohort_f3d5bb667f8849b33baf29fb9666400427a17c4cf02f47e9dc0e0a098af6f8f0/market_movement"
+  },
+  "bindings": {
+    "base_main": "205563e07ea3d28308ce647de42d0486d298063b",
+    "cohort_hash": "f3d5bb667f8849b33baf29fb9666400427a17c4cf02f47e9dc0e0a098af6f8f0",
+    "layer4_model_freeze_hash": "bce2cbdb6fd3ecf1d664439116d1666b9fc4b4172c2838bf29428d07d2713bd2",
+    "layer5_v1_2_protocol_hash": "ae39008016b66f27c279bd2d47093e679ff46458fb44226d2b373983d42bb46a",
+    "t6_runner_certification_hash": "43fd1a0b4464479ae0b49cead68cf810874a18f3d2fb9c7b923ffec33297b1fa",
+    "t6_runner_deployment_hash": "a2c14a52ea7a89261aaf1745ce6d7abd44bb2ef5f96114dca236fee09775ddf8"
+  },
+  "capture": {
+    "bookmaker_filter_at_capture": "none among provider returned books",
+    "cadence_seconds": 300,
+    "endpoint": "/football/matches/{match_id}/odds",
+    "field": "last_seen",
+    "normalized_store_append_only": true,
+    "only_total_goals_2_5_over_under_normalized": true,
+    "raw_payload_may_contain_other_markets_but_they_are_not_normalized_or_used": true,
+    "raw_payload_sha256_required": true,
+    "raw_provider_payload_retained_immutable": true,
+    "semantics": "PROSPECTIVE_SNAPSHOT"
+  },
+  "certification": {
+    "fake_clock_transport_tests_required": true,
+    "full_repository_suite_required": true,
+    "live_zero_eligible_dry_run_required_before_timer_install": true,
+    "must_prove_close_artifact_immutable": true,
+    "must_prove_close_selection_uses_latest_valid_pre_kickoff_bundle_without_price_shopping": true,
+    "must_prove_no_odds_request_at_or_after_kickoff": true,
+    "must_prove_no_odds_request_before_t6": true,
+    "must_prove_no_scan_without_prediction": true,
+    "must_prove_only_goals_2_5_are_normalized": true,
+    "must_prove_post_kickoff_tick_only_finalizes_and_never_fetches": true,
+    "must_prove_prediction_bytes_never_change": true
+  },
+  "closing_reference": {
+    "bookmaker_hierarchy": [
+      "pinnacle",
+      "bet365",
+      "betmgm-uk",
+      "paddy-power"
+    ],
+    "bookmaker_selection_uses_price_attractiveness": false,
+    "decimal_odds_must_be_strictly_greater_than": 1.0,
+    "if_no_valid_bundle": "CLOSE_ABSTAIN",
+    "latest_complete_bundle_within_selected_bookmaker": true,
+    "maximum_close_age_seconds": 600,
+    "name": "OPERATIONAL_CLOSE_V1",
+    "post_kickoff_backfill_forbidden": true,
+    "primary_devig": "MULTIPLICATIVE_PROPORTIONAL",
+    "raw_two_way_implied_sum_bounds": [
+      1.0,
+      1.2
+    ],
+    "same_raw_payload_required_for_over_under_pair": true,
+    "selection_rule": "latest structurally complete registered bookmaker bundle strictly before kickoff",
+    "selection_time": "kickoff",
+    "shin": "DIAGNOSTIC_ONLY"
+  },
+  "eligibility": {
+    "corners_and_bookings_forbidden": true,
+    "never_request_odds_at_or_after_kickoff": true,
+    "prediction_bundle_must_already_exist": true,
+    "registered_line": 2.5,
+    "registered_market": "GOALS_TOTAL",
+    "schedule_changed_or_terminal_abstention_without_prediction": "not_scanned",
+    "start_at_or_after_t6_cutoff": true,
+    "stop_strictly_before_kickoff": true
+  },
+  "entry_reference": {
+    "definition": "existing frozen Layer5 T-6 comparator",
+    "must_not_be_reselected_using_post_t6_prices": true,
+    "selection": "latest structurally complete registered bookmaker bundle at or before T-6 under Layer5 V1.2"
+  },
+  "failure_policy": {
+    "late_tick_after_kickoff": "do not request odds; finalize from existing pre-kickoff captures",
+    "market_api_failure": "record event and retry on later pre-kickoff tick",
+    "no_quote": "record abstention; do not change prediction",
+    "no_valid_close_within_600_seconds": "CLOSE_ABSTAIN",
+    "scanner_failure_never_invalidates_frozen_p_model": true,
+    "scientific_binding_mismatch": "ABORT_SCANNER"
+  },
+  "frozen_on": "2026-10-05",
+  "movement_metrics": {
+    "computed_without_outcomes": true,
+    "entry_to_close": [
+      "delta_no_vig_p_over = p_close_over - p_t6_over",
+      "delta_over_decimal_odds = close_over_odds - t6_over_odds",
+      "delta_under_decimal_odds = close_under_odds - t6_under_odds"
+    ],
+    "model_aligned_clv_definition": "For a frozen disagreement side, CLV_probability = signed movement of market no-vig probability toward that side between T-6 and close.",
+    "model_aligned_clv_not_used_for_selection": true,
+    "per_bookmaker_time_series": [
+      "observed_at",
+      "over_odds",
+      "under_odds",
+      "no_vig_p_over",
+      "overround"
+    ],
+    "settlement_or_outcome_not_required_to_finalize_close": true
+  },
+  "protocol_hash": "b28a5f2bf08476de006633e1e13ce8065f6d9e168796a3ca668d0bb7d44314ae",
+  "scientific_boundary": {
+    "future_outcomes_scored": false,
+    "model_stack_remains_frozen": true,
+    "no_live_post_t6_price_movement_observed_at_protocol_freeze": true,
+    "no_live_prediction_exists_at_protocol_freeze": true
+  },
+  "scientific_role": {
+    "closing_line_is_evaluation_evidence_only": true,
+    "future_outcomes_used": false,
+    "may_modify_cohort_membership": false,
+    "may_modify_disagreement_decision": false,
+    "may_modify_model_calibration_or_thresholds": false,
+    "may_modify_p_model": false,
+    "may_modify_prediction_bundle": false,
+    "type": "PASSIVE_MARKET_OBSERVATION_ONLY"
+  },
+  "status": "FROZEN_BEFORE_IMPLEMENTATION_OR_LIVE_PRICE_MOVEMENT_CAPTURE",
+  "version": "qfe-prospective-price-movement-scanner-v1"
+}
