@@ -61,6 +61,16 @@ def _reject(reason: str) -> DisagreementDecision:
     )
 
 
+
+
+def _market_semantics_reason(market_key: str) -> Optional[str]:
+    scope = protocol_active()["initial_market_scope"].get(str(market_key))
+    if not isinstance(scope, dict):
+        return "TARGET_UNSUPPORTED"
+    if scope.get("market_comparison_eligible") is False:
+        return "SETTLEMENT_SEMANTICS_UNVERIFIED"
+    return None
+
 def _support_reason(model: ModelMarketPoint) -> Optional[str]:
     p = protocol_active()["model_support_gate"]
     if p["dynamic_support_required"] and not model.dynamic_supported:
@@ -98,6 +108,9 @@ def evaluate_single_line(
     model: ModelMarketPoint,
 ) -> DisagreementDecision:
     protocol = protocol_active()
+    semantic_reason = _market_semantics_reason(market.market_key)
+    if semantic_reason:
+        return _reject(semantic_reason)
     if not market.is_ok or len(market.points) != 1:
         return _reject(market.reason or "TARGET_UNSUPPORTED")
     point = market.points[0]
@@ -155,7 +168,7 @@ def _contiguous_runs(rows: list[tuple[MarketPoint, ModelMarketPoint, float]]) ->
     return out
 
 
-def evaluate_surface(
+def _evaluate_surface_math(
     market: MarketSurface,
     models: Iterable[ModelMarketPoint],
 ) -> DisagreementDecision:
@@ -257,3 +270,17 @@ def evaluate_surface(
         mean_absolute_gap=mean(abs(g) for g in all_gaps),
         same_sign_fraction=same_sign,
     )
+
+def evaluate_surface(
+    market: MarketSurface,
+    models: Iterable[ModelMarketPoint],
+) -> DisagreementDecision:
+    """Policy entry point for multi-line market disagreement.
+
+    The generic surface math remains available internally for regression tests,
+    but unverified market/settlement mappings fail closed here.
+    """
+    semantic_reason = _market_semantics_reason(market.market_key)
+    if semantic_reason:
+        return _reject(semantic_reason)
+    return _evaluate_surface_math(market, models)

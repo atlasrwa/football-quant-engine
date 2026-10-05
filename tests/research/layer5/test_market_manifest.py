@@ -128,3 +128,23 @@ def test_capture_prefix_hash_binds_exact_bytes(tmp_path):
     reproduced = snapshot_capture_prefix(cap, size_bytes=frozen.size_bytes)
     assert reproduced.sha256 == frozen.sha256
     assert reproduced.data == frozen.data
+
+
+def test_historical_manifest_builder_remains_pinned_to_v1_1(tmp_path):
+    from src.research.layer5.protocol import LAYER5_PROTOCOL_V1_1_HASH, active_protocol_hash
+    chrono = tmp_path / "chrono.json"
+    _chrono(chrono, ("mt_a",))
+    cap = tmp_path / "captures.gz"
+    _gz(
+        cap,
+        [
+            _row("mt_a", "odds:total_goals:over:2.5:pinnacle", 2.0),
+            _row("mt_a", "odds:total_goals:under:2.5:pinnacle", 2.0),
+        ],
+    )
+    manifest, _ = build_matched_market_manifest(
+        capture_prefix=snapshot_capture_prefix(cap),
+        chronology_path=chrono,
+    )
+    assert active_protocol_hash() != LAYER5_PROTOCOL_V1_1_HASH
+    assert manifest["active_protocol_hash"] == LAYER5_PROTOCOL_V1_1_HASH

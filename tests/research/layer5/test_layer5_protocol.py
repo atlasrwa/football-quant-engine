@@ -113,7 +113,7 @@ def test_v1_1_repairs_bookmaker_selection_without_opening_protected():
         protocol_v1_1,
     )
     d = protocol_v1_1()
-    assert d == protocol_active()
+    assert d != protocol_active()
     assert sha256_json(d) == LAYER5_PROTOCOL_V1_1_HASH
     assert d["supersedes"]["status"] == "ABORTED_PRE_PROTECTED_DESIGN_DEFECT"
     assert d["bookmaker_selection"]["hierarchy"] == [
@@ -129,3 +129,56 @@ def test_v1_1_evidence_matches_active_protocol():
     artifact = json.loads(Path("evidence/layer5/QFE_LAYER5_PROTOCOL_V1_1.json").read_text())
     assert artifact["protocol_hash"] == LAYER5_PROTOCOL_V1_1_HASH
     assert {k: v for k, v in artifact.items() if k != "protocol_hash"} == protocol_v1_1()
+
+
+def test_v1_2_is_active_and_binds_certified_layer4_v3():
+    from src.research.layer5.protocol import (
+        LAYER5_PROTOCOL_V1_2_HASH,
+        active_protocol_hash,
+        protocol_active,
+        protocol_v1_2,
+    )
+    d=protocol_v1_2()
+    assert protocol_active()==d
+    assert active_protocol_hash()==LAYER5_PROTOCOL_V1_2_HASH
+    assert sha256_json(d)==LAYER5_PROTOCOL_V1_2_HASH
+    assert d["bindings"]["layer4_model_freeze_hash"]=="bce2cbdb6fd3ecf1d664439116d1666b9fc4b4172c2838bf29428d07d2713bd2"
+    assert d["bindings"]["layer4_v3_certification_hash"]=="1a0e34e1473b22088b9d9340393034a2e2f829ad93790afbbd5f66bb7c560503"
+
+
+def test_v1_2_preserves_v1_1_numeric_market_policy_exactly():
+    from src.research.layer5.protocol import protocol_v1_1, protocol_v1_2
+    old=protocol_v1_1(); new=protocol_v1_2()
+    keys=(
+        "market_horizon","no_vig","market_surface","model_support_gate",
+        "disagreement_policy","line_selection","bookmaker_selection","market_only_benchmark",
+    )
+    for key in keys:
+        assert new[key]==old[key]
+    assert new["frozen_numeric_policy_fingerprint"]=="0871ae9c1eb92d858b5f11551b339959e63870b52a1c936069236eb493ef5e51"
+
+
+def test_v1_2_requires_new_future_cohort_and_retires_legacy_317():
+    from src.research.layer5.protocol import protocol_v1_2
+    d=protocol_v1_2()
+    e=d["prospective_evaluation"]
+    assert e["legacy_317_status"]=="EXPOSED_DIAGNOSTIC_ONLY_NOT_A_FINAL_HOLDOUT"
+    assert any("new future prospective cohort" in x for x in e["may_open_outcomes_only_after"])
+    assert d["scientific_boundary"]["legacy_317_outcomes_or_market_relative_scores_for_final_validation_forbidden"] is True
+
+
+def test_v1_2_corner_bookmaker_comparison_is_fail_closed():
+    from src.research.layer5.protocol import protocol_v1_2
+    d=protocol_v1_2()
+    assert d["initial_market_scope"]["GOALS_TOTAL"]["market_comparison_eligible"] is True
+    assert d["initial_market_scope"]["CORNERS_TOTAL"]["market_comparison_eligible"] is False
+    assert d["initial_market_scope"]["CORNERS_SIDE"]["market_comparison_eligible"] is False
+    assert d["market_source"]["registered_concept_mapping"]["CORNERS_TOTAL"].startswith("UNVERIFIED")
+    assert "SETTLEMENT_SEMANTICS_UNVERIFIED" in d["abstention_reason_codes"]
+
+
+def test_v1_2_evidence_matches_frozen_protocol():
+    from src.research.layer5.protocol import LAYER5_PROTOCOL_V1_2_HASH, protocol_v1_2
+    artifact=json.loads(Path("evidence/layer5/QFE_LAYER5_PROTOCOL_V1_2.json").read_text())
+    assert artifact["protocol_hash"]==LAYER5_PROTOCOL_V1_2_HASH
+    assert {k:v for k,v in artifact.items() if k!="protocol_hash"}==protocol_v1_2()

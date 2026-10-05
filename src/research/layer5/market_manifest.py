@@ -23,7 +23,7 @@ from src.research.layer5.market_surface import (
     build_market_surface,
     select_benchmark_bundle,
 )
-from src.research.layer5.protocol import active_protocol_hash, protocol_active
+from src.research.layer5.protocol import LAYER5_PROTOCOL_V1_1_HASH, protocol_v1_1
 
 MANIFEST_VERSION = "qfe-layer5-matched-market-manifest-v1.1"
 _REGISTERED_GOAL_LINE = 2.5
@@ -152,7 +152,7 @@ def build_matched_market_manifest(
     capture_prefix: CapturePrefix,
     chronology_path: Path,
 ) -> tuple[dict[str, Any], tuple[dict[str, Any], ...]]:
-    protocol = protocol_active()
+    protocol = protocol_v1_1()
     fixture_ids, membership_hash, chronology_hash = _protected_contract(chronology_path)
     protected = set(fixture_ids)
     horizon = protocol["market_horizon"]
@@ -330,7 +330,7 @@ def build_matched_market_manifest(
     fixture_rows = sorted(fixture_rows, key=lambda r: r["fixture_id"])
     manifest: dict[str, Any] = {
         "version": MANIFEST_VERSION,
-        "active_protocol_hash": active_protocol_hash(),
+        "active_protocol_hash": LAYER5_PROTOCOL_V1_1_HASH,
         "scientific_status": "MARKET_METADATA_ONLY_PROTECTED_OUTCOMES_UNOPENED",
         "chronology_manifest_hash": chronology_hash,
         "protected_fixture_membership_hash": membership_hash,
