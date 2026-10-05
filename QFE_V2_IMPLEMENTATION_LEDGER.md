@@ -30,7 +30,8 @@ mean commercial validation.
 - **Prospective V1 writer:** **CERTIFIED** — exact historical counterfactual replay reproduces 19/19 frozen Layer 4 probabilities with zero drift; target outcome/stat leakage, stale history, post-T6 capture and non-cohort targets fail closed.
 - **Prospective incremental history V1:** **CERTIFIED / PREDICTION-ELIGIBLE** — 92 new finished fixtures across all six frozen competitions, 92/92 stats captured, 0 base overlap, combined 5,732-row PIT rebuild PASS.
 - **Prospective Cohort V1:** **FROZEN / CERTIFIED** — 135 fixtures, all scheduled fixtures in the preregistered Oct 7–21 UTC window, no cap or model/market filter; earliest T-6h cutoff is Oct 9 12:00 UTC.
-- **Operational gate:** freeze/certify the T-6h execution runner against this immutable cohort. No prospective prediction or outcome has been opened yet.
+- **Prospective T-6h runner:** **CERTIFIED / TIMER-READY** — 5-minute cadence, complete pre-cutoff history refresh, all p_model bundles frozen before odds, late backfill forbidden, schedule-change abstention immutable.
+- **Operational gate:** merge/deploy the certified runner from canonical main and verify the systemd timer. Earliest registered T-6h cutoff remains **2026-10-09 12:00 UTC**. No live prospective prediction, market capture, or outcome score has been opened yet.
 
 Historical sections below remain audit evidence. Where an older status conflicts with this current-state block, this block governs operational sequencing.
 
