@@ -8,6 +8,7 @@ from src.research.layer5.market_surface import (
 )
 from src.research.layer5.disagreement import (
     ModelMarketPoint,
+    _evaluate_surface_math,
     evaluate_single_line,
     evaluate_surface,
 )
@@ -124,7 +125,7 @@ def test_surface_line_selection_uses_market_centrality_not_maximum_gap():
         _model(9.5, 0.56),   # +6 pp, market-centered
         _model(10.5, 0.50),  # +20 pp, largest gap
     ]
-    d = evaluate_surface(market, models)
+    d = _evaluate_surface_math(market, models)
     assert d.eligible
     assert d.line == 9.5
     assert d.line != 10.5
@@ -134,7 +135,7 @@ def test_surface_line_selection_uses_market_centrality_not_maximum_gap():
 def test_surface_rejects_opposite_strong_disagreement():
     market = _manual_surface([(8.5, 0.70), (9.5, 0.50), (10.5, 0.30)])
     models = [_model(8.5, 0.77), _model(9.5, 0.56), _model(10.5, 0.23)]
-    d = evaluate_surface(market, models)
+    d = _evaluate_surface_math(market, models)
     assert not d.eligible
     assert d.reason == "CROSS_LINE_DIRECTION_CONFLICT"
 
@@ -142,7 +143,7 @@ def test_surface_rejects_opposite_strong_disagreement():
 def test_surface_requires_adjacent_corroboration():
     market = _manual_surface([(8.5, 0.70), (9.5, 0.50), (10.5, 0.30)])
     models = [_model(8.5, 0.71), _model(9.5, 0.58), _model(10.5, 0.31)]
-    d = evaluate_surface(market, models)
+    d = _evaluate_surface_math(market, models)
     assert not d.eligible
     assert d.reason == "CROSS_LINE_NOT_CORROBORATED"
 
@@ -205,7 +206,7 @@ def test_surface_never_selects_central_line_below_five_pp_gate():
         _model(9.5, 0.54),  # +4 pp support-only, most market-central
         _model(10.5, 0.36), # +6 pp strong
     ]
-    d = evaluate_surface(market, models)
+    d = _evaluate_surface_math(market, models)
     assert d.eligible
     assert d.absolute_gap >= 0.05
     assert d.line in (8.5, 10.5)
@@ -245,3 +246,11 @@ def test_selected_book_price_failure_does_not_authorize_fallback():
     )
     assert {q.bookmaker for q in chosen} == {"pinnacle"}
     assert build_market_surface(chosen, prediction_cutoff=1200).status == "ABSTAIN"
+
+
+def test_public_corner_disagreement_fails_closed_on_unverified_settlement_semantics():
+    market = _manual_surface([(8.5, 0.70), (9.5, 0.50), (10.5, 0.30)])
+    models = [_model(8.5, 0.80), _model(9.5, 0.60), _model(10.5, 0.40)]
+    d = evaluate_surface(market, models)
+    assert not d.eligible
+    assert d.reason == "SETTLEMENT_SEMANTICS_UNVERIFIED"

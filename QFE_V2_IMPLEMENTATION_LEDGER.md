@@ -26,7 +26,8 @@ mean commercial validation.
 - **Goals market comparison:** eligible under the accepted regulation-time contract.
 - **Corners:** modelable, but bookmaker comparison remains fail-closed until provider corner settlement equivalence is independently proven and frozen.
 - **Bookings:** model/market comparison blocked; provider market availability must not be confused with QFE target-comparison eligibility.
-- **Operational gate:** Layer 4 V3 calibrated odds-blind p_model is operationally frozen. Next: rebind/revalidate Layer 5 to the V3 model freeze, keep corners bookmaker comparison fail-closed, then create a **new future prospective outcome-blind cohort** for genuine validation.
+- **Layer 5 V1.2:** **CERTIFIED / ACTIVE** — bound to Layer 4 V3; V1.1 numerical market policy unchanged; former 317 cohort diagnostic-only; corners bookmaker comparison fail-closed; new future cohort machinery outcome-blind and pre-T6 enforced.
+- **Operational gate:** freeze a **new future prospective cohort before every fixture's T-6h cutoff**, then freeze V3 p_model predictions and T-6h goals market metadata. No genuine outcomes have been opened for this successor.
 
 Historical sections below remain audit evidence. Where an older status conflicts with this current-state block, this block governs operational sequencing.
 
@@ -419,12 +420,30 @@ Scientific interpretation:
 
 ### Layer 5 — market-relative research
 
-Status: **V1.1 PREREGISTERED / PROTECTED SEALED / IMPLEMENTATION REVALIDATION IN PROGRESS**
+Status: **V1.2 ACTIVE / CERTIFIED FOR NEW FUTURE PROSPECTIVE COHORT / NO NEW OUTCOMES OPENED**
+
+Current successor:
+- Active protocol: qfe-layer5-market-surface-disagreement-v1.2.
+- V1.2 protocol hash: ae39008016b66f27c279bd2d47093e679ff46458fb44226d2b373983d42bb46a.
+- Frozen numeric-policy fingerprint: 0871ae9c1eb92d858b5f11551b339959e63870b52a1c936069236eb493ef5e51.
+- Layer 4 V3 model binding: bce2cbdb6fd3ecf1d664439116d1666b9fc4b4172c2838bf29428d07d2713bd2.
+- Layer 4 V3 certification binding: 1a0e34e1473b22088b9d9340393034a2e2f829ad93790afbbd5f66bb7c560503.
+- V1.2 preregistration commit: 92e0f70b50650355495ab53c5f73f5121902e39f.
+- V1.2 implementation commit: 324d5b2f2739bc72abdbc06051519e5507018a89.
+- Numerical/selection policy exactly unchanged from V1.1: T-6h, bookmaker hierarchy/no fallback, proportional no-vig, Shin sensitivity-only, gap/support/CDF thresholds, and non-max-gap selection.
+- Former 317-fixture cohort: **EXPOSED / DIAGNOSTIC ONLY / FINAL SCORING FORBIDDEN**.
+- Historical V1.1 market manifest 6f43bd3cc224cc9e42515d6c187b1de7bfff822324aa5cbc4a4b0cbfcb74b54f regenerates byte-exactly but is implementation/coverage evidence only.
+- Goals O/U 2.5 bookmaker comparison remains eligible.
+- Match/team corners bookmaker comparison: **FAIL CLOSED** pending provider-to-bookmaker settlement equivalence.
+- Future cohort manifest requires exact outcome-blind fixture schema and rejects any cohort frozen after a fixture's T-6h cutoff.
+- V1.2 integrity audit: 5a18914704641eeaa5af7e0af8226464aee6a977d04809211515bf72991cdb0e; 40 focused tests, 354 full-repo tests, 88 imports, 19,000 adversarial cases / 0 violations.
+
+Historical V1/V1.1 record follows.
 
 Frozen protocol:
 - Protocol version: `qfe-layer5-market-surface-disagreement-v1`.
 - Layer 5 V1 hash: `ecb72d508f421fbbcd45e4623acc50df882c178af83743365ed4be4e2dcebf65` — **ABORTED PRE-PROTECTED** because bookmaker selection among multiple same-bookmaker candidates was underspecified; no protected outcome/score had been opened.
-- Active Layer 5 V1.1 hash: `0e3928354f7da00e74c9bacd43b02cdace1556d0d8e11544f9ae0bb49fab2fe5` — repairs bookmaker/source selection while preserving every outcome-independent disagreement threshold.
+- Historical Layer 5 V1.1 hash: `0e3928354f7da00e74c9bacd43b02cdace1556d0d8e11544f9ae0bb49fab2fe5` — preserved as pre-repair historical apparatus; no longer active.
 - V1.1 bookmaker hierarchy: `pinnacle → bet365 → betmgm-uk → paddy-power`; structural availability only, with no price-driven fallback.
 - Frozen Layer 4 model binding: `e33af913f4c27ce33355c78792419ad8cee73e3f16ce7c685781a010d386b3ea`.
 - Layer 4 integrity-audit binding: `78f5925fc6cc1821e35724663da28a91a82390eab02c87cfdb03a0e07ed8b9e2`.
@@ -457,7 +476,12 @@ Layer 5 gates:
 - [x] Implement disagreement eligibility/abstention using calibration support, dynamic support, OOD/component dispersion, reliability penalty and adjacent-line robustness.
 - [x] Freeze final V1.1 implementation integrity audit `3a93b1954e66515275d5965dbf833c502b5fc5849fcd1eda32c333934ebb856b` and matched-market manifest `6f43bd3cc224cc9e42515d6c187b1de7bfff822324aa5cbc4a4b0cbfcb74b54f`. Coverage remains intentionally sparse: 3 goals / 3 corner surfaces / 0 team corners.
 - [x] Freeze bookmaker, line-selection and abstention implementation before any protected outcome is opened.
-- [ ] **HISTORICAL NEXT — SUPERSEDED:** the old plan was to score the 317-fixture cohort. Current governance forbids that as final validation because the cohort is exposed. Layer 5 must first be rebound to Layer 4 V3, and genuine validation must use a newly frozen future prospective cohort.
+- [x] **V1.2 successor frozen:** bind to Layer 4 V3 while preserving the V1.1 numerical market policy exactly.
+- [x] Historical V1.1 317-fixture market manifest regenerates byte-exactly but is diagnostic-only.
+- [x] Corner bookmaker comparison fails closed on unverified settlement semantics.
+- [x] Future prospective cohort/market-manifest machinery enforces exact outcome-blind membership and pre-T6 freezing.
+- [x] V1.2 exact-implementation validation: 40 focused tests, 354 repository tests, 88 imports, 19,000 adversarial cases / 0 violations.
+- [ ] **NEXT:** freeze a new future prospective cohort before every fixture's T-6h cutoff; then freeze V3 p_model predictions and the timestamp-proven T-6h goals market manifest before any outcome is known.
 
 ### Layer 6 — prospective commercial evidence
 
