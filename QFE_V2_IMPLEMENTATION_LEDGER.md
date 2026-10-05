@@ -27,7 +27,8 @@ mean commercial validation.
 - **Corners:** modelable, but bookmaker comparison remains fail-closed until provider corner settlement equivalence is independently proven and frozen.
 - **Bookings:** model/market comparison blocked; provider market availability must not be confused with QFE target-comparison eligibility.
 - **Layer 5 V1.2:** **CERTIFIED / ACTIVE** — bound to Layer 4 V3; V1.1 numerical market policy unchanged; former 317 cohort diagnostic-only; corners bookmaker comparison fail-closed; new future cohort machinery outcome-blind and pre-T6 enforced.
-- **Operational gate:** freeze a **new future prospective cohort before every fixture's T-6h cutoff**, then freeze V3 p_model predictions and T-6h goals market metadata. No genuine outcomes have been opened for this successor.
+- **Prospective V1 writer:** **CERTIFIED** — exact historical counterfactual replay reproduces 19/19 frozen Layer 4 probabilities with zero drift; target outcome/stat leakage, stale history, post-T6 capture and non-cohort targets fail closed.
+- **Operational gate:** build and freeze an immutable **live incremental football-history snapshot across all six frozen model competitions**. The audited base corpus ends 2026-09-14, so no October cohort may be predicted from the base corpus alone. No genuine future cohort/outcome has been opened.
 
 Historical sections below remain audit evidence. Where an older status conflicts with this current-state block, this block governs operational sequencing.
 
@@ -437,6 +438,11 @@ Current successor:
 - Match/team corners bookmaker comparison: **FAIL CLOSED** pending provider-to-bookmaker settlement equivalence.
 - Future cohort manifest requires exact outcome-blind fixture schema and rejects any cohort frozen after a fixture's T-6h cutoff.
 - V1.2 integrity audit: 5a18914704641eeaa5af7e0af8226464aee6a977d04809211515bf72991cdb0e; 40 focused tests, 354 full-repo tests, 88 imports, 19,000 adversarial cases / 0 violations.
+- Prospective Execution V1 protocol: bf5b1ba2b15be8db74618754028a34c9568dc281e2fb26a9d0e174552681ca4c, frozen before new cohort selection.
+- Prospective writer commit: 2388826ce293d5b6804eba9646291d4d93954da5.
+- Prospective writer certification: f5e1fb54bbdd6f78be9d27c720a37cc61f46042189d3d9afaaabae6d27121648.
+- Counterfactual fixture THESTATSAPI:mt_585222974 reproduced all 19 raw/calibrated probabilities exactly twice; bundle hash 00d09da33020f7038ebbfaf2149477b03332ff9163dc103f2415cb3939fa88ec.
+- Writer certification validation: 28 focused tests, 362 full-repo tests, 89 imports, diff check PASS.
 
 Historical V1/V1.1 record follows.
 
@@ -481,7 +487,9 @@ Layer 5 gates:
 - [x] Corner bookmaker comparison fails closed on unverified settlement semantics.
 - [x] Future prospective cohort/market-manifest machinery enforces exact outcome-blind membership and pre-T6 freezing.
 - [x] V1.2 exact-implementation validation: 40 focused tests, 354 repository tests, 88 imports, 19,000 adversarial cases / 0 violations.
-- [ ] **NEXT:** freeze a new future prospective cohort before every fixture's T-6h cutoff; then freeze V3 p_model predictions and the timestamp-proven T-6h goals market manifest before any outcome is known.
+- [x] Freeze Prospective Execution V1 before live cohort selection.
+- [x] Certify the outcome-blind/odds-blind V3 p_model writer by exact historical counterfactual replay.
+- [ ] **NEXT:** build and freeze the live incremental football-history snapshot across all six frozen model competitions; only then select/freeze the new future cohort before each fixture's T-6h cutoff.
 
 ### Layer 6 — prospective commercial evidence
 
@@ -533,4 +541,7 @@ Layer 4 merge gate:
 8. [x] Freeze and run Layer 2 V3 under true DEVELOPMENT-only scoring: 552 WARMUP state-only, 3,812 DEVELOPMENT scored, 959 CALIBRATION + 317 exposed former-PROTECTED excluded from model input; exact rebuild PASS.
 9. [x] Independently audit merged PR #42 Layer 3: exact regeneration of chronology, tournament, 3,812 goals OOF rows, 3,783 corners OOF rows, structured fold OOF and component evaluation; 0 CALIBRATION / 0 exposed former-PROTECTED rows scored.
 10. [x] Independently audit merged PR #43 Layer 3.1: protocol preregistration confirmed; 94,752 event cells regenerated exactly; SIDE NB2 passes the preregistered DEVELOPMENT gate, TOTAL NB2 remains weak/inconclusive; no CALIBRATION, exposed former-PROTECTED or market inputs.
-11. [ ] Audit/rebuild Layer 4 from the certified corrected chain; keep any final-holdout scoring on HOLD and create a new future prospective holdout only after the complete repaired stack is frozen.
+11. [x] Audit/rebuild Layer 4 from the certified corrected chain; V3 bounded calibrated p_model frozen.
+12. [x] Rebind/certify Layer 5 V1.2 without changing the frozen numerical market policy; former 317 cohort retired as final holdout and corners comparison fail-closed.
+13. [x] Freeze Prospective Execution V1 and certify the p_model writer by exact historical counterfactual replay.
+14. [ ] Build/freeze live incremental history across the six frozen model competitions, then freeze the genuinely future cohort before T-6h.

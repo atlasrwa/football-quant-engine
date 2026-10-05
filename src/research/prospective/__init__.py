@@ -27,3 +27,16 @@ from __future__ import annotations
 __all__ = [
     "api_contract",
 ]
+
+from src.research.prospective.prediction_freeze import (
+    BASE_CORPUS_MANIFEST_HASH,
+    COMPETITION_UNIVERSE,
+    EXECUTION_PROTOCOL_HASH,
+    LAYER4_MODEL_FREEZE_HASH,
+    LAYER5_PROTOCOL_HASH,
+    PREDICTION_BUNDLE_VERSION,
+    ProspectivePredictionRow,
+    blank_target_from_match,
+    build_prospective_prediction_bundle,
+    write_prospective_prediction_bundle,
+)
