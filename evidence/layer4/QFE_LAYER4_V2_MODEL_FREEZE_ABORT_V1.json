@@ -1,0 +1,37 @@
+{
+  "abort_hash": "7bbab3206446421f3a6166c975fe224f14ac2fbf46744bf53acc5d7156b8438b",
+  "aborted_model_freeze_hash": "97b0852b75c1191c603d9857a2ba8a1276be9c4a24057d9c2bbf0edafbde2e8a",
+  "calibration_run_hash": "d6a0b7f6b98acbccc54033371c2c2cad785bc18575a651296aed8913370e7346",
+  "date": "2026-10-05",
+  "defect": {
+    "emitted_exact_one_probabilities": 3,
+    "emitted_exact_one_select_rows": 1,
+    "emitted_exact_zero_probabilities": 0,
+    "implementation_problem": "The probability clip is applied by loss/optimization functions but not to the emitted isotonic p_model.",
+    "protocol_probability_clip": 1e-06,
+    "risk": "A future miss at p_model=1.0 creates unbounded Log Loss and invalidates a production-safe probability contract.",
+    "selected_calibrator": "ISOTONIC_GLOBAL",
+    "selected_group": "GOALS_TOTAL"
+  },
+  "preserved_evidence": {
+    "calibration_outcomes_are_already_exposed": true,
+    "calibrator_selection_may_be_reused_as_exposed_repair_evidence": true,
+    "market_odds_used": false,
+    "protected_or_former_317_used": false,
+    "v2_outputs_mutated": false
+  },
+  "protocol_commit": "c9866caaeea1f928e6cbd04b8e9ccaed11a6c7b0",
+  "protocol_hash": "be4f49babfb3e345d457bfe1ca87542888cfc0c6078e0a2427c3d7c18014f7e3",
+  "raw_calibration_hash": "ac4e24650f7f138db89306d74f4ea0d8010e369f8e64951f8aad9dba8b5050c5",
+  "status": "ABORT_STANDALONE_PMODEL_OUTPUT_SAFETY_DEFECT",
+  "successor_rule": {
+    "candidate_methods_change": false,
+    "ensemble_weights_change": false,
+    "fit_select_split_change": false,
+    "new_calibration_search_forbidden": true,
+    "only_change": "Apply deterministic final p_model clamp [1e-6, 1-1e-6] using the probability bound already declared in the frozen Layer4 protocol.",
+    "selected_methods_change_allowed": false,
+    "selection_thresholds_change": false
+  },
+  "version": "qfe-layer4-v2-model-freeze-abort-v1"
+}

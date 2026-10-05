@@ -41,10 +41,10 @@ from src.research.layer4.protocol import (
     CORNERS_TOTAL_LINES,
     OOD_QUANTILES,
     COMPONENT_GAP_OOD_QUANTILE,
-    protocol_v1,
+    protocol_v2,
 )
 
-RAW_CALIBRATION_VERSION="qfe-layer4-raw-calibration-v2-pit-horizon"
+RAW_CALIBRATION_VERSION="qfe-layer4-raw-calibration-v3-pit-replay"
 
 
 @dataclass(frozen=True,slots=True)
@@ -103,7 +103,7 @@ def _reference_thresholds(values:list[float])->dict[str,float]:
 
 
 def _load_development_references(repo_root:Path,goals_weight:float)->dict[str,Any]:
-    structured=_read_json(repo_root/'evidence/layer3/STRUCTURED_DEVELOPMENT_OOF.json')
+    structured=_read_json(repo_root/'evidence/layer3/STRUCTURED_DEVELOPMENT_OOF_V3_PIT.json')
     similar=_read_json(repo_root/'evidence/layer3/SIMILAR_CONTEXT_DEVELOPMENT_OOF.json')
     gd={r['fixture_key']:r for r in structured['rows'] if r['target']=='goals' and r['candidate']=='dynamic_poisson'}
     gs={r['fixture_key']:r for r in similar['rows'] if r['target']=='goals'}
@@ -113,8 +113,8 @@ def _load_development_references(repo_root:Path,goals_weight:float)->dict[str,An
         mu=(1-goals_weight)*float(d['expected_total'])+goals_weight*float(s['expected_total'])
         goals_int.append(mu); goals_gap.append(abs(float(d['probability_over'])-float(s['probability_over'])))
 
-    summary=_read_json(repo_root/'evidence/layer31/QFE_LAYER31_CORNERS_MULTILINE_OOF.json')
-    raw=gzip.decompress((repo_root/'evidence/layer31/QFE_LAYER31_CORNERS_MULTILINE_OOF_ROWS.jsonl.gz').read_bytes()).decode()
+    summary=_read_json(repo_root/'evidence/layer31/QFE_LAYER31_CORNERS_MULTILINE_OOF_V2_PIT.json')
+    raw=gzip.decompress((repo_root/'evidence/layer31/QFE_LAYER31_CORNERS_MULTILINE_OOF_ROWS_V2_PIT.jsonl.gz').read_bytes()).decode()
     rows=[json.loads(x) for x in raw.splitlines() if x.strip()]
     if len(rows)!=summary['row_count'] or sha256_json(rows)!=summary['rows_hash']:
         raise ValueError('Layer3.1 reference artifact mismatch')
@@ -180,12 +180,12 @@ def _assert_monotone(rows:list[RawCalibrationRow])->None:
 
 
 def build_raw_calibration(*,corpus:MultiSeasonPITCorpus,repo_root:Path)->tuple[dict[str,Any],tuple[RawCalibrationRow,...]]:
-    repo_root=Path(repo_root); protocol=protocol_v1().to_dict()
-    selection=_read_json(repo_root/'evidence/layer4/QFE_LAYER4_ENSEMBLE_SELECTION_V1.json')
-    contract=_read_json(repo_root/'evidence/layer4/QFE_LAYER4_EXECUTION_CONTRACT_V1.json')
+    repo_root=Path(repo_root); protocol=protocol_v2().to_dict()
+    selection=_read_json(repo_root/'evidence/layer4/QFE_LAYER4_ENSEMBLE_SELECTION_V2_PIT.json')
+    contract=_read_json(repo_root/'evidence/layer4/QFE_LAYER4_EXECUTION_CONTRACT_V2_PIT.json')
     if selection['selection_hash']!=contract['ensemble_selection_hash']: raise ValueError('ensemble binding mismatch')
     gw=float(selection['goals']['selected_weight']); cw=float(selection['corners']['selected_weight'])
-    structured=_read_json(repo_root/'evidence/layer3/STRUCTURED_DEVELOPMENT_OOF.json')
+    structured=_read_json(repo_root/'evidence/layer3/STRUCTURED_DEVELOPMENT_OOF_V3_PIT.json')
     goal_cfg=DynamicCountConfig(**structured['goal_dynamic_config']); corner_cfg=DynamicCountConfig(**structured['corner_dynamic_config'])
     similar_source=_read_json(repo_root/'evidence/layer3/SIMILAR_CONTEXT_DEVELOPMENT_OOF.json')
     similar_cfg=SimilarContextConfig(**similar_source['config'])
@@ -241,7 +241,7 @@ def build_raw_calibration(*,corpus:MultiSeasonPITCorpus,repo_root:Path)->tuple[d
     if any(r.kickoff_ts>=PROTECTED_START_TS for r in out): raise ValueError('protected row leaked')
     if any('market' in k.lower() for r in out for k in r.to_dict()): raise ValueError('market field leaked')
     summary={
-        'version':RAW_CALIBRATION_VERSION,'protocol_hash':protocol_v1().protocol_hash,'ensemble_selection_hash':selection['selection_hash'],'execution_contract_hash':contract['contract_hash'],
+        'version':RAW_CALIBRATION_VERSION,'protocol_hash':protocol_v2().protocol_hash,'ensemble_selection_hash':selection['selection_hash'],'execution_contract_hash':contract['contract_hash'],
         'corpus_manifest_hash':corpus.manifest.manifest_hash,'goal_dynamic_config_hash':goal_cfg.identity_hash,'corner_dynamic_config_hash':corner_cfg.identity_hash,'similar_config_hash':similar_cfg.identity_hash,
         'goals_similar_weight':gw,'corners_nb2_weight':cw,'corners_common_alpha':alpha_fit.alpha,'corners_common_alpha_n_observations':alpha_fit.n_observations,
         'reference_thresholds':thresholds,
@@ -249,7 +249,7 @@ def build_raw_calibration(*,corpus:MultiSeasonPITCorpus,repo_root:Path)->tuple[d
         'fixture_count':len({r.fixture_key for r in out}),'fit_fixture_count':len({r.fixture_key for r in out if r.phase=='CALIBRATION_FIT'}),'select_fixture_count':len({r.fixture_key for r in out if r.phase=='CALIBRATION_SELECT'}),
         'group_counts':{g:sum(r.group==g for r in out) for g in ('GOALS_TOTAL','CORNERS_SIDE','CORNERS_TOTAL')},
         'protected_rows':0,'market_odds_used':False,'rows_hash':sha256_json([r.to_dict() for r in out]),
-        'source_hashes':{'structured':sha256_json(structured),'similar':sha256_json(similar_source),'ensemble_file':_file_sha(repo_root/'evidence/layer4/QFE_LAYER4_ENSEMBLE_SELECTION_V1.json')},
+        'source_hashes':{'structured':sha256_json(structured),'similar':sha256_json(similar_source),'ensemble_file':_file_sha(repo_root/'evidence/layer4/QFE_LAYER4_ENSEMBLE_SELECTION_V2_PIT.json')},
     }
     summary['raw_calibration_hash']=sha256_json(summary)
     return summary,tuple(out)

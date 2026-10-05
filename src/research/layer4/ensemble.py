@@ -19,14 +19,14 @@ from scipy.stats import poisson
 from src.research.dataset.manifest import canonical_json, sha256_json
 from src.research.evaluation.paired_uncertainty import paired_block_bootstrap
 from src.research.models.structured_distributions import binary_log_loss, brier_score
-from src.research.layer4.protocol import protocol_v1
+from src.research.layer4.protocol import protocol_v2
 
-ENSEMBLE_SELECTION_VERSION = "qfe-layer4-ensemble-selection-v1"
+ENSEMBLE_SELECTION_VERSION = "qfe-layer4-ensemble-selection-v2-pit-horizon"
 
-STRUCTURED_PATH = Path("evidence/layer3/STRUCTURED_DEVELOPMENT_OOF.json")
+STRUCTURED_PATH = Path("evidence/layer3/STRUCTURED_DEVELOPMENT_OOF_V3_PIT.json")
 SIMILAR_PATH = Path("evidence/layer3/SIMILAR_CONTEXT_DEVELOPMENT_OOF.json")
-L31_SUMMARY_PATH = Path("evidence/layer31/QFE_LAYER31_CORNERS_MULTILINE_OOF.json")
-L31_ROWS_PATH = Path("evidence/layer31/QFE_LAYER31_CORNERS_MULTILINE_OOF_ROWS.jsonl.gz")
+L31_SUMMARY_PATH = Path("evidence/layer31/QFE_LAYER31_CORNERS_MULTILINE_OOF_V2_PIT.json")
+L31_ROWS_PATH = Path("evidence/layer31/QFE_LAYER31_CORNERS_MULTILINE_OOF_ROWS_V2_PIT.jsonl.gz")
 
 
 @dataclass(frozen=True, slots=True)
@@ -188,12 +188,12 @@ def select_corners_weight(repo_root:Path,protocol:dict[str,Any]) -> dict[str,Any
 
 
 def build_ensemble_selection(repo_root:Path) -> dict[str,Any]:
-    repo_root=Path(repo_root); protocol=protocol_v1().to_dict()
+    repo_root=Path(repo_root); protocol=protocol_v2().to_dict()
     if protocol['scientific_boundary']['protected_outcomes_allowed'] or protocol['scientific_boundary']['market_odds_allowed']:
         raise ValueError('Layer4 protocol boundary violated')
     result={
         'version':ENSEMBLE_SELECTION_VERSION,
-        'protocol_hash':protocol_v1().protocol_hash,
+        'protocol_hash':protocol_v2().protocol_hash,
         'scientific_status':'DEVELOPMENT_ONLY_ENSEMBLE_SELECTION_NO_CALIBRATION_NO_PROTECTED_NO_MARKET',
         'source_artifacts':{
             'structured_semantic_hash':sha256_json(_read_json(repo_root/STRUCTURED_PATH)),

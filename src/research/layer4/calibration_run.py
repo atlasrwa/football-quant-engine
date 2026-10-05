@@ -17,10 +17,10 @@ from src.research.layer4.calibrators import (
     IdentityCalibrator,PlattGlobal,BetaGlobal,WeightedIsotonic,RidgeContextPlatt,
     Calibrator,weighted_log_loss,weighted_brier,_logit,_sigmoid,
 )
-from src.research.layer4.protocol import protocol_v1
+from src.research.layer4.protocol import protocol_v2
 from src.research.evaluation.chronology import PROTECTED_START_TS
 
-CALIBRATION_RUN_VERSION='qfe-layer4-calibration-run-v1'
+CALIBRATION_RUN_VERSION='qfe-layer4-calibration-run-v2-pit-replay'
 GROUPS=('GOALS_TOTAL','CORNERS_SIDE','CORNERS_TOTAL')
 
 
@@ -31,8 +31,8 @@ def _read_json(path):
 
 
 def load_raw_rows(repo_root:Path)->tuple[dict[str,Any],list[dict[str,Any]]]:
-    s=_read_json(repo_root/'evidence/layer4/QFE_LAYER4_RAW_CALIBRATION_V1.json')
-    raw=gzip.decompress((repo_root/'evidence/layer4/QFE_LAYER4_RAW_CALIBRATION_ROWS_V1.jsonl.gz').read_bytes()).decode()
+    s=_read_json(repo_root/'evidence/layer4/QFE_LAYER4_RAW_CALIBRATION_V2_PIT.json')
+    raw=gzip.decompress((repo_root/'evidence/layer4/QFE_LAYER4_RAW_CALIBRATION_ROWS_V2_PIT.jsonl.gz').read_bytes()).decode()
     rows=[json.loads(x) for x in raw.splitlines() if x.strip()]
     if len(rows)!=s['row_count'] or sha256_json(rows)!=s['rows_hash']: raise ValueError('raw calibration rows mismatch')
     return s,rows
@@ -149,8 +149,8 @@ def _assert_monotone(rows,cal_probs):
 
 
 def run_calibration(*,repo_root:Path)->tuple[dict[str,Any],list[dict[str,Any]]]:
-    repo_root=Path(repo_root); raw_summary,rows=load_raw_rows(repo_root); protocol=protocol_v1().to_dict(); contract=_read_json(repo_root/'evidence/layer4/QFE_LAYER4_EXECUTION_CONTRACT_V1.json')
-    if raw_summary['protocol_hash']!=protocol_v1().protocol_hash or raw_summary['execution_contract_hash']!=contract['contract_hash']: raise ValueError('Layer4 binding mismatch')
+    repo_root=Path(repo_root); raw_summary,rows=load_raw_rows(repo_root); protocol=protocol_v2().to_dict(); contract=_read_json(repo_root/'evidence/layer4/QFE_LAYER4_EXECUTION_CONTRACT_V2_PIT.json')
+    if raw_summary['protocol_hash']!=protocol_v2().protocol_hash or raw_summary['execution_contract_hash']!=contract['contract_hash']: raise ValueError('Layer4 binding mismatch')
     group_results=[]; final_cals={}
     for group in GROUPS:
         gr=[r for r in rows if r['group']==group]; result=_select_group(group,gr,protocol,contract); group_results.append(result)
@@ -168,7 +168,7 @@ def run_calibration(*,repo_root:Path)->tuple[dict[str,Any],list[dict[str,Any]]]:
             output_rows.append({**r,'p_model':p,'selected_calibrator':next(x['selected_candidate'] for x in group_results if x['group']==group),'raw_probability_bin':bi,'calibration_bin_event_cells':sb['event_cells'],'calibration_bin_unique_fixtures':sb['unique_fixtures'],'calibration_bin_mean_prediction':sb.get('mean_calibrated_probability'),'calibration_bin_observed_rate':sb.get('observed_rate'),'calibration_bin_reliability_error_ci':sb.get('reliability_error_ci')})
     output_rows.sort(key=lambda r:(r['kickoff_ts'],r['fixture_key'],r['group'],r.get('role') or '',r['line']))
     if any(int(r['kickoff_ts'])>=PROTECTED_START_TS for r in output_rows): raise ValueError('protected row leaked')
-    result={'version':CALIBRATION_RUN_VERSION,'protocol_hash':protocol_v1().protocol_hash,'raw_calibration_hash':raw_summary['raw_calibration_hash'],'execution_contract_hash':contract['contract_hash'],'scientific_status':'CALIBRATION_FIT_SELECT_COMPLETE_PROTECTED_UNOPENED_NO_MARKET','group_results':group_results,'diagnostics':diagnostics,'row_count':len(output_rows),'rows_hash':sha256_json(output_rows),'protected_rows_scored':0,'market_odds_used':False}
+    result={'version':CALIBRATION_RUN_VERSION,'protocol_hash':protocol_v2().protocol_hash,'raw_calibration_hash':raw_summary['raw_calibration_hash'],'execution_contract_hash':contract['contract_hash'],'scientific_status':'CALIBRATION_FIT_SELECT_COMPLETE_PROTECTED_UNOPENED_NO_MARKET','group_results':group_results,'diagnostics':diagnostics,'row_count':len(output_rows),'rows_hash':sha256_json(output_rows),'protected_rows_scored':0,'market_odds_used':False}
     result['calibration_run_hash']=sha256_json(result); return result,output_rows
 
 
